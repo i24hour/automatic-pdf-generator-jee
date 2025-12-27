@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   FileText,
   Sparkles,
@@ -18,9 +19,12 @@ import {
   Target,
   Award,
   X,
+  LogOut,
+  Clock,
 } from "lucide-react";
+import { useAuth } from "@/lib/auth-context";
 
-// API base URL - change this for production
+// API base URL
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 interface GenerateResponse {
@@ -29,9 +33,21 @@ interface GenerateResponse {
   pdf_filename?: string;
   total_mcq: number;
   total_numerical: number;
+  rate_limit_remaining: number;
+  rate_limit_reset_hours: number;
+}
+
+interface RateLimitInfo {
+  limit: number;
+  remaining: number;
+  reset_hours: number;
+  used: number;
 }
 
 export default function Home() {
+  const { user, token, isLoading: authLoading, isAuthenticated, logout } = useAuth();
+  const router = useRouter();
+
   const [subject, setSubject] = useState("Physics");
   const [topic, setTopic] = useState("");
   const [questionCount, setQuestionCount] = useState(20);
@@ -39,8 +55,8 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<GenerateResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [rateLimit, setRateLimit] = useState<RateLimitInfo | null>(null);
 
-  // AbortController for cancelling requests
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const subjects = [
@@ -56,15 +72,43 @@ export default function Home() {
     { name: "Olympiad", icon: Trophy, color: "text-yellow-400", bgColor: "bg-yellow-500/20", borderColor: "border-yellow-500" },
   ];
 
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      router.push("/login");
+    }
+  }, [authLoading, isAuthenticated, router]);
+
+  // Fetch rate limit on mount and after generation
+  useEffect(() => {
+    if (isAuthenticated && token) {
+      fetchRateLimit();
+    }
+  }, [isAuthenticated, token]);
+
+  const fetchRateLimit = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/rate-limit`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setRateLimit(data);
+      }
+    } catch (err) {
+      console.error("Failed to fetch rate limit:", err);
+    }
+  };
+
   const handleGenerate = async () => {
     if (!topic.trim()) {
       setError("Please enter a topic");
       return;
     }
 
-    // Create new AbortController for this request
     abortControllerRef.current = new AbortController();
-
     setIsLoading(true);
     setError(null);
     setResult(null);
@@ -74,6 +118,7 @@ export default function Home() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           subject,
@@ -91,8 +136,16 @@ export default function Home() {
 
       const data: GenerateResponse = await response.json();
       setResult(data);
+
+      // Update rate limit from response
+      setRateLimit((prev) => prev ? {
+        ...prev,
+        remaining: data.rate_limit_remaining,
+        reset_hours: data.rate_limit_reset_hours,
+        used: prev.limit - data.rate_limit_remaining,
+      } : null);
     } catch (err) {
-      if (err instanceof Error && err.name === 'AbortError') {
+      if (err instanceof Error && err.name === "AbortError") {
         setError("Generation cancelled");
       } else {
         setError(err instanceof Error ? err.message : "Something went wrong");
@@ -116,24 +169,78 @@ export default function Home() {
     }
   };
 
+  const handleLogout = () => {
+    logout();
+    router.push("/login");
+  };
+
+  // Show loading while checking auth
+  if (authLoading) {
+    return (
+      <main className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+      </main>
+    );
+  }
+
+  // Don't render if not authenticated (will redirect)
+  if (!isAuthenticated) {
+    return null;
+  }
+
   return (
     <main className="min-h-screen py-12 px-4">
       <div className="max-w-2xl mx-auto">
+        {/* User Header */}
+        <div className="flex justify-between items-center mb-8">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-cyan-500 flex items-center justify-center text-white font-semibold">
+              {user?.name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || "U"}
+            </div>
+            <div>
+              <p className="text-sm text-gray-400">Welcome back,</p>
+              <p className="font-medium">{user?.name || user?.email}</p>
+            </div>
+          </div>
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+          >
+            <LogOut className="w-4 h-4" />
+            <span className="text-sm">Logout</span>
+          </button>
+        </div>
+
         {/* Header */}
-        <div className="text-center mb-12">
+        <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-indigo-500 to-cyan-500 mb-6 float-animation pulse-glow">
             <BookOpen className="w-10 h-10 text-white" />
           </div>
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
             <span className="gradient-text">Mentors Mantra</span>
           </h1>
-          <p className="text-xl text-gray-400">
-            AI-Powered Test Paper Generator
-          </p>
-          <p className="text-sm text-gray-500 mt-2">
-            Generate JEE Main/Advanced level test papers instantly
-          </p>
+          <p className="text-xl text-gray-400">AI-Powered Test Paper Generator</p>
         </div>
+
+        {/* Rate Limit Badge */}
+        {rateLimit && (
+          <div className="flex justify-center mb-6">
+            <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm ${rateLimit.remaining > 0
+                ? "bg-green-500/20 text-green-400 border border-green-500/30"
+                : "bg-red-500/20 text-red-400 border border-red-500/30"
+              }`}>
+              <Clock className="w-4 h-4" />
+              <span>
+                {rateLimit.remaining}/{rateLimit.limit} generations remaining
+              </span>
+              {rateLimit.reset_hours > 0 && (
+                <span className="text-gray-400">
+                  • Resets in {rateLimit.reset_hours.toFixed(1)}h
+                </span>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Main Card */}
         <div className="glass-card p-8">
@@ -189,9 +296,7 @@ export default function Home() {
 
           {/* Topic Input */}
           <div className="mb-6">
-            <label htmlFor="topic" className="form-label">
-              Topic
-            </label>
+            <label htmlFor="topic" className="form-label">Topic</label>
             <input
               type="text"
               id="topic"
@@ -232,17 +337,11 @@ export default function Home() {
           {/* Generate/Cancel Buttons */}
           {isLoading ? (
             <div className="flex gap-3">
-              <button
-                disabled
-                className="btn-primary flex-1 opacity-75"
-              >
+              <button disabled className="btn-primary flex-1 opacity-75">
                 <Loader2 className="w-5 h-5 animate-spin" />
                 Generating {level} Paper...
               </button>
-              <button
-                onClick={handleCancel}
-                className="btn-cancel px-6"
-              >
+              <button onClick={handleCancel} className="btn-cancel px-6">
                 <X className="w-5 h-5" />
                 Cancel
               </button>
@@ -250,12 +349,20 @@ export default function Home() {
           ) : (
             <button
               onClick={handleGenerate}
-              disabled={!topic.trim()}
+              disabled={!topic.trim() || (rateLimit && rateLimit.remaining === 0)}
               className="btn-primary w-full"
             >
               <Sparkles className="w-5 h-5" />
               Generate {level} Test Paper
             </button>
+          )}
+
+          {/* Rate limit exceeded message */}
+          {rateLimit && rateLimit.remaining === 0 && !isLoading && (
+            <div className="error-message mt-4">
+              <Clock className="w-5 h-5 flex-shrink-0" />
+              <span>Rate limit reached. Try again in {rateLimit.reset_hours.toFixed(1)} hours.</span>
+            </div>
           )}
 
           {/* Error Message */}
@@ -278,7 +385,6 @@ export default function Home() {
                   </p>
                 </div>
               </div>
-
               <button onClick={handleDownload} className="btn-secondary w-full">
                 <Download className="w-5 h-5" />
                 Download PDF
