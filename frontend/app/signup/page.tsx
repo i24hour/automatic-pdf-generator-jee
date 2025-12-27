@@ -3,8 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { UserPlus, Mail, Lock, User, Loader2, AlertCircle, BookOpen } from "lucide-react";
+import { Loader2, AlertCircle, BookOpen } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
+import { FloatingInput } from "@/components/FloatingInput";
 
 export default function SignupPage() {
     const [name, setName] = useState("");
@@ -44,99 +45,65 @@ export default function SignupPage() {
     };
 
     return (
-        <main className="min-h-screen flex items-center justify-center py-12 px-4">
+        <main className="min-h-screen flex items-center justify-center py-12 px-4 bg-[#FAF9F6]">
             <div className="w-full max-w-md">
-                {/* Header */}
-                <div className="text-center mb-8">
-                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-cyan-500 mb-4">
-                        <BookOpen className="w-8 h-8 text-white" />
+                {/* Card */}
+                <div className="bg-white border border-gray-200 rounded-2xl p-10 shadow-lg">
+                    {/* Logo */}
+                    <div className="flex justify-center mb-6">
+                        <div className="w-14 h-14 rounded-xl bg-indigo-600 flex items-center justify-center">
+                            <BookOpen className="w-7 h-7 text-white" />
+                        </div>
                     </div>
-                    <h1 className="text-3xl font-bold gradient-text">Create Account</h1>
-                    <p className="text-gray-400 mt-2">Start generating AI-powered test papers</p>
-                </div>
 
-                {/* Signup Form */}
-                <div className="glass-card p-8">
+                    {/* Title */}
+                    <h1 className="text-2xl font-semibold text-gray-900 text-center mb-2">Create Account</h1>
+                    <p className="text-gray-500 text-center mb-8 text-sm">Start generating AI-powered test papers</p>
+
                     <form onSubmit={handleSubmit} className="space-y-5">
                         {/* Name */}
-                        <div>
-                            <label htmlFor="name" className="form-label">
-                                Name (Optional)
-                            </label>
-                            <div className="relative">
-                                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                                <input
-                                    type="text"
-                                    id="name"
-                                    value={name}
-                                    onChange={(e) => setName(e.target.value)}
-                                    placeholder="Your name"
-                                    className="form-input pl-12"
-                                />
-                            </div>
-                        </div>
+                        <FloatingInput
+                            type="text"
+                            label="Name (Optional)"
+                            value={name}
+                            onChange={setName}
+                            autoComplete="name"
+                        />
 
                         {/* Email */}
-                        <div>
-                            <label htmlFor="email" className="form-label">
-                                Email Address
-                            </label>
-                            <div className="relative">
-                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                                <input
-                                    type="email"
-                                    id="email"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    placeholder="you@example.com"
-                                    className="form-input pl-12"
-                                    required
-                                />
-                            </div>
-                        </div>
+                        <FloatingInput
+                            type="email"
+                            label="Email"
+                            value={email}
+                            onChange={setEmail}
+                            required
+                            autoComplete="email"
+                        />
 
                         {/* Password */}
-                        <div>
-                            <label htmlFor="password" className="form-label">
-                                Password
-                            </label>
-                            <div className="relative">
-                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                                <input
-                                    type="password"
-                                    id="password"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    placeholder="Min. 6 characters"
-                                    className="form-input pl-12"
-                                    required
-                                />
-                            </div>
-                        </div>
+                        <FloatingInput
+                            type="password"
+                            label="Password"
+                            value={password}
+                            onChange={setPassword}
+                            required
+                            autoComplete="new-password"
+                        />
 
                         {/* Confirm Password */}
-                        <div>
-                            <label htmlFor="confirmPassword" className="form-label">
-                                Confirm Password
-                            </label>
-                            <div className="relative">
-                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                                <input
-                                    type="password"
-                                    id="confirmPassword"
-                                    value={confirmPassword}
-                                    onChange={(e) => setConfirmPassword(e.target.value)}
-                                    placeholder="Confirm your password"
-                                    className="form-input pl-12"
-                                    required
-                                />
-                            </div>
-                        </div>
+                        <FloatingInput
+                            type="password"
+                            label="Confirm password"
+                            value={confirmPassword}
+                            onChange={setConfirmPassword}
+                            required
+                            autoComplete="new-password"
+                        />
 
                         {/* Error */}
                         {error && (
-                            <div className="error-message">
-                                <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                            <div className="flex items-center gap-2 text-red-600 text-sm bg-red-50 border border-red-200 rounded-lg px-4 py-3">
+                                <AlertCircle className="w-4 h-4 flex-shrink-0" />
                                 <span>{error}</span>
                             </div>
                         )}
@@ -145,7 +112,7 @@ export default function SignupPage() {
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="btn-primary w-full"
+                            className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                         >
                             {isLoading ? (
                                 <>
@@ -153,18 +120,15 @@ export default function SignupPage() {
                                     Creating account...
                                 </>
                             ) : (
-                                <>
-                                    <UserPlus className="w-5 h-5" />
-                                    Create Account
-                                </>
+                                "Create Account"
                             )}
                         </button>
                     </form>
 
                     {/* Login link */}
-                    <p className="text-center text-gray-400 mt-6">
+                    <p className="text-center text-gray-500 mt-6 text-sm">
                         Already have an account?{" "}
-                        <Link href="/login" className="text-indigo-400 hover:text-indigo-300 font-medium">
+                        <Link href="/login" className="text-indigo-600 hover:text-indigo-700 font-medium">
                             Sign in
                         </Link>
                     </p>

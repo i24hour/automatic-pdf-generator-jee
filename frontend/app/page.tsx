@@ -56,6 +56,8 @@ export default function Home() {
   const [result, setResult] = useState<GenerateResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [rateLimit, setRateLimit] = useState<RateLimitInfo | null>(null);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendMessage, setResendMessage] = useState<string | null>(null);
 
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -188,6 +190,79 @@ export default function Home() {
     return null;
   }
 
+
+
+  const handleResendVerification = async () => {
+    setResendLoading(true);
+    setResendMessage(null);
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/resend-verification`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (response.ok) {
+        setResendMessage("Verification email sent! Check your inbox.");
+      } else {
+        const data = await response.json();
+        setResendMessage(data.detail || "Failed to send email");
+      }
+    } catch {
+      setResendMessage("Failed to send email. Try again.");
+    } finally {
+      setResendLoading(false);
+    }
+  };
+
+  // Show verification required screen if email not verified
+  if (user && !user.is_verified) {
+    return (
+      <main className="min-h-screen flex items-center justify-center py-12 px-4 bg-[#FAF9F6]">
+        <div className="max-w-md w-full text-center">
+          <div className="bg-white border border-gray-200 rounded-2xl p-10 shadow-lg">
+            <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-amber-100 flex items-center justify-center">
+              <AlertCircle className="w-8 h-8 text-amber-600" />
+            </div>
+            <h1 className="text-2xl font-semibold text-gray-900 mb-2">Verify Your Email</h1>
+            <p className="text-gray-500 mb-6">
+              We&apos;ve sent a verification email to <strong>{user.email}</strong>.
+              Please check your inbox and click the verification link.
+            </p>
+
+            {resendMessage && (
+              <p className={`text-sm mb-4 ${resendMessage.includes("sent") ? "text-green-600" : "text-red-600"}`}>
+                {resendMessage}
+              </p>
+            )}
+
+            <div className="space-y-3">
+              <button
+                onClick={() => window.location.reload()}
+                className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors"
+              >
+                I&apos;ve Verified My Email
+              </button>
+              <button
+                onClick={handleResendVerification}
+                disabled={resendLoading}
+                className="w-full py-3 border border-indigo-600 text-indigo-600 hover:bg-indigo-50 font-medium rounded-lg transition-colors disabled:opacity-50"
+              >
+                {resendLoading ? "Sending..." : "Resend Verification Email"}
+              </button>
+              <button
+                onClick={handleLogout}
+                className="w-full py-3 text-gray-600 hover:text-gray-800 font-medium transition-colors"
+              >
+                Sign out
+              </button>
+            </div>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen py-12 px-4">
       <div className="max-w-2xl mx-auto">
@@ -226,8 +301,8 @@ export default function Home() {
         {rateLimit && (
           <div className="flex justify-center mb-6">
             <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm ${rateLimit.remaining > 0
-                ? "bg-green-500/20 text-green-400 border border-green-500/30"
-                : "bg-red-500/20 text-red-400 border border-red-500/30"
+              ? "bg-green-500/20 text-green-400 border border-green-500/30"
+              : "bg-red-500/20 text-red-400 border border-red-500/30"
               }`}>
               <Clock className="w-4 h-4" />
               <span>
@@ -257,8 +332,8 @@ export default function Home() {
                     onClick={() => setSubject(sub.name)}
                     disabled={isLoading}
                     className={`p-4 rounded-xl border transition-all duration-300 flex flex-col items-center gap-2 ${isSelected
-                        ? "border-indigo-500 bg-indigo-500/20 text-indigo-400"
-                        : "border-gray-700 hover:border-gray-600 text-gray-400 hover:text-gray-300"
+                      ? "border-indigo-500 bg-indigo-500/20 text-indigo-400"
+                      : "border-gray-700 hover:border-gray-600 text-gray-400 hover:text-gray-300"
                       } ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
                   >
                     <IconComponent className="w-6 h-6" />
@@ -282,8 +357,8 @@ export default function Home() {
                     onClick={() => setLevel(lvl.name)}
                     disabled={isLoading}
                     className={`p-3 rounded-xl border transition-all duration-300 flex flex-col items-center gap-2 ${isSelected
-                        ? `${lvl.borderColor} ${lvl.bgColor} ${lvl.color}`
-                        : "border-gray-700 hover:border-gray-600 text-gray-400 hover:text-gray-300"
+                      ? `${lvl.borderColor} ${lvl.bgColor} ${lvl.color}`
+                      : "border-gray-700 hover:border-gray-600 text-gray-400 hover:text-gray-300"
                       } ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
                   >
                     <IconComponent className="w-5 h-5" />

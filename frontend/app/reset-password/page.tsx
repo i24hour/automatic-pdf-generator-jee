@@ -1,15 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Lock, Loader2, AlertCircle, CheckCircle2, BookOpen, ArrowRight } from "lucide-react";
+import { Loader2, AlertCircle, CheckCircle2, BookOpen, ArrowRight } from "lucide-react";
+import { FloatingInput } from "@/components/FloatingInput";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 export default function ResetPasswordPage() {
     const searchParams = useSearchParams();
-    const router = useRouter();
     const token = searchParams.get("token");
 
     const [password, setPassword] = useState("");
@@ -61,12 +61,15 @@ export default function ResetPasswordPage() {
 
     if (!token) {
         return (
-            <main className="min-h-screen flex items-center justify-center py-12 px-4">
-                <div className="glass-card p-8 text-center">
-                    <AlertCircle className="w-16 h-16 mx-auto mb-4 text-red-400" />
-                    <h1 className="text-2xl font-bold mb-2 text-red-400">Invalid Link</h1>
-                    <p className="text-gray-400 mb-6">This password reset link is invalid or has expired.</p>
-                    <Link href="/forgot-password" className="btn-primary inline-flex">
+            <main className="min-h-screen flex items-center justify-center py-12 px-4 bg-[#FAF9F6]">
+                <div className="bg-white border border-gray-200 rounded-2xl p-10 text-center shadow-lg">
+                    <AlertCircle className="w-14 h-14 mx-auto mb-4 text-red-500" />
+                    <h1 className="text-2xl font-semibold text-gray-900 mb-2">Invalid Link</h1>
+                    <p className="text-gray-500 text-sm mb-6">This password reset link is invalid or has expired.</p>
+                    <Link
+                        href="/forgot-password"
+                        className="inline-block py-3 px-6 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors"
+                    >
                         Request New Link
                     </Link>
                 </div>
@@ -75,97 +78,83 @@ export default function ResetPasswordPage() {
     }
 
     return (
-        <main className="min-h-screen flex items-center justify-center py-12 px-4">
+        <main className="min-h-screen flex items-center justify-center py-12 px-4 bg-[#FAF9F6]">
             <div className="w-full max-w-md">
-                {/* Header */}
-                <div className="text-center mb-8">
-                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-cyan-500 mb-4">
-                        <BookOpen className="w-8 h-8 text-white" />
+                {/* Card */}
+                <div className="bg-white border border-gray-200 rounded-2xl p-10 shadow-lg">
+                    {/* Logo */}
+                    <div className="flex justify-center mb-6">
+                        <div className="w-14 h-14 rounded-xl bg-indigo-600 flex items-center justify-center">
+                            <BookOpen className="w-7 h-7 text-white" />
+                        </div>
                     </div>
-                    <h1 className="text-3xl font-bold gradient-text">Reset Password</h1>
-                    <p className="text-gray-400 mt-2">Enter your new password</p>
-                </div>
 
-                <div className="glass-card p-8">
                     {success ? (
                         <div className="text-center">
-                            <CheckCircle2 className="w-16 h-16 mx-auto mb-4 text-green-400" />
-                            <h2 className="text-xl font-bold mb-2 text-green-400">Password Reset!</h2>
-                            <p className="text-gray-400 mb-6">
-                                Your password has been reset successfully. You can now login with your new password.
+                            <CheckCircle2 className="w-14 h-14 mx-auto mb-4 text-green-500" />
+                            <h1 className="text-2xl font-semibold text-gray-900 mb-2">Password Reset!</h1>
+                            <p className="text-gray-500 text-sm mb-6">
+                                Your password has been reset successfully.
                             </p>
-                            <Link href="/login" className="btn-primary inline-flex">
-                                Continue to Login
-                                <ArrowRight className="w-5 h-5 ml-2" />
+                            <Link
+                                href="/login"
+                                className="inline-flex items-center gap-2 py-3 px-6 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors"
+                            >
+                                Continue to Sign in
+                                <ArrowRight className="w-4 h-4" />
                             </Link>
                         </div>
                     ) : (
-                        <form onSubmit={handleSubmit} className="space-y-5">
-                            {/* Password */}
-                            <div>
-                                <label htmlFor="password" className="form-label">
-                                    New Password
-                                </label>
-                                <div className="relative">
-                                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                                    <input
-                                        type="password"
-                                        id="password"
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        placeholder="Min. 6 characters"
-                                        className="form-input pl-12"
-                                        required
-                                    />
-                                </div>
-                            </div>
+                        <>
+                            <h1 className="text-2xl font-semibold text-gray-900 text-center mb-2">Reset Password</h1>
+                            <p className="text-gray-500 text-center mb-8 text-sm">Enter your new password</p>
 
-                            {/* Confirm Password */}
-                            <div>
-                                <label htmlFor="confirmPassword" className="form-label">
-                                    Confirm New Password
-                                </label>
-                                <div className="relative">
-                                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                                    <input
-                                        type="password"
-                                        id="confirmPassword"
-                                        value={confirmPassword}
-                                        onChange={(e) => setConfirmPassword(e.target.value)}
-                                        placeholder="Confirm your password"
-                                        className="form-input pl-12"
-                                        required
-                                    />
-                                </div>
-                            </div>
+                            <form onSubmit={handleSubmit} className="space-y-5">
+                                {/* Password */}
+                                <FloatingInput
+                                    type="password"
+                                    label="New password"
+                                    value={password}
+                                    onChange={setPassword}
+                                    required
+                                    autoComplete="new-password"
+                                />
 
-                            {/* Error */}
-                            {error && (
-                                <div className="error-message">
-                                    <AlertCircle className="w-5 h-5 flex-shrink-0" />
-                                    <span>{error}</span>
-                                </div>
-                            )}
+                                {/* Confirm Password */}
+                                <FloatingInput
+                                    type="password"
+                                    label="Confirm new password"
+                                    value={confirmPassword}
+                                    onChange={setConfirmPassword}
+                                    required
+                                    autoComplete="new-password"
+                                />
 
-                            {/* Submit */}
-                            <button
-                                type="submit"
-                                disabled={isLoading}
-                                className="btn-primary w-full"
-                            >
-                                {isLoading ? (
-                                    <>
-                                        <Loader2 className="w-5 h-5 animate-spin" />
-                                        Resetting...
-                                    </>
-                                ) : (
-                                    <>
-                                        <Lock className="w-5 h-5" />
-                                        Reset Password
-                                    </>
+                                {/* Error */}
+                                {error && (
+                                    <div className="flex items-center gap-2 text-red-600 text-sm bg-red-50 border border-red-200 rounded-lg px-4 py-3">
+                                        <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                                        <span>{error}</span>
+                                    </div>
                                 )}
-                            </button>
-                        </form>
+
+                                {/* Submit */}
+                                <button
+                                    type="submit"
+                                    disabled={isLoading}
+                                    className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                >
+                                    {isLoading ? (
+                                        <>
+                                            <Loader2 className="w-5 h-5 animate-spin" />
+                                            Resetting...
+                                        </>
+                                    ) : (
+                                        "Reset Password"
+                                    )}
+                                </button>
+                            </form>
+                        </>
                     )}
                 </div>
             </div>

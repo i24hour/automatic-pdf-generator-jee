@@ -1,16 +1,17 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0f0f23;
-  --foreground: #e2e8f0;
-  --primary: #6366f1;
-  --primary-hover: #818cf8;
-  --secondary: #1e1e3f;
-  --accent: #06b6d4;
+  --background: #FAF9F6;
+  --foreground: #1a1a2e;
+  --primary: #4F46E5;
+  --primary-hover: #4338CA;
+  --secondary: #F5F5F0;
+  --accent: #4F46E5;
   --success: #10b981;
   --error: #ef4444;
-  --border: #2d2d5a;
-  --card-bg: rgba(30, 30, 63, 0.8);
+  --border: #E5E5E0;
+  --card-bg: #FFFFFF;
+  --text-muted: #6B7280;
 }
 
 @theme inline {
@@ -26,26 +27,22 @@
 
 body {
   background: var(--background);
-  background-image:
-    radial-gradient(ellipse at top, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
-    radial-gradient(ellipse at bottom right, rgba(6, 182, 212, 0.1) 0%, transparent 50%);
   color: var(--foreground);
-  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), 'Inter', Arial, Helvetica, sans-serif;
   min-height: 100vh;
 }
 
-/* Glass morphism card */
+/* Clean card */
 .glass-card {
   background: var(--card-bg);
-  backdrop-filter: blur(12px);
   border: 1px solid var(--border);
   border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
 
 /* Primary button */
 .btn-primary {
-  background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+  background: var(--primary);
   color: white;
   padding: 12px 32px;
   border-radius: 12px;
@@ -61,8 +58,9 @@ body {
 }
 
 .btn-primary:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
+  background: var(--primary-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
 }
 
 .btn-primary:disabled {
@@ -118,7 +116,7 @@ body {
 .form-input {
   width: 100%;
   padding: 14px 16px;
-  background: rgba(15, 15, 35, 0.6);
+  background: white;
   border: 1px solid var(--border);
   border-radius: 10px;
   color: var(--foreground);
@@ -129,18 +127,18 @@ body {
 .form-input:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
 }
 
 .form-input::placeholder {
-  color: #64748b;
+  color: #9CA3AF;
 }
 
 /* Form select */
 .form-select {
   width: 100%;
   padding: 14px 16px;
-  background: rgba(15, 15, 35, 0.6);
+  background: white;
   border: 1px solid var(--border);
   border-radius: 10px;
   color: var(--foreground);
@@ -148,7 +146,7 @@ body {
   cursor: pointer;
   transition: all 0.3s ease;
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236366f1'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%234F46E5'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 12px center;
   background-size: 20px;
@@ -157,11 +155,11 @@ body {
 .form-select:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
 }
 
 .form-select option {
-  background: var(--secondary);
+  background: white;
   color: var(--foreground);
 }
 
@@ -170,7 +168,7 @@ body {
   display: block;
   margin-bottom: 8px;
   font-weight: 500;
-  color: #94a3b8;
+  color: var(--text-muted);
   font-size: 0.9rem;
 }
 
@@ -192,7 +190,7 @@ body {
 
 /* Success message */
 .success-message {
-  background: rgba(16, 185, 129, 0.15);
+  background: rgba(16, 185, 129, 0.1);
   border: 1px solid var(--success);
   border-radius: 12px;
   padding: 16px 20px;
@@ -204,7 +202,7 @@ body {
 
 /* Error message */
 .error-message {
-  background: rgba(239, 68, 68, 0.15);
+  background: rgba(239, 68, 68, 0.1);
   border: 1px solid var(--error);
   border-radius: 12px;
   padding: 16px 20px;
@@ -233,7 +231,7 @@ body {
 
 /* Gradient text */
 .gradient-text {
-  background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, #06b6d4 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -244,11 +242,11 @@ body {
 
   0%,
   100% {
-    box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+    box-shadow: 0 0 20px rgba(79, 70, 229, 0.2);
   }
 
   50% {
-    box-shadow: 0 0 40px rgba(99, 102, 241, 0.6);
+    box-shadow: 0 0 40px rgba(79, 70, 229, 0.4);
   }
 }
 
