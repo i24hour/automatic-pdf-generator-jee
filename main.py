@@ -5,24 +5,34 @@ Main application entry point with API endpoints.
 
 import os
 import uuid
+from datetime import datetime, timedelta
 from typing import Optional
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
+from sqlalchemy.orm import Session
 from dotenv import load_dotenv
 
 from services.llm_engine import llm_engine
 from services.pdf_engine import pdf_engine
+from database import get_db, init_db
+from models import User, PDFGeneration
+from auth import get_current_user_required, get_current_user
+from routers.auth_router import router as auth_router
 
 # Load environment variables
 load_dotenv()
+
+# Rate limiting configuration
+RATE_LIMIT_COUNT = int(os.getenv("RATE_LIMIT_COUNT", "3"))
+RATE_LIMIT_HOURS = int(os.getenv("RATE_LIMIT_HOURS", "6"))
 
 # Initialize FastAPI app
 app = FastAPI(
     title="Mentors Mantra Test Generator",
     description="Generate professionally formatted PDF test papers using AI",
-    version="1.0.0"
+    version="2.0.0"
 )
 
 # Configure CORS
@@ -33,6 +43,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include auth router
+app.include_router(auth_router)
+
+
+# Initialize database on startup
+@app.on_event("startup")
+async def startup_event():
+    init_db()
 
 
 # Request/Response Models
@@ -51,12 +70,65 @@ class GenerateResponse(BaseModel):
     pdf_filename: Optional[str] = None
     total_mcq: int = 0
     total_numerical: int = 0
+    rate_limit_remaining: int = 0
+    rate_limit_reset_hours: float = 0
+
+
+class RateLimitInfo(BaseModel):
+    """Rate limit information."""
+    limit: int
+    remaining: int
+    reset_hours: float
+    used: int
 
 
 class ErrorResponse(BaseModel):
     """Response model for errors."""
     success: bool = False
     error: str
+
+
+def check_rate_limit(user: User, db: Session) -> tuple[bool, int, float]:
+    """
+    Check if user has exceeded rate limit.
+    Returns: (is_allowed, remaining_count, hours_until_reset)
+    """
+    cutoff_time = datetime.utcnow() - timedelta(hours=RATE_LIMIT_HOURS)
+    
+    # Count generations in the rate limit window
+    recent_generations = db.query(PDFGeneration).filter(
+        PDFGeneration.user_id == user.id,
+        PDFGeneration.created_at >= cutoff_time
+    ).order_by(PDFGeneration.created_at.asc()).all()
+    
+    used_count = len(recent_generations)
+    remaining = max(0, RATE_LIMIT_COUNT - used_count)
+    
+    # Calculate reset time (when the oldest generation expires)
+    if recent_generations and used_count >= RATE_LIMIT_COUNT:
+        oldest = recent_generations[0]
+        reset_time = oldest.created_at + timedelta(hours=RATE_LIMIT_HOURS)
+        hours_until_reset = (reset_time - datetime.utcnow()).total_seconds() / 3600
+        hours_until_reset = max(0, hours_until_reset)
+    else:
+        hours_until_reset = 0
+    
+    is_allowed = used_count < RATE_LIMIT_COUNT
+    return is_allowed, remaining, hours_until_reset
+
+
+def record_generation(user: User, request: GenerateRequest, pdf_filename: str, db: Session):
+    """Record a PDF generation for rate limiting."""
+    generation = PDFGeneration(
+        user_id=user.id,
+        subject=request.subject,
+        topic=request.topic,
+        level=request.level,
+        question_count=request.total_questions,
+        pdf_filename=pdf_filename
+    )
+    db.add(generation)
+    db.commit()
 
 
 # API Endpoints
@@ -66,7 +138,7 @@ async def root():
     return {
         "status": "healthy",
         "service": "Mentors Mantra Test Generator",
-        "version": "1.0.0"
+        "version": "2.0.0"
     }
 
 
@@ -83,17 +155,42 @@ async def health_check():
     }
 
 
+@app.get("/api/rate-limit", response_model=RateLimitInfo)
+async def get_rate_limit(
+    current_user: User = Depends(get_current_user_required),
+    db: Session = Depends(get_db)
+):
+    """Get current rate limit status."""
+    is_allowed, remaining, reset_hours = check_rate_limit(current_user, db)
+    
+    return RateLimitInfo(
+        limit=RATE_LIMIT_COUNT,
+        remaining=remaining,
+        reset_hours=round(reset_hours, 2),
+        used=RATE_LIMIT_COUNT - remaining
+    )
+
+
 @app.post("/api/generate", response_model=GenerateResponse)
-async def generate_test(request: GenerateRequest):
+async def generate_test(
+    request: GenerateRequest,
+    current_user: User = Depends(get_current_user_required),
+    db: Session = Depends(get_db)
+):
     """
     Generate a test paper PDF.
     
-    - **subject**: The subject (Physics, Chemistry, Maths)
-    - **topic**: The specific topic for questions
-    - **total_questions**: Total number of questions (default: 20, range: 5-50)
-    
-    Returns a PDF file download.
+    Requires authentication. Limited to 3 PDFs per 6 hours.
     """
+    # Check rate limit
+    is_allowed, remaining, reset_hours = check_rate_limit(current_user, db)
+    
+    if not is_allowed:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=f"Rate limit exceeded. You can generate {RATE_LIMIT_COUNT} PDFs every {RATE_LIMIT_HOURS} hours. Try again in {reset_hours:.1f} hours."
+        )
+    
     try:
         # Calculate question split: 80% MCQ, 20% Numerical
         mcq_count = int(request.total_questions * 0.8)
@@ -134,12 +231,20 @@ async def generate_test(request: GenerateRequest):
                 detail="Failed to generate PDF. Please check if pdflatex is installed."
             )
         
+        # Record this generation for rate limiting
+        record_generation(current_user, request, os.path.basename(pdf_path), db)
+        
+        # Get updated rate limit info
+        _, new_remaining, new_reset_hours = check_rate_limit(current_user, db)
+        
         return GenerateResponse(
             success=True,
             message="Test paper generated successfully",
             pdf_filename=os.path.basename(pdf_path),
             total_mcq=mcq_count,
-            total_numerical=numerical_count
+            total_numerical=numerical_count,
+            rate_limit_remaining=new_remaining,
+            rate_limit_reset_hours=round(new_reset_hours, 2)
         )
         
     except HTTPException:
