@@ -1,16 +1,21 @@
 """
-Database models for User and PDF Generation tracking.
+Database models for User, Tokens, and PDF Generation tracking.
 """
 
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from database import Base
 import uuid
+import secrets
 
 
 def generate_uuid():
     return str(uuid.uuid4())
+
+
+def generate_token():
+    return secrets.token_urlsafe(32)
 
 
 class User(Base):
@@ -21,13 +26,60 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
     name = Column(String, nullable=True)
+    is_verified = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     
-    # Relationship to PDF generations
+    # Relationships
     pdf_generations = relationship("PDFGeneration", back_populates="user")
+    refresh_tokens = relationship("RefreshToken", back_populates="user", cascade="all, delete-orphan")
     
     def __repr__(self):
         return f"<User {self.email}>"
+
+
+class RefreshToken(Base):
+    """Refresh tokens for maintaining user sessions."""
+    __tablename__ = "refresh_tokens"
+    
+    id = Column(String, primary_key=True, default=generate_uuid)
+    token = Column(String, unique=True, index=True, nullable=False, default=generate_token)
+    user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationship
+    user = relationship("User", back_populates="refresh_tokens")
+    
+    def __repr__(self):
+        return f"<RefreshToken {self.id[:8]}...>"
+
+
+class VerificationToken(Base):
+    """Email verification tokens."""
+    __tablename__ = "verification_tokens"
+    
+    id = Column(String, primary_key=True, default=generate_uuid)
+    token = Column(String, unique=True, index=True, nullable=False, default=generate_token)
+    user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    def __repr__(self):
+        return f"<VerificationToken {self.token[:8]}...>"
+
+
+class PasswordResetToken(Base):
+    """Password reset tokens."""
+    __tablename__ = "password_reset_tokens"
+    
+    id = Column(String, primary_key=True, default=generate_uuid)
+    token = Column(String, unique=True, index=True, nullable=False, default=generate_token)
+    user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    def __repr__(self):
+        return f"<PasswordResetToken {self.token[:8]}...>"
 
 
 class PDFGeneration(Base):
@@ -43,7 +95,7 @@ class PDFGeneration(Base):
     pdf_filename = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     
-    # Relationship to user
+    # Relationship
     user = relationship("User", back_populates="pdf_generations")
     
     def __repr__(self):

@@ -1,22 +1,33 @@
 """
-Authentication router: register, login, and user info endpoints.
+Authentication router: register, login, refresh, verify, and password reset endpoints.
 """
 
-from datetime import timedelta
-from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordRequestForm
+import os
+from datetime import datetime, timedelta
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, EmailStr
+from dotenv import load_dotenv
 
 from database import get_db
-from models import User
+from models import User, RefreshToken, VerificationToken, PasswordResetToken
 from auth import (
     get_password_hash,
     verify_password,
     create_access_token,
+    create_refresh_token,
+    verify_refresh_token,
+    revoke_refresh_token,
+    revoke_all_user_tokens,
     get_current_user_required,
-    ACCESS_TOKEN_EXPIRE_HOURS
+    ACCESS_TOKEN_EXPIRE_MINUTES
 )
+from services.email_service import email_service
+
+load_dotenv()
+
+VERIFICATION_TOKEN_EXPIRE_HOURS = int(os.getenv("VERIFICATION_TOKEN_EXPIRE_HOURS", "24"))
+RESET_TOKEN_EXPIRE_HOURS = int(os.getenv("RESET_TOKEN_EXPIRE_HOURS", "1"))
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -34,16 +45,31 @@ class UserResponse(BaseModel):
     id: str
     email: str
     name: str = None
+    is_verified: bool = False
     
     class Config:
         from_attributes = True
 
 
-class Token(BaseModel):
-    """JWT token response."""
+class TokenResponse(BaseModel):
+    """JWT token response with refresh token."""
+    access_token: str
+    refresh_token: str
+    token_type: str = "bearer"
+    expires_in: int = ACCESS_TOKEN_EXPIRE_MINUTES * 60  # seconds
+    user: UserResponse
+
+
+class RefreshRequest(BaseModel):
+    """Refresh token request."""
+    refresh_token: str
+
+
+class AccessTokenResponse(BaseModel):
+    """Access token only response."""
     access_token: str
     token_type: str = "bearer"
-    user: UserResponse
+    expires_in: int = ACCESS_TOKEN_EXPIRE_MINUTES * 60
 
 
 class LoginRequest(BaseModel):
@@ -52,12 +78,62 @@ class LoginRequest(BaseModel):
     password: str
 
 
+class ForgotPasswordRequest(BaseModel):
+    """Forgot password request."""
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    """Reset password request."""
+    token: str
+    new_password: str
+
+
+class VerifyEmailRequest(BaseModel):
+    """Verify email request."""
+    token: str
+
+
+class MessageResponse(BaseModel):
+    """Generic message response."""
+    message: str
+
+
+# Helper Functions
+def create_verification_token(user_id: str, db: Session) -> str:
+    """Create an email verification token."""
+    # Delete any existing tokens for this user
+    db.query(VerificationToken).filter(VerificationToken.user_id == user_id).delete()
+    
+    expires_at = datetime.utcnow() + timedelta(hours=VERIFICATION_TOKEN_EXPIRE_HOURS)
+    token = VerificationToken(user_id=user_id, expires_at=expires_at)
+    db.add(token)
+    db.commit()
+    db.refresh(token)
+    return token.token
+
+
+def create_password_reset_token(user_id: str, db: Session) -> str:
+    """Create a password reset token."""
+    # Delete any existing tokens for this user
+    db.query(PasswordResetToken).filter(PasswordResetToken.user_id == user_id).delete()
+    
+    expires_at = datetime.utcnow() + timedelta(hours=RESET_TOKEN_EXPIRE_HOURS)
+    token = PasswordResetToken(user_id=user_id, expires_at=expires_at)
+    db.add(token)
+    db.commit()
+    db.refresh(token)
+    return token.token
+
+
 # Endpoints
-@router.post("/register", response_model=Token)
-async def register(user_data: UserCreate, db: Session = Depends(get_db)):
-    """
-    Register a new user.
-    """
+@router.post("/register", response_model=TokenResponse)
+async def register(
+    user_data: UserCreate,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db)
+):
+    """Register a new user and send verification email."""
     # Check if user already exists
     existing_user = db.query(User).filter(User.email == user_data.email).first()
     if existing_user:
@@ -71,30 +147,37 @@ async def register(user_data: UserCreate, db: Session = Depends(get_db)):
     new_user = User(
         email=user_data.email,
         hashed_password=hashed_password,
-        name=user_data.name
+        name=user_data.name,
+        is_verified=False
     )
     
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
     
-    # Create access token
-    access_token = create_access_token(
-        data={"sub": new_user.id},
-        expires_delta=timedelta(hours=ACCESS_TOKEN_EXPIRE_HOURS)
+    # Create verification token and send email
+    verification_token = create_verification_token(new_user.id, db)
+    background_tasks.add_task(
+        email_service.send_verification_email,
+        new_user.email,
+        new_user.name,
+        verification_token
     )
     
-    return Token(
+    # Create tokens
+    access_token = create_access_token(data={"sub": new_user.id})
+    refresh_token, _ = create_refresh_token(new_user.id, db)
+    
+    return TokenResponse(
         access_token=access_token,
+        refresh_token=refresh_token,
         user=UserResponse.model_validate(new_user)
     )
 
 
-@router.post("/login", response_model=Token)
+@router.post("/login", response_model=TokenResponse)
 async def login(login_data: LoginRequest, db: Session = Depends(get_db)):
-    """
-    Login and get access token.
-    """
+    """Login and get access + refresh tokens."""
     # Find user
     user = db.query(User).filter(User.email == login_data.email).first()
     
@@ -105,21 +188,165 @@ async def login(login_data: LoginRequest, db: Session = Depends(get_db)):
             headers={"WWW-Authenticate": "Bearer"},
         )
     
-    # Create access token
-    access_token = create_access_token(
-        data={"sub": user.id},
-        expires_delta=timedelta(hours=ACCESS_TOKEN_EXPIRE_HOURS)
-    )
+    # Create tokens
+    access_token = create_access_token(data={"sub": user.id})
+    refresh_token, _ = create_refresh_token(user.id, db)
     
-    return Token(
+    return TokenResponse(
         access_token=access_token,
+        refresh_token=refresh_token,
         user=UserResponse.model_validate(user)
     )
 
 
+@router.post("/refresh", response_model=AccessTokenResponse)
+async def refresh_access_token(request: RefreshRequest, db: Session = Depends(get_db)):
+    """Get a new access token using refresh token."""
+    user = verify_refresh_token(request.refresh_token, db)
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired refresh token"
+        )
+    
+    # Create new access token
+    access_token = create_access_token(data={"sub": user.id})
+    
+    return AccessTokenResponse(access_token=access_token)
+
+
+@router.post("/logout", response_model=MessageResponse)
+async def logout(
+    request: RefreshRequest,
+    db: Session = Depends(get_db)
+):
+    """Logout and revoke refresh token."""
+    revoke_refresh_token(request.refresh_token, db)
+    return MessageResponse(message="Logged out successfully")
+
+
+@router.post("/logout-all", response_model=MessageResponse)
+async def logout_all(
+    current_user: User = Depends(get_current_user_required),
+    db: Session = Depends(get_db)
+):
+    """Logout from all devices."""
+    count = revoke_all_user_tokens(current_user.id, db)
+    return MessageResponse(message=f"Logged out from {count} device(s)")
+
+
+@router.post("/verify-email", response_model=MessageResponse)
+async def verify_email(request: VerifyEmailRequest, db: Session = Depends(get_db)):
+    """Verify email with token."""
+    token = db.query(VerificationToken).filter(VerificationToken.token == request.token).first()
+    
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid verification token"
+        )
+    
+    if token.expires_at < datetime.utcnow():
+        db.delete(token)
+        db.commit()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Verification token has expired. Please request a new one."
+        )
+    
+    # Mark user as verified
+    user = db.query(User).filter(User.id == token.user_id).first()
+    if user:
+        user.is_verified = True
+        db.delete(token)
+        db.commit()
+    
+    return MessageResponse(message="Email verified successfully!")
+
+
+@router.post("/resend-verification", response_model=MessageResponse)
+async def resend_verification(
+    background_tasks: BackgroundTasks,
+    current_user: User = Depends(get_current_user_required),
+    db: Session = Depends(get_db)
+):
+    """Resend verification email."""
+    if current_user.is_verified:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email is already verified"
+        )
+    
+    # Create new verification token and send email
+    verification_token = create_verification_token(current_user.id, db)
+    background_tasks.add_task(
+        email_service.send_verification_email,
+        current_user.email,
+        current_user.name,
+        verification_token
+    )
+    
+    return MessageResponse(message="Verification email sent!")
+
+
+@router.post("/forgot-password", response_model=MessageResponse)
+async def forgot_password(
+    request: ForgotPasswordRequest,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db)
+):
+    """Send password reset email."""
+    user = db.query(User).filter(User.email == request.email).first()
+    
+    # Always return success to prevent email enumeration
+    if not user:
+        return MessageResponse(message="If an account exists with this email, you will receive a password reset link.")
+    
+    # Create reset token and send email
+    reset_token = create_password_reset_token(user.id, db)
+    background_tasks.add_task(
+        email_service.send_password_reset_email,
+        user.email,
+        user.name,
+        reset_token
+    )
+    
+    return MessageResponse(message="If an account exists with this email, you will receive a password reset link.")
+
+
+@router.post("/reset-password", response_model=MessageResponse)
+async def reset_password(request: ResetPasswordRequest, db: Session = Depends(get_db)):
+    """Reset password with token."""
+    token = db.query(PasswordResetToken).filter(PasswordResetToken.token == request.token).first()
+    
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid reset token"
+        )
+    
+    if token.expires_at < datetime.utcnow():
+        db.delete(token)
+        db.commit()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Reset token has expired. Please request a new one."
+        )
+    
+    # Update password
+    user = db.query(User).filter(User.id == token.user_id).first()
+    if user:
+        user.hashed_password = get_password_hash(request.new_password)
+        db.delete(token)
+        # Revoke all refresh tokens for security
+        revoke_all_user_tokens(user.id, db)
+        db.commit()
+    
+    return MessageResponse(message="Password reset successfully! Please login with your new password.")
+
+
 @router.get("/me", response_model=UserResponse)
 async def get_me(current_user: User = Depends(get_current_user_required)):
-    """
-    Get current user info.
-    """
+    """Get current user info."""
     return UserResponse.model_validate(current_user)
