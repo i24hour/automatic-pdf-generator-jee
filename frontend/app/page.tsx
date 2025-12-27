@@ -424,7 +424,7 @@ export default function Home() {
           ) : (
             <button
               onClick={handleGenerate}
-              disabled={!topic.trim() || (rateLimit && rateLimit.remaining === 0)}
+              disabled={!topic.trim() || !!(rateLimit && rateLimit.remaining === 0)}
               className="btn-primary w-full"
             >
               <Sparkles className="w-5 h-5" />
