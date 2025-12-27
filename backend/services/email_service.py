@@ -64,12 +64,15 @@ class EmailService:
         <html>
         <head>
             <style>
-                body {{ font-family: 'Segoe UI', Arial, sans-serif; background: #0f0f23; color: #e0e0e0; padding: 40px; }}
+                body {{ font-family: 'Segoe UI', Arial, sans-serif; background: #0f0f23; padding: 40px; margin: 0; }}
                 .container {{ max-width: 500px; margin: 0 auto; background: #1a1a2e; border-radius: 16px; padding: 40px; }}
-                .header {{ text-align: center; margin-bottom: 30px; }}
-                .logo {{ font-size: 28px; font-weight: bold; background: linear-gradient(135deg, #6366f1, #22d3ee); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }}
-                .btn {{ display: inline-block; background: linear-gradient(135deg, #6366f1, #22d3ee); color: white; padding: 14px 32px; border-radius: 12px; text-decoration: none; font-weight: 600; margin: 20px 0; }}
-                .footer {{ color: #888; font-size: 12px; text-align: center; margin-top: 30px; }}
+                .header {{ text-align: center; margin-bottom: 30px; background: linear-gradient(135deg, #6366f1, #22d3ee); padding: 20px; border-radius: 12px; }}
+                .logo {{ font-size: 24px; font-weight: bold; color: white !important; }}
+                h2 {{ color: #ffffff !important; margin-top: 20px; }}
+                p {{ color: #e0e0e0 !important; line-height: 1.6; }}
+                .btn {{ display: inline-block; background: linear-gradient(135deg, #6366f1, #22d3ee); color: white !important; padding: 14px 32px; border-radius: 12px; text-decoration: none; font-weight: 600; margin: 20px 0; }}
+                .footer {{ color: #888888 !important; font-size: 12px; text-align: center; margin-top: 30px; }}
+                code {{ color: #22d3ee !important; background: #0f0f23; padding: 4px 8px; border-radius: 4px; }}
             </style>
         </head>
         <body>
@@ -77,15 +80,15 @@ class EmailService:
                 <div class="header">
                     <div class="logo">📚 Mentors Mantra</div>
                 </div>
-                <h2>Verify Your Email</h2>
-                <p>Hi {name or 'there'},</p>
-                <p>Thanks for signing up! Please verify your email address by clicking the button below:</p>
+                <h2 style="color: #ffffff;">Verify Your Email</h2>
+                <p style="color: #e0e0e0;">Hi {name or 'there'},</p>
+                <p style="color: #e0e0e0;">Thanks for signing up! Please verify your email address by clicking the button below:</p>
                 <p style="text-align: center;">
-                    <a href="{verification_url}" class="btn">Verify Email</a>
+                    <a href="{verification_url}" class="btn" style="color: white;">Verify Email</a>
                 </p>
-                <p>Or copy this link: <br><code style="color: #6366f1;">{verification_url}</code></p>
-                <p>This link expires in 24 hours.</p>
-                <div class="footer">
+                <p style="color: #e0e0e0;">Or copy this link: <br><code style="color: #22d3ee;">{verification_url}</code></p>
+                <p style="color: #e0e0e0;">This link expires in 24 hours.</p>
+                <div class="footer" style="color: #888888;">
                     If you didn't create an account, you can safely ignore this email.
                 </div>
             </div>
