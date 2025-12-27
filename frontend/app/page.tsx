@@ -264,22 +264,21 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen py-12 px-4">
+    <main className="min-h-screen py-12 px-4 bg-[#FAF9F6]">
       <div className="max-w-2xl mx-auto">
-        {/* User Header */}
         <div className="flex justify-between items-center mb-8">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-cyan-500 flex items-center justify-center text-white font-semibold">
+            <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-semibold">
               {user?.name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || "U"}
             </div>
             <div>
-              <p className="text-sm text-gray-400">Welcome back,</p>
-              <p className="font-medium">{user?.name || user?.email}</p>
+              <p className="text-sm text-gray-500">Welcome back,</p>
+              <p className="font-medium text-gray-900">{user?.name || user?.email}</p>
             </div>
           </div>
           <button
             onClick={handleLogout}
-            className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+            className="flex items-center gap-2 text-gray-500 hover:text-gray-700 transition-colors"
           >
             <LogOut className="w-4 h-4" />
             <span className="text-sm">Logout</span>
@@ -288,28 +287,28 @@ export default function Home() {
 
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-indigo-500 to-cyan-500 mb-6 float-animation pulse-glow">
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-indigo-600 mb-6">
             <BookOpen className="w-10 h-10 text-white" />
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            <span className="gradient-text">Mentors Mantra</span>
+          <h1 className="text-4xl md:text-5xl font-bold mb-4 text-gray-900">
+            Mentors Mantra
           </h1>
-          <p className="text-xl text-gray-400">AI-Powered Test Paper Generator</p>
+          <p className="text-xl text-gray-500">AI-Powered Test Paper Generator</p>
         </div>
 
         {/* Rate Limit Badge */}
         {rateLimit && (
           <div className="flex justify-center mb-6">
             <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm ${rateLimit.remaining > 0
-              ? "bg-green-500/20 text-green-400 border border-green-500/30"
-              : "bg-red-500/20 text-red-400 border border-red-500/30"
+              ? "bg-green-100 text-green-700 border border-green-200"
+              : "bg-red-100 text-red-700 border border-red-200"
               }`}>
               <Clock className="w-4 h-4" />
               <span>
                 {rateLimit.remaining}/{rateLimit.limit} generations remaining
               </span>
               {rateLimit.reset_hours > 0 && (
-                <span className="text-gray-400">
+                <span className="text-gray-500">
                   • Resets in {rateLimit.reset_hours.toFixed(1)}h
                 </span>
               )}
@@ -318,10 +317,10 @@ export default function Home() {
         )}
 
         {/* Main Card */}
-        <div className="glass-card p-8">
+        <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-lg">
           {/* Subject Selection */}
           <div className="mb-6">
-            <label className="form-label">Select Subject</label>
+            <label className="block mb-3 font-medium text-gray-700">Select Subject</label>
             <div className="grid grid-cols-3 gap-3">
               {subjects.map((sub) => {
                 const IconComponent = sub.icon;
@@ -332,8 +331,8 @@ export default function Home() {
                     onClick={() => setSubject(sub.name)}
                     disabled={isLoading}
                     className={`p-4 rounded-xl border transition-all duration-300 flex flex-col items-center gap-2 ${isSelected
-                      ? "border-indigo-500 bg-indigo-500/20 text-indigo-400"
-                      : "border-gray-700 hover:border-gray-600 text-gray-400 hover:text-gray-300"
+                      ? "border-indigo-500 bg-indigo-50 text-indigo-600"
+                      : "border-gray-200 hover:border-gray-300 text-gray-600 hover:text-gray-800 bg-white"
                       } ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
                   >
                     <IconComponent className="w-6 h-6" />
@@ -346,7 +345,7 @@ export default function Home() {
 
           {/* Level Selection */}
           <div className="mb-6">
-            <label className="form-label">Select Level</label>
+            <label className="block mb-3 font-medium text-gray-700">Select Level</label>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {levels.map((lvl) => {
                 const IconComponent = lvl.icon;
@@ -357,8 +356,8 @@ export default function Home() {
                     onClick={() => setLevel(lvl.name)}
                     disabled={isLoading}
                     className={`p-3 rounded-xl border transition-all duration-300 flex flex-col items-center gap-2 ${isSelected
-                      ? `${lvl.borderColor} ${lvl.bgColor} ${lvl.color}`
-                      : "border-gray-700 hover:border-gray-600 text-gray-400 hover:text-gray-300"
+                      ? "border-indigo-500 bg-indigo-50 text-indigo-600"
+                      : "border-gray-200 hover:border-gray-300 text-gray-600 hover:text-gray-800 bg-white"
                       } ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
                   >
                     <IconComponent className="w-5 h-5" />
@@ -371,23 +370,23 @@ export default function Home() {
 
           {/* Topic Input */}
           <div className="mb-6">
-            <label htmlFor="topic" className="form-label">Topic</label>
+            <label htmlFor="topic" className="block mb-3 font-medium text-gray-700">Topic</label>
             <input
               type="text"
               id="topic"
               value={topic}
               onChange={(e) => setTopic(e.target.value)}
               placeholder="e.g., Electrostatics, Organic Chemistry, Integration"
-              className="form-input"
+              className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
               disabled={isLoading}
             />
           </div>
 
           {/* Question Count */}
           <div className="mb-8">
-            <label htmlFor="questionCount" className="form-label">
+            <label htmlFor="questionCount" className="block mb-3 font-medium text-gray-700">
               Number of Questions:{" "}
-              <span className="text-indigo-400 font-semibold">{questionCount}</span>
+              <span className="text-indigo-600 font-semibold">{questionCount}</span>
             </label>
             <input
               type="range"
@@ -396,7 +395,7 @@ export default function Home() {
               max={50}
               value={questionCount}
               onChange={(e) => setQuestionCount(parseInt(e.target.value))}
-              className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
               disabled={isLoading}
             />
             <div className="flex justify-between text-xs text-gray-500 mt-1">
@@ -412,11 +411,11 @@ export default function Home() {
           {/* Generate/Cancel Buttons */}
           {isLoading ? (
             <div className="flex gap-3">
-              <button disabled className="btn-primary flex-1 opacity-75">
+              <button disabled className="flex-1 py-3.5 bg-indigo-600 text-white font-medium rounded-lg flex items-center justify-center gap-2 opacity-75">
                 <Loader2 className="w-5 h-5 animate-spin" />
                 Generating {level} Paper...
               </button>
-              <button onClick={handleCancel} className="btn-cancel px-6">
+              <button onClick={handleCancel} className="px-6 py-3.5 border border-red-300 text-red-600 font-medium rounded-lg hover:bg-red-50 flex items-center gap-2">
                 <X className="w-5 h-5" />
                 Cancel
               </button>
@@ -425,7 +424,7 @@ export default function Home() {
             <button
               onClick={handleGenerate}
               disabled={!topic.trim() || !!(rateLimit && rateLimit.remaining === 0)}
-              className="btn-primary w-full"
+              className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               <Sparkles className="w-5 h-5" />
               Generate {level} Test Paper
@@ -434,7 +433,7 @@ export default function Home() {
 
           {/* Rate limit exceeded message */}
           {rateLimit && rateLimit.remaining === 0 && !isLoading && (
-            <div className="error-message mt-4">
+            <div className="flex items-center gap-2 text-amber-700 text-sm bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mt-4">
               <Clock className="w-5 h-5 flex-shrink-0" />
               <span>Rate limit reached. Try again in {rateLimit.reset_hours.toFixed(1)} hours.</span>
             </div>
@@ -442,7 +441,7 @@ export default function Home() {
 
           {/* Error Message */}
           {error && (
-            <div className="error-message mt-6">
+            <div className="flex items-center gap-2 text-red-600 text-sm bg-red-50 border border-red-200 rounded-lg px-4 py-3 mt-6">
               <AlertCircle className="w-5 h-5 flex-shrink-0" />
               <span>{error}</span>
             </div>
@@ -451,16 +450,16 @@ export default function Home() {
           {/* Success Message */}
           {result?.success && (
             <div className="mt-6 space-y-4">
-              <div className="success-message">
-                <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
+              <div className="flex items-start gap-3 text-green-700 bg-green-50 border border-green-200 rounded-lg px-4 py-3">
+                <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="font-medium">{result.message}</p>
-                  <p className="text-sm opacity-80">
+                  <p className="text-sm text-green-600">
                     {result.total_mcq} MCQs + {result.total_numerical} Numerical Questions
                   </p>
                 </div>
               </div>
-              <button onClick={handleDownload} className="btn-secondary w-full">
+              <button onClick={handleDownload} className="w-full py-3.5 border-2 border-indigo-600 text-indigo-600 font-medium rounded-lg hover:bg-indigo-50 transition-colors flex items-center justify-center gap-2">
                 <Download className="w-5 h-5" />
                 Download PDF
               </button>
