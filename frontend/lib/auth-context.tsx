@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -8,6 +8,7 @@ interface User {
     id: string;
     email: string;
     name?: string;
+    is_verified: boolean;
 }
 
 interface AuthContextType {
@@ -15,29 +16,76 @@ interface AuthContextType {
     token: string | null;
     isLoading: boolean;
     isAuthenticated: boolean;
-    login: (email: string, password: string) => Promise<void>;
-    register: (email: string, password: string, name?: string) => Promise<void>;
+    login: (email: string, password: string) => Promise<{ user: User }>;
+    register: (email: string, password: string, name?: string) => Promise<{ user: User }>;
     logout: () => void;
+    refreshToken: () => Promise<boolean>;
+    resendVerification: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Token refresh interval (every 10 minutes)
+const REFRESH_INTERVAL = 10 * 60 * 1000;
+
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [token, setToken] = useState<string | null>(null);
+    const [refreshTokenValue, setRefreshTokenValue] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
-    // Load token from localStorage on mount
+    // Refresh access token
+    const refreshAccessToken = useCallback(async (): Promise<boolean> => {
+        const storedRefreshToken = localStorage.getItem("refresh_token");
+        if (!storedRefreshToken) return false;
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ refresh_token: storedRefreshToken }),
+            });
+
+            if (!response.ok) {
+                // Refresh token invalid, logout
+                logout();
+                return false;
+            }
+
+            const data = await response.json();
+            setToken(data.access_token);
+            localStorage.setItem("auth_token", data.access_token);
+            return true;
+        } catch {
+            logout();
+            return false;
+        }
+    }, []);
+
+    // Load tokens from localStorage on mount
     useEffect(() => {
         const storedToken = localStorage.getItem("auth_token");
         const storedUser = localStorage.getItem("auth_user");
+        const storedRefreshToken = localStorage.getItem("refresh_token");
 
         if (storedToken && storedUser) {
             setToken(storedToken);
             setUser(JSON.parse(storedUser));
+            setRefreshTokenValue(storedRefreshToken);
         }
         setIsLoading(false);
     }, []);
+
+    // Auto-refresh token periodically
+    useEffect(() => {
+        if (!refreshTokenValue) return;
+
+        const interval = setInterval(() => {
+            refreshAccessToken();
+        }, REFRESH_INTERVAL);
+
+        return () => clearInterval(interval);
+    }, [refreshTokenValue, refreshAccessToken]);
 
     const login = async (email: string, password: string) => {
         const response = await fetch(`${API_BASE_URL}/auth/login`, {
@@ -54,10 +102,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const data = await response.json();
 
         setToken(data.access_token);
+        setRefreshTokenValue(data.refresh_token);
         setUser(data.user);
 
         localStorage.setItem("auth_token", data.access_token);
+        localStorage.setItem("refresh_token", data.refresh_token);
         localStorage.setItem("auth_user", JSON.stringify(data.user));
+
+        return { user: data.user };
     };
 
     const register = async (email: string, password: string, name?: string) => {
@@ -75,17 +127,54 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const data = await response.json();
 
         setToken(data.access_token);
+        setRefreshTokenValue(data.refresh_token);
         setUser(data.user);
 
         localStorage.setItem("auth_token", data.access_token);
+        localStorage.setItem("refresh_token", data.refresh_token);
         localStorage.setItem("auth_user", JSON.stringify(data.user));
+
+        return { user: data.user };
     };
 
-    const logout = () => {
+    const logout = async () => {
+        // Revoke refresh token on server
+        const storedRefreshToken = localStorage.getItem("refresh_token");
+        if (storedRefreshToken) {
+            try {
+                await fetch(`${API_BASE_URL}/auth/logout`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ refresh_token: storedRefreshToken }),
+                });
+            } catch {
+                // Ignore errors during logout
+            }
+        }
+
         setToken(null);
+        setRefreshTokenValue(null);
         setUser(null);
         localStorage.removeItem("auth_token");
+        localStorage.removeItem("refresh_token");
         localStorage.removeItem("auth_user");
+    };
+
+    const resendVerification = async () => {
+        if (!token) throw new Error("Not authenticated");
+
+        const response = await fetch(`${API_BASE_URL}/auth/resend-verification`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+            },
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || "Failed to send verification email");
+        }
     };
 
     return (
@@ -98,6 +187,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 login,
                 register,
                 logout,
+                refreshToken: refreshAccessToken,
+                resendVerification,
             }}
         >
             {children}

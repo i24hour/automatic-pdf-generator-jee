@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { LogIn, Mail, Lock, Loader2, AlertCircle, BookOpen } from "lucide-react";
+import { LogIn, Mail, Lock, Loader2, AlertCircle, BookOpen, AlertTriangle } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 
 export default function LoginPage() {
@@ -11,6 +11,7 @@ export default function LoginPage() {
     const [password, setPassword] = useState("");
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [needsVerification, setNeedsVerification] = useState(false);
 
     const { login } = useAuth();
     const router = useRouter();
@@ -18,10 +19,17 @@ export default function LoginPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
+        setNeedsVerification(false);
         setIsLoading(true);
 
         try {
-            await login(email, password);
+            const result = await login(email, password);
+
+            // Check if user needs email verification
+            if (result && !result.user.is_verified) {
+                setNeedsVerification(true);
+            }
+
             router.push("/");
         } catch (err) {
             setError(err instanceof Error ? err.message : "Login failed");
@@ -66,9 +74,17 @@ export default function LoginPage() {
 
                         {/* Password */}
                         <div>
-                            <label htmlFor="password" className="form-label">
-                                Password
-                            </label>
+                            <div className="flex justify-between items-center">
+                                <label htmlFor="password" className="form-label">
+                                    Password
+                                </label>
+                                <Link
+                                    href="/forgot-password"
+                                    className="text-sm text-indigo-400 hover:text-indigo-300"
+                                >
+                                    Forgot password?
+                                </Link>
+                            </div>
                             <div className="relative">
                                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                                 <input
@@ -82,6 +98,17 @@ export default function LoginPage() {
                                 />
                             </div>
                         </div>
+
+                        {/* Verification Warning */}
+                        {needsVerification && (
+                            <div className="p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 flex items-start gap-3">
+                                <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                                <div>
+                                    <p className="font-medium">Email not verified</p>
+                                    <p className="text-sm opacity-80">Please check your email and verify your account to use all features.</p>
+                                </div>
+                            </div>
+                        )}
 
                         {/* Error */}
                         {error && (
