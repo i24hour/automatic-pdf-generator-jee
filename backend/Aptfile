@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# Install LaTeX for PDF generation
+
+apt-get update
+apt-get install -y --no-install-recommends \
+    texlive-latex-base \
+    texlive-fonts-recommended \
+    texlive-latex-extra \
+    texlive-pictures \
+    texlive-science
