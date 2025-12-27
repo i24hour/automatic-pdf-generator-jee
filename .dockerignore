@@ -1,0 +1,18 @@
+# Ignore these files when building Docker image
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.env
+.env.local
+.git
+.gitignore
+output/
+*.pdf
+*.aux
+*.log
+*.tex
+.DS_Store
+venv/
+.venv/
+*.db
