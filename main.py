@@ -5,7 +5,7 @@ Main application entry point with API endpoints.
 
 import os
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 from fastapi import FastAPI, HTTPException, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -101,7 +101,7 @@ def check_rate_limit(user: User, db: Session) -> tuple[bool, int, float]:
     Check if user has exceeded rate limit.
     Returns: (is_allowed, remaining_count, hours_until_reset)
     """
-    cutoff_time = datetime.utcnow() - timedelta(hours=RATE_LIMIT_HOURS)
+    cutoff_time = datetime.now(timezone.utc) - timedelta(hours=RATE_LIMIT_HOURS)
     
     # Count generations in the rate limit window
     recent_generations = db.query(PDFGeneration).filter(
@@ -116,7 +116,7 @@ def check_rate_limit(user: User, db: Session) -> tuple[bool, int, float]:
     if recent_generations and used_count >= RATE_LIMIT_COUNT:
         oldest = recent_generations[0]
         reset_time = oldest.created_at + timedelta(hours=RATE_LIMIT_HOURS)
-        hours_until_reset = (reset_time - datetime.utcnow()).total_seconds() / 3600
+        hours_until_reset = (reset_time - datetime.now(timezone.utc)).total_seconds() / 3600
         hours_until_reset = max(0, hours_until_reset)
     else:
         hours_until_reset = 0

@@ -3,7 +3,7 @@ Authentication router: register, login, refresh, verify, and password reset endp
 """
 
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, EmailStr
@@ -105,7 +105,7 @@ def create_verification_token(user_id: str, db: Session) -> str:
     # Delete any existing tokens for this user
     db.query(VerificationToken).filter(VerificationToken.user_id == user_id).delete()
     
-    expires_at = datetime.utcnow() + timedelta(hours=VERIFICATION_TOKEN_EXPIRE_HOURS)
+    expires_at = datetime.now(timezone.utc) + timedelta(hours=VERIFICATION_TOKEN_EXPIRE_HOURS)
     token = VerificationToken(user_id=user_id, expires_at=expires_at)
     db.add(token)
     db.commit()
@@ -118,7 +118,7 @@ def create_password_reset_token(user_id: str, db: Session) -> str:
     # Delete any existing tokens for this user
     db.query(PasswordResetToken).filter(PasswordResetToken.user_id == user_id).delete()
     
-    expires_at = datetime.utcnow() + timedelta(hours=RESET_TOKEN_EXPIRE_HOURS)
+    expires_at = datetime.now(timezone.utc) + timedelta(hours=RESET_TOKEN_EXPIRE_HOURS)
     token = PasswordResetToken(user_id=user_id, expires_at=expires_at)
     db.add(token)
     db.commit()
@@ -247,7 +247,7 @@ async def verify_email(request: VerifyEmailRequest, db: Session = Depends(get_db
             detail="Invalid verification token"
         )
     
-    if token.expires_at < datetime.utcnow():
+    if token.expires_at < datetime.now(timezone.utc):
         db.delete(token)
         db.commit()
         raise HTTPException(
@@ -326,7 +326,7 @@ async def reset_password(request: ResetPasswordRequest, db: Session = Depends(ge
             detail="Invalid reset token"
         )
     
-    if token.expires_at < datetime.utcnow():
+    if token.expires_at < datetime.now(timezone.utc):
         db.delete(token)
         db.commit()
         raise HTTPException(
