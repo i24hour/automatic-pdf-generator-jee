@@ -3,7 +3,7 @@ Authentication utilities: password hashing, JWT tokens, and refresh tokens.
 """
 
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 from jose import JWTError, jwt
 from passlib.context import CryptContext
@@ -45,9 +45,9 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     to_encode = data.copy()
     
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = datetime.now(timezone.utc) + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     
     to_encode.update({"exp": expire, "type": "access"})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
@@ -60,7 +60,7 @@ def create_refresh_token(user_id: str, db: Session) -> tuple[str, datetime]:
     Create a long-lived refresh token (7 days by default).
     Stores in database and returns the token string and expiry.
     """
-    expires_at = datetime.utcnow() + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+    expires_at = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
     
     refresh_token = RefreshToken(
         user_id=user_id,
@@ -84,7 +84,7 @@ def verify_refresh_token(token: str, db: Session) -> Optional[User]:
     if not refresh_token:
         return None
     
-    if refresh_token.expires_at < datetime.utcnow():
+    if refresh_token.expires_at < datetime.now(timezone.utc):
         # Token expired, delete it
         db.delete(refresh_token)
         db.commit()
