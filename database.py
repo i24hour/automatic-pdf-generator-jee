@@ -1,6 +1,6 @@
 """
 Database configuration and session management.
-Uses SQLite for simplicity (can be upgraded to PostgreSQL).
+Uses SQLite for local development, PostgreSQL for production.
 """
 
 from sqlalchemy import create_engine
@@ -8,8 +8,12 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import os
 
-# Database URL - SQLite for local development
+# Database URL - SQLite for local development, PostgreSQL for production
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./app.db")
+
+# Heroku uses postgres:// but SQLAlchemy 1.4+ requires postgresql://
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
 # Create engine
 # For SQLite, we need connect_args to allow multi-threading
@@ -19,7 +23,8 @@ if DATABASE_URL.startswith("sqlite"):
         connect_args={"check_same_thread": False}
     )
 else:
-    engine = create_engine(DATABASE_URL)
+    # PostgreSQL for production
+    engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 
 # Session factory
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
