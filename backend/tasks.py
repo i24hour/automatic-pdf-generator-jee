@@ -62,11 +62,21 @@ def generate_pdf_task(self, job_id: str, subject: str, topic: str, level: str, q
         job.progress = 20
         db.commit()
         
+        # Calculate split: 80% MCQ, 20% Numerical
+        mcq_count = int(question_count * 0.8)
+        numerical_count = question_count - mcq_count
+        if mcq_count < 1:
+            mcq_count = 1
+        if numerical_count < 1:
+            numerical_count = 1
+            mcq_count = question_count - 1
+        
         questions = llm_engine.generate_questions(
             subject=subject,
             topic=topic,
-            level=level,
-            count=question_count
+            mcq_count=mcq_count,
+            numerical_count=numerical_count,
+            level=level
         )
         
         if not questions or "error" in questions:
@@ -80,16 +90,12 @@ def generate_pdf_task(self, job_id: str, subject: str, topic: str, level: str, q
         db.commit()
         
         # Step 2: Generate PDF (40% of work)
-        pdf_result = pdf_engine.generate_pdf(
-            questions=questions,
-            subject=subject,
-            topic=topic,
-            level=level
-        )
+        filename = f"test_{subject}_{topic}".replace(" ", "_").lower()
+        pdf_path = pdf_engine.generate_pdf(questions, filename)
         
-        if not pdf_result or "error" in pdf_result:
+        if not pdf_path:
             job.status = "failed"
-            job.error_message = pdf_result.get("error", "Failed to generate PDF")
+            job.error_message = "Failed to generate PDF"
             job.completed_at = datetime.now(timezone.utc)
             db.commit()
             return {"error": job.error_message}
@@ -98,7 +104,6 @@ def generate_pdf_task(self, job_id: str, subject: str, topic: str, level: str, q
         db.commit()
         
         # Step 3: Encode PDF and save
-        pdf_path = pdf_result.get("pdf_path")
         if pdf_path and os.path.exists(pdf_path):
             with open(pdf_path, "rb") as f:
                 pdf_bytes = f.read()
