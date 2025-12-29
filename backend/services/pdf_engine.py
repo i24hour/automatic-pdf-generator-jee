@@ -15,8 +15,16 @@ class PDFEngine:
     """PDF generation engine using Jinja2 + pdflatex."""
     
     def __init__(self):
-        self.template_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "templates")
-        self.output_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "output")
+        # Get the backend directory (parent of services/)
+        services_dir = os.path.dirname(os.path.abspath(__file__))
+        backend_dir = os.path.dirname(services_dir)
+        
+        # Alternative: use /app in Docker
+        if os.path.exists("/app/templates"):
+            backend_dir = "/app"
+        
+        self.template_dir = os.path.join(backend_dir, "templates")
+        self.output_dir = os.path.join(backend_dir, "output")
         
         # Ensure output directory exists
         os.makedirs(self.output_dir, exist_ok=True)
