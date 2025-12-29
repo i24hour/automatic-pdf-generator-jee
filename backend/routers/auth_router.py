@@ -247,7 +247,12 @@ async def verify_email(request: VerifyEmailRequest, db: Session = Depends(get_db
             detail="Invalid verification token"
         )
     
-    if token.expires_at < datetime.now(timezone.utc):
+    # Make expires_at timezone-aware if it's naive
+    expires_at = token.expires_at
+    if expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+    
+    if expires_at < datetime.now(timezone.utc):
         db.delete(token)
         db.commit()
         raise HTTPException(
@@ -326,7 +331,12 @@ async def reset_password(request: ResetPasswordRequest, db: Session = Depends(ge
             detail="Invalid reset token"
         )
     
-    if token.expires_at < datetime.now(timezone.utc):
+    # Make expires_at timezone-aware if it's naive
+    expires_at = token.expires_at
+    if expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+    
+    if expires_at < datetime.now(timezone.utc):
         db.delete(token)
         db.commit()
         raise HTTPException(

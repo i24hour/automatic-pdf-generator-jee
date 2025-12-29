@@ -84,7 +84,12 @@ def verify_refresh_token(token: str, db: Session) -> Optional[User]:
     if not refresh_token:
         return None
     
-    if refresh_token.expires_at < datetime.now(timezone.utc):
+    # Make expires_at timezone-aware if it's naive
+    expires_at = refresh_token.expires_at
+    if expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+    
+    if expires_at < datetime.now(timezone.utc):
         # Token expired, delete it
         db.delete(refresh_token)
         db.commit()
