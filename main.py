@@ -5,6 +5,7 @@ Main application entry point with API endpoints.
 
 import os
 import uuid
+import base64
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 from fastapi import FastAPI, HTTPException, Depends, status
@@ -17,7 +18,7 @@ from dotenv import load_dotenv
 from services.llm_engine import llm_engine
 from services.pdf_engine import pdf_engine
 from database import get_db, init_db
-from models import User, PDFGeneration
+from models import User, PDFGeneration, JobStatus
 from auth import get_current_user_required, get_current_user
 from routers.auth_router import router as auth_router
 
@@ -94,6 +95,24 @@ class ErrorResponse(BaseModel):
     """Response model for errors."""
     success: bool = False
     error: str
+
+
+class JobSubmitResponse(BaseModel):
+    """Response when a job is submitted."""
+    success: bool
+    job_id: str
+    message: str
+    rate_limit_remaining: int = 0
+
+
+class JobStatusResponse(BaseModel):
+    """Response for job status check."""
+    job_id: str
+    status: str  # pending, processing, completed, failed
+    progress: int = 0
+    error_message: Optional[str] = None
+    pdf_ready: bool = False
+
 
 
 def check_rate_limit(user: User, db: Session) -> tuple[bool, int, float]:
@@ -279,6 +298,133 @@ async def download_pdf(filename: str):
         filename=filename,
         media_type="application/pdf"
     )
+
+
+# ============== Background Job Endpoints ==============
+
+@app.post("/api/job/submit", response_model=JobSubmitResponse)
+async def submit_job(
+    request: GenerateRequest,
+    current_user: User = Depends(get_current_user_required),
+    db: Session = Depends(get_db)
+):
+    """
+    Submit a PDF generation job (async).
+    Returns immediately with a job ID to poll for status.
+    """
+    from tasks import generate_pdf_task
+    
+    # Check rate limit
+    is_allowed, remaining, reset_hours = check_rate_limit(current_user, db)
+    
+    if not is_allowed:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=f"Rate limit exceeded. Try again in {reset_hours:.1f} hours."
+        )
+    
+    # Create job record
+    job = JobStatus(
+        user_id=current_user.id,
+        subject=request.subject,
+        topic=request.topic,
+        level=request.level,
+        question_count=request.total_questions,
+        status="pending"
+    )
+    db.add(job)
+    db.commit()
+    db.refresh(job)
+    
+    # Record generation for rate limiting
+    generation = PDFGeneration(
+        user_id=current_user.id,
+        subject=request.subject,
+        topic=request.topic,
+        level=request.level,
+        question_count=request.total_questions
+    )
+    db.add(generation)
+    db.commit()
+    
+    # Queue the background task
+    generate_pdf_task.delay(
+        job_id=job.id,
+        subject=request.subject,
+        topic=request.topic,
+        level=request.level,
+        question_count=request.total_questions
+    )
+    
+    # Get updated rate limit
+    _, new_remaining, _ = check_rate_limit(current_user, db)
+    
+    return JobSubmitResponse(
+        success=True,
+        job_id=job.id,
+        message="Job submitted. Poll /api/job/{job_id}/status for progress.",
+        rate_limit_remaining=new_remaining
+    )
+
+
+@app.get("/api/job/{job_id}/status", response_model=JobStatusResponse)
+async def get_job_status(
+    job_id: str,
+    current_user: User = Depends(get_current_user_required),
+    db: Session = Depends(get_db)
+):
+    """Check the status of a PDF generation job."""
+    job = db.query(JobStatus).filter(
+        JobStatus.id == job_id,
+        JobStatus.user_id == current_user.id
+    ).first()
+    
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    
+    return JobStatusResponse(
+        job_id=job.id,
+        status=job.status,
+        progress=job.progress,
+        error_message=job.error_message,
+        pdf_ready=job.status == "completed" and job.pdf_data is not None
+    )
+
+
+@app.get("/api/job/{job_id}/download")
+async def download_job_pdf(
+    job_id: str,
+    current_user: User = Depends(get_current_user_required),
+    db: Session = Depends(get_db)
+):
+    """Download the PDF for a completed job."""
+    from fastapi.responses import Response
+    
+    job = db.query(JobStatus).filter(
+        JobStatus.id == job_id,
+        JobStatus.user_id == current_user.id
+    ).first()
+    
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    
+    if job.status != "completed":
+        raise HTTPException(status_code=400, detail="Job not completed yet")
+    
+    if not job.pdf_data:
+        raise HTTPException(status_code=404, detail="PDF data not found")
+    
+    # Decode base64 PDF
+    pdf_bytes = base64.b64decode(job.pdf_data)
+    
+    filename = job.pdf_filename or f"test_{job.subject}_{job.topic}.pdf"
+    
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
 
 
 @app.get("/api/models")
