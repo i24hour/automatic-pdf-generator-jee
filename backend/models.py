@@ -100,3 +100,25 @@ class PDFGeneration(Base):
     
     def __repr__(self):
         return f"<PDFGeneration {self.topic} by {self.user_id}>"
+
+
+class JobStatus(Base):
+    """Track background job status for PDF generation."""
+    __tablename__ = "job_statuses"
+    
+    id = Column(String, primary_key=True, default=generate_uuid)
+    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+    status = Column(String, default="pending")  # pending, processing, completed, failed
+    subject = Column(String, nullable=False)
+    topic = Column(String, nullable=False)
+    level = Column(String, nullable=False)
+    question_count = Column(Integer, nullable=False)
+    pdf_filename = Column(String, nullable=True)
+    pdf_data = Column(Text, nullable=True)  # Base64 encoded PDF for temporary storage
+    error_message = Column(Text, nullable=True)
+    progress = Column(Integer, default=0)  # 0-100 percent
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    completed_at = Column(DateTime(timezone=True), nullable=True)
+    
+    def __repr__(self):
+        return f"<JobStatus {self.id[:8]} - {self.status}>"

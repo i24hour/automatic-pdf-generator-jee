@@ -44,6 +44,21 @@ interface RateLimitInfo {
   used: number;
 }
 
+interface JobSubmitResponse {
+  success: boolean;
+  job_id: string;
+  message: string;
+  rate_limit_remaining: number;
+}
+
+interface JobStatusResponse {
+  job_id: string;
+  status: string;
+  progress: number;
+  error_message?: string;
+  pdf_ready: boolean;
+}
+
 export default function Home() {
   const { user, token, isLoading: authLoading, isAuthenticated, logout } = useAuth();
   const router = useRouter();
@@ -59,7 +74,13 @@ export default function Home() {
   const [resendLoading, setResendLoading] = useState(false);
   const [resendMessage, setResendMessage] = useState<string | null>(null);
 
+  // Job-based state
+  const [jobId, setJobId] = useState<string | null>(null);
+  const [jobStatus, setJobStatus] = useState<string>("idle");
+  const [jobProgress, setJobProgress] = useState(0);
+
   const abortControllerRef = useRef<AbortController | null>(null);
+  const pollingRef = useRef<NodeJS.Timeout | null>(null);
 
   const subjects = [
     { name: "Physics", icon: Atom },
@@ -104,19 +125,66 @@ export default function Home() {
     }
   };
 
+  const pollJobStatus = async (id: string) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/job/${id}/status`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to check job status");
+      }
+
+      const data: JobStatusResponse = await response.json();
+      setJobStatus(data.status);
+      setJobProgress(data.progress);
+
+      if (data.status === "completed" && data.pdf_ready) {
+        // Job completed, stop polling
+        if (pollingRef.current) {
+          clearInterval(pollingRef.current);
+          pollingRef.current = null;
+        }
+        setIsLoading(false);
+        setResult({
+          success: true,
+          message: "Test paper generated successfully!",
+          pdf_filename: id, // Use job_id for download
+          total_mcq: Math.round(questionCount * 0.8),
+          total_numerical: questionCount - Math.round(questionCount * 0.8),
+          rate_limit_remaining: rateLimit?.remaining || 0,
+          rate_limit_reset_hours: rateLimit?.reset_hours || 0,
+        });
+      } else if (data.status === "failed") {
+        // Job failed, stop polling
+        if (pollingRef.current) {
+          clearInterval(pollingRef.current);
+          pollingRef.current = null;
+        }
+        setIsLoading(false);
+        setError(data.error_message || "PDF generation failed");
+      }
+    } catch (err) {
+      console.error("Polling error:", err);
+    }
+  };
+
   const handleGenerate = async () => {
     if (!topic.trim()) {
       setError("Please enter a topic");
       return;
     }
 
-    abortControllerRef.current = new AbortController();
     setIsLoading(true);
     setError(null);
     setResult(null);
+    setJobId(null);
+    setJobStatus("pending");
+    setJobProgress(0);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/generate`, {
+      // Submit job
+      const response = await fetch(`${API_BASE_URL}/api/job/submit`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -128,45 +196,50 @@ export default function Home() {
           total_questions: questionCount,
           level,
         }),
-        signal: abortControllerRef.current.signal,
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.detail || "Failed to generate test paper");
+        throw new Error(errorData.detail || "Failed to submit job");
       }
 
-      const data: GenerateResponse = await response.json();
-      setResult(data);
+      const data: JobSubmitResponse = await response.json();
+      setJobId(data.job_id);
 
-      // Update rate limit from response
+      // Update rate limit
       setRateLimit((prev) => prev ? {
         ...prev,
         remaining: data.rate_limit_remaining,
-        reset_hours: data.rate_limit_reset_hours,
         used: prev.limit - data.rate_limit_remaining,
       } : null);
+
+      // Start polling for status
+      pollingRef.current = setInterval(() => {
+        pollJobStatus(data.job_id);
+      }, 2000); // Poll every 2 seconds
+
     } catch (err) {
-      if (err instanceof Error && err.name === "AbortError") {
-        setError("Generation cancelled");
-      } else {
-        setError(err instanceof Error ? err.message : "Something went wrong");
-      }
-    } finally {
       setIsLoading(false);
-      abortControllerRef.current = null;
+      setError(err instanceof Error ? err.message : "Something went wrong");
     }
   };
 
   const handleCancel = () => {
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-      abortControllerRef.current = null;
+    if (pollingRef.current) {
+      clearInterval(pollingRef.current);
+      pollingRef.current = null;
     }
+    setIsLoading(false);
+    setJobStatus("idle");
+    setError("Generation cancelled");
   };
 
   const handleDownload = () => {
-    if (result?.pdf_filename) {
+    if (jobId) {
+      // Download from job endpoint
+      window.open(`${API_BASE_URL}/api/job/${jobId}/download`, "_blank");
+    } else if (result?.pdf_filename) {
+      // Legacy download
       window.open(`${API_BASE_URL}/api/download/${result.pdf_filename}`, "_blank");
     }
   };
@@ -410,15 +483,29 @@ export default function Home() {
 
           {/* Generate/Cancel Buttons */}
           {isLoading ? (
-            <div className="flex gap-3">
-              <button disabled className="flex-1 py-3.5 bg-indigo-600 text-white font-medium rounded-lg flex items-center justify-center gap-2 opacity-75">
-                <Loader2 className="w-5 h-5 animate-spin" />
-                Generating {level} Paper...
-              </button>
-              <button onClick={handleCancel} className="px-6 py-3.5 border border-red-300 text-red-600 font-medium rounded-lg hover:bg-red-50 flex items-center gap-2">
-                <X className="w-5 h-5" />
-                Cancel
-              </button>
+            <div className="space-y-3">
+              <div className="flex gap-3">
+                <button disabled className="flex-1 py-3.5 bg-indigo-600 text-white font-medium rounded-lg flex items-center justify-center gap-2 opacity-75">
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  {jobStatus === "pending" ? "Queued..." : jobStatus === "processing" ? `Generating... ${jobProgress}%` : "Generating..."}
+                </button>
+                <button onClick={handleCancel} className="px-6 py-3.5 border border-red-300 text-red-600 font-medium rounded-lg hover:bg-red-50 flex items-center gap-2">
+                  <X className="w-5 h-5" />
+                  Cancel
+                </button>
+              </div>
+              {/* Progress bar */}
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div
+                  className="bg-indigo-600 h-2 rounded-full transition-all duration-500"
+                  style={{ width: `${jobProgress}%` }}
+                />
+              </div>
+              <p className="text-xs text-gray-500 text-center">
+                {jobStatus === "pending" ? "Waiting for worker..." :
+                  jobProgress < 60 ? "AI is generating questions..." :
+                    "Compiling PDF with LaTeX..."}
+              </p>
             </div>
           ) : (
             <button
