@@ -4,11 +4,23 @@ PDF generation task that runs asynchronously.
 """
 
 import os
+import sys
 import base64
 from datetime import datetime, timezone
+
+# Ensure the app directory is in Python path
+APP_DIR = os.path.dirname(os.path.abspath(__file__))
+if APP_DIR not in sys.path:
+    sys.path.insert(0, APP_DIR)
+
 from celery_app import celery_app
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+
+# Now import models after path is set
+from models import JobStatus
+from services.llm_engine import llm_engine
+from services.pdf_engine import pdf_engine
 
 # Database setup for worker
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./app.db")
@@ -34,10 +46,6 @@ def generate_pdf_task(self, job_id: str, subject: str, topic: str, level: str, q
     Background task to generate PDF.
     Updates JobStatus in database as it progresses.
     """
-    from models import JobStatus
-    from services.llm_engine import llm_engine
-    from services.pdf_engine import pdf_engine
-    
     db = get_db_session()
     
     try:
