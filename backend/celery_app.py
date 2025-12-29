@@ -4,8 +4,14 @@ Uses Redis as message broker and result backend.
 """
 
 import os
+import sys
 from celery import Celery
 from dotenv import load_dotenv
+
+# Ensure the app directory is in Python path
+APP_DIR = os.path.dirname(os.path.abspath(__file__))
+if APP_DIR not in sys.path:
+    sys.path.insert(0, APP_DIR)
 
 load_dotenv()
 
