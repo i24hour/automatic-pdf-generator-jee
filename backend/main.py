@@ -369,6 +369,30 @@ async def apply_promo_code(
     )
 
 
+@app.post("/api/admin/seed-promo")
+async def seed_promo_code(
+    admin_key: str,
+    db: Session = Depends(get_db)
+):
+    """Admin endpoint to seed the default promo code."""
+    if admin_key != os.getenv("JWT_SECRET_KEY", ""):
+        raise HTTPException(status_code=403, detail="Invalid admin key")
+    
+    existing = db.query(PromoCode).filter(PromoCode.code == "MENTORSMANTRA10").first()
+    if existing:
+        return {"message": "Promo code already exists", "code": existing.code, "uses": f"{existing.current_uses}/{existing.max_uses}"}
+    
+    promo = PromoCode(
+        code="MENTORSMANTRA10",
+        bonus_limit=10,
+        max_uses=2,
+        current_uses=0,
+        is_active=True
+    )
+    db.add(promo)
+    db.commit()
+    
+    return {"message": "Promo code created", "code": "MENTORSMANTRA10", "bonus": 10, "max_uses": 2}
 
 
 @app.get("/api/models")
