@@ -68,12 +68,6 @@ npm install
 npm run dev
 ```
 
-### 3. Access the Application
-
-- Frontend: http://localhost:3000
-- Backend API: http://localhost:8000
-- API Docs: http://localhost:8000/docs
-
 ## Configuration
 
 ### Switching LLM Providers
@@ -82,7 +76,7 @@ Edit `backend/.env`:
 
 ```env
 # Use Gemini
-ACTIVE_MODEL="gemini/gemini-1.5-flash"
+ACTIVE_MODEL="gemini/gemini-2.5-flash"
 GEMINI_API_KEY="your-key"
 
 # Or use OpenAI
@@ -119,7 +113,7 @@ docker run -p 8000:8000 --env-file .env mentors-mantra-backend
 ### Generate Test Paper
 
 ```bash
-curl -X POST http://localhost:8000/api/generate \
+curl -X POST http://yourdomain/api/generate \
   -H "Content-Type: application/json" \
   -d '{
     "subject": "Physics",
