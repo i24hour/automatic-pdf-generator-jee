@@ -18,7 +18,7 @@ from dotenv import load_dotenv
 from services.llm_engine import llm_engine
 from services.pdf_engine import pdf_engine
 from database import get_db, init_db
-from models import User, PDFGeneration
+from models import User, PDFGeneration, PromoCode, PromoCodeUsage
 from auth import get_current_user_required, get_current_user
 from routers.auth_router import router as auth_router
 
@@ -97,6 +97,19 @@ class ErrorResponse(BaseModel):
     error: str
 
 
+class ApplyPromoRequest(BaseModel):
+    """Request model for applying promo code."""
+    code: str = Field(..., description="Promo code to apply")
+
+
+class ApplyPromoResponse(BaseModel):
+    """Response model for promo code application."""
+    success: bool
+    message: str
+    new_limit: int = 0
+    bonus_added: int = 0
+
+
 
 
 
@@ -106,6 +119,9 @@ def check_rate_limit(user: User, db: Session) -> tuple[bool, int, float]:
     Check if user has exceeded rate limit.
     Returns: (is_allowed, remaining_count, hours_until_reset)
     """
+    # User's total limit = base limit + bonus from promo codes
+    user_total_limit = RATE_LIMIT_COUNT + (user.bonus_limit or 0)
+    
     cutoff_time = datetime.now(timezone.utc) - timedelta(hours=RATE_LIMIT_HOURS)
     
     # Count generations in the rate limit window
@@ -115,10 +131,10 @@ def check_rate_limit(user: User, db: Session) -> tuple[bool, int, float]:
     ).order_by(PDFGeneration.created_at.asc()).all()
     
     used_count = len(recent_generations)
-    remaining = max(0, RATE_LIMIT_COUNT - used_count)
+    remaining = max(0, user_total_limit - used_count)
     
     # Calculate reset time (when the oldest generation expires)
-    if recent_generations and used_count >= RATE_LIMIT_COUNT:
+    if recent_generations and used_count >= user_total_limit:
         oldest = recent_generations[0]
         reset_time = oldest.created_at + timedelta(hours=RATE_LIMIT_HOURS)
         hours_until_reset = (reset_time - datetime.now(timezone.utc)).total_seconds() / 3600
@@ -126,8 +142,8 @@ def check_rate_limit(user: User, db: Session) -> tuple[bool, int, float]:
     else:
         hours_until_reset = 0
     
-    is_allowed = used_count < RATE_LIMIT_COUNT
-    return is_allowed, remaining, hours_until_reset
+    is_allowed = used_count < user_total_limit
+    return is_allowed, remaining, hours_until_reset, user_total_limit
 
 
 def record_generation(user: User, request: GenerateRequest, pdf_filename: str, db: Session):
@@ -174,13 +190,13 @@ async def get_rate_limit(
     db: Session = Depends(get_db)
 ):
     """Get current rate limit status."""
-    is_allowed, remaining, reset_hours = check_rate_limit(current_user, db)
+    is_allowed, remaining, reset_hours, user_limit = check_rate_limit(current_user, db)
     
     return RateLimitInfo(
-        limit=RATE_LIMIT_COUNT,
+        limit=user_limit,
         remaining=remaining,
         reset_hours=round(reset_hours, 2),
-        used=RATE_LIMIT_COUNT - remaining
+        used=user_limit - remaining
     )
 
 
@@ -196,12 +212,12 @@ async def generate_test(
     Requires authentication. Limited to 3 PDFs per 6 hours.
     """
     # Check rate limit
-    is_allowed, remaining, reset_hours = check_rate_limit(current_user, db)
+    is_allowed, remaining, reset_hours, user_limit = check_rate_limit(current_user, db)
     
     if not is_allowed:
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail=f"Rate limit exceeded. You can generate {RATE_LIMIT_COUNT} PDFs every {RATE_LIMIT_HOURS} hours. Try again in {reset_hours:.1f} hours."
+            detail=f"Rate limit exceeded. You can generate {user_limit} PDFs every {RATE_LIMIT_HOURS} hours. Try again in {reset_hours:.1f} hours."
         )
     
     try:
@@ -248,7 +264,7 @@ async def generate_test(
         record_generation(current_user, request, os.path.basename(pdf_path), db)
         
         # Get updated rate limit info
-        _, new_remaining, new_reset_hours = check_rate_limit(current_user, db)
+        _, new_remaining, new_reset_hours, _ = check_rate_limit(current_user, db)
         
         return GenerateResponse(
             success=True,
@@ -286,6 +302,71 @@ async def download_pdf(filename: str):
     )
 
 
+@app.post("/api/apply-promo", response_model=ApplyPromoResponse)
+async def apply_promo_code(
+    request: ApplyPromoRequest,
+    current_user: User = Depends(get_current_user_required),
+    db: Session = Depends(get_db)
+):
+    """
+    Apply a promo code to get bonus generations.
+    """
+    # Find the promo code
+    promo = db.query(PromoCode).filter(
+        PromoCode.code == request.code,
+        PromoCode.is_active == True
+    ).first()
+    
+    if not promo:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid promo code"
+        )
+    
+    # Check if max uses reached
+    if promo.current_uses >= promo.max_uses:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This promo code has expired (max uses reached)"
+        )
+    
+    # Check if user already used this promo code
+    existing_usage = db.query(PromoCodeUsage).filter(
+        PromoCodeUsage.user_id == current_user.id,
+        PromoCodeUsage.promo_code_id == promo.id
+    ).first()
+    
+    if existing_usage:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="You have already used this promo code"
+        )
+    
+    # Apply the promo code
+    # 1. Add bonus to user
+    current_user.bonus_limit = (current_user.bonus_limit or 0) + promo.bonus_limit
+    
+    # 2. Record usage
+    usage = PromoCodeUsage(
+        user_id=current_user.id,
+        promo_code_id=promo.id
+    )
+    db.add(usage)
+    
+    # 3. Increment promo code usage count
+    promo.current_uses += 1
+    
+    db.commit()
+    
+    # Calculate new total limit
+    new_total_limit = RATE_LIMIT_COUNT + current_user.bonus_limit
+    
+    return ApplyPromoResponse(
+        success=True,
+        message=f"Promo code applied! You now have {new_total_limit} generations.",
+        new_limit=new_total_limit,
+        bonus_added=promo.bonus_limit
+    )
 
 
 

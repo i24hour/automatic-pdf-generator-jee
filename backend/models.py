@@ -27,11 +27,13 @@ class User(Base):
     hashed_password = Column(String, nullable=False)
     name = Column(String, nullable=True)
     is_verified = Column(Boolean, default=False)
+    bonus_limit = Column(Integer, default=0)  # Extra limit from promo codes
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     
     # Relationships
     pdf_generations = relationship("PDFGeneration", back_populates="user")
     refresh_tokens = relationship("RefreshToken", back_populates="user", cascade="all, delete-orphan")
+    promo_usages = relationship("PromoCodeUsage", back_populates="user")
     
     def __repr__(self):
         return f"<User {self.email}>"
@@ -102,3 +104,37 @@ class PDFGeneration(Base):
         return f"<PDFGeneration {self.topic} by {self.user_id}>"
 
 
+class PromoCode(Base):
+    """Promo codes for bonus generations."""
+    __tablename__ = "promo_codes"
+    
+    id = Column(String, primary_key=True, default=generate_uuid)
+    code = Column(String, unique=True, index=True, nullable=False)
+    bonus_limit = Column(Integer, nullable=False, default=10)  # Extra generations
+    max_uses = Column(Integer, nullable=False, default=2)  # Max users who can use
+    current_uses = Column(Integer, default=0)  # How many times used
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    usages = relationship("PromoCodeUsage", back_populates="promo_code")
+    
+    def __repr__(self):
+        return f"<PromoCode {self.code}>"
+
+
+class PromoCodeUsage(Base):
+    """Track which users have used which promo codes."""
+    __tablename__ = "promo_code_usages"
+    
+    id = Column(String, primary_key=True, default=generate_uuid)
+    user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    promo_code_id = Column(String, ForeignKey("promo_codes.id", ondelete="CASCADE"), nullable=False)
+    applied_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    user = relationship("User", back_populates="promo_usages")
+    promo_code = relationship("PromoCode", back_populates="usages")
+    
+    def __repr__(self):
+        return f"<PromoCodeUsage user={self.user_id} code={self.promo_code_id}>"
