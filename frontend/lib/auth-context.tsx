@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef } from "react";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -21,6 +21,7 @@ interface AuthContextType {
     logout: () => void;
     refreshToken: () => Promise<boolean>;
     resendVerification: () => Promise<void>;
+    authFetch: (url: string, options?: RequestInit) => Promise<Response>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -34,33 +35,91 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [refreshTokenValue, setRefreshTokenValue] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
+    // Track if refresh is in progress to avoid multiple simultaneous refreshes
+    const isRefreshing = useRef(false);
+    const refreshPromise = useRef<Promise<boolean> | null>(null);
+
     // Refresh access token
     const refreshAccessToken = useCallback(async (): Promise<boolean> => {
+        // If already refreshing, wait for that to complete
+        if (isRefreshing.current && refreshPromise.current) {
+            return refreshPromise.current;
+        }
+
         const storedRefreshToken = localStorage.getItem("refresh_token");
         if (!storedRefreshToken) return false;
 
-        try {
-            const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ refresh_token: storedRefreshToken }),
-            });
+        isRefreshing.current = true;
 
-            if (!response.ok) {
-                // Refresh token invalid, logout
-                logout();
+        refreshPromise.current = (async () => {
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ refresh_token: storedRefreshToken }),
+                });
+
+                if (!response.ok) {
+                    // Refresh token invalid, logout
+                    logoutInternal();
+                    return false;
+                }
+
+                const data = await response.json();
+                setToken(data.access_token);
+                localStorage.setItem("auth_token", data.access_token);
+                return true;
+            } catch {
+                logoutInternal();
                 return false;
+            } finally {
+                isRefreshing.current = false;
+                refreshPromise.current = null;
             }
+        })();
 
-            const data = await response.json();
-            setToken(data.access_token);
-            localStorage.setItem("auth_token", data.access_token);
-            return true;
-        } catch {
-            logout();
-            return false;
-        }
+        return refreshPromise.current;
     }, []);
+
+    // Internal logout without server call (for refresh failures)
+    const logoutInternal = () => {
+        setToken(null);
+        setRefreshTokenValue(null);
+        setUser(null);
+        localStorage.removeItem("auth_token");
+        localStorage.removeItem("refresh_token");
+        localStorage.removeItem("auth_user");
+    };
+
+    // Auth fetch wrapper that handles 401 and retries with new token
+    const authFetch = useCallback(async (url: string, options: RequestInit = {}): Promise<Response> => {
+        const currentToken = localStorage.getItem("auth_token");
+
+        // Add auth header
+        const headers = new Headers(options.headers);
+        if (currentToken) {
+            headers.set("Authorization", `Bearer ${currentToken}`);
+        }
+
+        // First attempt
+        let response = await fetch(url, { ...options, headers });
+
+        // If 401, try to refresh and retry once
+        if (response.status === 401) {
+            const refreshSuccess = await refreshAccessToken();
+
+            if (refreshSuccess) {
+                // Get new token and retry
+                const newToken = localStorage.getItem("auth_token");
+                if (newToken) {
+                    headers.set("Authorization", `Bearer ${newToken}`);
+                    response = await fetch(url, { ...options, headers });
+                }
+            }
+        }
+
+        return response;
+    }, [refreshAccessToken]);
 
     // Load tokens from localStorage on mount
     useEffect(() => {
@@ -152,12 +211,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
         }
 
-        setToken(null);
-        setRefreshTokenValue(null);
-        setUser(null);
-        localStorage.removeItem("auth_token");
-        localStorage.removeItem("refresh_token");
-        localStorage.removeItem("auth_user");
+        logoutInternal();
     };
 
     const resendVerification = async () => {
@@ -189,6 +243,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 logout,
                 refreshToken: refreshAccessToken,
                 resendVerification,
+                authFetch,
             }}
         >
             {children}
@@ -203,3 +258,4 @@ export function useAuth() {
     }
     return context;
 }
+

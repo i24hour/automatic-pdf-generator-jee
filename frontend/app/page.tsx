@@ -44,7 +44,7 @@ interface RateLimitInfo {
 }
 
 export default function Home() {
-  const { user, token, isLoading: authLoading, isAuthenticated, logout } = useAuth();
+  const { user, isLoading: authLoading, isAuthenticated, logout, authFetch } = useAuth();
   const router = useRouter();
 
   const [subject, setSubject] = useState("Physics");
@@ -80,18 +80,14 @@ export default function Home() {
 
   // Fetch rate limit on mount and after generation
   useEffect(() => {
-    if (isAuthenticated && token) {
+    if (isAuthenticated) {
       fetchRateLimit();
     }
-  }, [isAuthenticated, token]);
+  }, [isAuthenticated]);
 
   const fetchRateLimit = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/rate-limit`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await authFetch(`${API_BASE_URL}/api/rate-limit`);
       if (response.ok) {
         const data = await response.json();
         setRateLimit(data);
@@ -112,11 +108,10 @@ export default function Home() {
     setResult(null);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/generate`, {
+      const response = await authFetch(`${API_BASE_URL}/api/generate`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           subject,
@@ -177,11 +172,8 @@ export default function Home() {
     setResendLoading(true);
     setResendMessage(null);
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/resend-verification`, {
+      const response = await authFetch(`${API_BASE_URL}/auth/resend-verification`, {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
       });
       if (response.ok) {
         setResendMessage("Verification email sent! Check your inbox.");
