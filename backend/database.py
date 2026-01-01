@@ -43,6 +43,21 @@ def get_db():
 
 
 def init_db():
-    """Initialize database tables."""
-    from models import User, PDFGeneration  # Import here to avoid circular imports
+    """Initialize database tables and run migrations."""
+    from models import User, PDFGeneration, PromoCode, PromoCodeUsage, RefreshToken, VerificationToken, PasswordResetToken
+    
+    # Create all tables
     Base.metadata.create_all(bind=engine)
+    
+    # Run migrations for new columns (safe to run multiple times)
+    try:
+        from sqlalchemy import text
+        with engine.connect() as conn:
+            # Add bonus_limit column to users if it doesn't exist
+            try:
+                conn.execute(text("ALTER TABLE users ADD COLUMN bonus_limit INTEGER DEFAULT 0"))
+                conn.commit()
+            except Exception:
+                conn.rollback()  # Column already exists
+    except Exception as e:
+        print(f"Migration warning (can be ignored if columns exist): {e}")
