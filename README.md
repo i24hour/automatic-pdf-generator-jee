@@ -133,3 +133,4 @@ curl -X POST http://yourdomain/api/generate \
 ## License
 
 MIT
+# Trigger Vercel redeploy Thu Jan  1 08:40:30 IST 2026
