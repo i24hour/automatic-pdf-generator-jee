@@ -119,6 +119,22 @@ class LLMEngine:
         
         return processed
     
+    def _deduplicate_questions(self, questions: List[Dict]) -> List[Dict]:
+        """Remove duplicate questions based on text similarity."""
+        seen_texts = set()
+        unique_questions = []
+        
+        for q in questions:
+            # Normalize text for comparison (lowercase, remove extra spaces)
+            normalized = ' '.join(q.get('text', '').lower().split())
+            
+            # Only add if we haven't seen similar text
+            if normalized not in seen_texts and len(normalized) > 10:
+                seen_texts.add(normalized)
+                unique_questions.append(q)
+        
+        return unique_questions
+
     def generate_questions(
         self,
         subject: str,
@@ -140,6 +156,7 @@ class LLMEngine:
         Returns:
             Dictionary with questions data
         """
+        total_requested = mcq_count + numerical_count
         
         # Detailed level-specific prompts with examples
         level_prompts = {
@@ -211,14 +228,19 @@ TASK: Generate exactly {mcq_count} MCQs and {numerical_count} Numerical question
 {level_prompt}
 
 STRICT REQUIREMENTS:
-1. Questions MUST match the specified difficulty level EXACTLY - not easier, not harder
-2. Each question should be solvable only by students who have mastered that level
-3. Use proper LaTeX math mode: $...$ for inline math (e.g., $F = ma$, $\\frac{{a}}{{b}}$, $\\sqrt{{x}}$)
-4. MCQs must have exactly 4 options with plausible distractors
-5. NUMERICAL ANSWERS: Must be ONLY integers or decimals (e.g., "42", "3.14", "-5.5"). NO formulas, NO fractions, NO symbols.
-6. NO explanations or solutions
+1. Generate EXACTLY {mcq_count} MCQs and {numerical_count} Numerical questions - NO MORE, NO LESS
+2. Each question MUST be UNIQUE - no duplicate or similar questions allowed
+3. Questions MUST match the specified difficulty level EXACTLY - not easier, not harder
+4. Each question should be solvable only by students who have mastered that level
+5. Use proper LaTeX math mode: $...$ for inline math (e.g., $F = ma$, $\\frac{{a}}{{b}}$, $\\sqrt{{x}}$)
+6. MCQs must have exactly 4 options with plausible distractors
+7. NUMERICAL ANSWERS: Must be ONLY integers or decimals (e.g., "42", "3.14", "-5.5"). NO formulas, NO fractions, NO symbols.
+8. NO explanations or solutions
 
-QUALITY CHECK: Before finalizing, verify each question truly represents {level} difficulty by comparing with actual past papers from that exam.
+QUALITY CHECK: Before finalizing, verify:
+- Total questions = {total_requested} (exactly {mcq_count} MCQs + {numerical_count} Numerical)
+- No duplicate questions
+- Each question truly represents {level} difficulty
 
 Return ONLY valid JSON:
 {{
@@ -240,51 +262,73 @@ Return ONLY valid JSON:
     ]
 }}"""
 
-        try:
-            response = litellm.completion(
-                model=self.model,
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "You are an expert exam setter. Always respond with valid JSON only."
-                    },
-                    {
-                        "role": "user",
-                        "content": prompt
-                    }
-                ],
-                temperature=0.7
-            )
-            
-            response_text = response.choices[0].message.content
-            
-            # Clean and parse JSON
-            cleaned_json = self._clean_json_response(response_text)
-            data = json.loads(cleaned_json)
-            
-            # Process questions (escape LaTeX special chars)
-            if "questions" in data:
-                data["questions"] = self._process_questions(data["questions"])
-            
-            return {
-                "success": True,
-                "subject": subject,
-                "topic": topic,
-                "questions": data.get("questions", [])
-            }
-            
-        except json.JSONDecodeError as e:
-            return {
-                "success": False,
-                "error": f"Failed to parse LLM response as JSON: {str(e)}",
-                "raw_response": response_text if 'response_text' in locals() else None
-            }
-        except Exception as e:
-            return {
-                "success": False,
-                "error": f"LLM call failed: {str(e)}"
-            }
+        max_retries = 2
+        for attempt in range(max_retries + 1):
+            try:
+                response = litellm.completion(
+                    model=self.model,
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": "You are an expert exam setter. Always respond with valid JSON only. Generate EXACTLY the number of questions requested."
+                        },
+                        {
+                            "role": "user",
+                            "content": prompt
+                        }
+                    ],
+                    temperature=0.7
+                )
+                
+                response_text = response.choices[0].message.content
+                
+                # Clean and parse JSON
+                cleaned_json = self._clean_json_response(response_text)
+                data = json.loads(cleaned_json)
+                
+                # Process questions (escape LaTeX special chars)
+                if "questions" in data:
+                    data["questions"] = self._process_questions(data["questions"])
+                    
+                    # Deduplicate questions
+                    data["questions"] = self._deduplicate_questions(data["questions"])
+                    
+                    # Validate question count
+                    actual_count = len(data["questions"])
+                    if actual_count < total_requested and attempt < max_retries:
+                        print(f"Got {actual_count} questions, expected {total_requested}. Retrying...")
+                        continue
+                
+                return {
+                    "success": True,
+                    "subject": subject,
+                    "topic": topic,
+                    "questions": data.get("questions", [])
+                }
+                
+            except json.JSONDecodeError as e:
+                if attempt < max_retries:
+                    continue
+                return {
+                    "success": False,
+                    "error": f"Failed to parse LLM response as JSON: {str(e)}",
+                    "raw_response": response_text if 'response_text' in locals() else None
+                }
+            except Exception as e:
+                return {
+                    "success": False,
+                    "error": f"LLM call failed: {str(e)}"
+                }
+        
+        # If we get here, we exhausted retries
+        return {
+            "success": True,
+            "subject": subject,
+            "topic": topic,
+            "questions": data.get("questions", []) if 'data' in locals() else []
+        }
 
 
 # Singleton instance
 llm_engine = LLMEngine()
+
