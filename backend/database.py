@@ -24,7 +24,11 @@ if DATABASE_URL.startswith("sqlite"):
     )
 else:
     # PostgreSQL for production
-    engine = create_engine(DATABASE_URL, pool_pre_ping=True)
+    engine = create_engine(
+        DATABASE_URL, 
+        pool_pre_ping=True,
+        connect_args={"sslmode": "require"}
+    )
 
 # Session factory
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
