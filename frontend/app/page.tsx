@@ -505,10 +505,12 @@ export default function Home() {
 
         {/* Footer */}
         <div className="text-center mt-8 text-gray-500 text-sm">
-          <p className="flex items-center justify-center gap-2">
-            <FileText className="w-4 h-4" />
-            Powered by AI • Formatted for JEE
-          </p>
+          <div className="flex flex-col items-center justify-center gap-1">
+            <a href="https://www.mentorsmantra.co.in" target="_blank" rel="noopener noreferrer" className="hover:text-indigo-600 transition-colors font-medium">
+              www.mentorsmantra.co.in
+            </a>
+            <p>Contact: 9821040290 / 7982387231</p>
+          </div>
         </div>
       </div>
     </main>
