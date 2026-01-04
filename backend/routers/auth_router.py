@@ -38,6 +38,7 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: str
     name: str = None
+    phone: str = None
 
 
 class UserResponse(BaseModel):
@@ -45,6 +46,7 @@ class UserResponse(BaseModel):
     id: str
     email: str
     name: str = None
+    phone: str = None
     is_verified: bool = False
     
     class Config:
@@ -148,6 +150,7 @@ async def register(
         email=user_data.email,
         hashed_password=hashed_password,
         name=user_data.name,
+        phone=user_data.phone,
         is_verified=False
     )
     

@@ -26,6 +26,7 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
     name = Column(String, nullable=True)
+    phone = Column(String, nullable=True)  # Phone number
     is_verified = Column(Boolean, default=False)
     bonus_limit = Column(Integer, default=0)  # Extra limit from promo codes
     created_at = Column(DateTime(timezone=True), server_default=func.now())

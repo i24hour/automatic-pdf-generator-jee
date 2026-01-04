@@ -10,6 +10,7 @@ import { FloatingInput } from "@/components/FloatingInput";
 export default function SignupPage() {
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
+    const [phone, setPhone] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [error, setError] = useState<string | null>(null);
@@ -35,7 +36,7 @@ export default function SignupPage() {
         setIsLoading(true);
 
         try {
-            await register(email, password, name || undefined);
+            await register(email, password, name || undefined, phone || undefined);
             router.push("/");
         } catch (err) {
             setError(err instanceof Error ? err.message : "Registration failed");
@@ -58,7 +59,7 @@ export default function SignupPage() {
 
                     {/* Title */}
                     <h1 className="text-2xl font-semibold text-gray-900 text-center mb-2">Create Account</h1>
-                    <p className="text-gray-500 text-center mb-8 text-sm">Start generating AI-powered test papers</p>
+                    <p className="text-gray-500 text-center mb-8 text-sm">Join thousands of JEE aspirants</p>
 
                     <form onSubmit={handleSubmit} className="space-y-5">
                         {/* Name */}
@@ -78,6 +79,15 @@ export default function SignupPage() {
                             onChange={setEmail}
                             required
                             autoComplete="email"
+                        />
+
+                        {/* Phone */}
+                        <FloatingInput
+                            type="tel"
+                            label="Phone Number (Optional)"
+                            value={phone}
+                            onChange={setPhone}
+                            autoComplete="tel"
                         />
 
                         {/* Password */}

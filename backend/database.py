@@ -59,5 +59,13 @@ def init_db():
                 conn.commit()
             except Exception:
                 conn.rollback()  # Column already exists
+            
+            # Add phone column to users if it doesn't exist
+            try:
+                conn.execute(text("ALTER TABLE users ADD COLUMN phone VARCHAR(20)"))
+                conn.commit()
+            except Exception:
+                conn.rollback()  # Column already exists
     except Exception as e:
         print(f"Migration warning (can be ignored if columns exist): {e}")
+
