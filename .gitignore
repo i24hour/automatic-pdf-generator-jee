@@ -34,7 +34,9 @@ npm-debug.log*
 
 # Backend output
 backend/output/
-*.tex
 *.aux
 *.log
 *.out
+# Ignore generated tex files except templates
+backend/output/*.tex
+!backend/templates/
