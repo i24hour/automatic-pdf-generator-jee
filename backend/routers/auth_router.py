@@ -4,6 +4,7 @@ Authentication router: register, login, refresh, verify, and password reset endp
 
 import os
 from datetime import datetime, timedelta, timezone
+from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, EmailStr
@@ -45,8 +46,8 @@ class UserResponse(BaseModel):
     """User response (without password)."""
     id: str
     email: str
-    name: str = None
-    phone: str = None
+    name: Optional[str] = None
+    phone: Optional[str] = None
     is_verified: bool = False
     
     class Config:

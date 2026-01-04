@@ -84,9 +84,10 @@ export default function SignupPage() {
                         {/* Phone */}
                         <FloatingInput
                             type="tel"
-                            label="Phone Number (Optional)"
+                            label="Phone Number *"
                             value={phone}
                             onChange={setPhone}
+                            required
                             autoComplete="tel"
                         />
 
