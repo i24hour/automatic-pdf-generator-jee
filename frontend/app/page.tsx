@@ -329,7 +329,7 @@ export default function Home() {
           <h1 className="text-4xl md:text-5xl font-bold mb-4 text-gray-900">
             Mentors Mantra
           </h1>
-          <p className="text-xl text-gray-500">Trained by IITians</p>
+          <p className="text-xl text-gray-500">Trained by IITians/NEET Rankers</p>
         </div>
 
         {/* Rate Limit Badge */}
