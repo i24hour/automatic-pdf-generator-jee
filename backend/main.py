@@ -221,16 +221,22 @@ async def generate_test(
         )
     
     try:
-        # Calculate question split: 80% MCQ, 20% Numerical
-        mcq_count = int(request.total_questions * 0.8)
-        numerical_count = request.total_questions - mcq_count
-        
-        # Ensure at least 1 of each type
-        if mcq_count < 1:
-            mcq_count = 1
-        if numerical_count < 1:
-            numerical_count = 1
-            mcq_count = request.total_questions - 1
+        # Calculate question split
+        # NEET is MCQ-only (no numerical questions)
+        if request.level == "NEET":
+            mcq_count = request.total_questions
+            numerical_count = 0
+        else:
+            # 80% MCQ, 20% Numerical for JEE and others
+            mcq_count = int(request.total_questions * 0.8)
+            numerical_count = request.total_questions - mcq_count
+            
+            # Ensure at least 1 of each type for non-NEET
+            if mcq_count < 1:
+                mcq_count = 1
+            if numerical_count < 1:
+                numerical_count = 1
+                mcq_count = request.total_questions - 1
         
         # Generate questions using LLM
         llm_result = llm_engine.generate_questions(

@@ -221,18 +221,21 @@ EXAMPLE OLYMPIAD-LEVEL QUESTIONS:
             "NEET": """DIFFICULTY: NEET Level (Medical Entrance Exam)
 CHARACTERISTICS:
 - NCERT-based conceptual questions - stick to NCERT content strictly
-- Assertion-Reason type questions are very common
+- Assertion-Reason type questions are very common (format as regular MCQ with options like "Both A and R are true and R is the correct explanation of A")
 - Statement-based MCQs (identify correct/incorrect statements)
-- Diagram-based questions especially for Biology
 - Focus on factual recall, definitions, and direct application
 - Similar to NTA NEET papers and NEET PYQs
-- Match the following / Column matching questions
-- Questions testing NCERT diagrams, flowcharts, and cycles
+- ONLY MCQs (no numerical questions in NEET)
+
+IMPORTANT FORMATTING RULES FOR NEET:
+- DO NOT use tables, columns, or "Match the following" format - these don't render well
+- For matching questions, convert to regular MCQ format with options like "A-2, B-3, C-1, D-4"
+- Keep questions simple and text-based
+- Use simple lists if needed, not complex formatting
 
 EXAMPLE NEET-LEVEL QUESTIONS:
 - "Which of the following is NOT a function of liver?"
-- "Assertion: Mitochondria are called powerhouse of cell. Reason: ATP synthesis occurs here."
-- "Match Column A (Hormones) with Column B (Functions)"
+- "Assertion: Mitochondria are called powerhouse of cell. Reason: ATP synthesis occurs here. Options: (a) Both A and R are true, R explains A (b) Both A and R are true, R does not explain A..."
 - "The correct sequence of air passage in humans is:"
 - "Which of the following statements about photosynthesis is incorrect?"
 - Questions from NEET, AIIMS, JIPMER past papers"""
