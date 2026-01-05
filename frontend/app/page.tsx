@@ -21,6 +21,8 @@ import {
   LogOut,
   Clock,
   Gift,
+  Leaf,
+  Stethoscope,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 
@@ -66,14 +68,41 @@ export default function Home() {
     { name: "Physics", icon: Atom },
     { name: "Chemistry", icon: FlaskConical },
     { name: "Maths", icon: Calculator },
+    { name: "Biology", icon: Leaf },
   ];
 
-  const levels = [
+  const allLevels = [
     { name: "Boards", icon: GraduationCap, color: "text-green-400", bgColor: "bg-green-500/20", borderColor: "border-green-500" },
     { name: "JEE Mains", icon: Target, color: "text-blue-400", bgColor: "bg-blue-500/20", borderColor: "border-blue-500" },
     { name: "JEE Advanced", icon: Award, color: "text-purple-400", bgColor: "bg-purple-500/20", borderColor: "border-purple-500" },
     { name: "Olympiad", icon: Trophy, color: "text-yellow-400", bgColor: "bg-yellow-500/20", borderColor: "border-yellow-500" },
+    { name: "NEET", icon: Stethoscope, color: "text-pink-400", bgColor: "bg-pink-500/20", borderColor: "border-pink-500" },
   ];
+
+  // Smart level filtering based on subject
+  const getAvailableLevels = () => {
+    if (subject === "Maths") {
+      // NEET doesn't have Maths
+      return allLevels.filter(l => l.name !== "NEET");
+    }
+    if (subject === "Biology") {
+      // Biology is only for Boards and NEET
+      return allLevels.filter(l => l.name === "Boards" || l.name === "NEET");
+    }
+    // Physics and Chemistry: all levels available
+    return allLevels;
+  };
+
+  const levels = getAvailableLevels();
+
+  // Auto-switch level when subject changes to avoid invalid state
+  useEffect(() => {
+    const availableLevelNames = getAvailableLevels().map(l => l.name);
+    if (!availableLevelNames.includes(level)) {
+      // Switch to first available level
+      setLevel(availableLevelNames[0] || "Boards");
+    }
+  }, [subject]);
 
   // Redirect to login if not authenticated
   useEffect(() => {

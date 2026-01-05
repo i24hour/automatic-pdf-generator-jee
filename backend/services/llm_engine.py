@@ -216,7 +216,26 @@ EXAMPLE OLYMPIAD-LEVEL QUESTIONS:
 - "Derive the shape of a rotating liquid surface and find the focal length of the parabolic mirror formed"
 - "N coupled oscillators - find normal modes and frequencies for arbitrary N"
 - "Prove using variational methods that a certain physical quantity is minimized"
-- Problems from IPHO, INPHO, IMO, RMO past papers"""
+- Problems from IPHO, INPHO, IMO, RMO past papers""",
+
+            "NEET": """DIFFICULTY: NEET Level (Medical Entrance Exam)
+CHARACTERISTICS:
+- NCERT-based conceptual questions - stick to NCERT content strictly
+- Assertion-Reason type questions are very common
+- Statement-based MCQs (identify correct/incorrect statements)
+- Diagram-based questions especially for Biology
+- Focus on factual recall, definitions, and direct application
+- Similar to NTA NEET papers and NEET PYQs
+- Match the following / Column matching questions
+- Questions testing NCERT diagrams, flowcharts, and cycles
+
+EXAMPLE NEET-LEVEL QUESTIONS:
+- "Which of the following is NOT a function of liver?"
+- "Assertion: Mitochondria are called powerhouse of cell. Reason: ATP synthesis occurs here."
+- "Match Column A (Hormones) with Column B (Functions)"
+- "The correct sequence of air passage in humans is:"
+- "Which of the following statements about photosynthesis is incorrect?"
+- Questions from NEET, AIIMS, JIPMER past papers"""
         }
         
         level_prompt = level_prompts.get(level, level_prompts["JEE Mains"])
