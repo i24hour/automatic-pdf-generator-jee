@@ -336,6 +336,13 @@ async def apply_promo_code(
             detail="This promo code has expired (max uses reached)"
         )
     
+    # Check if promo code has expired
+    if promo.expires_at and promo.expires_at < datetime.now(timezone.utc):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This promo code has expired"
+        )
+    
     # Check if user already used this promo code
     existing_usage = db.query(PromoCodeUsage).filter(
         PromoCodeUsage.user_id == current_user.id,

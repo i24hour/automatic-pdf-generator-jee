@@ -116,6 +116,7 @@ class PromoCode(Base):
     current_uses = Column(Integer, default=0)  # How many times used
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    expires_at = Column(DateTime(timezone=True), nullable=True)  # Optional expiration date
     
     # Relationships
     usages = relationship("PromoCodeUsage", back_populates="promo_code")

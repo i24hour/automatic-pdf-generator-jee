@@ -70,6 +70,13 @@ def init_db():
                 conn.commit()
             except Exception:
                 conn.rollback()  # Column already exists
+            
+            # Add expires_at column to promo_codes if it doesn't exist
+            try:
+                conn.execute(text("ALTER TABLE promo_codes ADD COLUMN expires_at TIMESTAMP WITH TIME ZONE"))
+                conn.commit()
+            except Exception:
+                conn.rollback()  # Column already exists
     except Exception as e:
         print(f"Migration warning (can be ignored if columns exist): {e}")
 
