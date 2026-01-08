@@ -33,14 +33,15 @@
 }
 \renewcommand{\footrulewidth}{0pt}
 
-% Custom Option List
-\newcommand{\fourchoices}[4]{
-    \begin{enumerate}[label=(\alph*), itemsep=0pt, topsep=2pt]
-        \item #1
-        \item #2
-        \item #3
-        \item #4
-    \end{enumerate}
+% Custom Option List (2x2 grid for better formula display)
+\newcommand{\fourchoices}[4]{%
+    \vspace{3pt}%
+    \par\noindent%
+    \begin{tabular}{@{}p{0.45\linewidth}@{\hspace{0.05\linewidth}}p{0.45\linewidth}@{}}
+        (a) #1 & (b) #2 \\[4pt]
+        (c) #3 & (d) #4 \\
+    \end{tabular}%
+    \vspace{3pt}%
 }
 
 \begin{document}
