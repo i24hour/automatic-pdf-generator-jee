@@ -33,15 +33,14 @@
 }
 \renewcommand{\footrulewidth}{0pt}
 
-% Custom Option List (2x2 grid for better formula display)
+% Custom Option List (vertical line-by-line for long statements)
 \newcommand{\fourchoices}[4]{%
-    \vspace{3pt}%
-    \par\noindent%
-    \begin{tabular}{@{}p{0.45\linewidth}@{\hspace{0.05\linewidth}}p{0.45\linewidth}@{}}
-        (a) #1 & (b) #2 \\[4pt]
-        (c) #3 & (d) #4 \\
-    \end{tabular}%
-    \vspace{3pt}%
+    \vspace{2pt}%
+    \par\noindent (a) #1%
+    \par\noindent (b) #2%
+    \par\noindent (c) #3%
+    \par\noindent (d) #4%
+    \vspace{4pt}%
 }
 
 \begin{document}
