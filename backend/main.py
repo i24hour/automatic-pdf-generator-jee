@@ -258,6 +258,7 @@ async def generate_test(
         filename = filename.replace(" ", "_").lower()
         
         # Generate PDF
+        llm_result["level"] = request.level  # Pass level to PDF template
         pdf_path = pdf_engine.generate_pdf(llm_result, filename)
         
         if not pdf_path:
