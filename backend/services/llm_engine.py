@@ -33,6 +33,8 @@ class LLMEngine:
         Clean the LLM response to extract valid JSON.
         Handles markdown code blocks, extra text, and invalid escape sequences.
         """
+        import re
+        
         # Remove markdown code blocks
         cleaned = response_text.strip()
         
@@ -54,23 +56,42 @@ class LLMEngine:
         if start_idx != -1 and end_idx > start_idx:
             cleaned = cleaned[start_idx:end_idx]
         
-        # Fix common invalid escape sequences in JSON
-        # LLMs sometimes use \frac, \sqrt, etc. which are invalid JSON escapes
-        # We need to escape single backslashes that aren't valid JSON escapes
-        import re
+        # CRITICAL FIX: Escape LaTeX backslashes BEFORE JSON parsing
+        # Common LaTeX commands that start with characters that are invalid JSON escapes
+        # \f (form feed), \b (backspace), \r (carriage return), \n (newline), \t (tab)
+        # These get interpreted as control characters during JSON.parse if not escaped
         
-        # Valid JSON escape sequences: \", \\, \/, \b, \f, \n, \r, \t, \uXXXX
-        # Replace single backslashes that are not part of valid escapes
-        def fix_escapes(match):
+        # List of LaTeX commands to protect (that start with problematic characters)
+        latex_commands = [
+            'frac', 'forall', 'fbox',
+            'binom', 'bar', 'beta', 'begin', 'bf', 'big', 'bigg',
+            'right', 'rangle', 'rceil', 'rfloor', 'rm',
+            'nabla', 'neg', 'neq', 'newline', 'nu',
+            'tan', 'tau', 'text', 'textbf', 'therefore', 'theta', 'times', 'to', 'triangle',
+        ]
+        
+        # Replace \cmd with \\cmd for all LaTeX commands (double the backslash)
+        for cmd in latex_commands:
+            # Match \cmd but not \\cmd (already escaped)
+            pattern = r'(?<!\\)\\' + cmd
+            replacement = r'\\\\' + cmd
+            cleaned = re.sub(pattern, replacement, cleaned)
+        
+        # Also escape any remaining single backslashes that aren't valid JSON escapes
+        # Valid JSON escapes: \", \\, \/, \b, \f, \n, \r, \t, \uXXXX
+        def fix_remaining_escapes(match):
             char = match.group(1)
-            valid_escapes = ['"', '\\', '/', 'b', 'f', 'n', 'r', 't', 'u']
-            if char in valid_escapes:
-                return match.group(0)  # Keep valid escape
+            # Only keep truly valid JSON escapes as-is
+            if char in ['"', '\\', '/']:
+                return match.group(0)
+            elif char == 'u' and len(match.group(0)) >= 6:  # \uXXXX
+                return match.group(0)
             else:
-                return '\\\\' + char  # Double the backslash for invalid escapes
+                # Double the backslash for anything else
+                return '\\\\' + char
         
-        # Match backslash followed by any character
-        cleaned = re.sub(r'\\(.)', fix_escapes, cleaned)
+        # Match single backslash followed by any character (not already doubled)
+        cleaned = re.sub(r'(?<!\\)\\([^\\])', fix_remaining_escapes, cleaned)
         
         return cleaned
     
