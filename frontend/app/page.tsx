@@ -200,7 +200,10 @@ export default function Home() {
       } : null);
 
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
+      // Log technical error to console for debugging
+      console.error("Generation error:", err);
+      // Show generic message to user
+      setError("Failed to generate test paper. Please try again.");
     } finally {
       setIsLoading(false);
     }
