@@ -201,12 +201,19 @@ CHARACTERISTICS:
 - Integration of 2 related concepts
 - Moderate calculation complexity
 - Questions similar to NTA JEE Main papers
+- Numerical questions are INTEGER TYPE (answer must be an integer from 0-999)
 
 EXAMPLE JEE MAINS-LEVEL QUESTIONS:
 - "A capacitor is charged to V volts and then connected to an inductor. Find maximum current"
 - "Two blocks connected by spring on frictionless surface - find oscillation frequency"
 - "In Young's double slit, if one slit is covered with thin film, find fringe shift"
-- Distractors should include common calculation errors""",
+- Distractors should include common calculation errors
+
+IMPORTANT FOR NUMERICAL QUESTIONS:
+- Design questions so that the final answer is a WHOLE NUMBER (integer)
+- Answers should be in range 0-999 (as per actual JEE Mains pattern)
+- Frame questions like "Find the value of X" where X comes out to be an integer
+- Example: Instead of "find velocity" giving 2.5 m/s, ask "find velocity in cm/s" giving 250""",
 
             "JEE Advanced": """DIFFICULTY: JEE Advanced Level (Hard-Very Hard)
 CHARACTERISTICS:
@@ -239,14 +246,27 @@ EXAMPLE OLYMPIAD-LEVEL QUESTIONS:
 - "Prove using variational methods that a certain physical quantity is minimized"
 - Problems from IPHO, INPHO, IMO, RMO past papers""",
 
-            "NEET": """DIFFICULTY: NEET Level (Medical Entrance Exam)
+            "NEET": """DIFFICULTY: NEET Level (Medical Entrance Exam) - TOUGH/COMPETITIVE
+
 CHARACTERISTICS:
-- NCERT-based conceptual questions - stick to NCERT content strictly
-- Assertion-Reason type questions are very common (format as regular MCQ with options like "Both A and R are true and R is the correct explanation of A")
-- Statement-based MCQs (identify correct/incorrect statements)
-- Focus on factual recall, definitions, and direct application
-- Similar to NTA NEET papers and NEET PYQs
+- NCERT-based BUT application-oriented and tricky - NOT just factual recall
+- Questions should require DEEP understanding, not surface-level memorization
+- Include NEET PYQ style questions from difficult years (2019, 2020, 2021)
+- Assertion-Reason type questions with subtle differences between options
+- Statement-based MCQs where multiple statements need careful analysis
+- Diagram interpretation, experimental-based, and exception-based questions
+- Negative marking trap options - all options should look plausible
+- Questions that test conceptual clarity and application together
+- Integrate 2-3 concepts within a single question
 - ONLY MCQs (no numerical questions in NEET)
+
+DIFFICULTY ENHANCEMENT:
+- Avoid direct definition questions - make them application-based
+- Include "EXCEPT" and "NOT" type questions
+- Use clinical/medical application scenarios
+- Test exceptions to general rules
+- Include questions on experiments, scientists, and their contributions
+- Comparative questions (between species, processes, structures)
 
 IMPORTANT FORMATTING RULES FOR NEET:
 - DO NOT use tables, columns, or "Match the following" format - these don't render well
@@ -254,15 +274,28 @@ IMPORTANT FORMATTING RULES FOR NEET:
 - Keep questions simple and text-based
 - Use simple lists if needed, not complex formatting
 
-EXAMPLE NEET-LEVEL QUESTIONS:
-- "Which of the following is NOT a function of liver?"
-- "Assertion: Mitochondria are called powerhouse of cell. Reason: ATP synthesis occurs here. Options: (a) Both A and R are true, R explains A (b) Both A and R are true, R does not explain A..."
-- "The correct sequence of air passage in humans is:"
-- "Which of the following statements about photosynthesis is incorrect?"
-- Questions from NEET, AIIMS, JIPMER past papers"""
+EXAMPLE TOUGH NEET QUESTIONS:
+- "In C4 plants, the
+
+
+bundle sheath cells are characterized by all EXCEPT:"
+- "Assertion: All enzymes are proteins. Reason: Ribozymes are RNA molecules with catalytic activity."
+- "A patient shows symptoms of myxoedema. Which hormone therapy would be most appropriate?"
+- "Which of the following is NOT correctly matched?" (with subtle differences)
+- "The
+
+
+__(a)__ is absent in prokaryotes. Identify the correct option that can fill the blank."
+- Questions requiring comparison between similar structures/processes"""
         }
         
         level_prompt = level_prompts.get(level, level_prompts["JEE Mains"])
+        
+        # JEE Mains uses integer-type numerical questions (0-999)
+        if level == "JEE Mains":
+            numerical_answer_instruction = "7. NUMERICAL ANSWERS: Must be INTEGERS ONLY (whole numbers like 42, 150, 0, 999). NO decimals, NO formulas, NO fractions, NO symbols. Design questions so answers fall in range 0-999."
+        else:
+            numerical_answer_instruction = "7. NUMERICAL ANSWERS: Must be ONLY integers or decimals (e.g., \"42\", \"3.14\", \"-5.5\"). NO formulas, NO fractions, NO symbols."
         
         prompt = f"""You are an expert exam setter with 20+ years of experience setting {level} level examination papers.
 
@@ -277,7 +310,7 @@ STRICT REQUIREMENTS:
 4. Each question should be solvable only by students who have mastered that level
 5. Use proper LaTeX math mode: $...$ for inline math (e.g., $F = ma$, $\\frac{{a}}{{b}}$, $\\sqrt{{x}}$)
 6. MCQs must have exactly 4 options with plausible distractors
-7. NUMERICAL ANSWERS: Must be ONLY integers or decimals (e.g., "42", "3.14", "-5.5"). NO formulas, NO fractions, NO symbols.
+{numerical_answer_instruction}
 8. NO explanations or solutions
 
 QUALITY CHECK: Before finalizing, verify:
