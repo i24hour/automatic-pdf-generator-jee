@@ -110,6 +110,15 @@ class ApplyPromoResponse(BaseModel):
     bonus_added: int = 0
 
 
+class DetectSubjectRequest(BaseModel):
+    """Request model for subject detection."""
+    topic: str = Field(..., description="Topic to classify")
+
+
+class DetectSubjectResponse(BaseModel):
+    """Response model for subject detection."""
+    subject: str
+    confidence: str = "high"
 
 
 
@@ -182,6 +191,22 @@ async def health_check():
             "pdf_engine": "ready"
         }
     }
+
+
+@app.post("/api/detect-subject", response_model=DetectSubjectResponse)
+async def detect_subject(request: DetectSubjectRequest):
+    """
+    Auto-detect the subject for a given topic using LLM.
+    This helps users by automatically selecting the most likely subject.
+    """
+    if not request.topic or len(request.topic.strip()) < 2:
+        return DetectSubjectResponse(subject="Physics", confidence="low")
+    
+    result = llm_engine.detect_subject(request.topic)
+    return DetectSubjectResponse(
+        subject=result.get("subject", "Physics"),
+        confidence=result.get("confidence", "low")
+    )
 
 
 @app.get("/api/rate-limit", response_model=RateLimitInfo)

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   FileText,
@@ -63,6 +63,8 @@ export default function Home() {
   const [promoCode, setPromoCode] = useState("");
   const [promoLoading, setPromoLoading] = useState(false);
   const [promoMessage, setPromoMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [isDetectingSubject, setIsDetectingSubject] = useState(false);
+  const detectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const subjects = [
     { name: "Physics", icon: Atom },
@@ -117,6 +119,50 @@ export default function Home() {
       fetchRateLimit();
     }
   }, [isAuthenticated]);
+
+  // Auto-detect subject when topic changes (debounced)
+  useEffect(() => {
+    // Clear any existing timeout
+    if (detectTimeoutRef.current) {
+      clearTimeout(detectTimeoutRef.current);
+    }
+
+    // Only detect if topic has at least 3 characters
+    if (topic.trim().length < 3) {
+      return;
+    }
+
+    // Debounce the API call by 500ms
+    detectTimeoutRef.current = setTimeout(async () => {
+      setIsDetectingSubject(true);
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/detect-subject`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ topic: topic.trim() })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.subject && data.confidence !== 'low') {
+            // Auto-select the detected subject
+            setSubject(data.subject);
+          }
+        }
+      } catch (error) {
+        console.error('Error detecting subject:', error);
+      } finally {
+        setIsDetectingSubject(false);
+      }
+    }, 500);
+
+    // Cleanup on unmount
+    return () => {
+      if (detectTimeoutRef.current) {
+        clearTimeout(detectTimeoutRef.current);
+      }
+    };
+  }, [topic]);
 
   const fetchRateLimit = async () => {
     try {

@@ -155,6 +155,68 @@ class LLMEngine:
                 unique_questions.append(q)
         
         return unique_questions
+    
+    def detect_subject(self, topic: str) -> Dict[str, str]:
+        """
+        Detect the subject for a given topic using LLM.
+        
+        Args:
+            topic: The topic to classify
+            
+        Returns:
+            Dictionary with 'subject' and 'confidence' keys
+        """
+        prompt = f"""Classify this educational topic into exactly ONE subject.
+
+Topic: "{topic}"
+
+Available subjects: Physics, Chemistry, Maths, Biology
+
+Rules:
+- Reply with ONLY the subject name (Physics, Chemistry, Maths, or Biology)
+- Nothing else, just the single word
+- If the topic could belong to multiple subjects, choose the most likely one
+- If unsure, default to the subject where this topic is most commonly taught
+
+Reply:"""
+
+        try:
+            response = litellm.completion(
+                model=self.model,
+                messages=[
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.1,  # Low temperature for consistent classification
+                max_tokens=10
+            )
+            
+            result = response.choices[0].message.content.strip()
+            
+            # Validate the response
+            valid_subjects = ["Physics", "Chemistry", "Maths", "Biology"]
+            
+            # Check if response contains a valid subject
+            for subject in valid_subjects:
+                if subject.lower() in result.lower():
+                    return {"subject": subject, "confidence": "high"}
+            
+            # If no exact match, try to find partial match
+            result_lower = result.lower()
+            if "phys" in result_lower:
+                return {"subject": "Physics", "confidence": "medium"}
+            elif "chem" in result_lower:
+                return {"subject": "Chemistry", "confidence": "medium"}
+            elif "math" in result_lower:
+                return {"subject": "Maths", "confidence": "medium"}
+            elif "bio" in result_lower:
+                return {"subject": "Biology", "confidence": "medium"}
+            
+            # Default to Physics if can't determine
+            return {"subject": "Physics", "confidence": "low"}
+            
+        except Exception as e:
+            print(f"Error detecting subject: {str(e)}")
+            return {"subject": "Physics", "confidence": "low"}
 
     def generate_questions(
         self,
