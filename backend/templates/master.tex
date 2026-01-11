@@ -55,7 +55,11 @@
 \end{center}
 
 \vspace{0.2cm}
+\BLOCK{ if level == 'JEE Advanced' }
+\textit{\textbf{Instructions:} This paper contains \VAR{total_questions} questions. Some MCQs are marked \textbf{(One or More Correct)} - select all correct options. Remaining MCQs have single correct answer. Section B contains Numerical Value Questions.}
+\BLOCK{ else }
 \textit{\textbf{Instructions:} This paper contains \VAR{total_questions} questions. Section A contains MCQs and Section B contains Numerical Value Questions.}
+\BLOCK{ endif }
 \vspace{0.3cm}
 
 % --- QUESTIONS SECTION ---
@@ -76,8 +80,11 @@
         \end{center}
         \BLOCK{ endif }
 
-        % Check if MCQ or Numerical
-        \BLOCK{ if q.type == 'mcq' }
+        % Check if MCQ (single or multi) or Numerical
+        \BLOCK{ if q.type == 'mcq_multi' }
+            \textit{(One or More Correct)}
+            \fourchoices{\VAR{q.options[0]}}{\VAR{q.options[1]}}{\VAR{q.options[2]}}{\VAR{q.options[3]}}
+        \BLOCK{ elif q.type == 'mcq' }
             \fourchoices{\VAR{q.options[0]}}{\VAR{q.options[1]}}{\VAR{q.options[2]}}{\VAR{q.options[3]}}
         \BLOCK{ else }
             \vspace{0.2cm} \\ 

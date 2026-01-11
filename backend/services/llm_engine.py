@@ -222,12 +222,21 @@ CHARACTERISTICS:
 - Integration of 3+ concepts from different subtopics
 - Complex mathematical manipulation
 - Questions similar to actual IIT JEE Advanced papers
-- May have multiple correct options (but format as single correct for this paper)
 - Paragraph-based or assertion-reason style thinking
 
+QUESTION TYPES FOR JEE ADVANCED:
+1. MULTI-CORRECT MCQs (first ~20% of MCQs): Questions where MORE THAN ONE option is correct
+   - Use type "mcq_multi" for these
+   - Answer should be like "AB", "ACD", "BD" etc. (multiple correct options)
+   - These test deeper understanding where multiple statements/conditions can be true
+   
+2. SINGLE-CORRECT MCQs (remaining ~80% of MCQs): Standard single answer questions
+   - Use type "mcq" for these
+   - Answer should be single letter like "A", "B", "C", or "D"
+
 EXAMPLE JEE ADVANCED-LEVEL QUESTIONS:
-- "A conducting sphere in non-uniform electric field - find induced dipole moment and force"
-- "Thermodynamic cycle with adiabatic, isothermal, and polytropic processes - find efficiency"
+- Multi-correct: "Which of the following are true for an adiabatic process?" (Answer: "AC")
+- Single-correct: "A conducting sphere in non-uniform electric field - find induced dipole moment"
 - "Block on accelerating wedge with friction - find condition for relative motion"
 - Problems that test edge cases and deep understanding""",
 
@@ -246,27 +255,14 @@ EXAMPLE OLYMPIAD-LEVEL QUESTIONS:
 - "Prove using variational methods that a certain physical quantity is minimized"
 - Problems from IPHO, INPHO, IMO, RMO past papers""",
 
-            "NEET": """DIFFICULTY: NEET Level (Medical Entrance Exam) - TOUGH/COMPETITIVE
-
+            "NEET": """DIFFICULTY: NEET Level (Medical Entrance Exam)
 CHARACTERISTICS:
-- NCERT-based BUT application-oriented and tricky - NOT just factual recall
-- Questions should require DEEP understanding, not surface-level memorization
-- Include NEET PYQ style questions from difficult years (2019, 2020, 2021)
-- Assertion-Reason type questions with subtle differences between options
-- Statement-based MCQs where multiple statements need careful analysis
-- Diagram interpretation, experimental-based, and exception-based questions
-- Negative marking trap options - all options should look plausible
-- Questions that test conceptual clarity and application together
-- Integrate 2-3 concepts within a single question
+- NCERT-based conceptual questions - stick to NCERT content strictly
+- Assertion-Reason type questions are very common (format as regular MCQ with options like "Both A and R are true and R is the correct explanation of A")
+- Statement-based MCQs (identify correct/incorrect statements)
+- Focus on factual recall, definitions, and direct application
+- Similar to NTA NEET papers and NEET PYQs
 - ONLY MCQs (no numerical questions in NEET)
-
-DIFFICULTY ENHANCEMENT:
-- Avoid direct definition questions - make them application-based
-- Include "EXCEPT" and "NOT" type questions
-- Use clinical/medical application scenarios
-- Test exceptions to general rules
-- Include questions on experiments, scientists, and their contributions
-- Comparative questions (between species, processes, structures)
 
 IMPORTANT FORMATTING RULES FOR NEET:
 - DO NOT use tables, columns, or "Match the following" format - these don't render well
@@ -274,19 +270,12 @@ IMPORTANT FORMATTING RULES FOR NEET:
 - Keep questions simple and text-based
 - Use simple lists if needed, not complex formatting
 
-EXAMPLE TOUGH NEET QUESTIONS:
-- "In C4 plants, the
-
-
-bundle sheath cells are characterized by all EXCEPT:"
-- "Assertion: All enzymes are proteins. Reason: Ribozymes are RNA molecules with catalytic activity."
-- "A patient shows symptoms of myxoedema. Which hormone therapy would be most appropriate?"
-- "Which of the following is NOT correctly matched?" (with subtle differences)
-- "The
-
-
-__(a)__ is absent in prokaryotes. Identify the correct option that can fill the blank."
-- Questions requiring comparison between similar structures/processes"""
+EXAMPLE NEET-LEVEL QUESTIONS:
+- "Which of the following is NOT a function of liver?"
+- "Assertion: Mitochondria are called powerhouse of cell. Reason: ATP synthesis occurs here. Options: (a) Both A and R are true, R explains A (b) Both A and R are true, R does not explain A..."
+- "The correct sequence of air passage in humans is:"
+- "Which of the following statements about photosynthesis is incorrect?"
+- Questions from NEET, AIIMS, JIPMER past papers"""
         }
         
         level_prompt = level_prompts.get(level, level_prompts["JEE Mains"])
@@ -297,29 +286,51 @@ __(a)__ is absent in prokaryotes. Identify the correct option that can fill the 
         else:
             numerical_answer_instruction = "7. NUMERICAL ANSWERS: Must be ONLY integers or decimals (e.g., \"42\", \"3.14\", \"-5.5\"). NO formulas, NO fractions, NO symbols."
         
-        prompt = f"""You are an expert exam setter with 20+ years of experience setting {level} level examination papers.
+        # JEE Advanced: first 20% of MCQs should be multi-correct
+        if level == "JEE Advanced":
+            multi_correct_count = max(1, int(mcq_count * 0.2))  # At least 1 multi-correct
+            single_correct_count = mcq_count - multi_correct_count
+            mcq_instruction = f"""FOR MCQs - THIS IS MANDATORY:
+*** CRITICALLY IMPORTANT: The FIRST {multi_correct_count} MCQs MUST be MULTI-CORRECT type ***
 
-TASK: Generate exactly {mcq_count} MCQs and {numerical_count} Numerical questions on "{topic}" for {subject}.
+MULTI-CORRECT MCQs (Questions 1 to {multi_correct_count}):
+- Set type as "mcq_multi" (NOT "mcq")
+- Answer MUST have 2 or 3 correct options like "AB", "ACD", "BC", "ABD"
+- Question text should imply multiple answers (e.g., "Which of the following are correct?")
 
-{level_prompt}
+SINGLE-CORRECT MCQs (Questions {multi_correct_count + 1} to {mcq_count}):
+- Set type as "mcq"
+- Answer is single letter: "A", "B", "C", or "D"
 
-STRICT REQUIREMENTS:
-1. Generate EXACTLY {mcq_count} MCQs and {numerical_count} Numerical questions - NO MORE, NO LESS
-2. Each question MUST be UNIQUE - no duplicate or similar questions allowed
-3. Questions MUST match the specified difficulty level EXACTLY - not easier, not harder
-4. Each question should be solvable only by students who have mastered that level
-5. Use proper LaTeX math mode: $...$ for inline math (e.g., $F = ma$, $\\frac{{a}}{{b}}$, $\\sqrt{{x}}$)
-6. MCQs must have exactly 4 options with plausible distractors
-{numerical_answer_instruction}
-8. NO explanations or solutions
-
-QUALITY CHECK: Before finalizing, verify:
-- Total questions = {total_requested} (exactly {mcq_count} MCQs + {numerical_count} Numerical)
-- No duplicate questions
-- Each question truly represents {level} difficulty
-
-Return ONLY valid JSON:
-{{
+FAILURE TO INCLUDE {multi_correct_count} MULTI-CORRECT MCQs WILL RESULT IN REJECTION."""
+            json_example = """{{
+    "questions": [
+        {{
+            "type": "mcq_multi",
+            "text": "Which of the following are correct for an isothermal process?",
+            "options": ["$\\\\Delta U = 0$", "$PV = constant$", "$\\\\Delta T = 0$", "$Q = 0$"],
+            "answer": "ABC",
+            "diagram_tikz": null
+        }},
+        {{
+            "type": "mcq",
+            "text": "Single correct question with $math$ notation",
+            "options": ["Option A", "Option B", "Option C", "Option D"],
+            "answer": "A",
+            "diagram_tikz": null
+        }},
+        {{
+            "type": "numerical", 
+            "text": "Numerical question with $math$",
+            "options": [],
+            "answer": "3.14",
+            "diagram_tikz": null
+        }}
+    ]
+}}"""
+        else:
+            mcq_instruction = "FOR MCQs: All MCQs should be single-correct (type: \"mcq\", answer: \"A\", \"B\", \"C\", or \"D\")"
+            json_example = """{{
     "questions": [
         {{
             "type": "mcq",
@@ -337,6 +348,30 @@ Return ONLY valid JSON:
         }}
     ]
 }}"""
+        
+        prompt = f"""You are an expert exam setter with 20+ years of experience setting {level} level examination papers.
+
+TASK: Generate exactly {mcq_count} MCQs and {numerical_count} Numerical questions on "{topic}" for {subject}.
+
+{level_prompt}
+
+STRICT REQUIREMENTS:
+1. Generate EXACTLY {mcq_count} MCQs and {numerical_count} Numerical questions - NO MORE, NO LESS
+2. Each question MUST be UNIQUE - no duplicate or similar questions allowed
+3. Questions MUST match the specified difficulty level EXACTLY - not easier, not harder
+4. Each question should be solvable only by students who have mastered that level
+5. Use proper LaTeX math mode: $...$ for inline math (e.g., $F = ma$, $\\frac{{a}}{{b}}$, $\\sqrt{{x}}$)
+6. {mcq_instruction}
+{numerical_answer_instruction}
+8. NO explanations or solutions
+
+QUALITY CHECK: Before finalizing, verify:
+- Total questions = {total_requested} (exactly {mcq_count} MCQs + {numerical_count} Numerical)
+- No duplicate questions
+- Each question truly represents {level} difficulty
+
+Return ONLY valid JSON:
+{json_example}"""
 
         max_retries = 2
         for attempt in range(max_retries + 1):
