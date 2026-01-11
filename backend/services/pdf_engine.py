@@ -60,6 +60,7 @@ class PDFEngine:
             subject=data.get("subject", ""),
             topic=data.get("topic", ""),
             level=data.get("level", "JEE Mains"),
+            difficulty=data.get("difficulty", "Medium"),
             total_questions=len(data.get("questions", [])),
             questions=data.get("questions", [])
         )

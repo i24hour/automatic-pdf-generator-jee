@@ -155,67 +155,6 @@ class LLMEngine:
                 unique_questions.append(q)
         
         return unique_questions
-    
-    def detect_subject(self, topic: str) -> Dict[str, str]:
-        """
-        Detect the subject for a given topic using LLM.
-        
-        Args:
-            topic: The topic to classify
-            
-        Returns:
-            Dictionary with 'subject' and 'confidence' keys
-        """
-        prompt = f"""Classify this educational topic into exactly ONE subject.
-
-Topic: "{topic}"
-
-Available subjects: Physics, Chemistry, Maths, Biology
-
-Rules:
-- Reply with ONLY the subject name (Physics, Chemistry, Maths, or Biology)
-- Nothing else, just the single word
-- If the topic could belong to multiple subjects, choose the most likely one
-- If unsure, default to the subject where this topic is most commonly taught
-
-Reply:"""
-
-        try:
-            response = litellm.completion(
-                model=self.model,
-                messages=[
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=0.1  # Low temperature for consistent classification
-            )
-            
-            result = response.choices[0].message.content.strip()
-            
-            # Validate the response
-            valid_subjects = ["Physics", "Chemistry", "Maths", "Biology"]
-            
-            # Check if response contains a valid subject
-            for subject in valid_subjects:
-                if subject.lower() in result.lower():
-                    return {"subject": subject, "confidence": "high"}
-            
-            # If no exact match, try to find partial match
-            result_lower = result.lower()
-            if "phys" in result_lower:
-                return {"subject": "Physics", "confidence": "medium"}
-            elif "chem" in result_lower:
-                return {"subject": "Chemistry", "confidence": "medium"}
-            elif "math" in result_lower:
-                return {"subject": "Maths", "confidence": "medium"}
-            elif "bio" in result_lower:
-                return {"subject": "Biology", "confidence": "medium"}
-            
-            # Default to Physics if can't determine
-            return {"subject": "Physics", "confidence": "low"}
-            
-        except Exception as e:
-            print(f"Error detecting subject: {str(e)}")
-            return {"subject": "Physics", "confidence": "low"}
 
     def generate_questions(
         self,
@@ -223,7 +162,8 @@ Reply:"""
         topic: str,
         mcq_count: int,
         numerical_count: int,
-        level: str = "JEE Mains"
+        level: str = "JEE Mains",
+        difficulty: str = "Medium"
     ) -> Dict[str, Any]:
         """
         Generate test questions using the configured LLM.
@@ -233,16 +173,46 @@ Reply:"""
             topic: The specific topic
             mcq_count: Number of MCQ questions
             numerical_count: Number of numerical questions
-            level: Difficulty level (Boards, JEE Mains, JEE Advanced, Olympiad)
+            level: Exam type (Boards, JEE Mains, JEE Advanced, Olympiad, NEET)
+            difficulty: Difficulty within exam (Easy, Medium, Hard)
             
         Returns:
             Dictionary with questions data
         """
         total_requested = mcq_count + numerical_count
         
+        # Difficulty modifiers for each toughness level
+        difficulty_prompts = {
+            "Easy": """TOUGHNESS: EASY
+- Questions from frequently asked / common patterns
+- Straightforward application of concepts
+- Calculations should be simple with nice numbers
+- Focus on fundamental understanding
+- These are the questions that most students should be able to solve
+- Typical time: 1-2 minutes per question""",
+            
+            "Medium": """TOUGHNESS: MEDIUM
+- Standard exam-level questions
+- May require 2-3 step problem solving
+- Some conceptual depth required
+- Mix of direct and application-based questions
+- These separate average students from good students
+- Typical time: 2-3 minutes per question""",
+            
+            "Hard": """TOUGHNESS: HARD
+- Challenging questions that require deep understanding
+- Multi-step problems with conceptual twists
+- Tricky calculations or non-obvious approaches
+- These are the questions that differentiate toppers
+- May combine multiple concepts
+- Typical time: 3-5 minutes per question"""
+        }
+        
+        difficulty_prompt = difficulty_prompts.get(difficulty, difficulty_prompts["Medium"])
+        
         # Detailed level-specific prompts with examples
         level_prompts = {
-            "Boards": """DIFFICULTY: CBSE/State Board Level
+            "Boards": """EXAM TYPE: CBSE/State Board Level
 CHARACTERISTICS:
 - Direct application of formulas and concepts
 - Single-step or simple two-step problems
@@ -255,7 +225,7 @@ EXAMPLE BOARD-LEVEL QUESTIONS:
 - "Calculate the resistance of a wire with resistivity ρ, length l, and area A"
 - Numerical answers are typically round numbers or simple fractions""",
 
-            "JEE Mains": """DIFFICULTY: JEE Main Level (Moderate-Hard)
+            "JEE Mains": """EXAM TYPE: JEE Main Level
 CHARACTERISTICS:
 - Application-based problems requiring 2-3 step solutions
 - Conceptual twists and common misconception traps
@@ -276,7 +246,7 @@ IMPORTANT FOR NUMERICAL QUESTIONS:
 - Frame questions like "Find the value of X" where X comes out to be an integer
 - Example: Instead of "find velocity" giving 2.5 m/s, ask "find velocity in cm/s" giving 250""",
 
-            "JEE Advanced": """DIFFICULTY: JEE Advanced Level (Hard-Very Hard)
+            "JEE Advanced": """EXAM TYPE: JEE Advanced Level
 CHARACTERISTICS:
 - Multi-concept problems requiring 4-5 step solutions
 - Non-obvious approach needed, lateral thinking required
@@ -301,7 +271,7 @@ EXAMPLE JEE ADVANCED-LEVEL QUESTIONS:
 - "Block on accelerating wedge with friction - find condition for relative motion"
 - Problems that test edge cases and deep understanding""",
 
-            "Olympiad": """DIFFICULTY: Physics/Chemistry/Math Olympiad Level (Extremely Hard)
+            "Olympiad": """EXAM TYPE: Physics/Chemistry/Math Olympiad Level
 CHARACTERISTICS:
 - Research-level problem-solving skills needed
 - Creative and unconventional approaches required
@@ -316,7 +286,7 @@ EXAMPLE OLYMPIAD-LEVEL QUESTIONS:
 - "Prove using variational methods that a certain physical quantity is minimized"
 - Problems from IPHO, INPHO, IMO, RMO past papers""",
 
-            "NEET": """DIFFICULTY: NEET Level (Medical Entrance Exam)
+            "NEET": """EXAM TYPE: NEET Level (Medical Entrance Exam)
 CHARACTERISTICS:
 - NCERT-based conceptual questions - stick to NCERT content strictly
 - Assertion-Reason type questions are very common (format as regular MCQ with options like "Both A and R are true and R is the correct explanation of A")
@@ -351,19 +321,10 @@ EXAMPLE NEET-LEVEL QUESTIONS:
         if level == "JEE Advanced":
             multi_correct_count = max(1, int(mcq_count * 0.2))  # At least 1 multi-correct
             single_correct_count = mcq_count - multi_correct_count
-            mcq_instruction = f"""FOR MCQs - THIS IS MANDATORY:
-*** CRITICALLY IMPORTANT: The FIRST {multi_correct_count} MCQs MUST be MULTI-CORRECT type ***
-
-MULTI-CORRECT MCQs (Questions 1 to {multi_correct_count}):
-- Set type as "mcq_multi" (NOT "mcq")
-- Answer MUST have 2 or 3 correct options like "AB", "ACD", "BC", "ABD"
-- Question text should imply multiple answers (e.g., "Which of the following are correct?")
-
-SINGLE-CORRECT MCQs (Questions {multi_correct_count + 1} to {mcq_count}):
-- Set type as "mcq"
-- Answer is single letter: "A", "B", "C", or "D"
-
-FAILURE TO INCLUDE {multi_correct_count} MULTI-CORRECT MCQs WILL RESULT IN REJECTION."""
+            mcq_instruction = f"""FOR MCQs:
+- Generate {multi_correct_count} MULTI-CORRECT MCQs FIRST (type: "mcq_multi", answer like "AB", "ACD", "BC")
+- Then generate {single_correct_count} SINGLE-CORRECT MCQs (type: "mcq", answer like "A", "B", "C", "D")
+- Multi-correct questions should have 2-3 correct options out of 4"""
             json_example = """{{
     "questions": [
         {{
@@ -415,6 +376,8 @@ FAILURE TO INCLUDE {multi_correct_count} MULTI-CORRECT MCQs WILL RESULT IN REJEC
 TASK: Generate exactly {mcq_count} MCQs and {numerical_count} Numerical questions on "{topic}" for {subject}.
 
 {level_prompt}
+
+{difficulty_prompt}
 
 STRICT REQUIREMENTS:
 1. Generate EXACTLY {mcq_count} MCQs and {numerical_count} Numerical questions - NO MORE, NO LESS

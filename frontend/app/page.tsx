@@ -54,6 +54,7 @@ export default function Home() {
   const [topic, setTopic] = useState("");
   const [questionCount, setQuestionCount] = useState(20);
   const [level, setLevel] = useState("JEE Mains");
+  const [difficulty, setDifficulty] = useState("Medium");
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<GenerateResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -79,6 +80,12 @@ export default function Home() {
     { name: "JEE Advanced", icon: Award, color: "text-purple-400", bgColor: "bg-purple-500/20", borderColor: "border-purple-500" },
     { name: "Olympiad", icon: Trophy, color: "text-yellow-400", bgColor: "bg-yellow-500/20", borderColor: "border-yellow-500" },
     { name: "NEET", icon: Stethoscope, color: "text-pink-400", bgColor: "bg-pink-500/20", borderColor: "border-pink-500" },
+  ];
+
+  const difficulties = [
+    { name: "Easy", color: "text-green-600", bgColor: "bg-green-100", borderColor: "border-green-500" },
+    { name: "Medium", color: "text-yellow-600", bgColor: "bg-yellow-100", borderColor: "border-yellow-500" },
+    { name: "Hard", color: "text-red-600", bgColor: "bg-red-100", borderColor: "border-red-500" },
   ];
 
   // Smart level filtering based on subject
@@ -227,6 +234,7 @@ export default function Home() {
           topic: topic.trim(),
           total_questions: questionCount,
           level,
+          difficulty,
         }),
       });
 
@@ -467,7 +475,7 @@ export default function Home() {
 
           {/* Level Selection */}
           <div className="mb-6">
-            <label className="block mb-3 font-medium text-gray-700">Select Level</label>
+            <label className="block mb-3 font-medium text-gray-700">Select Exam Type</label>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {levels.map((lvl) => {
                 const IconComponent = lvl.icon;
@@ -484,6 +492,29 @@ export default function Home() {
                   >
                     <IconComponent className="w-5 h-5" />
                     <span className="text-xs font-medium text-center">{lvl.name}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Difficulty Selection */}
+          <div className="mb-6">
+            <label className="block mb-3 font-medium text-gray-700">Select Difficulty</label>
+            <div className="grid grid-cols-3 gap-3">
+              {difficulties.map((diff) => {
+                const isSelected = difficulty === diff.name;
+                return (
+                  <button
+                    key={diff.name}
+                    onClick={() => setDifficulty(diff.name)}
+                    disabled={isLoading}
+                    className={`p-3 rounded-xl border transition-all duration-300 flex items-center justify-center gap-2 ${isSelected
+                      ? `${diff.borderColor} ${diff.bgColor} ${diff.color}`
+                      : "border-gray-200 hover:border-gray-300 text-gray-600 hover:text-gray-800 bg-white"
+                      } ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
+                  >
+                    <span className="text-sm font-medium">{diff.name}</span>
                   </button>
                 );
               })}
@@ -544,7 +575,7 @@ export default function Home() {
             ) : (
               <>
                 <Sparkles className="w-5 h-5" />
-                Generate {level} Test Paper
+                Generate {level} ({difficulty}) Test Paper
               </>
             )}
           </button>

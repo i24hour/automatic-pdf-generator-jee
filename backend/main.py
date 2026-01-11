@@ -69,7 +69,8 @@ class GenerateRequest(BaseModel):
     subject: str = Field(..., description="Subject: Physics, Chemistry, or Maths")
     topic: str = Field(..., description="Specific topic for the test")
     total_questions: int = Field(default=20, ge=5, le=50, description="Total number of questions")
-    level: str = Field(default="JEE Mains", description="Difficulty level: Boards, JEE Mains, JEE Advanced, Olympiad")
+    level: str = Field(default="JEE Mains", description="Exam type: Boards, JEE Mains, JEE Advanced, Olympiad, NEET")
+    difficulty: str = Field(default="Medium", description="Difficulty within exam: Easy, Medium, Hard")
 
 
 class GenerateResponse(BaseModel):
@@ -269,7 +270,8 @@ async def generate_test(
             topic=request.topic,
             mcq_count=mcq_count,
             numerical_count=numerical_count,
-            level=request.level
+            level=request.level,
+            difficulty=request.difficulty
         )
         
         if not llm_result.get("success"):
@@ -279,15 +281,17 @@ async def generate_test(
             )
         
         
-        # Generate filename: Top{N}_{Topic}_{Level}.pdf
+        # Generate filename: Top{N}_{Topic}_{Level}_{Difficulty}.pdf
         # Sanitize topic for filename (replace special chars)
         safe_topic = request.topic.replace("&", "and").replace("/", "-").replace("\\", "-")
         safe_topic = safe_topic.replace(" ", "_")
         safe_level = request.level.replace(" ", "_")
-        filename = f"Top{request.total_questions}_{safe_topic}_{safe_level}"
+        safe_difficulty = request.difficulty
+        filename = f"Top{request.total_questions}_{safe_topic}_{safe_level}_{safe_difficulty}"
         
         # Generate PDF
         llm_result["level"] = request.level  # Pass level to PDF template
+        llm_result["difficulty"] = request.difficulty  # Pass difficulty to PDF template
         pdf_path = pdf_engine.generate_pdf(llm_result, filename)
         
         if not pdf_path:
