@@ -253,9 +253,13 @@ async def generate_test(
                 detail=llm_result.get("error", "Failed to generate questions")
             )
         
-        # Generate unique filename
-        filename = f"test_{request.subject}_{request.topic}_{uuid.uuid4().hex[:8]}"
-        filename = filename.replace(" ", "_").lower()
+        
+        # Generate filename: Top{N}_{Topic}_{Level}.pdf
+        # Sanitize topic for filename (replace special chars)
+        safe_topic = request.topic.replace("&", "and").replace("/", "-").replace("\\", "-")
+        safe_topic = safe_topic.replace(" ", "_")
+        safe_level = request.level.replace(" ", "_")
+        filename = f"Top{request.total_questions}_{safe_topic}_{safe_level}"
         
         # Generate PDF
         llm_result["level"] = request.level  # Pass level to PDF template
