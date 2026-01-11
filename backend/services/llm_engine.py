@@ -186,8 +186,7 @@ Reply:"""
                 messages=[
                     {"role": "user", "content": prompt}
                 ],
-                temperature=0.1,  # Low temperature for consistent classification
-                max_tokens=10
+                temperature=0.1  # Low temperature for consistent classification
             )
             
             result = response.choices[0].message.content.strip()
