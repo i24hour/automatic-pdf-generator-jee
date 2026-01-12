@@ -17,7 +17,7 @@ SMTP_HOST = "smtp.gmail.com"
 SMTP_PORT = 587
 SMTP_USER = os.getenv("SMTP_EMAIL", "mentorsmantra@gmail.com")
 SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")
-FROM_NAME = os.getenv("FROM_NAME", "Mentors Mantra")
+FROM_NAME = os.getenv("FROM_NAME", "INFINITEST")
 
 # Frontend URL for links in emails
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
@@ -80,7 +80,8 @@ class EmailService:
         <body>
             <div class="container">
                 <div class="header">
-                    <div class="logo"><span>📚</span> Mentors Mantra</div>
+                    <div class="logo"><span>🎯</span> INFINITEST</div>
+                    <div style="color: #6b7280; font-size: 12px; margin-top: 4px;">A Mentors Mantra Product</div>
                 </div>
                 <h2>Verify Your Email</h2>
                 <p>Hi {name or 'there'},</p>
@@ -99,7 +100,7 @@ class EmailService:
         </html>
         """
         
-        return self._send_email(to_email, "Verify your email - Mentors Mantra", html_content)
+        return self._send_email(to_email, "Verify your email - INFINITEST", html_content)
     
     def send_password_reset_email(self, to_email: str, name: Optional[str], token: str) -> bool:
         """Send password reset link."""
@@ -126,7 +127,8 @@ class EmailService:
         <body>
             <div class="container">
                 <div class="header">
-                    <div class="logo"><span>📚</span> Mentors Mantra</div>
+                    <div class="logo"><span>🎯</span> INFINITEST</div>
+                    <div style="color: #6b7280; font-size: 12px; margin-top: 4px;">A Mentors Mantra Product</div>
                 </div>
                 <h2>Reset Your Password</h2>
                 <p>Hi {name or 'there'},</p>
@@ -145,7 +147,7 @@ class EmailService:
         </html>
         """
         
-        return self._send_email(to_email, "Reset your password - Mentors Mantra", html_content)
+        return self._send_email(to_email, "Reset your password - INFINITEST", html_content)
 
 
 # Singleton instance
