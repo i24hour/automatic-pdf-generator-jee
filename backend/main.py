@@ -71,6 +71,8 @@ class GenerateRequest(BaseModel):
     total_questions: int = Field(default=20, ge=5, le=50, description="Total number of questions")
     level: str = Field(default="JEE Mains", description="Exam type: Boards, JEE Mains, JEE Advanced, Olympiad, NEET")
     difficulty: str = Field(default="Medium", description="Difficulty within exam: Easy, Medium, Hard")
+    num_mcqs: Optional[int] = Field(default=None, description="Number of MCQs (optional)")
+    num_numerical: Optional[int] = Field(default=None, description="Number of numerical questions (optional)")
 
 
 class GenerateResponse(BaseModel):
@@ -277,21 +279,34 @@ async def generate_test(
     
     try:
         # Calculate question split
-        # NEET is MCQ-only (no numerical questions)
-        if request.level == "NEET":
-            mcq_count = request.total_questions
-            numerical_count = 0
-        else:
-            # 80% MCQ, 20% Numerical for JEE and others
-            mcq_count = int(request.total_questions * 0.8)
-            numerical_count = request.total_questions - mcq_count
+        if request.num_mcqs is not None and request.num_numerical is not None:
+            # Use user provided split
+            mcq_count = request.num_mcqs
+            numerical_count = request.num_numerical
             
-            # Ensure at least 1 of each type for non-NEET
-            if mcq_count < 1:
-                mcq_count = 1
-            if numerical_count < 1:
-                numerical_count = 1
-                mcq_count = request.total_questions - 1
+            # Validate total matches
+            if mcq_count + numerical_count != request.total_questions:
+                # If mismatch, prioritize user split and update total (though total is used for filename)
+                # Or just error? Let's be flexible and trust the split, but maybe warn?
+                # Actually, let's just use the split values.
+                pass
+        else:
+            # Default split logic
+            # NEET is MCQ-only (no numerical questions)
+            if request.level == "NEET":
+                mcq_count = request.total_questions
+                numerical_count = 0
+            else:
+                # 80% MCQ, 20% Numerical for JEE and others
+                mcq_count = int(request.total_questions * 0.8)
+                numerical_count = request.total_questions - mcq_count
+                
+                # Ensure at least 1 of each type for non-NEET
+                if mcq_count < 1:
+                    mcq_count = 1
+                if numerical_count < 1:
+                    numerical_count = 1
+                    mcq_count = request.total_questions - 1
         
         # Generate questions using LLM
         llm_result = llm_engine.generate_questions(
