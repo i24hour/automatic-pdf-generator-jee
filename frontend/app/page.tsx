@@ -433,6 +433,39 @@ export default function Home() {
           </div>
         )}
 
+        {/* Promo Code Section */}
+        <div className="flex justify-center mb-6">
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <Gift className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Enter promo code"
+                value={promoCode}
+                onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                className="pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent w-48"
+              />
+            </div>
+            <button
+              onClick={handleApplyPromo}
+              disabled={promoLoading || !promoCode.trim()}
+              className="px-4 py-2 bg-indigo-500 text-white rounded-lg text-sm font-medium hover:bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {promoLoading ? "Applying..." : "Apply"}
+            </button>
+          </div>
+        </div>
+        {promoMessage && (
+          <div className={`flex justify-center mb-6`}>
+            <div className={`text-sm px-4 py-2 rounded-lg ${promoMessage.type === "success"
+              ? "bg-green-100 text-green-700"
+              : "bg-red-100 text-red-700"
+              }`}>
+              {promoMessage.text}
+            </div>
+          </div>
+        )}
+
         {/* Main Card */}
         <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-lg">
           {/* Subject Selection */}
