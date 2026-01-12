@@ -654,6 +654,7 @@ export default function Home() {
               www.mentorsmantra.co.in
             </a>
             <p>Contact: 9821040290 / 7982387231</p>
+            <p className="text-gray-400 mt-2 italic">A Mentors Mantra Product</p>
           </div>
         </div>
       </div>
