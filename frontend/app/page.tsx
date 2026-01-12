@@ -56,6 +56,8 @@ export default function Home() {
   const [questionCount, setQuestionCount] = useState(20);
   const [level, setLevel] = useState("JEE Mains");
   const [difficulty, setDifficulty] = useState("Medium");
+  const [numMCQs, setNumMCQs] = useState(16);
+  const [numNumericals, setNumNumericals] = useState(4);
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<GenerateResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -105,6 +107,44 @@ export default function Home() {
   };
 
   const levels = getAvailableLevels();
+
+  // Update split when level changes
+  useEffect(() => {
+    if (level === "NEET") {
+      setNumMCQs(questionCount);
+      setNumNumericals(0);
+    } else {
+      // Recalculate based on current total
+      const mcqs = Math.round(questionCount * 0.8);
+      const numericals = questionCount - mcqs;
+      setNumMCQs(mcqs);
+      setNumNumericals(numericals);
+    }
+  }, [level]);
+
+  const handleSliderChange = (val: number) => {
+    setQuestionCount(val);
+    if (level === "NEET") {
+      setNumMCQs(val);
+      setNumNumericals(0);
+    } else {
+      const mcqs = Math.round(val * 0.8);
+      const numericals = val - mcqs;
+      setNumMCQs(mcqs);
+      setNumNumericals(numericals);
+    }
+  };
+
+  const handleSplitChange = (type: 'mcq' | 'numerical', value: number) => {
+    const newVal = Math.max(0, value);
+    if (type === 'mcq') {
+      setNumMCQs(newVal);
+      setQuestionCount(newVal + numNumericals);
+    } else {
+      setNumNumericals(newVal);
+      setQuestionCount(numMCQs + newVal);
+    }
+  };
 
   // Auto-switch level when subject changes to avoid invalid state
   useEffect(() => {
@@ -240,6 +280,8 @@ export default function Home() {
           total_questions: questionCount,
           level,
           difficulty,
+          num_mcqs: numMCQs,
+          num_numerical: numNumericals,
         }),
         signal: abortControllerRef.current.signal,
       });
@@ -567,7 +609,7 @@ export default function Home() {
               min={5}
               max={50}
               value={questionCount}
-              onChange={(e) => setQuestionCount(parseInt(e.target.value))}
+              onChange={(e) => handleSliderChange(parseInt(e.target.value))}
               className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
               disabled={isLoading}
             />
@@ -575,10 +617,33 @@ export default function Home() {
               <span>5</span>
               <span>50</span>
             </div>
-            <p className="text-xs text-gray-500 mt-2">
-              <Zap className="w-3 h-3 inline mr-1" />
-              Split: ~{Math.round(questionCount * 0.8)} MCQs + ~{Math.round(questionCount * 0.2)} Numerical
-            </p>
+          </div>
+
+          {/* Question Split Inputs */}
+          <div className="grid grid-cols-2 gap-4 mb-8">
+            <div>
+              <label className="block mb-2 text-sm font-medium text-gray-700">MCQs (80%)</label>
+              <input
+                type="number"
+                value={numMCQs}
+                onChange={(e) => handleSplitChange('mcq', parseInt(e.target.value) || 0)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                min={0}
+                disabled={isLoading}
+              />
+            </div>
+            <div>
+              <label className="block mb-2 text-sm font-medium text-gray-700">Numerical (20%)</label>
+              <input
+                type="number"
+                value={numNumericals}
+                onChange={(e) => handleSplitChange('numerical', parseInt(e.target.value) || 0)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                min={0}
+                disabled={isLoading || level === "NEET"}
+              />
+              {level === "NEET" && <p className="text-xs text-gray-500 mt-1">Not available for NEET</p>}
+            </div>
           </div>
 
           {/* Generate Button */}
