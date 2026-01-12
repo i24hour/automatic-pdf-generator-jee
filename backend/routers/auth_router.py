@@ -240,6 +240,20 @@ async def logout_all(
     return MessageResponse(message=f"Logged out from {count} device(s)")
 
 
+@router.get("/me", response_model=UserResponse)
+async def get_current_user_info(
+    current_user: User = Depends(get_current_user_required)
+):
+    """Get current authenticated user info."""
+    return UserResponse(
+        id=current_user.id,
+        email=current_user.email,
+        name=current_user.name,
+        phone=current_user.phone,
+        is_verified=current_user.is_verified
+    )
+
+
 @router.post("/verify-email", response_model=MessageResponse)
 async def verify_email(request: VerifyEmailRequest, db: Session = Depends(get_db)):
     """Verify email with token."""

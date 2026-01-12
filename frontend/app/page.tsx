@@ -48,7 +48,7 @@ interface RateLimitInfo {
 }
 
 export default function Home() {
-  const { user, isLoading: authLoading, isAuthenticated, logout, authFetch } = useAuth();
+  const { user, isLoading: authLoading, isAuthenticated, logout, authFetch, refreshUser } = useAuth();
   const router = useRouter();
 
   const [subject, setSubject] = useState("Physics");
@@ -351,7 +351,7 @@ export default function Home() {
 
             <div className="space-y-3">
               <button
-                onClick={() => window.location.reload()}
+                onClick={() => refreshUser()}
                 className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors"
               >
                 I&apos;ve Verified My Email

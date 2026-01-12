@@ -20,6 +20,7 @@ interface AuthContextType {
     register: (email: string, password: string, name?: string, phone?: string) => Promise<{ user: User }>;
     logout: () => void;
     refreshToken: () => Promise<boolean>;
+    refreshUser: () => Promise<void>;
     resendVerification: () => Promise<void>;
     authFetch: (url: string, options?: RequestInit) => Promise<Response>;
 }
@@ -231,6 +232,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     };
 
+    // Refresh user data from server (e.g., after email verification)
+    const refreshUser = async (): Promise<void> => {
+        const currentToken = localStorage.getItem("auth_token");
+        if (!currentToken) return;
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/auth/me`, {
+                headers: {
+                    Authorization: `Bearer ${currentToken}`,
+                },
+            });
+
+            if (response.ok) {
+                const userData = await response.json();
+                setUser(userData);
+                localStorage.setItem("auth_user", JSON.stringify(userData));
+            }
+        } catch (error) {
+            console.error("Failed to refresh user:", error);
+        }
+    };
+
     return (
         <AuthContext.Provider
             value={{
@@ -242,6 +265,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 register,
                 logout,
                 refreshToken: refreshAccessToken,
+                refreshUser,
                 resendVerification,
                 authFetch,
             }}
