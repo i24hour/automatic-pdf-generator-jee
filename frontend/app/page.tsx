@@ -90,8 +90,8 @@ export default function Home() {
 
   const difficulties = [
     { name: "Easy", color: "text-green-600", bgColor: "bg-green-100", borderColor: "border-green-500" },
-    { name: "Medium", color: "text-yellow-600", bgColor: "bg-yellow-100", borderColor: "border-yellow-500" },
-    { name: "Hard", color: "text-red-600", bgColor: "bg-red-100", borderColor: "border-red-500" },
+    { name: "Medium", color: "text-green-600", bgColor: "bg-green-100", borderColor: "border-green-500" },
+    { name: "Hard", color: "text-green-600", bgColor: "bg-green-100", borderColor: "border-green-500" },
   ];
 
   // Smart level filtering based on subject
