@@ -426,7 +426,7 @@ export default function Home() {
               </span>
               {rateLimit.reset_hours > 0 && (
                 <span className="text-gray-500">
-                  • Resets in {rateLimit.reset_hours.toFixed(1)}h
+                  • Reset on 1st {new Date(new Date().setMonth(new Date().getMonth() + 1)).toLocaleString('default', { month: 'short' })}
                 </span>
               )}
             </div>

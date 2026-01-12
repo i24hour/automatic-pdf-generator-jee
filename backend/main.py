@@ -133,25 +133,26 @@ def check_rate_limit(user: User, db: Session) -> tuple[bool, int, float]:
     # User's total limit = base limit + bonus from promo codes
     user_total_limit = RATE_LIMIT_COUNT + (user.bonus_limit or 0)
     
-    cutoff_time = datetime.now(timezone.utc) - timedelta(hours=RATE_LIMIT_HOURS)
+    # Calculate start of current month
+    now = datetime.now(timezone.utc)
+    start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     
-    # Count generations in the rate limit window
+    # Count generations in the current month
     recent_generations = db.query(PDFGeneration).filter(
         PDFGeneration.user_id == user.id,
-        PDFGeneration.created_at >= cutoff_time
-    ).order_by(PDFGeneration.created_at.asc()).all()
+        PDFGeneration.created_at >= start_of_month
+    ).all()
     
     used_count = len(recent_generations)
     remaining = max(0, user_total_limit - used_count)
     
-    # Calculate reset time (when the oldest generation expires)
-    if recent_generations and used_count >= user_total_limit:
-        oldest = recent_generations[0]
-        reset_time = oldest.created_at + timedelta(hours=RATE_LIMIT_HOURS)
-        hours_until_reset = (reset_time - datetime.now(timezone.utc)).total_seconds() / 3600
-        hours_until_reset = max(0, hours_until_reset)
+    # Calculate reset time (1st of next month)
+    if now.month == 12:
+        next_month = now.replace(year=now.year + 1, month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
     else:
-        hours_until_reset = 0
+        next_month = now.replace(month=now.month + 1, day=1, hour=0, minute=0, second=0, microsecond=0)
+        
+    hours_until_reset = (next_month - now).total_seconds() / 3600
     
     is_allowed = used_count < user_total_limit
     return is_allowed, remaining, hours_until_reset, user_total_limit
