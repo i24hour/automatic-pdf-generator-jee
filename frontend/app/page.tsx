@@ -23,6 +23,7 @@ import {
   Gift,
   Leaf,
   Stethoscope,
+  X,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 
@@ -66,6 +67,7 @@ export default function Home() {
   const [promoMessage, setPromoMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [isDetectingSubject, setIsDetectingSubject] = useState(false);
   const detectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const subjects = [
     { name: "Physics", icon: Atom },
@@ -219,6 +221,9 @@ export default function Home() {
       return;
     }
 
+    // Create new abort controller for this request
+    abortControllerRef.current = new AbortController();
+
     setIsLoading(true);
     setError(null);
     setResult(null);
@@ -236,6 +241,7 @@ export default function Home() {
           level,
           difficulty,
         }),
+        signal: abortControllerRef.current.signal,
       });
 
       if (!response.ok) {
@@ -253,15 +259,29 @@ export default function Home() {
         used: prev.limit - data.rate_limit_remaining,
       } : null);
 
-    } catch (err) {
+    } catch (err: unknown) {
+      // Check if it was cancelled
+      if (err instanceof Error && err.name === 'AbortError') {
+        setError("Generation cancelled.");
+        return;
+      }
       // Log technical error to console for debugging
       console.error("Generation error:", err);
       // Show generic message to user
       setError("Failed to generate test paper. Please try again.");
     } finally {
       setIsLoading(false);
+      abortControllerRef.current = null;
     }
   };
+
+  const handleCancelGeneration = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+  };
+
 
   const handleDownload = () => {
     if (result?.pdf_filename) {
@@ -579,6 +599,17 @@ export default function Home() {
               </>
             )}
           </button>
+
+          {/* Cancel Button - shows during loading */}
+          {isLoading && (
+            <button
+              onClick={handleCancelGeneration}
+              className="w-full py-2.5 mt-2 bg-gray-100 hover:bg-red-50 text-gray-700 hover:text-red-600 font-medium rounded-lg transition-colors flex items-center justify-center gap-2 border border-gray-200 hover:border-red-200"
+            >
+              <X className="w-4 h-4" />
+              Cancel Generation
+            </button>
+          )}
 
           {/* Rate limit exceeded message */}
           {rateLimit && rateLimit.remaining === 0 && !isLoading && (
