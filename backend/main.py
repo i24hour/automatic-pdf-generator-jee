@@ -132,8 +132,19 @@ def check_rate_limit(user: User, db: Session) -> tuple[bool, int, float]:
     Check if user has exceeded rate limit.
     Returns: (is_allowed, remaining_count, hours_until_reset)
     """
-    # User's total limit = base limit + bonus from promo codes
-    user_total_limit = RATE_LIMIT_COUNT + (user.bonus_limit or 0)
+
+    # Check if monthly bonus needs reset
+    now = datetime.now(timezone.utc)
+    current_month_str = now.strftime("%Y-%m")
+    
+    if user.last_bonus_month != current_month_str:
+        user.monthly_bonus_limit = 0
+        user.last_bonus_month = current_month_str
+        db.commit()
+        db.refresh(user)
+
+    # User's total limit = base limit + permanent bonus + monthly bonus
+    user_total_limit = RATE_LIMIT_COUNT + (user.bonus_limit or 0) + (user.monthly_bonus_limit or 0)
     
     # Calculate start of current month
     now = datetime.now(timezone.utc)
@@ -434,8 +445,13 @@ async def apply_promo_code(
         )
     
     # Apply the promo code
+    # Apply the promo code
     # 1. Add bonus to user
-    current_user.bonus_limit = (current_user.bonus_limit or 0) + promo.bonus_limit
+    if promo.is_monthly_only:
+        current_user.monthly_bonus_limit = (current_user.monthly_bonus_limit or 0) + promo.bonus_limit
+        current_user.last_bonus_month = datetime.now(timezone.utc).strftime("%Y-%m")
+    else:
+        current_user.bonus_limit = (current_user.bonus_limit or 0) + promo.bonus_limit
     
     # 2. Record usage
     usage = PromoCodeUsage(
@@ -450,7 +466,7 @@ async def apply_promo_code(
     db.commit()
     
     # Calculate new total limit
-    new_total_limit = RATE_LIMIT_COUNT + current_user.bonus_limit
+    new_total_limit = RATE_LIMIT_COUNT + (current_user.bonus_limit or 0) + (current_user.monthly_bonus_limit or 0)
     
     return ApplyPromoResponse(
         success=True,
@@ -465,25 +481,45 @@ async def seed_promo_code(
     admin_key: str,
     db: Session = Depends(get_db)
 ):
-    """Admin endpoint to seed the default promo code."""
-    if admin_key != os.getenv("JWT_SECRET_KEY", ""):
+    """Seed promo codes and reset usage (Admin only)."""
+    if admin_key != os.getenv("ADMIN_KEY", "admin123"):
         raise HTTPException(status_code=403, detail="Invalid admin key")
     
-    existing = db.query(PromoCode).filter(PromoCode.code == "MENTORSMANTRA10").first()
-    if existing:
-        return {"message": "Promo code already exists", "code": existing.code, "uses": f"{existing.current_uses}/{existing.max_uses}"}
+    results = []
+
+    # 1. Create/Update Promo Code MENTORSMANTRA6
+    code = "MENTORSMANTRA6"
+    promo = db.query(PromoCode).filter(PromoCode.code == code).first()
+    if not promo:
+        promo = PromoCode(
+            code=code,
+            bonus_limit=6,
+            max_uses=5,
+            is_monthly_only=True,
+            is_active=True
+        )
+        db.add(promo)
+        results.append(f"Created {code}")
+    else:
+        promo.bonus_limit = 6
+        promo.max_uses = 5
+        promo.is_monthly_only = True
+        promo.is_active = True
+        results.append(f"Updated {code}")
     
-    promo = PromoCode(
-        code="MENTORSMANTRA10",
-        bonus_limit=10,
-        max_uses=2,
-        current_uses=0,
-        is_active=True
-    )
-    db.add(promo)
+    # 3. Reset Usage for Current Month
+    now = datetime.now(timezone.utc)
+    start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    
+    deleted = db.query(PDFGeneration).filter(
+        PDFGeneration.created_at >= start_of_month
+    ).delete(synchronize_session=False)
+    
+    results.append(f"Deleted {deleted} records from current month")
+    
     db.commit()
     
-    return {"message": "Promo code created", "code": "MENTORSMANTRA10", "bonus": 10, "max_uses": 2}
+    return {"message": "Admin tasks completed", "details": results}
 
 
 @app.get("/api/models")

@@ -28,7 +28,9 @@ class User(Base):
     name = Column(String, nullable=True)
     phone = Column(String, nullable=True)  # Phone number
     is_verified = Column(Boolean, default=False)
-    bonus_limit = Column(Integer, default=0)  # Extra limit from promo codes
+    bonus_limit = Column(Integer, default=0)  # Permanent extra limit
+    monthly_bonus_limit = Column(Integer, default=0)  # Monthly extra limit (resets every month)
+    last_bonus_month = Column(String, nullable=True)  # Track which month the monthly bonus belongs to (YYYY-MM)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     
     # Relationships
@@ -115,6 +117,7 @@ class PromoCode(Base):
     max_uses = Column(Integer, nullable=False, default=2)  # Max users who can use
     current_uses = Column(Integer, default=0)  # How many times used
     is_active = Column(Boolean, default=True)
+    is_monthly_only = Column(Boolean, default=False)  # If true, bonus applies only to current month
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     expires_at = Column(DateTime(timezone=True), nullable=True)  # Optional expiration date
     
