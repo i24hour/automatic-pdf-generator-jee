@@ -48,7 +48,16 @@ def get_db():
 
 def init_db():
     """Initialize database tables and run migrations."""
-    from models import User, PDFGeneration, PromoCode, PromoCodeUsage, RefreshToken, VerificationToken, PasswordResetToken
+    from models import (
+        User,
+        PDFGeneration,
+        PromoCode,
+        PromoCodeUsage,
+        RefreshToken,
+        VerificationToken,
+        PasswordResetToken,
+        TopicSubjectCache,
+    )
     
     # Create all tables
     Base.metadata.create_all(bind=engine)
