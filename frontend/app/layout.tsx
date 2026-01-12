@@ -9,7 +9,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Mentors Mantra Test Generator",
+  title: "INFINITEST Test Generator",
   description: "Generate professionally formatted PDF test papers using AI for JEE Main/Advanced preparation",
   keywords: ["JEE", "test generator", "exam paper", "physics", "chemistry", "maths", "AI"],
 };

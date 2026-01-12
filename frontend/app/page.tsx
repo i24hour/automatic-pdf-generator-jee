@@ -404,7 +404,7 @@ export default function Home() {
             <BookOpen className="w-10 h-10 text-white" />
           </div>
           <h1 className="text-4xl md:text-5xl font-bold mb-4 text-gray-900">
-            Mentors Mantra
+            INFINITEST
           </h1>
           <div className="flex items-center justify-center gap-2 text-xl text-gray-500 font-medium">
             <span>Trained by IITians</span>
