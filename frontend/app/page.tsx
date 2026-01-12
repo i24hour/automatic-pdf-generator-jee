@@ -22,6 +22,7 @@ import {
   Clock,
   Gift,
   Leaf,
+  Dna,
   Stethoscope,
   X,
 } from "lucide-react";
@@ -75,7 +76,8 @@ export default function Home() {
     { name: "Physics", icon: Atom },
     { name: "Chemistry", icon: FlaskConical },
     { name: "Maths", icon: Calculator },
-    { name: "Biology", icon: Leaf },
+    { name: "Zoology", icon: Dna },
+    { name: "Botany", icon: Leaf },
   ];
 
   const allLevels = [
@@ -98,8 +100,8 @@ export default function Home() {
       // NEET doesn't have Maths
       return allLevels.filter(l => l.name !== "NEET");
     }
-    if (subject === "Biology") {
-      // Biology is only for Boards and NEET
+    if (subject === "Zoology" || subject === "Botany") {
+      // Zoology and Botany are only for Boards and NEET
       return allLevels.filter(l => l.name === "Boards" || l.name === "NEET");
     }
     // Physics and Chemistry: all levels available

@@ -32,13 +32,13 @@ class LLMEngine:
         """Classify a topic into a subject with confidence using the LLM."""
         prompt = f"""
 You are a subject classifier for exam topics. Given the topic text, return a JSON with:
-- \"subject\": one of [\"Physics\", \"Chemistry\", \"Maths\", \"Biology\"]
-- \"confidence\": \"high\", \"medium\", or \"low\"
+- "subject": one of ["Physics", "Chemistry", "Maths", "Zoology", "Botany"]
+- "confidence": "high", "medium", or "low"
 
-Topic: \"{topic}\"
+Topic: "{topic}"
 
 Return ONLY JSON, no extra text.
-Example: {{\"subject\":\"Physics\",\"confidence\":\"high\"}}
+Example: {{"subject":"Physics","confidence":"high"}}
 """
 
         try:
@@ -58,7 +58,7 @@ Example: {{\"subject\":\"Physics\",\"confidence\":\"high\"}}
             if confidence not in {"high", "medium", "low"}:
                 confidence = "medium"
             # Normalize subject casing
-            subject_map = {s.lower(): s for s in ["Physics", "Chemistry", "Maths", "Biology"]}
+            subject_map = {s.lower(): s for s in ["Physics", "Chemistry", "Maths", "Zoology", "Botany"]}
             subject = subject_map.get(subject.lower(), "Physics")
             return {"subject": subject, "confidence": confidence}
         except Exception as e:
