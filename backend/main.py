@@ -448,7 +448,7 @@ async def generate_test_verified(
                     mcq_count = request.total_questions - 1
         
         # Generate questions WITH VERIFICATION
-        llm_result = llm_engine.generate_questions_with_verification(
+        llm_result = await llm_engine.generate_questions_with_verification_async(
             subject=request.subject,
             topic=request.topic,
             mcq_count=mcq_count,

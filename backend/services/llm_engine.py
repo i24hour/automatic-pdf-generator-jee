@@ -7,6 +7,7 @@ Switch between Gemini, OpenAI, or Claude by changing ACTIVE_MODEL in .env
 import os
 import json
 import re
+import asyncio
 from typing import Dict, List, Any
 from dotenv import load_dotenv
 import litellm
@@ -500,9 +501,9 @@ Return ONLY valid JSON:
             "questions": data.get("questions", []) if 'data' in locals() else []
         }
 
-    def verify_numerical_answer(self, question_text: str, original_answer: str, subject: str) -> Dict[str, Any]:
+    async def verify_numerical_answer_async(self, question_text: str, original_answer: str, subject: str) -> Dict[str, Any]:
         """
-        Verify a numerical answer by asking LLM to solve the question step-by-step.
+        Verify a numerical answer by asking LLM to solve the question step-by-step (ASYNC).
         Returns the verified answer and whether it matches the original.
         """
         prompt = f"""You are a {subject} expert. Solve this numerical problem step-by-step.
@@ -518,7 +519,8 @@ INSTRUCTIONS:
 Solve now:"""
 
         try:
-            response = litellm.completion(
+            # Use acompletion for async call
+            response = await litellm.acompletion(
                 model=self.model,
                 messages=[
                     {"role": "system", "content": f"You are a precise {subject} solver. Show step-by-step working and give exact numerical answer."},
@@ -567,7 +569,7 @@ Solve now:"""
                 "matches": True  # Assume original is correct if verification fails
             }
 
-    def generate_questions_with_verification(
+    async def generate_questions_with_verification_async(
         self,
         subject: str,
         topic: str,
@@ -577,26 +579,42 @@ Solve now:"""
         difficulty: str = "Medium"
     ) -> Dict[str, Any]:
         """
-        Generate questions and verify numerical answers.
+        Generate questions and verify numerical answers in PARALLEL.
         """
-        # First, generate questions normally
+        # First, generate questions normally (this is still sync for now, or we could make it async too if needed)
+        # But the bottleneck is the verification loop, so we focus on that.
         result = self.generate_questions(subject, topic, mcq_count, numerical_count, level, difficulty)
         
         if not result.get("success"):
             return result
         
         questions = result.get("questions", [])
-        verified_count = 0
-        corrected_count = 0
         
-        # Verify only numerical questions
-        for q in questions:
+        # Identify numerical questions to verify
+        verification_tasks = []
+        numerical_indices = []
+        
+        for i, q in enumerate(questions):
             if q.get("type") == "numerical":
-                verification = self.verify_numerical_answer(
-                    q.get("text", ""),
-                    q.get("answer", ""),
-                    subject
+                numerical_indices.append(i)
+                verification_tasks.append(
+                    self.verify_numerical_answer_async(
+                        q.get("text", ""),
+                        q.get("answer", ""),
+                        subject
+                    )
                 )
+        
+        # Run all verifications in parallel
+        if verification_tasks:
+            verification_results = await asyncio.gather(*verification_tasks)
+            
+            verified_count = 0
+            corrected_count = 0
+            
+            for i, verification in enumerate(verification_results):
+                q_index = numerical_indices[i]
+                q = questions[q_index]
                 
                 if verification.get("success"):
                     verified_count += 1
@@ -610,12 +628,18 @@ Solve now:"""
                     else:
                         q["answer_verified"] = True
                         q["solution"] = verification.get("solution")
-        
-        result["verification_stats"] = {
-            "total_numerical": numerical_count,
-            "verified": verified_count,
-            "corrected": corrected_count
-        }
+            
+            result["verification_stats"] = {
+                "total_numerical": numerical_count,
+                "verified": verified_count,
+                "corrected": corrected_count
+            }
+        else:
+            result["verification_stats"] = {
+                "total_numerical": numerical_count,
+                "verified": 0,
+                "corrected": 0
+            }
         
         return result
 
