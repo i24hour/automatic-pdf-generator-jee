@@ -471,6 +471,10 @@ Return ONLY valid JSON:
                     if actual_count < total_requested and attempt < max_retries:
                         print(f"Got {actual_count} questions, expected {total_requested}. Retrying...")
                         continue
+                    
+                    # Trim if we got too many
+                    if actual_count > total_requested:
+                        data["questions"] = data["questions"][:total_requested]
                 
                 return {
                     "success": True,
