@@ -7,7 +7,7 @@ import os
 import uuid
 import base64
 from datetime import datetime, timedelta, timezone
-from typing import Optional
+from typing import Optional, Dict
 from fastapi import FastAPI, HTTPException, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
@@ -40,13 +40,14 @@ app = FastAPI(
 origins = [
     "http://localhost:3000",
     "https://localhost:3000",
-    "https://mentors-mantra-test-generator.vercel.app",
-    "https://*.vercel.app",
+    "https://infinitest.tech",
+    "https://www.infinitest.tech",
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins for now
+    allow_origins=origins,
+    allow_origin_regex="https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
@@ -395,6 +396,109 @@ async def download_pdf(filename: str):
         filename=filename,
         media_type="application/pdf"
     )
+
+
+class GenerateVerifiedResponse(BaseModel):
+    """Response for verified generation endpoint."""
+    success: bool
+    message: str
+    pdf_filename: Optional[str] = None
+    total_mcq: Optional[int] = None
+    total_numerical: Optional[int] = None
+    verification_stats: Optional[Dict] = None
+    rate_limit_remaining: Optional[int] = None
+    rate_limit_reset_hours: Optional[float] = None
+
+
+@app.post("/api/generate-verified", response_model=GenerateVerifiedResponse)
+async def generate_test_verified(
+    request: GenerateRequest,
+    current_user: User = Depends(get_current_user_required),
+    db: Session = Depends(get_db)
+):
+    """
+    TRIAL ENDPOINT: Generate test with numerical answer verification.
+    Verifies each numerical question by re-solving it.
+    """
+    try:
+        # Check rate limit
+        is_allowed, remaining, reset_hours, total_limit = check_rate_limit(current_user, db)
+        
+        if not is_allowed:
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail=f"Rate limit exceeded. You have used all {total_limit} generations this month. Resets in {reset_hours:.1f} hours."
+            )
+        
+        # Determine question split
+        if request.num_mcqs is not None and request.num_numerical is not None:
+            mcq_count = request.num_mcqs
+            numerical_count = request.num_numerical
+        else:
+            if request.level == "NEET":
+                mcq_count = request.total_questions
+                numerical_count = 0
+            else:
+                mcq_count = int(request.total_questions * 0.8)
+                numerical_count = request.total_questions - mcq_count
+                if mcq_count < 1:
+                    mcq_count = 1
+                if numerical_count < 1:
+                    numerical_count = 1
+                    mcq_count = request.total_questions - 1
+        
+        # Generate questions WITH VERIFICATION
+        llm_result = llm_engine.generate_questions_with_verification(
+            subject=request.subject,
+            topic=request.topic,
+            mcq_count=mcq_count,
+            numerical_count=numerical_count,
+            level=request.level,
+            difficulty=request.difficulty
+        )
+        
+        if not llm_result.get("success"):
+            raise HTTPException(
+                status_code=500,
+                detail=llm_result.get("error", "Failed to generate questions")
+            )
+        
+        # Generate filename
+        safe_topic = request.topic.replace("&", "and").replace("/", "-").replace("\\", "-")
+        safe_topic = safe_topic.replace(" ", "_")
+        safe_level = request.level.replace(" ", "_")
+        safe_difficulty = request.difficulty
+        filename = f"Verified_Top{request.total_questions}_{safe_topic}_{safe_level}_{safe_difficulty}"
+        
+        # Generate PDF
+        llm_result["level"] = request.level
+        llm_result["difficulty"] = request.difficulty
+        pdf_path = pdf_engine.generate_pdf(llm_result, filename)
+        
+        if not pdf_path:
+            raise HTTPException(status_code=500, detail="PDF generation failed")
+        
+        # Record generation
+        record_generation(current_user, request, os.path.basename(pdf_path), db)
+        
+        # Get updated rate limit info
+        _, new_remaining, new_reset_hours, _ = check_rate_limit(current_user, db)
+        
+        return GenerateVerifiedResponse(
+            success=True,
+            message="Test paper generated with verified answers",
+            pdf_filename=os.path.basename(pdf_path),
+            total_mcq=mcq_count,
+            total_numerical=numerical_count,
+            verification_stats=llm_result.get("verification_stats"),
+            rate_limit_remaining=new_remaining,
+            rate_limit_reset_hours=round(new_reset_hours, 2)
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/api/apply-promo", response_model=ApplyPromoResponse)
