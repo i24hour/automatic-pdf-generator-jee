@@ -500,6 +500,125 @@ Return ONLY valid JSON:
             "questions": data.get("questions", []) if 'data' in locals() else []
         }
 
+    def verify_numerical_answer(self, question_text: str, original_answer: str, subject: str) -> Dict[str, Any]:
+        """
+        Verify a numerical answer by asking LLM to solve the question step-by-step.
+        Returns the verified answer and whether it matches the original.
+        """
+        prompt = f"""You are a {subject} expert. Solve this numerical problem step-by-step.
+
+QUESTION: {question_text}
+
+INSTRUCTIONS:
+1. Show your complete working/solution
+2. At the end, clearly state: FINAL ANSWER: [your numerical answer]
+3. The answer should be a number (integer or decimal)
+4. Be very careful with calculations
+
+Solve now:"""
+
+        try:
+            response = litellm.completion(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": f"You are a precise {subject} solver. Show step-by-step working and give exact numerical answer."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.2  # Low temperature for consistent answers
+            )
+            
+            response_text = response.choices[0].message.content
+            
+            # Extract the final answer
+            import re
+            # Look for "FINAL ANSWER: X" pattern
+            match = re.search(r'FINAL ANSWER[:\s]*([+-]?\d*\.?\d+)', response_text, re.IGNORECASE)
+            if match:
+                verified_answer = match.group(1)
+            else:
+                # Try to find any number at the end
+                numbers = re.findall(r'[+-]?\d*\.?\d+', response_text)
+                verified_answer = numbers[-1] if numbers else original_answer
+            
+            # Compare answers (with tolerance for floating point)
+            try:
+                orig_num = float(original_answer)
+                verif_num = float(verified_answer)
+                # Allow 1% tolerance for floating point comparisons
+                tolerance = max(abs(orig_num) * 0.01, 0.01)
+                matches = abs(orig_num - verif_num) <= tolerance
+            except (ValueError, TypeError):
+                matches = original_answer.strip() == verified_answer.strip()
+            
+            return {
+                "success": True,
+                "original_answer": original_answer,
+                "verified_answer": verified_answer,
+                "matches": matches,
+                "solution": response_text
+            }
+            
+        except Exception as e:
+            return {
+                "success": False,
+                "error": str(e),
+                "original_answer": original_answer,
+                "verified_answer": original_answer,
+                "matches": True  # Assume original is correct if verification fails
+            }
+
+    def generate_questions_with_verification(
+        self,
+        subject: str,
+        topic: str,
+        mcq_count: int,
+        numerical_count: int,
+        level: str = "JEE Mains",
+        difficulty: str = "Medium"
+    ) -> Dict[str, Any]:
+        """
+        Generate questions and verify numerical answers.
+        """
+        # First, generate questions normally
+        result = self.generate_questions(subject, topic, mcq_count, numerical_count, level, difficulty)
+        
+        if not result.get("success"):
+            return result
+        
+        questions = result.get("questions", [])
+        verified_count = 0
+        corrected_count = 0
+        
+        # Verify only numerical questions
+        for q in questions:
+            if q.get("type") == "numerical":
+                verification = self.verify_numerical_answer(
+                    q.get("text", ""),
+                    q.get("answer", ""),
+                    subject
+                )
+                
+                if verification.get("success"):
+                    verified_count += 1
+                    if not verification.get("matches"):
+                        # Answer mismatch - use verified answer
+                        q["original_answer"] = q.get("answer")
+                        q["answer"] = verification.get("verified_answer")
+                        q["answer_corrected"] = True
+                        q["solution"] = verification.get("solution")
+                        corrected_count += 1
+                    else:
+                        q["answer_verified"] = True
+                        q["solution"] = verification.get("solution")
+        
+        result["verification_stats"] = {
+            "total_numerical": numerical_count,
+            "verified": verified_count,
+            "corrected": corrected_count
+        }
+        
+        return result
+
 
 # Singleton instance
 llm_engine = LLMEngine()
