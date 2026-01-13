@@ -53,7 +53,7 @@ interface RateLimitInfo {
   used: number;
 }
 
-export default function Home() {
+export default function TrialPage() {
   const { user, isLoading: authLoading, isAuthenticated, logout, authFetch, refreshUser } = useAuth();
   const router = useRouter();
 
