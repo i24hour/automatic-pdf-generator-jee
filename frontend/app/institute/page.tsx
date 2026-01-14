@@ -78,14 +78,13 @@ export default function InstitutePage() {
 
     useEffect(() => {
         // Update default counts when exam type changes
-        const limits = EXAM_LIMITS[examType];
-        setPhysicsCount(limits.Physics);
-        setChemistryCount(limits.Chemistry);
+        setPhysicsCount(EXAM_LIMITS[examType].Physics);
+        setChemistryCount(EXAM_LIMITS[examType].Chemistry);
         if (examType === "NEET") {
-            setZoologyCount(limits.Zoology);
-            setBotanyCount(limits.Botany);
+            setZoologyCount(EXAM_LIMITS.NEET.Zoology);
+            setBotanyCount(EXAM_LIMITS.NEET.Botany);
         } else {
-            setMathsCount(limits.Maths);
+            setMathsCount(examType === "Mains" ? EXAM_LIMITS.Mains.Maths : EXAM_LIMITS.Advanced.Maths);
         }
     }, [examType]);
 
@@ -167,7 +166,7 @@ export default function InstitutePage() {
         );
     }
 
-    const limits = EXAM_LIMITS[examType];
+    // Access limits dynamically but cast for TypeScript
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 p-4 md:p-8">
@@ -233,8 +232,8 @@ export default function InstitutePage() {
                                     key={exam}
                                     onClick={() => setExamType(exam)}
                                     className={`p-3 rounded-lg border transition-all ${examType === exam
-                                            ? "bg-indigo-600 border-indigo-500 text-white"
-                                            : "bg-white/5 border-white/20 text-gray-300 hover:border-white/40"
+                                        ? "bg-indigo-600 border-indigo-500 text-white"
+                                        : "bg-white/5 border-white/20 text-gray-300 hover:border-white/40"
                                         }`}
                                 >
                                     {exam}
@@ -254,8 +253,8 @@ export default function InstitutePage() {
                                     key={d}
                                     onClick={() => setDifficulty(d)}
                                     className={`p-3 rounded-lg border transition-all ${difficulty === d
-                                            ? "bg-green-600 border-green-500 text-white"
-                                            : "bg-white/5 border-white/20 text-gray-300 hover:border-white/40"
+                                        ? "bg-green-600 border-green-500 text-white"
+                                        : "bg-white/5 border-white/20 text-gray-300 hover:border-white/40"
                                         }`}
                                 >
                                     {d}
@@ -271,61 +270,61 @@ export default function InstitutePage() {
                         </label>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                             <div>
-                                <label className="text-xs text-gray-400">Physics (max {limits.Physics})</label>
+                                <label className="text-xs text-gray-400">Physics (max {EXAM_LIMITS[examType].Physics})</label>
                                 <input
                                     type="number"
                                     min={0}
-                                    max={limits.Physics}
+                                    max={EXAM_LIMITS[examType].Physics}
                                     value={physicsCount}
-                                    onChange={(e) => setPhysicsCount(Math.min(Number(e.target.value), limits.Physics))}
+                                    onChange={(e) => setPhysicsCount(Math.min(Number(e.target.value), EXAM_LIMITS[examType].Physics))}
                                     className="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                 />
                             </div>
                             <div>
-                                <label className="text-xs text-gray-400">Chemistry (max {limits.Chemistry})</label>
+                                <label className="text-xs text-gray-400">Chemistry (max {EXAM_LIMITS[examType].Chemistry})</label>
                                 <input
                                     type="number"
                                     min={0}
-                                    max={limits.Chemistry}
+                                    max={EXAM_LIMITS[examType].Chemistry}
                                     value={chemistryCount}
-                                    onChange={(e) => setChemistryCount(Math.min(Number(e.target.value), limits.Chemistry))}
+                                    onChange={(e) => setChemistryCount(Math.min(Number(e.target.value), EXAM_LIMITS[examType].Chemistry))}
                                     className="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                 />
                             </div>
                             {examType === "NEET" ? (
                                 <>
                                     <div>
-                                        <label className="text-xs text-gray-400">Zoology (max {limits.Zoology})</label>
+                                        <label className="text-xs text-gray-400">Zoology (max {EXAM_LIMITS.NEET.Zoology})</label>
                                         <input
                                             type="number"
                                             min={0}
-                                            max={limits.Zoology}
+                                            max={EXAM_LIMITS.NEET.Zoology}
                                             value={zoologyCount}
-                                            onChange={(e) => setZoologyCount(Math.min(Number(e.target.value), limits.Zoology))}
+                                            onChange={(e) => setZoologyCount(Math.min(Number(e.target.value), EXAM_LIMITS.NEET.Zoology))}
                                             className="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                         />
                                     </div>
                                     <div>
-                                        <label className="text-xs text-gray-400">Botany (max {limits.Botany})</label>
+                                        <label className="text-xs text-gray-400">Botany (max {EXAM_LIMITS.NEET.Botany})</label>
                                         <input
                                             type="number"
                                             min={0}
-                                            max={limits.Botany}
+                                            max={EXAM_LIMITS.NEET.Botany}
                                             value={botanyCount}
-                                            onChange={(e) => setBotanyCount(Math.min(Number(e.target.value), limits.Botany))}
+                                            onChange={(e) => setBotanyCount(Math.min(Number(e.target.value), EXAM_LIMITS.NEET.Botany))}
                                             className="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                         />
                                     </div>
                                 </>
                             ) : (
                                 <div>
-                                    <label className="text-xs text-gray-400">Maths (max {limits.Maths})</label>
+                                    <label className="text-xs text-gray-400">Maths (max {examType === "Mains" ? EXAM_LIMITS.Mains.Maths : EXAM_LIMITS.Advanced.Maths})</label>
                                     <input
                                         type="number"
                                         min={0}
-                                        max={limits.Maths}
+                                        max={examType === "Mains" ? EXAM_LIMITS.Mains.Maths : EXAM_LIMITS.Advanced.Maths}
                                         value={mathsCount}
-                                        onChange={(e) => setMathsCount(Math.min(Number(e.target.value), limits.Maths))}
+                                        onChange={(e) => setMathsCount(Math.min(Number(e.target.value), examType === "Mains" ? EXAM_LIMITS.Mains.Maths : EXAM_LIMITS.Advanced.Maths))}
                                         className="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                     />
                                 </div>
