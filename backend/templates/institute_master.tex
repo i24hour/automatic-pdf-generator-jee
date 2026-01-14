@@ -1,0 +1,138 @@
+\documentclass[10pt, a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{geometry}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{tikz}  % For AI generated diagrams
+\usepackage{multicol} % For 2-column layout
+\usepackage{fancyhdr}
+\usepackage{enumitem}
+\usepackage{float}
+\usepackage{xcolor}  % For colored text
+
+% TikZ Libraries (Standard set for Physics/Maths)
+\usetikzlibrary{arrows.meta, calc, decorations.pathmorphing, patterns, shapes.geometric}
+
+% Page Layout (JEE Standard)
+\geometry{top=0.75in, bottom=1in, left=0.5in, right=0.5in}
+\setlength{\columnsep}{0.6cm}
+
+% Header and Footer
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{\textbf{INFINITEST}}
+\lhead{\small A Mentors Mantra Product}
+\cfoot{
+    \footnotesize
+    \BLOCK{ if institute_name }
+    \textbf{\VAR{institute_name}} \\[2pt]
+    \BLOCK{ endif }
+    \BLOCK{ if institute_contact or institute_email }
+    \textcolor{gray}{
+        \BLOCK{ if institute_contact }Contact: \textbf{\VAR{institute_contact}}\BLOCK{ endif }
+        \BLOCK{ if institute_contact and institute_email } | \BLOCK{ endif }
+        \BLOCK{ if institute_email }Email: \textbf{\VAR{institute_email}}\BLOCK{ endif }
+    }
+    \BLOCK{ endif }
+}
+\rfoot{\thepage}
+\renewcommand{\footrulewidth}{0pt}
+
+% Custom Option List (vertical line-by-line for long statements)
+\newcommand{\fourchoices}[4]{%
+    \vspace{2pt}%
+    \par\noindent (a) #1%
+    \par\noindent (b) #2%
+    \par\noindent (c) #3%
+    \par\noindent (d) #4%
+    \vspace{4pt}%
+}
+
+\begin{document}
+
+% --- TITLE SECTION ---
+\begin{center}
+    {\Huge \textbf{INFINITEST}} \\[0.1cm]
+    {\small \textit{A Mentors Mantra Product}} \\[0.3cm]
+    \BLOCK{ if institute_name }
+    {\Large \textbf{\VAR{institute_name}}} \\[0.2cm]
+    \BLOCK{ endif }
+    {\Large \textbf{Target: \VAR{level}}} \\[0.05cm]
+    {\normalsize \textbf{Difficulty: \VAR{difficulty}}} \\[0.1cm]
+    \rule{\textwidth}{1pt}
+    \textbf{Topics: \VAR{topic}}
+\end{center}
+
+\vspace{0.2cm}
+\BLOCK{ if level == 'JEE Advanced' }
+\textit{\textbf{Instructions:} This paper contains \VAR{total_questions} questions. Some MCQs are marked \textbf{(One or More Correct)} - select all correct options. Remaining MCQs have single correct answer. Section B contains Numerical Value Questions.}
+\BLOCK{ else }
+\textit{\textbf{Instructions:} This paper contains \VAR{total_questions} questions. Section A contains MCQs and Section B contains Numerical Value Questions.}
+\BLOCK{ endif }
+\vspace{0.3cm}
+
+% --- QUESTIONS SECTION ---
+\begin{multicols}{2}
+\begin{enumerate}[label=\textbf{Q.\arabic*}]
+
+    % JINJA LOOP START
+    \BLOCK{ for q in questions }
+
+        % Show subject label if multi-subject
+        \BLOCK{ if q.subject }
+        \textbf{[\VAR{q.subject}]}
+        \BLOCK{ endif }
+        
+        \item \VAR{q.text}
+        
+        % Check if diagram exists
+        \BLOCK{ if q.diagram_tikz }
+        \begin{center}
+        \begin{tikzpicture}[scale=0.6]
+            \VAR{q.diagram_tikz}
+        \end{tikzpicture}
+        \end{center}
+        \BLOCK{ endif }
+
+        % Check if MCQ (single or multi) or Numerical
+        \BLOCK{ if q.type == 'mcq_multi' }
+            \textit{(One or More Correct)}
+            \fourchoices{\VAR{q.options[0]}}{\VAR{q.options[1]}}{\VAR{q.options[2]}}{\VAR{q.options[3]}}
+        \BLOCK{ elif q.type == 'mcq' }
+            \fourchoices{\VAR{q.options[0]}}{\VAR{q.options[1]}}{\VAR{q.options[2]}}{\VAR{q.options[3]}}
+        \BLOCK{ else }
+            \vspace{0.2cm} \\ 
+            \textbf{Answer: \_\_\_\_\_\_\_\_\_}
+        \BLOCK{ endif }
+
+    \BLOCK{ endfor }
+    % JINJA LOOP END
+
+\end{enumerate}
+\end{multicols}
+
+\newpage
+
+% --- ANSWER KEY SECTION ---
+\begin{center}
+    {\Large \textbf{ANSWER KEY}}
+\end{center}
+
+\begin{table}[h]
+\centering
+\renewcommand{\arraystretch}{1.5}
+\begin{tabular}{|c|c||c|c||c|c|}
+\hline
+\textbf{Q.No} & \textbf{Ans} & \textbf{Q.No} & \textbf{Ans} & \textbf{Q.No} & \textbf{Ans} \\
+\hline
+\BLOCK{ for q in questions }
+    \textbf{\VAR{loop.index}} & \VAR{q.answer} 
+    \BLOCK{ if loop.index is divisibleby 3 } \\ \hline \BLOCK{ else } & \BLOCK{ endif }
+\BLOCK{ endfor }
+\\ \hline
+\end{tabular}
+\end{table}
+
+\end{document}

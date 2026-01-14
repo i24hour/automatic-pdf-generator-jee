@@ -54,7 +54,15 @@ class PDFEngine:
         Returns:
             Rendered LaTeX string
         """
-        template = self.jinja_env.get_template("master.tex")
+        # Choose template based on whether it's an institute request
+        is_institute = data.get("is_institute", False)
+        template_name = "institute_master.tex" if is_institute else "master.tex"
+        
+        try:
+            template = self.jinja_env.get_template(template_name)
+        except Exception:
+            # Fallback to master.tex
+            template = self.jinja_env.get_template("master.tex")
         
         rendered = template.render(
             subject=data.get("subject", ""),
@@ -62,7 +70,12 @@ class PDFEngine:
             level=data.get("level", "JEE Mains"),
             difficulty=data.get("difficulty", "Medium"),
             total_questions=len(data.get("questions", [])),
-            questions=data.get("questions", [])
+            questions=data.get("questions", []),
+            # Institute branding
+            institute_name=data.get("institute_name", ""),
+            institute_contact=data.get("institute_contact", ""),
+            institute_email=data.get("institute_email", ""),
+            is_institute=is_institute
         )
         
         return rendered

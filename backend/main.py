@@ -21,6 +21,7 @@ from database import get_db, init_db
 from models import User, PDFGeneration, PromoCode, PromoCodeUsage, TopicSubjectCache
 from auth import get_current_user_required, get_current_user
 from routers.auth_router import router as auth_router
+from routers.institute_router import router as institute_router
 
 # Load environment variables
 load_dotenv()
@@ -56,6 +57,7 @@ app.add_middleware(
 
 # Include auth router
 app.include_router(auth_router)
+app.include_router(institute_router)
 
 
 # Initialize database on startup

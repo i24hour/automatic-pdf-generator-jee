@@ -161,3 +161,75 @@ class TopicSubjectCache(Base):
 
     def __repr__(self):
         return f"<TopicSubjectCache topic={self.normalized_topic} subject={self.subject}>"
+
+
+class InstituteUser(Base):
+    """Institute user model for separate authentication."""
+    __tablename__ = "institute_users"
+    
+    id = Column(String, primary_key=True, default=generate_uuid)
+    email = Column(String, unique=True, index=True, nullable=False)
+    hashed_password = Column(String, nullable=False)
+    is_active = Column(Boolean, default=True)
+    
+    # Profile info (shown on PDF)
+    institute_name = Column(String, nullable=True)
+    contact_number = Column(String, nullable=True)
+    institute_email = Column(String, nullable=True)
+    
+    # Rate limiting (same as regular users)
+    monthly_bonus_limit = Column(Integer, default=0)
+    last_bonus_month = Column(String, nullable=True)
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    generations = relationship("InstituteGeneration", back_populates="institute_user")
+    refresh_tokens = relationship("InstituteRefreshToken", back_populates="institute_user", cascade="all, delete-orphan")
+    
+    def __repr__(self):
+        return f"<InstituteUser {self.email}>"
+
+
+class InstituteRefreshToken(Base):
+    """Refresh tokens for institute user sessions."""
+    __tablename__ = "institute_refresh_tokens"
+    
+    id = Column(String, primary_key=True, default=generate_uuid)
+    token = Column(String, unique=True, index=True, nullable=False, default=generate_token)
+    institute_user_id = Column(String, ForeignKey("institute_users.id", ondelete="CASCADE"), nullable=False)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationship
+    institute_user = relationship("InstituteUser", back_populates="refresh_tokens")
+    
+    def __repr__(self):
+        return f"<InstituteRefreshToken {self.id[:8]}...>"
+
+
+class InstituteGeneration(Base):
+    """Track PDF generations by institute users."""
+    __tablename__ = "institute_generations"
+    
+    id = Column(String, primary_key=True, default=generate_uuid)
+    institute_user_id = Column(String, ForeignKey("institute_users.id", ondelete="CASCADE"), nullable=False)
+    
+    # Request details
+    chapters = Column(Text, nullable=False)  # JSON array of chapters
+    exam_type = Column(String, nullable=False)  # Mains, NEET, Advanced
+    difficulty = Column(String, nullable=False)  # Easy, Medium, Hard
+    physics_count = Column(Integer, default=0)
+    chemistry_count = Column(Integer, default=0)
+    maths_count = Column(Integer, default=0)
+    biology_count = Column(Integer, default=0)  # For NEET (Zoology + Botany)
+    
+    # Output
+    pdf_filename = Column(String, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationship
+    institute_user = relationship("InstituteUser", back_populates="generations")
+    
+    def __repr__(self):
+        return f"<InstituteGeneration {self.exam_type} by {self.institute_user_id}>"
