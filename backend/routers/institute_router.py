@@ -378,7 +378,8 @@ async def generate_institute_test(
             mcq_count = int(count * 0.8)
             num_count = count - mcq_count
         
-        result = await llm_engine.generate_questions_with_verification_async(
+        # Use fast generation (same as main site)
+        result = llm_engine.generate_questions(
             subject=subject,
             topic=topic,
             mcq_count=mcq_count,
@@ -392,13 +393,6 @@ async def generate_institute_test(
             # Add subject label to each question
             for q in questions:
                 q["subject"] = subject
-            
-            # Accumulate verification stats
-            stats = result.get("verification_stats", {})
-            verification_stats["total_numerical"] += stats.get("total_numerical", 0)
-            verification_stats["verified"] += stats.get("verified", 0)
-            verification_stats["corrected"] += stats.get("corrected", 0)
-            
             return questions
         return []
     
