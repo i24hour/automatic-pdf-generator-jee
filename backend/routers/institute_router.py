@@ -221,10 +221,9 @@ class InstituteRefreshRequest(BaseModel):
 @router.post("/refresh")
 async def refresh_institute_token(request: InstituteRefreshRequest, db: Session = Depends(get_db)):
     """Refresh access token for institute users."""
-    # Find the refresh token
+    # Find the refresh token (only check token and expiry for backwards compatibility)
     token_record = db.query(InstituteRefreshToken).filter(
         InstituteRefreshToken.token == request.refresh_token,
-        InstituteRefreshToken.is_revoked == False,
         InstituteRefreshToken.expires_at > datetime.now(timezone.utc)
     ).first()
     

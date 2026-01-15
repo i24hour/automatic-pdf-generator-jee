@@ -199,6 +199,7 @@ class InstituteRefreshToken(Base):
     token = Column(String, unique=True, index=True, nullable=False, default=generate_token)
     institute_user_id = Column(String, ForeignKey("institute_users.id", ondelete="CASCADE"), nullable=False)
     expires_at = Column(DateTime(timezone=True), nullable=False)
+    is_revoked = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     
     # Relationship
