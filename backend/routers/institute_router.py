@@ -317,14 +317,17 @@ async def detect_subjects(
                 classifications.append(ChapterClassification(chapter="Chemistry (Full Syllabus)", subject="Chemistry"))
                 classifications.append(ChapterClassification(chapter="Maths (Full Syllabus)", subject="Maths"))
             elif subject == "PCMB":
+                # Return ALL 5 subjects - frontend will filter based on exam type
                 classifications.append(ChapterClassification(chapter="Physics (Full Syllabus)", subject="Physics"))
                 classifications.append(ChapterClassification(chapter="Chemistry (Full Syllabus)", subject="Chemistry"))
+                classifications.append(ChapterClassification(chapter="Maths (Full Syllabus)", subject="Maths"))
                 classifications.append(ChapterClassification(chapter="Zoology (Full Syllabus)", subject="Zoology"))
                 classifications.append(ChapterClassification(chapter="Botany (Full Syllabus)", subject="Botany"))
             elif subject == "PCB":
                 classifications.append(ChapterClassification(chapter="Physics (Full Syllabus)", subject="Physics"))
                 classifications.append(ChapterClassification(chapter="Chemistry (Full Syllabus)", subject="Chemistry"))
-                classifications.append(ChapterClassification(chapter="Biology (Full Syllabus)", subject="Zoology"))
+                classifications.append(ChapterClassification(chapter="Zoology (Full Syllabus)", subject="Zoology"))
+                classifications.append(ChapterClassification(chapter="Botany (Full Syllabus)", subject="Botany"))
         else:
             classifications.append(ChapterClassification(chapter=chapter.strip(), subject=subject))
     
