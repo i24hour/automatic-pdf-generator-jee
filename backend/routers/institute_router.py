@@ -376,13 +376,16 @@ async def generate_institute_test(
                 chapters_classified.append(ChapterClassification(chapter=f"{chapter.strip()} (Chemistry)", subject="Chemistry"))
                 chapters_classified.append(ChapterClassification(chapter=f"{chapter.strip()} (Maths)", subject="Maths"))
             elif subject == "PCMB":
-                # Physics, Chemistry, Maths, Biology for NEET
+                # Physics, Chemistry, Maths, Biology - Add ALL subjects
                 chapters_by_subject["Physics"].append(chapter.strip())
                 chapters_by_subject["Chemistry"].append(chapter.strip())
+                chapters_by_subject["Maths"].append(chapter.strip())
                 chapters_by_subject["Zoology"].append(chapter.strip())
                 chapters_by_subject["Botany"].append(chapter.strip())
+                
                 chapters_classified.append(ChapterClassification(chapter=chapter.strip(), subject="Physics"))
                 chapters_classified.append(ChapterClassification(chapter=f"{chapter.strip()} (Chemistry)", subject="Chemistry"))
+                chapters_classified.append(ChapterClassification(chapter=f"{chapter.strip()} (Maths)", subject="Maths"))
                 chapters_classified.append(ChapterClassification(chapter=f"{chapter.strip()} (Zoology)", subject="Zoology"))
                 chapters_classified.append(ChapterClassification(chapter=f"{chapter.strip()} (Botany)", subject="Botany"))
             elif subject == "PCB":
