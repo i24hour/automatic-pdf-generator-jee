@@ -130,7 +130,16 @@ export default function InstitutePage() {
             });
 
             if (!response.ok) {
-                throw new Error("Failed to detect subjects");
+                if (response.status === 401) {
+                    // Token expired - redirect to login
+                    localStorage.removeItem("institute_access_token");
+                    localStorage.removeItem("institute_refresh_token");
+                    localStorage.removeItem("institute_user");
+                    router.push("/institute/login");
+                    return;
+                }
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.detail || "Failed to detect subjects");
             }
 
             const data = await response.json();
