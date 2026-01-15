@@ -308,7 +308,25 @@ async def detect_subjects(
             continue
         result = llm_engine.detect_subject(chapter.strip())
         subject = result.get("subject", "Physics")
-        classifications.append(ChapterClassification(chapter=chapter.strip(), subject=subject))
+        is_multi = result.get("is_multi", False)
+        
+        # Expand PCM/PCMB/PCB to individual subjects for display
+        if is_multi:
+            if subject == "PCM":
+                classifications.append(ChapterClassification(chapter="Physics (Full Syllabus)", subject="Physics"))
+                classifications.append(ChapterClassification(chapter="Chemistry (Full Syllabus)", subject="Chemistry"))
+                classifications.append(ChapterClassification(chapter="Maths (Full Syllabus)", subject="Maths"))
+            elif subject == "PCMB":
+                classifications.append(ChapterClassification(chapter="Physics (Full Syllabus)", subject="Physics"))
+                classifications.append(ChapterClassification(chapter="Chemistry (Full Syllabus)", subject="Chemistry"))
+                classifications.append(ChapterClassification(chapter="Zoology (Full Syllabus)", subject="Zoology"))
+                classifications.append(ChapterClassification(chapter="Botany (Full Syllabus)", subject="Botany"))
+            elif subject == "PCB":
+                classifications.append(ChapterClassification(chapter="Physics (Full Syllabus)", subject="Physics"))
+                classifications.append(ChapterClassification(chapter="Chemistry (Full Syllabus)", subject="Chemistry"))
+                classifications.append(ChapterClassification(chapter="Biology (Full Syllabus)", subject="Zoology"))
+        else:
+            classifications.append(ChapterClassification(chapter=chapter.strip(), subject=subject))
     
     return DetectSubjectsResponse(classifications=classifications)
 
