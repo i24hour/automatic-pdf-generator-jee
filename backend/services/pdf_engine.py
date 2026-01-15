@@ -97,6 +97,10 @@ class PDFEngine:
         pdf_path = os.path.join(temp_dir, f"{filename}.pdf")
         
         try:
+            # Sanitize LaTeX content to ensure valid UTF-8
+            # Remove any non-UTF-8 characters that might come from LLM
+            latex_content = latex_content.encode('utf-8', errors='ignore').decode('utf-8')
+            
             # Write LaTeX content to temporary file
             with open(tex_path, "w", encoding="utf-8") as f:
                 f.write(latex_content)
