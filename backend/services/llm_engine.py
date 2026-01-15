@@ -45,13 +45,12 @@ class LLMEngine:
         elif "PCB" in topic_upper:
             return {"subject": "PCB", "confidence": "high", "is_multi": True}
         
-        # "Full syllabus" without subject specification for JEE = PCM
+        # "Full syllabus" without subject specification - return all subjects (PCMB)
+        # Frontend/backend will filter based on exam type
         if ("full syllabus" in topic_lower or "complete syllabus" in topic_lower or 
-            "all chapters" in topic_lower or "entire syllabus" in topic_lower):
-            if any(x in topic_lower for x in ["neet", "biology", "bio"]):
-                return {"subject": "PCMB", "confidence": "high", "is_multi": True}
-            else:
-                return {"subject": "PCM", "confidence": "high", "is_multi": True}
+            "all chapters" in topic_lower or "entire syllabus" in topic_lower or
+            topic_lower in ["full", "complete", "all"]):
+            return {"subject": "PCMB", "confidence": "high", "is_multi": True}
         
         # ============ PHYSICS PATTERNS ============
         physics_keywords = [

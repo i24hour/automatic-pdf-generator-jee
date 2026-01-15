@@ -127,7 +127,16 @@ export default function InstitutePage() {
             }
 
             const data = await response.json();
-            const classified: ChapterClassification[] = data.classifications;
+            let classified: ChapterClassification[] = data.classifications;
+
+            // Filter subjects based on exam type
+            // NEET: Physics, Chemistry, Zoology, Botany
+            // JEE (Mains/Advanced): Physics, Chemistry, Maths
+            const validSubjects = examType === "NEET"
+                ? ["Physics", "Chemistry", "Zoology", "Botany"]
+                : ["Physics", "Chemistry", "Maths"];
+
+            classified = classified.filter(c => validSubjects.includes(c.subject));
             setDetectedSubjects(classified);
 
             // Get unique subjects and set default counts
