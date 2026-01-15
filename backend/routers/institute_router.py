@@ -378,8 +378,8 @@ async def generate_institute_test(
             mcq_count = int(count * 0.8)
             num_count = count - mcq_count
         
-        # Use fast generation (same as main site)
-        result = llm_engine.generate_questions(
+        # Use TRUE ASYNC generation for parallel execution
+        result = await llm_engine.generate_questions_async(
             subject=subject,
             topic=topic,
             mcq_count=mcq_count,

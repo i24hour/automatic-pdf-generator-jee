@@ -512,6 +512,106 @@ Return ONLY valid JSON:
             "questions": data.get("questions", []) if 'data' in locals() else []
         }
 
+    async def generate_questions_async(
+        self,
+        subject: str,
+        topic: str,
+        mcq_count: int,
+        numerical_count: int,
+        level: str = "JEE Mains",
+        difficulty: str = "Medium"
+    ) -> Dict[str, Any]:
+        """
+        ASYNC version of generate_questions using litellm.acompletion.
+        Allows true parallel execution when used with asyncio.gather.
+        """
+        total_requested = mcq_count + numerical_count
+        
+        # Difficulty modifiers
+        difficulty_prompts = {
+            "Easy": "TOUGHNESS: EASY - Questions from common patterns, straightforward application, simple calculations.",
+            "Medium": "TOUGHNESS: MEDIUM - Standard exam-level, 2-3 step problems, some conceptual depth.",
+            "Hard": "TOUGHNESS: HARD - Challenging questions, multi-step with conceptual twists, non-obvious approaches."
+        }
+        difficulty_prompt = difficulty_prompts.get(difficulty, difficulty_prompts["Medium"])
+        
+        # Level prompts (simplified for async)
+        level_prompts = {
+            "Boards": "CBSE/State Board Level - Direct application, single-step problems.",
+            "JEE Mains": "JEE Main Level - Application-based, 2-3 step solutions. NUMERICAL answers must be INTEGERS 0-999.",
+            "Mains": "JEE Main Level - Application-based, 2-3 step solutions. NUMERICAL answers must be INTEGERS 0-999.",
+            "JEE Advanced": "JEE Advanced Level - Multi-concept, 4-5 step solutions, ~20% MCQs should be multi-correct.",
+            "Advanced": "JEE Advanced Level - Multi-concept, 4-5 step solutions, ~20% MCQs should be multi-correct.",
+            "Olympiad": "Olympiad Level - Research-level problem-solving, creative approaches.",
+            "NEET": "NEET Level - Biology/Medical focus, emphasis on conceptual understanding and factual recall."
+        }
+        level_prompt = level_prompts.get(level, level_prompts.get("JEE Mains"))
+        
+        prompt = f"""You are an expert question paper setter for competitive exams.
+
+GENERATE EXACTLY:
+- {mcq_count} MCQ questions (type "mcq", with options array and answer as A/B/C/D)
+- {numerical_count} Numerical questions (type "numerical", answer as integer)
+
+SUBJECT: {subject}
+TOPIC: {topic}
+EXAM LEVEL: {level_prompt}
+{difficulty_prompt}
+
+Return ONLY valid JSON:
+{{"questions": [
+  {{"type": "mcq", "text": "...", "options": ["A) ...", "B) ...", "C) ...", "D) ..."], "answer": "A"}},
+  {{"type": "numerical", "text": "...", "answer": "42"}}
+]}}
+"""
+        max_retries = 2
+        for attempt in range(max_retries + 1):
+            try:
+                response = await litellm.acompletion(
+                    model=self.model,
+                    messages=[
+                        {"role": "system", "content": f"Expert {subject} question setter. Return ONLY valid JSON."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    temperature=0.7
+                )
+                
+                response_text = response.choices[0].message.content
+                cleaned_json = self._clean_json_response(response_text)
+                data = json.loads(cleaned_json)
+                
+                if "questions" in data:
+                    data["questions"] = self._process_questions(data["questions"])
+                    data["questions"] = self._deduplicate_questions(data["questions"])
+                    
+                    actual_count = len(data["questions"])
+                    if actual_count < total_requested and attempt < max_retries:
+                        continue
+                    if actual_count > total_requested:
+                        data["questions"] = data["questions"][:total_requested]
+                
+                return {
+                    "success": True,
+                    "subject": subject,
+                    "topic": topic,
+                    "questions": data.get("questions", [])
+                }
+                
+            except Exception as e:
+                if attempt < max_retries:
+                    continue
+                return {
+                    "success": False,
+                    "error": f"Async LLM call failed: {str(e)}"
+                }
+        
+        return {
+            "success": True,
+            "subject": subject,
+            "topic": topic,
+            "questions": data.get("questions", []) if 'data' in locals() else []
+        }
+
     async def verify_numerical_answer_async(self, question_text: str, original_answer: str, subject: str) -> Dict[str, Any]:
         """
         Verify a numerical answer by asking LLM to solve the question step-by-step (ASYNC).
