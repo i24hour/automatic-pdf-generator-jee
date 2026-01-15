@@ -135,7 +135,6 @@
     \BLOCK{ if q.subject and q.subject != current_subject.value }
         \BLOCK{ if current_subject.value != '' }
             \end{enumerate}
-            \end{multicols}
             \newpage
         \BLOCK{ endif }
         
@@ -149,8 +148,7 @@
         \end{center}
         \vspace{0.3cm}
         
-        \begin{multicols}{2}
-        \begin{enumerate}[label=\textbf{Q.\arabic*.},start=\VAR{question_num.value},itemsep=8pt]
+        \begin{enumerate}[label=\textbf{Q.\arabic*.},start=\VAR{question_num.value},itemsep=12pt,leftmargin=*]
     \BLOCK{ endif }
 
     \item \VAR{q.text}
@@ -179,7 +177,6 @@
 \BLOCK{ endfor }
 
 \end{enumerate}
-\end{multicols}
 
 \newpage
 
