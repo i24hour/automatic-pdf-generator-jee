@@ -2,12 +2,12 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { BookOpen, Loader2, AlertCircle, Building2 } from "lucide-react";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+import { Loader2, AlertCircle, Building2 } from "lucide-react";
+import { useInstituteAuth } from "@/lib/institute-auth-context";
 
 export default function InstituteLoginPage() {
     const router = useRouter();
+    const { login } = useInstituteAuth();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [isLoading, setIsLoading] = useState(false);
@@ -19,24 +19,7 @@ export default function InstituteLoginPage() {
         setError(null);
 
         try {
-            const response = await fetch(`${API_BASE_URL}/api/institute/login`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email, password }),
-            });
-
-            if (!response.ok) {
-                const data = await response.json();
-                throw new Error(data.detail || "Login failed");
-            }
-
-            const data = await response.json();
-
-            // Store tokens
-            localStorage.setItem("institute_access_token", data.access_token);
-            localStorage.setItem("institute_refresh_token", data.refresh_token);
-            localStorage.setItem("institute_user", JSON.stringify(data.user));
-
+            await login(email, password);
             // Redirect to institute dashboard
             router.push("/institute");
         } catch (err: unknown) {
