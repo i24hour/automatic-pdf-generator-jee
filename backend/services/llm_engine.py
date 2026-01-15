@@ -32,14 +32,21 @@ class LLMEngine:
     def detect_subject(self, topic: str) -> Dict[str, str]:
         """Classify a topic into a subject with confidence using the LLM."""
         prompt = f"""
-You are a subject classifier for exam topics. Given the topic text, return a JSON with:
+You are a subject classifier for JEE/NEET exam topics. Given the topic text, return a JSON with:
 - "subject": one of ["Physics", "Chemistry", "Maths", "Zoology", "Botany"]
 - "confidence": "high", "medium", or "low"
+
+IMPORTANT Classification Rules:
+- Chemistry topics include: Atomic Structure, Chemical Bonding, Periodic Table, Organic Chemistry, Inorganic Chemistry, Electrochemistry, Thermodynamics (Chemical), Solutions, Equilibrium, Mole Concept, Redox Reactions, Coordination Compounds, s-block/p-block/d-block elements, Acids & Bases, Polymers, Biomolecules
+- Physics topics include: Mechanics, Electrostatics, Magnetism, Optics, Modern Physics (Photoelectric effect, Nuclear Physics), Waves, Thermodynamics (Heat engines, Carnot cycle), Fluid Mechanics, Gravitation, Rotational Motion
+- Maths topics include: Calculus, Integration, Differentiation, Algebra, Trigonometry, Coordinate Geometry, Probability, Statistics, Matrices, Sequences and Series, Complex Numbers
+- Zoology topics include: Human Physiology, Animal Kingdom, Genetics, Evolution, Reproduction in Animals, Human Health and Disease
+- Botany topics include: Plant Physiology, Plant Kingdom, Cell Biology, Ecology, Plant Reproduction, Biotechnology
 
 Topic: "{topic}"
 
 Return ONLY JSON, no extra text.
-Example: {{"subject":"Physics","confidence":"high"}}
+Example: {{"subject":"Chemistry","confidence":"high"}}
 """
 
         try:
