@@ -60,6 +60,7 @@ export default function InstitutePage() {
     const [difficulty, setDifficulty] = useState("Medium");
 
     // Detected subjects and their chapters
+    const [rawClassifications, setRawClassifications] = useState<ChapterClassification[]>([]);
     const [detectedSubjects, setDetectedSubjects] = useState<ChapterClassification[]>([]);
     const [subjectsDetected, setSubjectsDetected] = useState(false);
 
@@ -73,12 +74,38 @@ export default function InstitutePage() {
         }
     }, [authLoading, isAuthenticated, router]);
 
-    // Reset detection when chapters or exam type changes
+    // Reset detection when chapters changes
     useEffect(() => {
         setSubjectsDetected(false);
         setDetectedSubjects([]);
+        setRawClassifications([]);
         setSubjectCounts({});
-    }, [chapters, examType]);
+    }, [chapters]);
+
+    // Re-filter subjects when exam type or raw classifications change
+    useEffect(() => {
+        if (rawClassifications.length === 0) return;
+
+        // Filter subjects based on exam type
+        // NEET: Physics, Chemistry, Zoology, Botany
+        // JEE (Mains/Advanced): Physics, Chemistry, Maths
+        const validSubjects = examType === "NEET"
+            ? ["Physics", "Chemistry", "Zoology", "Botany"]
+            : ["Physics", "Chemistry", "Maths"];
+
+        const filtered = rawClassifications.filter(c => validSubjects.includes(c.subject));
+        setDetectedSubjects(filtered);
+
+        // Get unique subjects and set default counts
+        const uniqueSubjects = [...new Set(filtered.map(c => c.subject))];
+        const initialCounts: Record<string, number> = {};
+        uniqueSubjects.forEach(subject => {
+            // Preserve existing count if available, otherwise use default
+            initialCounts[subject] = subjectCounts[subject] || getMaxLimit(subject);
+        });
+        setSubjectCounts(initialCounts);
+        setSubjectsDetected(true);
+    }, [examType, rawClassifications]);
 
     // Get max limit for a subject based on exam type
     const getMaxLimit = (subject: string): number => {
@@ -127,26 +154,8 @@ export default function InstitutePage() {
             }
 
             const data = await response.json();
-            let classified: ChapterClassification[] = data.classifications;
-
-            // Filter subjects based on exam type
-            // NEET: Physics, Chemistry, Zoology, Botany
-            // JEE (Mains/Advanced): Physics, Chemistry, Maths
-            const validSubjects = examType === "NEET"
-                ? ["Physics", "Chemistry", "Zoology", "Botany"]
-                : ["Physics", "Chemistry", "Maths"];
-
-            classified = classified.filter(c => validSubjects.includes(c.subject));
-            setDetectedSubjects(classified);
-
-            // Get unique subjects and set default counts
-            const uniqueSubjects = [...new Set(classified.map(c => c.subject))];
-            const initialCounts: Record<string, number> = {};
-            uniqueSubjects.forEach(subject => {
-                initialCounts[subject] = getMaxLimit(subject);
-            });
-            setSubjectCounts(initialCounts);
-            setSubjectsDetected(true);
+            setRawClassifications(data.classifications);
+            // Filtering will happen in useEffect
         } catch (err) {
             if (err instanceof Error) {
                 setError(err.message);
