@@ -31,6 +31,21 @@ class LLMEngine:
 
     def detect_subject(self, topic: str) -> Dict[str, str]:
         """Classify a topic into a subject with confidence using the LLM."""
+        
+        # Handle common abbreviations BEFORE sending to LLM
+        topic_upper = topic.upper().strip()
+        
+        # Check for PCM/PCMB abbreviations - these indicate ALL subjects
+        if "PCMB" in topic_upper or "PCBM" in topic_upper:
+            # Return Physics - the caller should handle PCMB as all 4 subjects
+            return {"subject": "PCMB", "confidence": "high", "is_multi": True}
+        elif "PCM" in topic_upper or "PMC" in topic_upper:
+            # Return special marker for all 3 subjects
+            return {"subject": "PCM", "confidence": "high", "is_multi": True}
+        elif "PCB" in topic_upper:
+            # Physics Chemistry Biology
+            return {"subject": "PCB", "confidence": "high", "is_multi": True}
+        
         prompt = f"""
 You are a subject classifier for JEE/NEET exam topics. Given the topic text, return a JSON with:
 - "subject": one of ["Physics", "Chemistry", "Maths", "Zoology", "Botany"]

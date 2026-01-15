@@ -342,9 +342,40 @@ async def generate_institute_test(
             continue
         result = llm_engine.detect_subject(chapter.strip())
         subject = result.get("subject", "Physics")
-        chapters_classified.append(ChapterClassification(chapter=chapter.strip(), subject=subject))
-        if subject in chapters_by_subject:
-            chapters_by_subject[subject].append(chapter.strip())
+        is_multi = result.get("is_multi", False)
+        
+        # Handle PCM/PCMB/PCB abbreviations - expand to all subjects
+        if is_multi:
+            if subject == "PCM":
+                # Physics, Chemistry, Maths for JEE
+                chapters_by_subject["Physics"].append(chapter.strip())
+                chapters_by_subject["Chemistry"].append(chapter.strip())
+                chapters_by_subject["Maths"].append(chapter.strip())
+                chapters_classified.append(ChapterClassification(chapter=chapter.strip(), subject="Physics"))
+                chapters_classified.append(ChapterClassification(chapter=f"{chapter.strip()} (Chemistry)", subject="Chemistry"))
+                chapters_classified.append(ChapterClassification(chapter=f"{chapter.strip()} (Maths)", subject="Maths"))
+            elif subject == "PCMB":
+                # Physics, Chemistry, Maths, Biology for NEET
+                chapters_by_subject["Physics"].append(chapter.strip())
+                chapters_by_subject["Chemistry"].append(chapter.strip())
+                chapters_by_subject["Zoology"].append(chapter.strip())
+                chapters_by_subject["Botany"].append(chapter.strip())
+                chapters_classified.append(ChapterClassification(chapter=chapter.strip(), subject="Physics"))
+                chapters_classified.append(ChapterClassification(chapter=f"{chapter.strip()} (Chemistry)", subject="Chemistry"))
+                chapters_classified.append(ChapterClassification(chapter=f"{chapter.strip()} (Zoology)", subject="Zoology"))
+                chapters_classified.append(ChapterClassification(chapter=f"{chapter.strip()} (Botany)", subject="Botany"))
+            elif subject == "PCB":
+                # Physics, Chemistry, Biology
+                chapters_by_subject["Physics"].append(chapter.strip())
+                chapters_by_subject["Chemistry"].append(chapter.strip())
+                chapters_by_subject["Zoology"].append(chapter.strip())
+                chapters_classified.append(ChapterClassification(chapter=chapter.strip(), subject="Physics"))
+                chapters_classified.append(ChapterClassification(chapter=f"{chapter.strip()} (Chemistry)", subject="Chemistry"))
+                chapters_classified.append(ChapterClassification(chapter=f"{chapter.strip()} (Zoology)", subject="Zoology"))
+        else:
+            chapters_classified.append(ChapterClassification(chapter=chapter.strip(), subject=subject))
+            if subject in chapters_by_subject:
+                chapters_by_subject[subject].append(chapter.strip())
     
     # Step 2: Determine question counts
     if request.exam_type == "NEET":
