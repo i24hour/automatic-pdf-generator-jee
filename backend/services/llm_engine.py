@@ -32,20 +32,108 @@ class LLMEngine:
     def detect_subject(self, topic: str) -> Dict[str, str]:
         """Classify a topic into a subject with confidence using the LLM."""
         
-        # Handle common abbreviations BEFORE sending to LLM
+        # Handle common abbreviations and patterns BEFORE sending to LLM
         topic_upper = topic.upper().strip()
+        topic_lower = topic.lower().strip()
         
+        # ============ MULTI-SUBJECT PATTERNS ============
         # Check for PCM/PCMB abbreviations - these indicate ALL subjects
         if "PCMB" in topic_upper or "PCBM" in topic_upper:
-            # Return Physics - the caller should handle PCMB as all 4 subjects
             return {"subject": "PCMB", "confidence": "high", "is_multi": True}
         elif "PCM" in topic_upper or "PMC" in topic_upper:
-            # Return special marker for all 3 subjects
             return {"subject": "PCM", "confidence": "high", "is_multi": True}
         elif "PCB" in topic_upper:
-            # Physics Chemistry Biology
             return {"subject": "PCB", "confidence": "high", "is_multi": True}
         
+        # "Full syllabus" without subject specification for JEE = PCM
+        if ("full syllabus" in topic_lower or "complete syllabus" in topic_lower or 
+            "all chapters" in topic_lower or "entire syllabus" in topic_lower):
+            if any(x in topic_lower for x in ["neet", "biology", "bio"]):
+                return {"subject": "PCMB", "confidence": "high", "is_multi": True}
+            else:
+                return {"subject": "PCM", "confidence": "high", "is_multi": True}
+        
+        # ============ PHYSICS PATTERNS ============
+        physics_keywords = [
+            "electrostatics", "electrostatic", "magnetism", "magnetic", "optics", "optical",
+            "mechanics", "kinematics", "dynamics", "newton", "rotational", "gravitation",
+            "waves", "oscillations", "thermodynamics", "heat", "carnot", "shm", "simple harmonic",
+            "fluid", "bernoulli", "viscosity", "current electricity", "ohm", "kirchhoff",
+            "capacitor", "capacitance", "inductor", "inductance", "electromagnetic", "em waves",
+            "photoelectric", "nuclear", "radioactive", "semiconductor", "diode", "transistor",
+            "ray optics", "wave optics", "interference", "diffraction", "polarization",
+            "motion", "force", "momentum", "energy", "work", "power", "projectile", "friction"
+        ]
+        
+        # ============ CHEMISTRY PATTERNS ============
+        chemistry_keywords = [
+            "atomic structure", "atom", "orbital", "quantum", "electronic configuration",
+            "chemical bonding", "covalent", "ionic", "vsepr", "hybridization", "molecular",
+            "periodic", "periodicity", "s-block", "p-block", "d-block", "f-block", "transition",
+            "organic", "alkane", "alkene", "alkyne", "alcohol", "aldehyde", "ketone", "carboxylic",
+            "inorganic", "coordination", "ligand", "isomer", "goc", "general organic",
+            "electrochemistry", "electrolysis", "galvanic", "nernst", "redox", "oxidation",
+            "solution", "colligative", "osmotic", "raoult", "mole concept", "stoichiometry",
+            "equilibrium", "le chatelier", "kp", "kc", "ionic equilibrium", "ph", "buffer",
+            "iupac", "nomenclature", "polymer", "biomolecule", "carbohydrate", "protein", "amino",
+            "chemical kinetics", "rate", "order", "arrhenius", "catalyst", "surface chemistry"
+        ]
+        
+        # ============ MATHS PATTERNS ============
+        maths_keywords = [
+            "integration", "integral", "differentiation", "derivative", "calculus",
+            "algebra", "quadratic", "polynomial", "equation", "inequality",
+            "trigonometry", "trigonometric", "sin", "cos", "tan", "inverse trig",
+            "coordinate", "straight line", "circle", "parabola", "ellipse", "hyperbola", "conic",
+            "vector", "3d", "three dimensional", "plane", "direction cosine",
+            "matrix", "matrices", "determinant", "inverse matrix",
+            "probability", "permutation", "combination", "binomial", "statistics",
+            "sequence", "series", "ap", "gp", "harmonic", "arithmetic progression",
+            "complex number", "argand", "de moivre", "limits", "continuity",
+            "function", "relation", "domain", "range", "composite", "lcd", "monotonicity"
+        ]
+        
+        # ============ BIOLOGY PATTERNS (NEET) ============
+        zoology_keywords = [
+            "human physiology", "digestion", "respiration", "circulation", "excretion",
+            "animal kingdom", "classification", "phylum", "chordata", "mammalia",
+            "genetics", "mendel", "chromosome", "dna", "rna", "mutation", "heredity",
+            "evolution", "darwin", "lamarck", "natural selection", "speciation",
+            "reproduction", "gametogenesis", "fertilization", "embryology", "menstrual",
+            "human health", "disease", "immunity", "vaccine", "pathogen", "aids", "cancer"
+        ]
+        
+        botany_keywords = [
+            "plant physiology", "photosynthesis", "transpiration", "mineral nutrition",
+            "plant kingdom", "algae", "bryophyte", "pteridophyte", "gymnosperm", "angiosperm",
+            "cell biology", "cell structure", "mitochondria", "chloroplast", "cell cycle",
+            "ecology", "ecosystem", "biodiversity", "environment", "pollution", "conservation",
+            "plant reproduction", "flower", "pollination", "seed", "fruit",
+            "biotechnology", "genetic engineering", "recombinant", "pcr", "gel electrophoresis"
+        ]
+        
+        # Check patterns (case-insensitive)
+        for keyword in physics_keywords:
+            if keyword in topic_lower:
+                return {"subject": "Physics", "confidence": "high"}
+        
+        for keyword in chemistry_keywords:
+            if keyword in topic_lower:
+                return {"subject": "Chemistry", "confidence": "high"}
+        
+        for keyword in maths_keywords:
+            if keyword in topic_lower:
+                return {"subject": "Maths", "confidence": "high"}
+        
+        for keyword in zoology_keywords:
+            if keyword in topic_lower:
+                return {"subject": "Zoology", "confidence": "high"}
+        
+        for keyword in botany_keywords:
+            if keyword in topic_lower:
+                return {"subject": "Botany", "confidence": "high"}
+        
+        # If no pattern matched, use LLM
         prompt = f"""
 You are a subject classifier for JEE/NEET exam topics. Given the topic text, return a JSON with:
 - "subject": one of ["Physics", "Chemistry", "Maths", "Zoology", "Botany"]
