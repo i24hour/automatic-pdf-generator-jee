@@ -448,7 +448,7 @@ async def generate_institute_test(
             for q in questions:
                 q["subject"] = subject
             return questions
-        return []
+        return {"error": result.get("error", "Unknown error"), "subject": subject}
     
     # Generate for each subject
     import asyncio
@@ -469,11 +469,17 @@ async def generate_institute_test(
         raise HTTPException(status_code=400, detail="No valid chapters to generate questions from")
     
     results = await asyncio.gather(*tasks)
-    for questions in results:
-        all_questions.extend(questions)
+    errors = []
+    for res in results:
+        if isinstance(res, list):
+            all_questions.extend(res)
+        elif isinstance(res, dict) and "error" in res:
+            errors.append(f"{res['subject']}: {res['error']}")
     
     if not all_questions:
-        raise HTTPException(status_code=500, detail="Failed to generate questions")
+        error_msg = "; ".join(errors)
+        print(f"Generation Errors: {errors}")
+        raise HTTPException(status_code=500, detail=f"Failed to generate questions. Errors: {error_msg}")
     
     # Step 4: Generate PDF with institute branding
     topic_str = ", ".join(request.chapters[:3])  # First 3 chapters for filename
@@ -497,7 +503,13 @@ async def generate_institute_test(
         "is_institute": True
     }
     
-    pdf_path = pdf_engine.generate_pdf(pdf_data, filename)
+    try:
+        pdf_path = pdf_engine.generate_pdf(pdf_data, filename)
+        if not pdf_path:
+            raise Exception("PDF generation returned None")
+    except Exception as e:
+        print(f"PDF Generation Error: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to generate PDF: {str(e)}")
     
     if not pdf_path:
         raise HTTPException(status_code=500, detail="PDF generation failed")
