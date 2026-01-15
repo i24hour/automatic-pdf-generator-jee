@@ -51,6 +51,7 @@ export default function InstitutePage() {
     const router = useRouter();
     const [user, setUser] = useState<InstituteUser | null>(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [isDetecting, setIsDetecting] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [result, setResult] = useState<GenerateResponse | null>(null);
 
@@ -58,11 +59,13 @@ export default function InstitutePage() {
     const [chapters, setChapters] = useState("");
     const [examType, setExamType] = useState<"Mains" | "NEET" | "Advanced">("Mains");
     const [difficulty, setDifficulty] = useState("Medium");
-    const [physicsCount, setPhysicsCount] = useState(25);
-    const [chemistryCount, setChemistryCount] = useState(25);
-    const [mathsCount, setMathsCount] = useState(25);
-    const [zoologyCount, setZoologyCount] = useState(45);
-    const [botanyCount, setBotanyCount] = useState(45);
+
+    // Detected subjects and their chapters
+    const [detectedSubjects, setDetectedSubjects] = useState<ChapterClassification[]>([]);
+    const [subjectsDetected, setSubjectsDetected] = useState(false);
+
+    // Question counts per subject
+    const [subjectCounts, setSubjectCounts] = useState<Record<string, number>>({});
 
     useEffect(() => {
         const storedUser = localStorage.getItem("institute_user");
@@ -76,17 +79,80 @@ export default function InstitutePage() {
         setUser(JSON.parse(storedUser));
     }, [router]);
 
+    // Reset detection when chapters or exam type changes
     useEffect(() => {
-        // Update default counts when exam type changes
-        setPhysicsCount(EXAM_LIMITS[examType].Physics);
-        setChemistryCount(EXAM_LIMITS[examType].Chemistry);
+        setSubjectsDetected(false);
+        setDetectedSubjects([]);
+        setSubjectCounts({});
+    }, [chapters, examType]);
+
+    // Get max limit for a subject based on exam type
+    const getMaxLimit = (subject: string): number => {
         if (examType === "NEET") {
-            setZoologyCount(EXAM_LIMITS.NEET.Zoology);
-            setBotanyCount(EXAM_LIMITS.NEET.Botany);
+            if (subject === "Physics") return EXAM_LIMITS.NEET.Physics;
+            if (subject === "Chemistry") return EXAM_LIMITS.NEET.Chemistry;
+            if (subject === "Zoology") return EXAM_LIMITS.NEET.Zoology;
+            if (subject === "Botany") return EXAM_LIMITS.NEET.Botany;
+        } else if (examType === "Mains") {
+            if (subject === "Physics") return EXAM_LIMITS.Mains.Physics;
+            if (subject === "Chemistry") return EXAM_LIMITS.Mains.Chemistry;
+            if (subject === "Maths") return EXAM_LIMITS.Mains.Maths;
         } else {
-            setMathsCount(examType === "Mains" ? EXAM_LIMITS.Mains.Maths : EXAM_LIMITS.Advanced.Maths);
+            if (subject === "Physics") return EXAM_LIMITS.Advanced.Physics;
+            if (subject === "Chemistry") return EXAM_LIMITS.Advanced.Chemistry;
+            if (subject === "Maths") return EXAM_LIMITS.Advanced.Maths;
         }
-    }, [examType]);
+        return 25; // Default
+    };
+
+    // Detect subjects from chapters
+    const detectSubjects = async () => {
+        if (!chapters.trim()) {
+            setError("Please enter at least one chapter");
+            return;
+        }
+
+        setIsDetecting(true);
+        setError(null);
+
+        try {
+            const chapterList = chapters.split(",").map(c => c.trim()).filter(c => c);
+            const token = localStorage.getItem("institute_access_token");
+
+            // Call backend to detect subjects for each chapter
+            const response = await fetch(`${API_BASE_URL}/api/institute/detect-subjects`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({ chapters: chapterList }),
+            });
+
+            if (!response.ok) {
+                throw new Error("Failed to detect subjects");
+            }
+
+            const data = await response.json();
+            const classified: ChapterClassification[] = data.classifications;
+            setDetectedSubjects(classified);
+
+            // Get unique subjects and set default counts
+            const uniqueSubjects = [...new Set(classified.map(c => c.subject))];
+            const initialCounts: Record<string, number> = {};
+            uniqueSubjects.forEach(subject => {
+                initialCounts[subject] = getMaxLimit(subject);
+            });
+            setSubjectCounts(initialCounts);
+            setSubjectsDetected(true);
+        } catch (err) {
+            if (err instanceof Error) {
+                setError(err.message);
+            }
+        } finally {
+            setIsDetecting(false);
+        }
+    };
 
     const handleLogout = () => {
         localStorage.removeItem("institute_access_token");
@@ -96,8 +162,8 @@ export default function InstitutePage() {
     };
 
     const handleGenerate = async () => {
-        if (!chapters.trim()) {
-            setError("Please enter at least one chapter");
+        if (!subjectsDetected) {
+            setError("Please detect subjects first");
             return;
         }
 
@@ -114,15 +180,15 @@ export default function InstitutePage() {
                 chapters: chapterList,
                 exam_type: examType,
                 difficulty,
-                physics_count: physicsCount,
-                chemistry_count: chemistryCount,
+                physics_count: subjectCounts["Physics"] || 0,
+                chemistry_count: subjectCounts["Chemistry"] || 0,
             };
 
             if (examType === "NEET") {
-                requestBody.zoology_count = zoologyCount;
-                requestBody.botany_count = botanyCount;
+                requestBody.zoology_count = subjectCounts["Zoology"] || 0;
+                requestBody.botany_count = subjectCounts["Botany"] || 0;
             } else {
-                requestBody.maths_count = mathsCount;
+                requestBody.maths_count = subjectCounts["Maths"] || 0;
             }
 
             const response = await fetch(`${API_BASE_URL}/api/institute/generate`, {
@@ -263,74 +329,73 @@ export default function InstitutePage() {
                         </div>
                     </div>
 
-                    {/* Question Counts */}
-                    <div className="mb-6">
-                        <label className="block text-sm font-medium text-gray-300 mb-2">
-                            Questions per Subject
-                        </label>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <div>
-                                <label className="text-xs text-gray-400">Physics (max {EXAM_LIMITS[examType].Physics})</label>
-                                <input
-                                    type="number"
-                                    min={0}
-                                    max={EXAM_LIMITS[examType].Physics}
-                                    value={physicsCount}
-                                    onChange={(e) => setPhysicsCount(Math.min(Number(e.target.value), EXAM_LIMITS[examType].Physics))}
-                                    className="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                />
-                            </div>
-                            <div>
-                                <label className="text-xs text-gray-400">Chemistry (max {EXAM_LIMITS[examType].Chemistry})</label>
-                                <input
-                                    type="number"
-                                    min={0}
-                                    max={EXAM_LIMITS[examType].Chemistry}
-                                    value={chemistryCount}
-                                    onChange={(e) => setChemistryCount(Math.min(Number(e.target.value), EXAM_LIMITS[examType].Chemistry))}
-                                    className="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                />
-                            </div>
-                            {examType === "NEET" ? (
-                                <>
-                                    <div>
-                                        <label className="text-xs text-gray-400">Zoology (max {EXAM_LIMITS.NEET.Zoology})</label>
-                                        <input
-                                            type="number"
-                                            min={0}
-                                            max={EXAM_LIMITS.NEET.Zoology}
-                                            value={zoologyCount}
-                                            onChange={(e) => setZoologyCount(Math.min(Number(e.target.value), EXAM_LIMITS.NEET.Zoology))}
-                                            className="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="text-xs text-gray-400">Botany (max {EXAM_LIMITS.NEET.Botany})</label>
-                                        <input
-                                            type="number"
-                                            min={0}
-                                            max={EXAM_LIMITS.NEET.Botany}
-                                            value={botanyCount}
-                                            onChange={(e) => setBotanyCount(Math.min(Number(e.target.value), EXAM_LIMITS.NEET.Botany))}
-                                            className="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                        />
-                                    </div>
-                                </>
-                            ) : (
-                                <div>
-                                    <label className="text-xs text-gray-400">Maths (max {examType === "Mains" ? EXAM_LIMITS.Mains.Maths : EXAM_LIMITS.Advanced.Maths})</label>
-                                    <input
-                                        type="number"
-                                        min={0}
-                                        max={examType === "Mains" ? EXAM_LIMITS.Mains.Maths : EXAM_LIMITS.Advanced.Maths}
-                                        value={mathsCount}
-                                        onChange={(e) => setMathsCount(Math.min(Number(e.target.value), examType === "Mains" ? EXAM_LIMITS.Mains.Maths : EXAM_LIMITS.Advanced.Maths))}
-                                        className="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                    />
-                                </div>
-                            )}
+                    {/* Detect Subjects Button */}
+                    {!subjectsDetected && (
+                        <div className="mb-6">
+                            <button
+                                onClick={detectSubjects}
+                                disabled={isDetecting || !chapters.trim()}
+                                className="w-full py-3 bg-indigo-600/80 text-white font-medium rounded-lg hover:bg-indigo-600 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                            >
+                                {isDetecting ? (
+                                    <>
+                                        <Loader2 className="w-5 h-5 animate-spin" />
+                                        Detecting Subjects...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Sparkles className="w-5 h-5" />
+                                        Detect Subjects from Chapters
+                                    </>
+                                )}
+                            </button>
                         </div>
-                    </div>
+                    )}
+
+                    {/* Detected Subjects & Question Counts */}
+                    {subjectsDetected && (
+                        <div className="mb-6">
+                            <label className="block text-sm font-medium text-gray-300 mb-3">
+                                Detected Subjects & Question Counts
+                            </label>
+
+                            {/* Show detected chapters by subject */}
+                            <div className="bg-white/5 rounded-lg p-4 mb-4">
+                                <div className="flex flex-wrap gap-2">
+                                    {detectedSubjects.map((cc, i) => (
+                                        <span
+                                            key={i}
+                                            className="px-2 py-1 rounded-full text-xs bg-indigo-500/20 text-indigo-300 border border-indigo-500/30"
+                                        >
+                                            {cc.chapter}: <strong>{cc.subject}</strong>
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Question count inputs for detected subjects only */}
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                {Object.keys(subjectCounts).map((subject) => (
+                                    <div key={subject}>
+                                        <label className="text-xs text-gray-400">
+                                            {subject} (max {getMaxLimit(subject)})
+                                        </label>
+                                        <input
+                                            type="number"
+                                            min={0}
+                                            max={getMaxLimit(subject)}
+                                            value={subjectCounts[subject]}
+                                            onChange={(e) => {
+                                                const newCount = Math.min(Number(e.target.value), getMaxLimit(subject));
+                                                setSubjectCounts(prev => ({ ...prev, [subject]: newCount }));
+                                            }}
+                                            className="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
                     {/* Generate Button */}
                     <button

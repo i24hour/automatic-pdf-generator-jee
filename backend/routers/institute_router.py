@@ -252,6 +252,32 @@ async def update_profile(
     )
 
 
+class DetectSubjectsRequest(BaseModel):
+    chapters: List[str]
+
+
+class DetectSubjectsResponse(BaseModel):
+    classifications: List[ChapterClassification]
+
+
+@router.post("/detect-subjects", response_model=DetectSubjectsResponse)
+async def detect_subjects(
+    request: DetectSubjectsRequest,
+    current_user: InstituteUser = Depends(get_institute_user)
+):
+    """Detect subjects for each chapter using AI."""
+    classifications = []
+    
+    for chapter in request.chapters:
+        if not chapter.strip():
+            continue
+        result = llm_engine.detect_subject(chapter.strip())
+        subject = result.get("subject", "Physics")
+        classifications.append(ChapterClassification(chapter=chapter.strip(), subject=subject))
+    
+    return DetectSubjectsResponse(classifications=classifications)
+
+
 @router.post("/generate", response_model=InstituteGenerateResponse)
 async def generate_institute_test(
     request: InstituteGenerateRequest,
