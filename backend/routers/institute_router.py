@@ -214,6 +214,42 @@ async def institute_login(request: InstituteLoginRequest, db: Session = Depends(
     )
 
 
+class InstituteRefreshRequest(BaseModel):
+    refresh_token: str
+
+
+@router.post("/refresh")
+async def refresh_institute_token(request: InstituteRefreshRequest, db: Session = Depends(get_db)):
+    """Refresh access token for institute users."""
+    # Find the refresh token
+    token_record = db.query(InstituteRefreshToken).filter(
+        InstituteRefreshToken.token == request.refresh_token,
+        InstituteRefreshToken.is_revoked == False,
+        InstituteRefreshToken.expires_at > datetime.now(timezone.utc)
+    ).first()
+    
+    if not token_record:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired refresh token"
+        )
+    
+    # Get the user
+    user = db.query(InstituteUser).filter(InstituteUser.id == token_record.institute_user_id).first()
+    if not user or not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found or inactive"
+        )
+    
+    # Create new access token
+    access_token = create_access_token(
+        data={"sub": user.id, "user_type": "institute"}
+    )
+    
+    return {"access_token": access_token, "token_type": "bearer"}
+
+
 @router.get("/profile", response_model=InstituteProfileResponse)
 async def get_profile(current_user: InstituteUser = Depends(get_institute_user)):
     """Get institute profile."""

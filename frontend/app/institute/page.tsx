@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
-    Building2,
+    FileText,
     Loader2,
     Download,
     CheckCircle2,
@@ -12,7 +12,12 @@ import {
     User,
     Sparkles,
     BookOpen,
+    Target,
+    Stethoscope,
+    Award,
+    Building2,
 } from "lucide-react";
+import { useInstituteAuth } from "@/lib/institute-auth-context";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -33,14 +38,6 @@ interface GenerateResponse {
     };
 }
 
-interface InstituteUser {
-    id: string;
-    email: string;
-    institute_name?: string;
-    contact_number?: string;
-    institute_email?: string;
-}
-
 const EXAM_LIMITS = {
     Mains: { Physics: 25, Chemistry: 25, Maths: 25 },
     NEET: { Physics: 45, Chemistry: 45, Zoology: 45, Botany: 45 },
@@ -49,7 +46,8 @@ const EXAM_LIMITS = {
 
 export default function InstitutePage() {
     const router = useRouter();
-    const [user, setUser] = useState<InstituteUser | null>(null);
+    const { user, isLoading: authLoading, isAuthenticated, logout, authFetch } = useInstituteAuth();
+
     const [isLoading, setIsLoading] = useState(false);
     const [isDetecting, setIsDetecting] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -67,17 +65,12 @@ export default function InstitutePage() {
     // Question counts per subject
     const [subjectCounts, setSubjectCounts] = useState<Record<string, number>>({});
 
+    // Redirect to login if not authenticated
     useEffect(() => {
-        const storedUser = localStorage.getItem("institute_user");
-        const token = localStorage.getItem("institute_access_token");
-
-        if (!storedUser || !token) {
+        if (!authLoading && !isAuthenticated) {
             router.push("/institute/login");
-            return;
         }
-
-        setUser(JSON.parse(storedUser));
-    }, [router]);
+    }, [authLoading, isAuthenticated, router]);
 
     // Reset detection when chapters or exam type changes
     useEffect(() => {
@@ -117,27 +110,17 @@ export default function InstitutePage() {
 
         try {
             const chapterList = chapters.split(",").map(c => c.trim()).filter(c => c);
-            const token = localStorage.getItem("institute_access_token");
 
             // Call backend to detect subjects for each chapter
-            const response = await fetch(`${API_BASE_URL}/api/institute/detect-subjects`, {
+            const response = await authFetch(`${API_BASE_URL}/api/institute/detect-subjects`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
                 },
                 body: JSON.stringify({ chapters: chapterList }),
             });
 
             if (!response.ok) {
-                if (response.status === 401) {
-                    // Token expired - redirect to login
-                    localStorage.removeItem("institute_access_token");
-                    localStorage.removeItem("institute_refresh_token");
-                    localStorage.removeItem("institute_user");
-                    router.push("/institute/login");
-                    return;
-                }
                 const errorData = await response.json().catch(() => ({}));
                 throw new Error(errorData.detail || "Failed to detect subjects");
             }
@@ -200,11 +183,10 @@ export default function InstitutePage() {
                 requestBody.maths_count = subjectCounts["Maths"] || 0;
             }
 
-            const response = await fetch(`${API_BASE_URL}/api/institute/generate`, {
+            const response = await authFetch(`${API_BASE_URL}/api/institute/generate`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
                 },
                 body: JSON.stringify(requestBody),
             });
