@@ -52,6 +52,7 @@ export default function InstitutePage() {
     const [isDetecting, setIsDetecting] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [result, setResult] = useState<GenerateResponse | null>(null);
+    const [abortController, setAbortController] = useState<AbortController | null>(null);
 
     // Form state
     const [chapters, setChapters] = useState("");
@@ -183,12 +184,17 @@ export default function InstitutePage() {
                 requestBody.maths_count = subjectCounts["Maths"] || 0;
             }
 
+            // Create AbortController for cancellation
+            const controller = new AbortController();
+            setAbortController(controller);
+
             const response = await authFetch(`${API_BASE_URL}/api/institute/generate`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify(requestBody),
+                signal: controller.signal,
             });
 
             if (!response.ok) {
@@ -200,11 +206,24 @@ export default function InstitutePage() {
             setResult(data);
         } catch (err: unknown) {
             if (err instanceof Error) {
-                setError(err.message);
+                if (err.name === 'AbortError') {
+                    setError('Generation cancelled');
+                } else {
+                    setError(err.message);
+                }
             } else {
                 setError("An unknown error occurred");
             }
         } finally {
+            setIsLoading(false);
+            setAbortController(null);
+        }
+    };
+
+    const handleCancel = () => {
+        if (abortController) {
+            abortController.abort();
+            setAbortController(null);
             setIsLoading(false);
         }
     };
@@ -406,6 +425,17 @@ export default function InstitutePage() {
                             </>
                         )}
                     </button>
+
+                    {/* Cancel Button */}
+                    {isLoading && (
+                        <button
+                            onClick={handleCancel}
+                            className="w-full py-3 mt-2 bg-red-600/20 text-red-400 font-medium rounded-xl hover:bg-red-600/30 transition-colors flex items-center justify-center gap-2 border border-red-500/30"
+                        >
+                            <AlertCircle className="w-5 h-5" />
+                            Cancel Generation
+                        </button>
+                    )}
 
                     {/* Error */}
                     {error && (
