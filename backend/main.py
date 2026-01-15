@@ -27,7 +27,7 @@ from routers.institute_router import router as institute_router
 load_dotenv()
 
 # Rate limiting configuration
-RATE_LIMIT_COUNT = int(os.getenv("RATE_LIMIT_COUNT", "3"))
+RATE_LIMIT_COUNT = int(os.getenv("RATE_LIMIT_COUNT", "30"))
 RATE_LIMIT_HOURS = int(os.getenv("RATE_LIMIT_HOURS", "24"))
 
 # Initialize FastAPI app
