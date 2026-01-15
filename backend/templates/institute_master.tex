@@ -5,134 +5,210 @@
 \usepackage{amsfonts}
 \usepackage{amssymb}
 \usepackage{graphicx}
-\usepackage{tikz}  % For AI generated diagrams
-\usepackage{multicol} % For 2-column layout
+\usepackage{tikz}
+\usepackage{multicol}
 \usepackage{fancyhdr}
 \usepackage{enumitem}
 \usepackage{float}
-\usepackage{xcolor}  % For colored text
+\usepackage{xcolor}
+\usepackage{array}
+\usepackage{tabularx}
 
-% TikZ Libraries (Standard set for Physics/Maths)
+% TikZ Libraries
 \usetikzlibrary{arrows.meta, calc, decorations.pathmorphing, patterns, shapes.geometric}
 
-% Page Layout (JEE Standard)
-\geometry{top=0.75in, bottom=1in, left=0.5in, right=0.5in}
-\setlength{\columnsep}{0.6cm}
+% Page Layout
+\geometry{top=0.6in, bottom=0.8in, left=0.5in, right=0.5in}
+\setlength{\columnsep}{0.5cm}
+\setlength{\parindent}{0pt}
 
 % Header and Footer
 \pagestyle{fancy}
 \fancyhf{}
-\rhead{\textbf{INFINITEST}}
-\lhead{\small A Mentors Mantra Product}
+\lhead{\small \textbf{INFINITEST} - A Mentors Mantra Product}
+\rhead{\small \VAR{level} | \VAR{difficulty}}
 \cfoot{
     \footnotesize
     \BLOCK{ if institute_name }
-    \textbf{\VAR{institute_name}} \\[2pt]
+    \textbf{\VAR{institute_name}}
+    \BLOCK{ if institute_contact or institute_email } | \BLOCK{ endif }
     \BLOCK{ endif }
-    \BLOCK{ if institute_contact or institute_email }
-    \textcolor{gray}{
-        \BLOCK{ if institute_contact }Contact: \textbf{\VAR{institute_contact}}\BLOCK{ endif }
-        \BLOCK{ if institute_contact and institute_email } | \BLOCK{ endif }
-        \BLOCK{ if institute_email }Email: \textbf{\VAR{institute_email}}\BLOCK{ endif }
-    }
-    \BLOCK{ endif }
+    \BLOCK{ if institute_contact }Contact: \VAR{institute_contact}\BLOCK{ endif }
+    \BLOCK{ if institute_contact and institute_email } | \BLOCK{ endif }
+    \BLOCK{ if institute_email }\VAR{institute_email}\BLOCK{ endif }
 }
 \rfoot{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
 \renewcommand{\footrulewidth}{0pt}
 
-% Custom Option List (vertical line-by-line for long statements)
+% Custom commands
 \newcommand{\fourchoices}[4]{%
-    \vspace{2pt}%
-    \par\noindent (a) #1%
-    \par\noindent (b) #2%
-    \par\noindent (c) #3%
-    \par\noindent (d) #4%
-    \vspace{4pt}%
+    \vspace{3pt}%
+    \par\noindent\hspace{0.5em}(a) #1%
+    \par\noindent\hspace{0.5em}(b) #2%
+    \par\noindent\hspace{0.5em}(c) #3%
+    \par\noindent\hspace{0.5em}(d) #4%
+    \vspace{6pt}%
+}
+
+\newcommand{\sectionheader}[1]{%
+    \vspace{0.3cm}
+    \noindent\rule{\linewidth}{1pt}
+    \begin{center}
+        {\Large \textbf{SECTION - #1}}
+    \end{center}
+    \vspace{0.2cm}
 }
 
 \begin{document}
 
-% --- TITLE SECTION ---
+% =============== TITLE PAGE ===============
 \begin{center}
+    \vspace*{0.3cm}
     {\Huge \textbf{INFINITEST}} \\[0.1cm]
-    {\small \textit{A Mentors Mantra Product}} \\[0.3cm]
+    {\small \textit{A Mentors Mantra Product}} \\[0.4cm]
+    
     \BLOCK{ if institute_name }
-    {\Large \textbf{\VAR{institute_name}}} \\[0.2cm]
+    {\Large \textbf{\VAR{institute_name}}} \\[0.3cm]
     \BLOCK{ endif }
-    {\Large \textbf{Target: \VAR{level}}} \\[0.05cm]
-    {\normalsize \textbf{Difficulty: \VAR{difficulty}}} \\[0.1cm]
-    \rule{\textwidth}{1pt}
-    \textbf{Topics: \VAR{topic}}
+    
+    \rule{\textwidth}{2pt} \\[0.2cm]
+    {\LARGE \textbf{\VAR{level} - Practice Test}} \\[0.1cm]
+    {\large Difficulty: \textbf{\VAR{difficulty}}} \\[0.2cm]
+    \rule{\textwidth}{2pt}
 \end{center}
 
-\vspace{0.2cm}
-\BLOCK{ if level == 'JEE Advanced' }
-\textit{\textbf{Instructions:} This paper contains \VAR{total_questions} questions. Some MCQs are marked \textbf{(One or More Correct)} - select all correct options. Remaining MCQs have single correct answer. Section B contains Numerical Value Questions.}
-\BLOCK{ else }
-\textit{\textbf{Instructions:} This paper contains \VAR{total_questions} questions. Section A contains MCQs and Section B contains Numerical Value Questions.}
-\BLOCK{ endif }
 \vspace{0.3cm}
 
-% --- QUESTIONS SECTION ---
-\begin{multicols}{2}
-\begin{enumerate}[label=\textbf{Q.\arabic*}]
+% =============== INSTRUCTIONS ===============
+\begin{center}
+    {\large \textbf{GENERAL INSTRUCTIONS}}
+\end{center}
 
-    % JINJA LOOP START
-    \BLOCK{ for q in questions }
+\begin{enumerate}[leftmargin=*,itemsep=2pt]
+    \item This question paper contains \textbf{\VAR{total_questions}} questions.
+    \item The question paper is divided into subject-wise sections.
+    \BLOCK{ if level == 'Mains' or level == 'JEE Mains' }
+    \item \textbf{SECTION A - MCQs:} Each question has 4 options with ONLY ONE correct answer.
+    \begin{itemize}[itemsep=1pt]
+        \item Correct Answer: \textbf{+4 marks}
+        \item Wrong Answer: \textbf{-1 mark}
+        \item Unattempted: \textbf{0 marks}
+    \end{itemize}
+    \item \textbf{SECTION B - Numerical Value:} Answer should be rounded off to 2 decimal places.
+    \begin{itemize}[itemsep=1pt]
+        \item Correct Answer: \textbf{+4 marks}
+        \item Wrong Answer: \textbf{0 marks}
+        \item Unattempted: \textbf{0 marks}
+    \end{itemize}
+    \BLOCK{ elif level == 'NEET' }
+    \item Each question carries \textbf{4 marks} for correct answer.
+    \item \textbf{1 mark will be deducted} for every wrong answer.
+    \item No marks will be deducted for unattempted questions.
+    \BLOCK{ elif level == 'Advanced' or level == 'JEE Advanced' }
+    \item \textbf{Single Correct MCQs:} +3 for correct, -1 for wrong.
+    \item \textbf{Multiple Correct MCQs:} +4 for all correct, +1 for partial, -2 for wrong.
+    \item \textbf{Numerical Value:} +3 for correct, 0 for wrong.
+    \BLOCK{ else }
+    \item Each correct MCQ carries \textbf{+4 marks}, wrong answer \textbf{-1 mark}.
+    \item Numerical questions: \textbf{+4 marks} for correct, \textbf{0 marks} for wrong.
+    \BLOCK{ endif }
+    \item Use of calculator is NOT permitted.
+    \item Rough work may be done on blank pages provided.
+\end{enumerate}
 
-        % Show subject label if multi-subject
-        \BLOCK{ if q.subject }
-        \textbf{[\VAR{q.subject}]}
+\vspace{0.3cm}
+\begin{center}
+    \rule{0.5\textwidth}{0.4pt} \\[0.1cm]
+    {\small \textbf{Topics Covered:} \VAR{topic}}
+\end{center}
+
+\newpage
+
+% =============== QUESTIONS BY SUBJECT ===============
+\BLOCK{ set current_subject = namespace(value='') }
+\BLOCK{ set question_num = namespace(value=1) }
+
+\BLOCK{ for q in questions }
+
+    % Check if subject changed - start new section
+    \BLOCK{ if q.subject and q.subject != current_subject.value }
+        \BLOCK{ if current_subject.value != '' }
+            \end{enumerate}
+            \end{multicols}
+            \newpage
         \BLOCK{ endif }
         
-        \item \VAR{q.text}
+        \BLOCK{ set current_subject.value = q.subject }
         
-        % Check if diagram exists
-        \BLOCK{ if q.diagram_tikz }
+        % Subject Header
         \begin{center}
-        \begin{tikzpicture}[scale=0.6]
-            \VAR{q.diagram_tikz}
-        \end{tikzpicture}
+            \rule{\textwidth}{1.5pt} \\[0.2cm]
+            {\LARGE \textbf{\VAR{q.subject}}} \\[0.2cm]
+            \rule{\textwidth}{1.5pt}
         \end{center}
-        \BLOCK{ endif }
+        \vspace{0.3cm}
+        
+        \begin{multicols}{2}
+        \begin{enumerate}[label=\textbf{Q.\arabic*.},start=\VAR{question_num.value},itemsep=8pt]
+    \BLOCK{ endif }
 
-        % Check if MCQ (single or multi) or Numerical
-        \BLOCK{ if q.type == 'mcq_multi' }
-            \textit{(One or More Correct)}
-            \fourchoices{\VAR{q.options[0]}}{\VAR{q.options[1]}}{\VAR{q.options[2]}}{\VAR{q.options[3]}}
-        \BLOCK{ elif q.type == 'mcq' }
-            \fourchoices{\VAR{q.options[0]}}{\VAR{q.options[1]}}{\VAR{q.options[2]}}{\VAR{q.options[3]}}
-        \BLOCK{ else }
-            \vspace{0.2cm} \\ 
-            \textbf{Answer: \_\_\_\_\_\_\_\_\_}
-        \BLOCK{ endif }
+    \item \VAR{q.text}
+    
+    \BLOCK{ if q.diagram_tikz }
+    \begin{center}
+    \begin{tikzpicture}[scale=0.55]
+        \VAR{q.diagram_tikz}
+    \end{tikzpicture}
+    \end{center}
+    \BLOCK{ endif }
 
-    \BLOCK{ endfor }
-    % JINJA LOOP END
+    \BLOCK{ if q.type == 'mcq_multi' }
+        {\small \textit{(One or More Correct)}}
+        \fourchoices{\VAR{q.options[0]}}{\VAR{q.options[1]}}{\VAR{q.options[2]}}{\VAR{q.options[3]}}
+    \BLOCK{ elif q.type == 'mcq' }
+        \fourchoices{\VAR{q.options[0]}}{\VAR{q.options[1]}}{\VAR{q.options[2]}}{\VAR{q.options[3]}}
+    \BLOCK{ else }
+        \vspace{0.3cm}
+        \textbf{Answer:} \_\_\_\_\_\_\_\_\_\_\_\_
+        \vspace{0.3cm}
+    \BLOCK{ endif }
+
+    \BLOCK{ set question_num.value = question_num.value + 1 }
+
+\BLOCK{ endfor }
 
 \end{enumerate}
 \end{multicols}
 
 \newpage
 
-% --- ANSWER KEY SECTION ---
+% =============== ANSWER KEY ===============
 \begin{center}
-    {\Large \textbf{ANSWER KEY}}
+    \rule{\textwidth}{1.5pt} \\[0.2cm]
+    {\LARGE \textbf{ANSWER KEY}} \\[0.2cm]
+    \rule{\textwidth}{1.5pt}
 \end{center}
+\vspace{0.3cm}
 
-\begin{table}[h]
-\centering
-\renewcommand{\arraystretch}{1.5}
-\begin{tabular}{|c|c||c|c||c|c|}
-\hline
-\textbf{Q.No} & \textbf{Ans} & \textbf{Q.No} & \textbf{Ans} & \textbf{Q.No} & \textbf{Ans} \\
-\hline
+\BLOCK{ set ans_subject = namespace(value='') }
+
 \BLOCK{ for q in questions }
-    \textbf{\VAR{loop.index}} & \VAR{q.answer} 
-    \BLOCK{ if loop.index is divisibleby 3 } \\ \hline \BLOCK{ else } & \BLOCK{ endif }
+    \BLOCK{ if q.subject and q.subject != ans_subject.value }
+        \BLOCK{ set ans_subject.value = q.subject }
+        
+        \vspace{0.2cm}
+        \textbf{\VAR{q.subject}:} \\[0.1cm]
+    \BLOCK{ endif }
+    
+    \textbf{Q.\VAR{loop.index}:} \VAR{q.answer} \hspace{0.5cm}
+    \BLOCK{ if loop.index is divisibleby 5 } \\[0.1cm] \BLOCK{ endif }
 \BLOCK{ endfor }
-\\ \hline
-\end{tabular}
-\end{table}
+
+\vspace{0.5cm}
+\begin{center}
+    \rule{0.6\textwidth}{0.4pt} \\[0.2cm]
+    {\small \textbf{All the Best!}}
+\end{center}
 
 \end{document}
