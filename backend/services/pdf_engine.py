@@ -23,23 +23,14 @@ def sanitize_for_latex(text: str) -> str:
     # First, ensure valid UTF-8
     text = text.encode('utf-8', errors='ignore').decode('utf-8')
     
-    # Escape LaTeX special characters FIRST (before other replacements)
-    # These need to be escaped: # $ % & _ { } ~ ^ \
-    latex_escapes = {
-        '#': r'\#',
-        '%': r'\%',
-        '&': r'\&',
-        '_': r'\_',
-        '{': r'\{',
-        '}': r'\}',
-        '~': r'\textasciitilde{}',
-        '^': r'\textasciicircum{}',
-    }
+    # ONLY escape characters that are problematic outside math mode
+    # Do NOT escape { } _ ^ $ \ as they're used for LaTeX math
+    # Only escape # and & which cause issues in text
+    text = text.replace('#', r'\#')
+    text = text.replace('&', r'\&')
     
-    # Don't escape $ and \ as they're used for math mode
-    for char, escape in latex_escapes.items():
-        # Only escape if not already in a math context
-        text = text.replace(char, escape)
+    # Replace ~ with proper LaTeX (but carefully)
+    # text = text.replace('~', r'\textasciitilde{}')  # Disabled - too aggressive
     
     # Map problematic Unicode chars to LaTeX equivalents
     replacements = {
