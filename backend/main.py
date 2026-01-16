@@ -83,6 +83,7 @@ class GenerateResponse(BaseModel):
     success: bool
     message: str
     pdf_filename: Optional[str] = None
+    pdf_base64: Optional[str] = None  # Base64-encoded PDF for immediate download
     total_mcq: int = 0
     total_numerical: int = 0
     rate_limit_remaining: int = 0
@@ -364,10 +365,19 @@ async def generate_test(
         # Get updated rate limit info
         _, new_remaining, new_reset_hours, _ = check_rate_limit(current_user, db)
         
+        # Read PDF file and encode as base64 for immediate download
+        pdf_base64_str = None
+        try:
+            with open(pdf_path, 'rb') as pdf_file:
+                pdf_base64_str = base64.b64encode(pdf_file.read()).decode('utf-8')
+        except Exception as e:
+            print(f"Warning: Could not encode PDF to base64: {e}")
+        
         return GenerateResponse(
             success=True,
             message="Test paper generated successfully",
             pdf_filename=os.path.basename(pdf_path),
+            pdf_base64=pdf_base64_str,
             total_mcq=mcq_count,
             total_numerical=numerical_count,
             rate_limit_remaining=new_remaining,
@@ -405,6 +415,7 @@ class GenerateVerifiedResponse(BaseModel):
     success: bool
     message: str
     pdf_filename: Optional[str] = None
+    pdf_base64: Optional[str] = None  # Base64-encoded PDF for immediate download
     total_mcq: Optional[int] = None
     total_numerical: Optional[int] = None
     verification_stats: Optional[Dict] = None
@@ -486,10 +497,19 @@ async def generate_test_verified(
         # Get updated rate limit info
         _, new_remaining, new_reset_hours, _ = check_rate_limit(current_user, db)
         
+        # Read PDF file and encode as base64 for immediate download
+        pdf_base64_str = None
+        try:
+            with open(pdf_path, 'rb') as pdf_file:
+                pdf_base64_str = base64.b64encode(pdf_file.read()).decode('utf-8')
+        except Exception as e:
+            print(f"Warning: Could not encode PDF to base64: {e}")
+        
         return GenerateVerifiedResponse(
             success=True,
             message="Test paper generated with verified answers",
             pdf_filename=os.path.basename(pdf_path),
+            pdf_base64=pdf_base64_str,
             total_mcq=mcq_count,
             total_numerical=numerical_count,
             verification_stats=llm_result.get("verification_stats"),

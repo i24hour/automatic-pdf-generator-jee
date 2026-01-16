@@ -4,6 +4,7 @@ Institute Router - Authentication and API endpoints for institute users.
 
 import os
 import json
+import base64
 from datetime import datetime, timedelta, timezone
 from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -71,6 +72,7 @@ class InstituteGenerateResponse(BaseModel):
     success: bool
     message: str
     pdf_filename: Optional[str] = None
+    pdf_base64: Optional[str] = None  # Base64-encoded PDF for immediate download
     chapters_classified: List[ChapterClassification]
     verification_stats: Optional[dict] = None
 
@@ -529,10 +531,19 @@ async def generate_institute_test(
     db.add(generation)
     db.commit()
     
+    # Read PDF file and encode as base64 for immediate download
+    pdf_base64_str = None
+    try:
+        with open(pdf_path, 'rb') as pdf_file:
+            pdf_base64_str = base64.b64encode(pdf_file.read()).decode('utf-8')
+    except Exception as e:
+        print(f"Warning: Could not encode PDF to base64: {e}")
+    
     return InstituteGenerateResponse(
         success=True,
         message=f"Test paper generated with {len(all_questions)} questions",
         pdf_filename=os.path.basename(pdf_path),
+        pdf_base64=pdf_base64_str,
         chapters_classified=chapters_classified,
         verification_stats=verification_stats
     )

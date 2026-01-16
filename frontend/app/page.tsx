@@ -333,7 +333,24 @@ export default function Home() {
 
 
   const handleDownload = () => {
-    if (result?.pdf_filename) {
+    if (result?.pdf_base64) {
+      // Decode base64 and trigger download
+      const binary = atob(result.pdf_base64);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+      }
+      const blob = new Blob([bytes], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = result.pdf_filename || 'test_paper.pdf';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } else if (result?.pdf_filename) {
+      // Fallback to API endpoint (for backwards compatibility)
       window.open(`${API_BASE_URL}/api/download/${result.pdf_filename}`, "_blank");
     }
   };

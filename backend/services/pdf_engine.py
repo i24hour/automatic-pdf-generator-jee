@@ -7,8 +7,105 @@ import os
 import subprocess
 import tempfile
 import shutil
+import re
 from typing import Dict, Any, Optional
 import jinja2
+
+
+def sanitize_for_latex(text: str) -> str:
+    """
+    Sanitize text to be LaTeX-safe by escaping problematic Unicode characters.
+    """
+    if not isinstance(text, str):
+        return str(text) if text else ""
+    
+    # First, ensure valid UTF-8
+    text = text.encode('utf-8', errors='ignore').decode('utf-8')
+    
+    # Map problematic Unicode chars to LaTeX equivalents
+    replacements = {
+        '°': r'$^{\circ}$',
+        '×': r'$\times$',
+        '÷': r'$\div$',
+        '±': r'$\pm$',
+        '≈': r'$\approx$',
+        '≠': r'$\neq$',
+        '≤': r'$\leq$',
+        '≥': r'$\geq$',
+        '→': r'$\rightarrow$',
+        '←': r'$\leftarrow$',
+        '↔': r'$\leftrightarrow$',
+        '∞': r'$\infty$',
+        'α': r'$\alpha$',
+        'β': r'$\beta$',
+        'γ': r'$\gamma$',
+        'δ': r'$\delta$',
+        'θ': r'$\theta$',
+        'λ': r'$\lambda$',
+        'μ': r'$\mu$',
+        'π': r'$\pi$',
+        'σ': r'$\sigma$',
+        'ω': r'$\omega$',
+        'Ω': r'$\Omega$',
+        'Δ': r'$\Delta$',
+        '√': r'$\sqrt{}$',
+        '∫': r'$\int$',
+        '∑': r'$\sum$',
+        '∏': r'$\prod$',
+        '∂': r'$\partial$',
+        '∈': r'$\in$',
+        '∉': r'$\notin$',
+        '⊂': r'$\subset$',
+        '⊃': r'$\supset$',
+        '∪': r'$\cup$',
+        '∩': r'$\cap$',
+        '∅': r'$\emptyset$',
+        '⇒': r'$\Rightarrow$',
+        '⇔': r'$\Leftrightarrow$',
+        '′': r"'",
+        '″': r"''",
+        '–': r'--',
+        '—': r'---',
+        '"': r"``",
+        '"': r"''",
+        ''': r"'",
+        ''': r"'",
+        '…': r'...',
+        '•': r'$\bullet$',
+        '·': r'$\cdot$',
+        '½': r'$\frac{1}{2}$',
+        '⅓': r'$\frac{1}{3}$',
+        '¼': r'$\frac{1}{4}$',
+        '¾': r'$\frac{3}{4}$',
+        '²': r'$^2$',
+        '³': r'$^3$',
+        '¹': r'$^1$',
+        'Ö': 'O',
+        'Ü': 'U',
+        'ö': 'o',
+        'ü': 'u',
+        'ä': 'a',
+        'Ä': 'A',
+        'ß': 'ss',
+        'é': 'e',
+        'è': 'e',
+        'ê': 'e',
+        'ë': 'e',
+        'à': 'a',
+        'â': 'a',
+        'ù': 'u',
+        'û': 'u',
+        'ç': 'c',
+        'ñ': 'n',
+    }
+    
+    for char, replacement in replacements.items():
+        text = text.replace(char, replacement)
+    
+    # Remove any remaining non-ASCII characters that might cause issues
+    text = re.sub(r'[^\x00-\x7F]+', '', text)
+    
+    return text
 
 
 class PDFEngine:
@@ -64,17 +161,32 @@ class PDFEngine:
             # Fallback to master.tex
             template = self.jinja_env.get_template("master.tex")
         
+        # Sanitize all question fields for LaTeX safety
+        questions = data.get("questions", [])
+        sanitized_questions = []
+        for q in questions:
+            sanitized_q = {}
+            for key, value in q.items():
+                if isinstance(value, str):
+                    sanitized_q[key] = sanitize_for_latex(value)
+                elif isinstance(value, list):
+                    # Handle options list
+                    sanitized_q[key] = [sanitize_for_latex(v) if isinstance(v, str) else v for v in value]
+                else:
+                    sanitized_q[key] = value
+            sanitized_questions.append(sanitized_q)
+        
         rendered = template.render(
-            subject=data.get("subject", ""),
-            topic=data.get("topic", ""),
-            level=data.get("level", "JEE Mains"),
-            difficulty=data.get("difficulty", "Medium"),
-            total_questions=len(data.get("questions", [])),
-            questions=data.get("questions", []),
+            subject=sanitize_for_latex(data.get("subject", "")),
+            topic=sanitize_for_latex(data.get("topic", "")),
+            level=sanitize_for_latex(data.get("level", "JEE Mains")),
+            difficulty=sanitize_for_latex(data.get("difficulty", "Medium")),
+            total_questions=len(sanitized_questions),
+            questions=sanitized_questions,
             # Institute branding
-            institute_name=data.get("institute_name", ""),
-            institute_contact=data.get("institute_contact", ""),
-            institute_email=data.get("institute_email", ""),
+            institute_name=sanitize_for_latex(data.get("institute_name", "")),
+            institute_contact=sanitize_for_latex(data.get("institute_contact", "")),
+            institute_email=sanitize_for_latex(data.get("institute_email", "")),
             is_institute=is_institute
         )
         
