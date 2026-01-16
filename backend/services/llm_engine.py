@@ -518,7 +518,7 @@ EXAMPLE NEET-LEVEL QUESTIONS:
     ]
 }}"""
         
-        prompt = f"""You are an expert exam setter with 20+ years of experience setting {level} level examination papers.
+        prompt = f"""You are an expert exam setter with 20+ years of experience setting {level} level examination papers for top coaching institutes like FIITJEE, Allen, and Resonance.
 
 TASK: Generate exactly {mcq_count} MCQs and {numerical_count} Numerical questions on "{topic}" for {subject}.
 
@@ -531,15 +531,28 @@ STRICT REQUIREMENTS:
 2. Each question MUST be UNIQUE - no duplicate or similar questions allowed
 3. Questions MUST match the specified difficulty level EXACTLY - not easier, not harder
 4. Each question should be solvable only by students who have mastered that level
-5. Use proper LaTeX math mode: $...$ for inline math (e.g., $F = ma$, $\\frac{{a}}{{b}}$, $\\sqrt{{x}}$)
-6. {mcq_instruction}
+5. {mcq_instruction}
 {numerical_answer_instruction}
-8. NO explanations or solutions
+7. NO explanations or solutions
+
+FORMATTING REQUIREMENTS (VERY IMPORTANT):
+- Use proper spacing between words and sentences
+- Write complete, grammatically correct sentences
+- Use LaTeX math mode for ALL mathematical expressions: $...$
+  Examples: $F = ma$, $\\frac{{a}}{{b}}$, $\\sqrt{{x}}$, $\\int_0^1 f(x) dx$
+- For subscripts use: $W_0$, $v_1$, $x_2$ (NOT W₀, v₁, x₂)
+- For superscripts use: $x^2$, $10^3$ (NOT x², 10³)
+- For Greek letters use: $\\alpha$, $\\beta$, $\\theta$, $\\omega$ (NOT α, β, θ, ω)
+- For special symbols: $\\times$ (multiplication), $\\div$ (division), $\\pm$ (plus-minus)
+- Separate distinct concepts with proper punctuation and spacing
+- DO NOT concatenate words or run sentences together
 
 QUALITY CHECK: Before finalizing, verify:
 - Total questions = {total_requested} (exactly {mcq_count} MCQs + {numerical_count} Numerical)
 - No duplicate questions
 - Each question truly represents {level} difficulty
+- All mathematical expressions are in $...$ LaTeX format
+- Proper spacing between all words
 
 Return ONLY valid JSON:
 {json_example}"""
@@ -649,7 +662,7 @@ Return ONLY valid JSON:
         }
         level_prompt = level_prompts.get(level, level_prompts.get("JEE Mains"))
         
-        prompt = f"""You are an expert question paper setter for competitive exams.
+        prompt = f"""You are an expert question paper setter for competitive exams like FIITJEE, Allen, Resonance.
 
 GENERATE EXACTLY:
 - {mcq_count} MCQ questions (type "mcq", with options array and answer as A/B/C/D)
@@ -660,10 +673,19 @@ TOPIC: {topic}
 EXAM LEVEL: {level_prompt}
 {difficulty_prompt}
 
+FORMATTING REQUIREMENTS (CRITICAL):
+- Use proper spacing between ALL words and sentences
+- Use LaTeX math mode for ALL mathematical expressions: $...$
+- For subscripts: $W_0$, $v_1$ (NOT W₀, v₁)
+- For superscripts: $x^2$, $10^3$ (NOT x², 10³)
+- For Greek letters: $\\alpha$, $\\beta$, $\\theta$ (NOT α, β, θ)
+- For fractions: $\\frac{{a}}{{b}}$ 
+- DO NOT concatenate words or run sentences together
+
 Return ONLY valid JSON:
 {{"questions": [
-  {{"type": "mcq", "text": "...", "options": ["A) ...", "B) ...", "C) ...", "D) ..."], "answer": "A"}},
-  {{"type": "numerical", "text": "...", "answer": "42"}}
+  {{"type": "mcq", "text": "A body of mass $m$ is dropped from height $h$. What is the velocity?", "options": ["$\\sqrt{{2gh}}$", "$\\sqrt{{gh}}$", "$2gh$", "$gh$"], "answer": "A"}},
+  {{"type": "numerical", "text": "If $F = 10$ N and $m = 2$ kg, find acceleration in m/s$^2$.", "answer": "5"}}
 ]}}
 """
         max_retries = 2

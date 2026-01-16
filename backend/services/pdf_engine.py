@@ -15,12 +15,31 @@ import jinja2
 def sanitize_for_latex(text: str) -> str:
     """
     Sanitize text to be LaTeX-safe by escaping problematic Unicode characters.
+    Preserves spacing and handles mathematical expressions.
     """
     if not isinstance(text, str):
         return str(text) if text else ""
     
     # First, ensure valid UTF-8
     text = text.encode('utf-8', errors='ignore').decode('utf-8')
+    
+    # Escape LaTeX special characters FIRST (before other replacements)
+    # These need to be escaped: # $ % & _ { } ~ ^ \
+    latex_escapes = {
+        '#': r'\#',
+        '%': r'\%',
+        '&': r'\&',
+        '_': r'\_',
+        '{': r'\{',
+        '}': r'\}',
+        '~': r'\textasciitilde{}',
+        '^': r'\textasciicircum{}',
+    }
+    
+    # Don't escape $ and \ as they're used for math mode
+    for char, escape in latex_escapes.items():
+        # Only escape if not already in a math context
+        text = text.replace(char, escape)
     
     # Map problematic Unicode chars to LaTeX equivalents
     replacements = {
@@ -62,15 +81,15 @@ def sanitize_for_latex(text: str) -> str:
         '∅': r'$\emptyset$',
         '⇒': r'$\Rightarrow$',
         '⇔': r'$\Leftrightarrow$',
-        '′': r"'",
-        '″': r"''",
-        '–': r'--',
-        '—': r'---',
-        '"': r"``",
-        '"': r"''",
-        ''': r"'",
-        ''': r"'",
-        '…': r'...',
+        '′': "'",
+        '″': "''",
+        '–': '--',
+        '—': '---',
+        '"': "``",
+        '"': "''",
+        ''': "'",
+        ''': "'",
+        '…': '...',
         '•': r'$\bullet$',
         '·': r'$\cdot$',
         '½': r'$\frac{1}{2}$',
@@ -80,30 +99,27 @@ def sanitize_for_latex(text: str) -> str:
         '²': r'$^2$',
         '³': r'$^3$',
         '¹': r'$^1$',
-        'Ö': 'O',
-        'Ü': 'U',
-        'ö': 'o',
-        'ü': 'u',
-        'ä': 'a',
-        'Ä': 'A',
-        'ß': 'ss',
-        'é': 'e',
-        'è': 'e',
-        'ê': 'e',
-        'ë': 'e',
-        'à': 'a',
-        'â': 'a',
-        'ù': 'u',
-        'û': 'u',
-        'ç': 'c',
-        'ñ': 'n',
+        '₀': r'$_0$',
+        '₁': r'$_1$',
+        '₂': r'$_2$',
+        '₃': r'$_3$',
+        # Accented characters - replace with ASCII equivalents
+        'Ö': 'O', 'Ü': 'U', 'ö': 'o', 'ü': 'u',
+        'ä': 'a', 'Ä': 'A', 'ß': 'ss',
+        'é': 'e', 'è': 'e', 'ê': 'e', 'ë': 'e',
+        'à': 'a', 'â': 'a', 'ù': 'u', 'û': 'u',
+        'ç': 'c', 'ñ': 'n', 'í': 'i', 'ó': 'o',
     }
     
     for char, replacement in replacements.items():
         text = text.replace(char, replacement)
     
-    # Remove any remaining non-ASCII characters that might cause issues
-    text = re.sub(r'[^\x00-\x7F]+', '', text)
+    # Replace remaining non-ASCII with space (preserve word boundaries)
+    # This keeps spacing intact instead of concatenating words
+    text = re.sub(r'[^\x00-\x7F]+', ' ', text)
+    
+    # Clean up multiple spaces
+    text = re.sub(r' +', ' ', text)
     
     return text
 
