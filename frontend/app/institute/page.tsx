@@ -509,23 +509,7 @@ export default function InstitutePage() {
                                 </div>
                             </div>
 
-                            {/* Verification Stats */}
-                            {result.verification_stats && result.verification_stats.total_numerical > 0 && (
-                                <div className="flex items-start gap-3 text-blue-400 bg-blue-400/10 border border-blue-400/20 rounded-lg px-4 py-3">
-                                    <Sparkles className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                                    <div>
-                                        <p className="font-medium">Answer Verification Complete</p>
-                                        <p className="text-sm text-blue-300">
-                                            {result.verification_stats.verified} numerical answers verified
-                                            {result.verification_stats.corrected > 0 && (
-                                                <span className="text-orange-400 ml-1">
-                                                    ({result.verification_stats.corrected} corrected)
-                                                </span>
-                                            )}
-                                        </p>
-                                    </div>
-                                </div>
-                            )}
+
 
                             <button
                                 onClick={handleDownload}
