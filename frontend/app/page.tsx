@@ -637,41 +637,21 @@ export default function Home() {
             />
           </div>
 
-          {/* Total Questions Slider */}
-          <div className="mb-3 md:mb-4">
-            <label className="block mb-2 font-medium text-gray-700 text-sm">
-              Total Questions: <span className="text-indigo-600 font-bold">{questionCount}</span>
-            </label>
-            <input
-              type="range"
-              min={5}
-              max={50}
-              value={questionCount}
-              onChange={(e) => handleSliderChange(parseInt(e.target.value))}
-              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
-              disabled={isLoading}
-            />
-            <div className="flex justify-between text-xs text-gray-400 mt-1">
-              <span>5</span>
-              <span>50</span>
-            </div>
-          </div>
-
-          {/* Exam Pattern Defaults */}
+          {/* Question Count */}
           <div className="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium text-gray-700">{level} Pattern</span>
-              <span className="text-xs text-gray-400">Total: {numMCQs + numNumericals}</span>
+              <span className="text-xs text-gray-400">Total: {numMCQs + numNumericals} (max 50)</span>
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div className="bg-white p-2 rounded border flex items-center justify-between">
-                <span className="text-xs text-gray-600">{level === "NEET" ? "MCQs" : "MCQs"}</span>
+                <span className="text-xs text-gray-600">MCQs</span>
                 <input
                   type="number"
                   value={numMCQs}
                   onChange={(e) => {
                     const val = parseInt(e.target.value) || 0;
-                    if (val + numNumericals <= 50) handleSplitChange('mcq', val);
+                    if (val >= 0 && val + numNumericals <= 50) handleSplitChange('mcq', val);
                   }}
                   className="w-14 text-center text-sm border rounded p-1 font-medium"
                   min={0}
@@ -679,7 +659,7 @@ export default function Home() {
                   disabled={isLoading}
                 />
               </div>
-              {level !== "NEET" && (
+              {level !== "NEET" ? (
                 <div className="bg-white p-2 rounded border flex items-center justify-between">
                   <span className="text-xs text-gray-600">Numerical</span>
                   <input
@@ -687,7 +667,7 @@ export default function Home() {
                     value={numNumericals}
                     onChange={(e) => {
                       const val = parseInt(e.target.value) || 0;
-                      if (numMCQs + val <= 50) handleSplitChange('numerical', val);
+                      if (val >= 0 && numMCQs + val <= 50) handleSplitChange('numerical', val);
                     }}
                     className="w-14 text-center text-sm border rounded p-1 font-medium"
                     min={0}
@@ -695,20 +675,12 @@ export default function Home() {
                     disabled={isLoading}
                   />
                 </div>
-              )}
-              {level === "NEET" && (
+              ) : (
                 <div className="bg-white p-2 rounded border flex items-center justify-center">
                   <span className="text-xs text-gray-400">No Numericals</span>
                 </div>
               )}
             </div>
-            <p className="text-xs text-gray-400 mt-2 text-center">
-              {level === "JEE Mains" && "Default: 20 MCQ + 5 Numerical"}
-              {level === "JEE Advanced" && "Default: 15 MCQ + 5 Numerical"}
-              {level === "NEET" && "NEET has MCQs only"}
-              {level === "Boards" && "Default: 15 Questions (Mix of VSA/SA/LA)"}
-              {level === "Olympiad" && "Default: 10 Theory + 5 Problems"}
-            </p>
           </div>
 
           {/* Generate Button */}
