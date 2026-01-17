@@ -76,6 +76,9 @@ export default function Home() {
   const [promoMessage, setPromoMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [isDetectingSubject, setIsDetectingSubject] = useState(false);
   const detectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [elapsedTime, setElapsedTime] = useState(0);
+  const [progressStep, setProgressStep] = useState(0);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const subjects = [
@@ -275,6 +278,13 @@ export default function Home() {
     setIsLoading(true);
     setError(null);
     setResult(null);
+    setElapsedTime(0);
+    setProgressStep(0);
+
+    // Start timer
+    timerRef.current = setInterval(() => {
+      setElapsedTime(prev => prev + 1);
+    }, 1000);
 
     try {
       const response = await authFetch(`${API_BASE_URL}/api/generate-verified`, {
@@ -322,6 +332,11 @@ export default function Home() {
     } finally {
       setIsLoading(false);
       abortControllerRef.current = null;
+      // Clear timer
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
     }
   };
 
@@ -680,7 +695,7 @@ export default function Home() {
             {isLoading ? (
               <>
                 <Loader2 className="w-5 h-5 animate-spin" />
-                Generating... (this may take 30-60s)
+                Generating...
               </>
             ) : (
               <>
@@ -690,15 +705,72 @@ export default function Home() {
             )}
           </button>
 
-          {/* Cancel Button - shows during loading */}
+          {/* Live Progress Indicator */}
           {isLoading && (
-            <button
-              onClick={handleCancelGeneration}
-              className="w-full py-2.5 mt-2 bg-gray-100 hover:bg-red-50 text-gray-700 hover:text-red-600 font-medium rounded-lg transition-colors flex items-center justify-center gap-2 border border-gray-200 hover:border-red-200"
-            >
-              <X className="w-4 h-4" />
-              Cancel Generation
-            </button>
+            <div className="mt-6 p-5 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl border border-indigo-100">
+              {/* Timer */}
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-indigo-500 rounded-full animate-pulse" />
+                  <span className="text-sm font-medium text-indigo-700">AI is working...</span>
+                </div>
+                <div className="flex items-center gap-1 text-sm font-mono text-indigo-600 bg-white px-3 py-1 rounded-full border border-indigo-200">
+                  <Clock className="w-4 h-4" />
+                  <span>{Math.floor(elapsedTime / 60)}:{(elapsedTime % 60).toString().padStart(2, '0')}</span>
+                </div>
+              </div>
+
+              {/* Progress Steps */}
+              <div className="space-y-3">
+                {[
+                  { text: "🤔 Analyzing topic and difficulty...", minTime: 0 },
+                  { text: "📚 Researching question patterns...", minTime: 5 },
+                  { text: "✍️ Creating MCQ questions...", minTime: 10 },
+                  { text: "🔢 Generating numerical problems...", minTime: 20 },
+                  { text: "✅ Verifying answers...", minTime: 35 },
+                  { text: "📄 Formatting PDF document...", minTime: 50 },
+                ].map((step, index) => {
+                  const isActive = elapsedTime >= step.minTime;
+                  const isCompleted = [
+                    { text: "🤔 Analyzing topic and difficulty...", minTime: 0 },
+                    { text: "📚 Researching question patterns...", minTime: 5 },
+                    { text: "✍️ Creating MCQ questions...", minTime: 10 },
+                    { text: "🔢 Generating numerical problems...", minTime: 20 },
+                    { text: "✅ Verifying answers...", minTime: 35 },
+                    { text: "📄 Formatting PDF document...", minTime: 50 },
+                  ][index + 1]?.minTime <= elapsedTime;
+
+                  return (
+                    <div
+                      key={index}
+                      className={`flex items-center gap-3 transition-all duration-500 ${isActive ? 'opacity-100' : 'opacity-30'
+                        }`}
+                    >
+                      {isCompleted ? (
+                        <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
+                      ) : isActive ? (
+                        <Loader2 className="w-5 h-5 text-indigo-500 animate-spin flex-shrink-0" />
+                      ) : (
+                        <div className="w-5 h-5 rounded-full border-2 border-gray-300 flex-shrink-0" />
+                      )}
+                      <span className={`text-sm ${isCompleted ? 'text-green-600' : isActive ? 'text-indigo-700 font-medium' : 'text-gray-400'
+                        }`}>
+                        {step.text}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Cancel Button */}
+              <button
+                onClick={handleCancelGeneration}
+                className="w-full py-2.5 mt-4 bg-white hover:bg-red-50 text-gray-600 hover:text-red-600 font-medium rounded-lg transition-colors flex items-center justify-center gap-2 border border-gray-200 hover:border-red-200"
+              >
+                <X className="w-4 h-4" />
+                Cancel Generation
+              </button>
+            </div>
           )}
 
           {/* Rate limit exceeded message */}

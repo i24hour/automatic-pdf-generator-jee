@@ -7,9 +7,11 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends \
     texlive-latex-base \
     texlive-fonts-recommended \
+    texlive-fonts-extra \
     texlive-latex-extra \
     texlive-pictures \
     texlive-science \
+    lmodern \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better caching
