@@ -712,7 +712,9 @@ export default function Home() {
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 bg-indigo-500 rounded-full animate-pulse" />
-                  <span className="text-sm font-medium text-indigo-700">AI is working...</span>
+                  <span className="text-sm font-medium text-indigo-700">
+                    Working{'.'.repeat((elapsedTime % 3) + 1)}
+                  </span>
                 </div>
                 <div className="flex items-center gap-1 text-sm font-mono text-indigo-600 bg-white px-3 py-1 rounded-full border border-indigo-200">
                   <Clock className="w-4 h-4" />

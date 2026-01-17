@@ -82,13 +82,51 @@
         \end{center}
         \BLOCK{ endif }
 
-        % Check if MCQ (single or multi) or Numerical
+        % Check if MCQ (single or multi), Numerical, or CBSE types
         \BLOCK{ if q.type == 'mcq_multi' }
             \textit{(One or More Correct)}
             \fourchoices{\VAR{q.options[0]}}{\VAR{q.options[1]}}{\VAR{q.options[2]}}{\VAR{q.options[3]}}
         \BLOCK{ elif q.type == 'mcq' }
             \fourchoices{\VAR{q.options[0]}}{\VAR{q.options[1]}}{\VAR{q.options[2]}}{\VAR{q.options[3]}}
+        \BLOCK{ elif q.type == 'short_answer' }
+            \hfill \textbf{[\VAR{q.marks|default(2)} Marks]}
+            \vspace{0.3cm}
+            \par\noindent\textcolor{gray}{\dotfill}
+            \vspace{0.2cm}
+            \par\noindent\textcolor{gray}{\dotfill}
+            \BLOCK{ if q.marks|default(2) >= 3 }
+            \vspace{0.2cm}
+            \par\noindent\textcolor{gray}{\dotfill}
+            \BLOCK{ endif }
+        \BLOCK{ elif q.type == 'long_answer' }
+            \hfill \textbf{[5 Marks]}
+            \vspace{0.3cm}
+            \par\noindent\textcolor{gray}{\dotfill}
+            \vspace{0.2cm}
+            \par\noindent\textcolor{gray}{\dotfill}
+            \vspace{0.2cm}
+            \par\noindent\textcolor{gray}{\dotfill}
+            \vspace{0.2cm}
+            \par\noindent\textcolor{gray}{\dotfill}
+            \vspace{0.2cm}
+            \par\noindent\textcolor{gray}{\dotfill}
+        \BLOCK{ elif q.type == 'case_based' }
+            \hfill \textbf{[4 Marks]}
+            \vspace{0.2cm}
+            \par\textit{\VAR{q.passage|default('')}}
+            \vspace{0.3cm}
+            \BLOCK{ if q.sub_questions }
+            \BLOCK{ for sq in q.sub_questions }
+            \par\noindent (\VAR{loop.index|string|replace('1','i')|replace('2','ii')|replace('3','iii')|replace('4','iv')}) \VAR{sq.text}
+            \BLOCK{ if sq.options }
+            \fourchoices{\VAR{sq.options[0]}}{\VAR{sq.options[1]}}{\VAR{sq.options[2]}}{\VAR{sq.options[3]}}
+            \BLOCK{ endif }
+            \BLOCK{ endfor }
+            \BLOCK{ endif }
         \BLOCK{ else }
+            \BLOCK{ if q.marks }
+            \hfill \textbf{[\VAR{q.marks} Marks]}
+            \BLOCK{ endif }
             \vspace{0.2cm} \\ 
             \textbf{Answer: \_\_\_\_\_\_\_\_\_}
         \BLOCK{ endif }

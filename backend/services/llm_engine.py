@@ -394,18 +394,49 @@ Example: {{"subject":"Chemistry","confidence":"high"}}
         
         # Detailed level-specific prompts with examples
         level_prompts = {
-            "Boards": """EXAM TYPE: CBSE/State Board Level
+            "Boards": """EXAM TYPE: CBSE Board Pattern
 CHARACTERISTICS:
-- Direct application of formulas and concepts
-- Single-step or simple two-step problems
-- No complex calculations or multi-concept integration
-- Focus on definitions, basic numericals, and theorem applications
+- Follow EXACT CBSE Board exam pattern
+- Direct application of NCERT concepts
+- Focus on definitions, derivations, and conceptual understanding
+- Questions should match CBSE Class 11/12 term exams
 
-EXAMPLE BOARD-LEVEL QUESTIONS:
-- "State Coulomb's law and calculate force between two charges of 2μC separated by 10cm"
-- "What is the SI unit of electric potential?"
-- "Calculate the resistance of a wire with resistivity ρ, length l, and area A"
-- Numerical answers are typically round numbers or simple fractions""",
+CBSE QUESTION TYPES (generate a mix of ALL types):
+
+1. VERY SHORT ANSWER (VSA) - 1-2 Marks:
+   - One-liner answers, definitions, state laws/principles
+   - Example: "Define electric flux. Write its SI unit."
+   - Example: "State the principle of superposition of waves."
+   - Generate as type "short_answer" with marks: 1 or 2
+
+2. SHORT ANSWER (SA) - 2-3 Marks:
+   - Brief explanations, simple derivations, diagrams
+   - Example: "Derive the relation between electric field and potential."
+   - Example: "Explain the working of a transformer with a diagram."
+   - Generate as type "short_answer" with marks: 2 or 3
+
+3. LONG ANSWER (LA) - 5 Marks:
+   - Detailed derivations, proofs, multi-part questions
+   - Example: "Derive lens maker's formula. Using it, derive thin lens formula."
+   - Example: "State and prove Gauss's law. Apply it to find field due to infinite charged plane."
+   - Generate as type "long_answer" with marks: 5
+
+4. CASE-BASED QUESTIONS - 4 Marks:
+   - A paragraph describing a real-world scenario
+   - Followed by 4 MCQs (1 mark each) based on that paragraph
+   - Example: Paragraph about electromagnetic induction in power plants, then 4 MCQs
+   - Generate as type "case_based" with a "passage" field and "sub_questions" array
+
+5. NUMERICALS - 3-5 Marks:
+   - Direct formula application, simple calculations
+   - Example: "A wire of resistance 10Ω is bent into a circle. Find equivalent resistance across diameter."
+   - Generate as type "numerical" with marks: 3 or 5
+
+IMPORTANT: 
+- DO NOT generate only MCQs for Boards
+- Generate a balanced mix of VSA, SA, LA, and Numericals
+- Include at least 1-2 Case-based questions if total questions >= 10
+- Questions should be NCERT-aligned""",
 
             "JEE Mains": """EXAM TYPE: JEE Main Level
 CHARACTERISTICS:
