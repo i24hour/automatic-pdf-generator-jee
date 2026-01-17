@@ -94,6 +94,12 @@ def sanitize_for_latex(text: str) -> str:
         '₁': r'$_1$',
         '₂': r'$_2$',
         '₃': r'$_3$',
+        # Greater/Less than symbols (commonly used in ordering)
+        '¿': r'$>$',  # Sometimes LLM generates this instead of >
+        '›': r'$>$',  # Single right-pointing angle quotation
+        '‹': r'$<$',  # Single left-pointing angle quotation
+        '>': r'$>$',  # Regular greater-than (for math safety)
+        '<': r'$<$',  # Regular less-than (for math safety)
         # Accented characters - replace with ASCII equivalents
         'Ö': 'O', 'Ü': 'U', 'ö': 'o', 'ü': 'u',
         'ä': 'a', 'Ä': 'A', 'ß': 'ss',

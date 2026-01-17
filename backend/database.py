@@ -23,10 +23,13 @@ if DATABASE_URL.startswith("sqlite"):
         connect_args={"check_same_thread": False}
     )
 else:
-    # PostgreSQL for production
+    # PostgreSQL for production - use small pool to avoid exhausting Heroku connections
     engine = create_engine(
         DATABASE_URL, 
         pool_pre_ping=True,
+        pool_size=2,  # Small pool to avoid Heroku connection limits
+        max_overflow=3,  # Allow up to 5 total connections
+        pool_recycle=300,  # Recycle connections every 5 min
         connect_args={"sslmode": "require"}
     )
 

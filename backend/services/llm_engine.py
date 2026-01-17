@@ -267,19 +267,54 @@ Example: {{"subject":"Chemistry","confidence":"high"}}
         
         return '$'.join(result)
     
+    def _fix_spacing(self, text: str) -> str:
+        """Fix common spacing issues in LLM output."""
+        if not text:
+            return text
+        
+        import re
+        
+        # Add space after colon if followed by a letter/number (not in math mode)
+        text = re.sub(r':([A-Za-z0-9$])', r': \1', text)
+        
+        # Add space after closing paren followed by letter (outside math)
+        text = re.sub(r'\)([A-Z])', r') \1', text)
+        
+        # Add space between Roman numerals and letters: (I)CH -> (I) CH
+        text = re.sub(r'\(([IVX]+)\)([A-Za-z$])', r'(\1) \2', text)
+        
+        # Add space after period if followed by capital letter
+        text = re.sub(r'\.([A-Z])', r'. \1', text)
+        
+        # Add space around arrows that aren't in math mode
+        text = text.replace('→', ' → ')
+        text = text.replace('->', ' -> ')
+        
+        # Clean up multiple spaces
+        text = re.sub(r' +', ' ', text)
+        
+        return text.strip()
+    
     def _process_questions(self, questions: List[Dict]) -> List[Dict]:
-        """Process questions - preserve math mode, minimal escaping."""
+        """Process questions - preserve math mode, minimal escaping, fix spacing."""
         processed = []
         for q in questions:
+            # Apply spacing fixes before LaTeX escaping
+            text = self._fix_spacing(q.get("text", ""))
+            text = self._escape_latex_outside_math(text)
+            
             processed_q = {
                 "type": q.get("type", "mcq"),
-                "text": self._escape_latex_outside_math(q.get("text", "")),
+                "text": text,
                 "answer": q.get("answer", ""),
                 "diagram_tikz": q.get("diagram_tikz"),
             }
             
             if q.get("options"):
-                processed_q["options"] = [self._escape_latex_outside_math(opt) for opt in q["options"]]
+                processed_q["options"] = [
+                    self._escape_latex_outside_math(self._fix_spacing(opt)) 
+                    for opt in q["options"]
+                ]
             else:
                 processed_q["options"] = []
             
