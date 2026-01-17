@@ -587,13 +587,13 @@ export default function Home() {
                     key={lvl.name}
                     onClick={() => setLevel(lvl.name)}
                     disabled={isLoading}
-                    className={`p-3 rounded-xl border transition-all duration-300 flex flex-col items-center gap-2 ${isSelected
+                    className={`p-2 md:p-3 rounded-xl border transition-all duration-300 flex flex-col items-center gap-1 md:gap-2 ${isSelected
                       ? "border-indigo-500 bg-indigo-50 text-indigo-600"
                       : "border-gray-200 hover:border-gray-300 text-gray-600 hover:text-gray-800 bg-white"
                       } ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
                   >
-                    <IconComponent className="w-5 h-5" />
-                    <span className="text-xs font-medium text-center">{lvl.name}</span>
+                    <IconComponent className="w-4 h-4 md:w-5 md:h-5" />
+                    <span className="text-[10px] md:text-xs font-medium text-center">{lvl.name}</span>
                   </button>
                 );
               })}
@@ -601,9 +601,9 @@ export default function Home() {
           </div>
 
           {/* Difficulty Selection */}
-          <div className="mb-6">
-            <label className="block mb-3 font-medium text-gray-700">Select Difficulty</label>
-            <div className="grid grid-cols-3 gap-3">
+          <div className="mb-4 md:mb-6">
+            <label className="block mb-2 md:mb-3 font-medium text-gray-700 text-sm md:text-base">Select Difficulty</label>
+            <div className="grid grid-cols-3 gap-2 md:gap-3">
               {difficulties.map((diff) => {
                 const isSelected = difficulty === diff.name;
                 return (
@@ -611,12 +611,12 @@ export default function Home() {
                     key={diff.name}
                     onClick={() => setDifficulty(diff.name)}
                     disabled={isLoading}
-                    className={`p-3 rounded-xl border transition-all duration-300 flex items-center justify-center gap-2 ${isSelected
+                    className={`p-2 md:p-3 rounded-xl border transition-all duration-300 flex items-center justify-center gap-2 ${isSelected
                       ? `${diff.borderColor} ${diff.bgColor} ${diff.color}`
                       : "border-gray-200 hover:border-gray-300 text-gray-600 hover:text-gray-800 bg-white"
                       } ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
                   >
-                    <span className="text-sm font-medium">{diff.name}</span>
+                    <span className="text-xs md:text-sm font-medium">{diff.name}</span>
                   </button>
                 );
               })}
