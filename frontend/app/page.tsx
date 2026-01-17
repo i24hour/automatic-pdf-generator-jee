@@ -459,9 +459,9 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen py-12 px-4 bg-[#FAF9F6]">
+    <main className="min-h-screen py-6 md:py-12 px-3 md:px-4 bg-[#FAF9F6]">
       <div className="max-w-2xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex justify-between items-center mb-4 md:mb-8">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-semibold">
               {user?.name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || "U"}
@@ -481,14 +481,14 @@ export default function Home() {
         </div>
 
         {/* Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-indigo-600 mb-6">
-            <BookOpen className="w-10 h-10 text-white" />
+        <div className="text-center mb-4 md:mb-8">
+          <div className="inline-flex items-center justify-center w-14 h-14 md:w-20 md:h-20 rounded-2xl bg-indigo-600 mb-3 md:mb-6">
+            <BookOpen className="w-7 h-7 md:w-10 md:h-10 text-white" />
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold mb-4 text-gray-900">
+          <h1 className="text-2xl md:text-5xl font-bold mb-2 md:mb-4 text-gray-900">
             INFINITEST
           </h1>
-          <div className="flex items-center justify-center gap-2 text-xl text-gray-500 font-medium">
+          <div className="flex items-center justify-center gap-2 text-sm md:text-xl text-gray-500 font-medium">
             <span>Trained by IITians</span>
             <span className="text-gray-300">•</span>
             <span>NEET Rankers</span>
@@ -497,7 +497,7 @@ export default function Home() {
 
         {/* Rate Limit Badge */}
         {rateLimit && (
-          <div className="flex justify-center mb-6">
+          <div className="flex justify-center mb-3 md:mb-6">
             <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm ${rateLimit.remaining > 0
               ? "bg-green-100 text-green-700 border border-green-200"
               : "bg-red-100 text-red-700 border border-red-200"
@@ -516,7 +516,7 @@ export default function Home() {
         )}
 
         {/* Promo Code Section */}
-        <div className="flex justify-center mb-6">
+        <div className="flex justify-center mb-3 md:mb-6">
           <div className="flex items-center gap-2">
             <div className="relative">
               <Gift className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -549,11 +549,11 @@ export default function Home() {
         )}
 
         {/* Main Card */}
-        <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-lg">
+        <div className="bg-white border border-gray-200 rounded-2xl p-4 md:p-8 shadow-lg">
           {/* Subject Selection */}
-          <div className="mb-6">
-            <label className="block mb-3 font-medium text-gray-700">Select Subject</label>
-            <div className="grid grid-cols-3 gap-3">
+          <div className="mb-4 md:mb-6">
+            <label className="block mb-2 md:mb-3 font-medium text-gray-700 text-sm md:text-base">Select Subject</label>
+            <div className="grid grid-cols-3 gap-2 md:gap-3">
               {subjects.map((sub) => {
                 const IconComponent = sub.icon;
                 const isSelected = subject === sub.name;
@@ -562,13 +562,13 @@ export default function Home() {
                     key={sub.name}
                     onClick={() => setSubject(sub.name)}
                     disabled={isLoading}
-                    className={`p-4 rounded-xl border transition-all duration-300 flex flex-col items-center gap-2 ${isSelected
+                    className={`p-2 md:p-4 rounded-xl border transition-all duration-300 flex flex-col items-center gap-1 md:gap-2 ${isSelected
                       ? "border-indigo-500 bg-indigo-50 text-indigo-600"
                       : "border-gray-200 hover:border-gray-300 text-gray-600 hover:text-gray-800 bg-white"
                       } ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
                   >
-                    <IconComponent className="w-6 h-6" />
-                    <span className="text-sm font-medium">{sub.name}</span>
+                    <IconComponent className="w-5 h-5 md:w-6 md:h-6" />
+                    <span className="text-xs md:text-sm font-medium">{sub.name}</span>
                   </button>
                 );
               })}
@@ -576,9 +576,9 @@ export default function Home() {
           </div>
 
           {/* Level Selection */}
-          <div className="mb-6">
-            <label className="block mb-3 font-medium text-gray-700">Select Exam Type</label>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="mb-4 md:mb-6">
+            <label className="block mb-2 md:mb-3 font-medium text-gray-700 text-sm md:text-base">Select Exam Type</label>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
               {levels.map((lvl) => {
                 const IconComponent = lvl.icon;
                 const isSelected = level === lvl.name;
