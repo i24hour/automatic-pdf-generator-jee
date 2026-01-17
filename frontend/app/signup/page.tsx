@@ -6,6 +6,9 @@ import Link from "next/link";
 import { Loader2, AlertCircle, BookOpen } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { FloatingInput } from "@/components/FloatingInput";
+import { GoogleLogin } from "@react-oauth/google";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://mentors-mantra-api-87253755436.us-central1.run.app";
 
 export default function SignupPage() {
     const [name, setName] = useState("");
@@ -15,8 +18,9 @@ export default function SignupPage() {
     const [confirmPassword, setConfirmPassword] = useState("");
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
-    const { register } = useAuth();
+    const { register, setTokens } = useAuth();
     const router = useRouter();
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -45,6 +49,38 @@ export default function SignupPage() {
         }
     };
 
+    const handleGoogleSuccess = async (credentialResponse: { credential?: string }) => {
+        if (!credentialResponse.credential) {
+            setError("Google signup failed - no credential received");
+            return;
+        }
+
+        setIsGoogleLoading(true);
+        setError(null);
+
+        try {
+            const response = await fetch(`${API_URL}/auth/google`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ credential: credentialResponse.credential }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.detail || "Google signup failed");
+            }
+
+            // Set tokens and user in auth context
+            setTokens(data.access_token, data.refresh_token, data.user);
+            router.push("/");
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Google signup failed");
+        } finally {
+            setIsGoogleLoading(false);
+        }
+    };
+
     return (
         <main className="min-h-screen flex items-center justify-center py-12 px-4 bg-[#FAF9F6]">
             <div className="w-full max-w-md">
@@ -60,6 +96,37 @@ export default function SignupPage() {
                     {/* Title */}
                     <h1 className="text-2xl font-semibold text-gray-900 text-center mb-2">Create Account</h1>
                     <p className="text-gray-500 text-center mb-8 text-sm">Join thousands of JEE aspirants</p>
+
+                    {/* Google Sign In */}
+                    <div className="mb-6">
+                        <div className="flex justify-center">
+                            {isGoogleLoading ? (
+                                <div className="flex items-center justify-center gap-2 py-3 px-4 border border-gray-300 rounded-lg w-full">
+                                    <Loader2 className="w-5 h-5 animate-spin text-gray-500" />
+                                    <span className="text-gray-600">Signing up with Google...</span>
+                                </div>
+                            ) : (
+                                <GoogleLogin
+                                    onSuccess={handleGoogleSuccess}
+                                    onError={() => setError("Google signup failed")}
+                                    theme="outline"
+                                    size="large"
+                                    width="100%"
+                                    text="signup_with"
+                                />
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Divider */}
+                    <div className="relative my-6">
+                        <div className="absolute inset-0 flex items-center">
+                            <div className="w-full border-t border-gray-200"></div>
+                        </div>
+                        <div className="relative flex justify-center text-sm">
+                            <span className="px-4 bg-white text-gray-500">or continue with email</span>
+                        </div>
+                    </div>
 
                     <form onSubmit={handleSubmit} className="space-y-5">
                         {/* Name */}
