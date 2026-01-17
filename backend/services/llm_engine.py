@@ -268,11 +268,37 @@ Example: {{"subject":"Chemistry","confidence":"high"}}
         return '$'.join(result)
     
     def _fix_spacing(self, text: str) -> str:
-        """Fix common spacing issues in LLM output."""
+        """Fix common spacing issues in LLM output, including concatenated words."""
         if not text:
             return text
         
         import re
+        
+        # Common transition words that should have spaces before them
+        common_words = [
+            'and', 'the', 'of', 'to', 'in', 'for', 'is', 'are', 'was', 'were', 'be', 'been',
+            'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could',
+            'should', 'may', 'might', 'must', 'shall', 'can', 'that', 'which', 'who',
+            'whom', 'whose', 'this', 'these', 'those', 'what', 'when', 'where', 'why',
+            'how', 'all', 'each', 'every', 'both', 'few', 'more', 'most', 'other',
+            'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'so', 'than',
+            'too', 'very', 'just', 'but', 'or', 'if', 'because', 'as', 'until', 'while',
+            'from', 'with', 'about', 'into', 'through', 'during', 'before', 'after',
+            'above', 'below', 'between', 'under', 'again', 'further', 'then', 'once',
+            'called', 'known', 'attached', 'leading', 'resulting', 'causing', 'forming',
+            'during', 'arrested', 'division', 'stage', 'cells', 'group', 'inner', 'outer'
+        ]
+        
+        # Fix concatenated words by adding space before common words
+        # Only if preceded by lowercase letter (not at start of word)
+        for word in common_words:
+            # Pattern: lowercase letter directly followed by common word
+            pattern = r'([a-z])(' + word + r')([a-z\s,.\)])'
+            replacement = r'\1 \2\3'
+            text = re.sub(pattern, replacement, text, flags=re.IGNORECASE)
+        
+        # Fix period/comma followed directly by lowercase (missing space)
+        text = re.sub(r'([.,])([a-z])', r'\1 \2', text)
         
         # Add space after colon if followed by a letter/number (not in math mode)
         text = re.sub(r':([A-Za-z0-9$])', r': \1', text)
