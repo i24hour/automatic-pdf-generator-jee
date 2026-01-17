@@ -30,6 +30,7 @@ interface GenerateResponse {
     success: boolean;
     message: string;
     pdf_filename?: string;
+    pdf_base64?: string;
     chapters_classified: ChapterClassification[];
     verification_stats?: {
         total_numerical: number;

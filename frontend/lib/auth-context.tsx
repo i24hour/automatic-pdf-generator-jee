@@ -23,6 +23,7 @@ interface AuthContextType {
     refreshUser: () => Promise<void>;
     resendVerification: () => Promise<void>;
     authFetch: (url: string, options?: RequestInit) => Promise<Response>;
+    setTokens: (accessToken: string, refreshToken: string, user: User) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -90,6 +91,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.removeItem("auth_token");
         localStorage.removeItem("refresh_token");
         localStorage.removeItem("auth_user");
+    };
+
+    const setTokens = (accessToken: string, refreshToken: string, userData: User) => {
+        setToken(accessToken);
+        setRefreshTokenValue(refreshToken);
+        setUser(userData);
+        localStorage.setItem("auth_token", accessToken);
+        localStorage.setItem("refresh_token", refreshToken);
+        localStorage.setItem("auth_user", JSON.stringify(userData));
     };
 
     // Auth fetch wrapper that handles 401 and retries with new token
@@ -268,6 +278,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 refreshUser,
                 resendVerification,
                 authFetch,
+                setTokens,
             }}
         >
             {children}

@@ -35,6 +35,7 @@ interface GenerateResponse {
   success: boolean;
   message: string;
   pdf_filename?: string;
+  pdf_base64?: string;
   total_mcq: number;
   total_numerical: number;
   rate_limit_remaining: number;
