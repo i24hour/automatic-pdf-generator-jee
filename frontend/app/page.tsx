@@ -637,31 +637,67 @@ export default function Home() {
             />
           </div>
 
-          {/* Question Count */}
+          {/* Dynamic Exam Pattern */}
           <div className="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-700">{level} Pattern</span>
+              <span className="text-sm font-medium text-gray-700">
+                {level === "Boards" ? "CBSE Pattern" : `${level} Pattern`}
+              </span>
               <span className="text-xs text-gray-400">Total: {numMCQs + numNumericals} (max 50)</span>
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              <div className="bg-white p-2 rounded border flex items-center justify-between">
-                <span className="text-xs text-gray-600">MCQs</span>
-                <input
-                  type="number"
-                  value={numMCQs}
-                  onChange={(e) => {
-                    const val = parseInt(e.target.value) || 0;
-                    if (val >= 0 && val + numNumericals <= 50) handleSplitChange('mcq', val);
-                  }}
-                  className="w-14 text-center text-sm border rounded p-1 font-medium"
-                  min={0}
-                  max={50 - numNumericals}
-                  disabled={isLoading}
-                />
+
+            {/* Boards Pattern */}
+            {level === "Boards" && (
+              <div className="space-y-2">
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="flex items-center justify-between bg-white p-2 rounded border">
+                    <span className="text-xs text-gray-600">Very Short Ans (1-2M)</span>
+                    <input type="number" min={0} max={20} defaultValue={4} className="w-12 text-center text-sm border rounded p-1" />
+                  </div>
+                  <div className="flex items-center justify-between bg-white p-2 rounded border">
+                    <span className="text-xs text-gray-600">Short Ans (2-3M)</span>
+                    <input type="number" min={0} max={20} defaultValue={4} className="w-12 text-center text-sm border rounded p-1" />
+                  </div>
+                  <div className="flex items-center justify-between bg-white p-2 rounded border">
+                    <span className="text-xs text-gray-600">Long Ans (5M)</span>
+                    <input type="number" min={0} max={10} defaultValue={2} className="w-12 text-center text-sm border rounded p-1" />
+                  </div>
+                  <div className="flex items-center justify-between bg-white p-2 rounded border">
+                    <span className="text-xs text-gray-600">Case-Based</span>
+                    <input type="number" min={0} max={5} defaultValue={1} className="w-12 text-center text-sm border rounded p-1" />
+                  </div>
+                </div>
+                <div className="flex items-center justify-between bg-white p-2 rounded border">
+                  <span className="text-xs text-gray-600">Numericals (3-5M)</span>
+                  <input type="number" min={0} max={20} defaultValue={4} className="w-12 text-center text-sm border rounded p-1" />
+                </div>
               </div>
-              {level !== "NEET" ? (
+            )}
+
+            {/* JEE Mains / JEE Advanced / Olympiad Pattern */}
+            {(level === "JEE Mains" || level === "JEE Advanced" || level === "Olympiad") && (
+              <div className="grid grid-cols-2 gap-2">
                 <div className="bg-white p-2 rounded border flex items-center justify-between">
-                  <span className="text-xs text-gray-600">Numerical</span>
+                  <span className="text-xs text-gray-600">
+                    {level === "Olympiad" ? "Theoretical" : "MCQs"}
+                  </span>
+                  <input
+                    type="number"
+                    value={numMCQs}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value) || 0;
+                      if (val >= 0 && val + numNumericals <= 50) handleSplitChange('mcq', val);
+                    }}
+                    className="w-14 text-center text-sm border rounded p-1 font-medium"
+                    min={0}
+                    max={50 - numNumericals}
+                    disabled={isLoading}
+                  />
+                </div>
+                <div className="bg-white p-2 rounded border flex items-center justify-between">
+                  <span className="text-xs text-gray-600">
+                    {level === "Olympiad" ? "Problems" : "Numerical"}
+                  </span>
                   <input
                     type="number"
                     value={numNumericals}
@@ -675,12 +711,32 @@ export default function Home() {
                     disabled={isLoading}
                   />
                 </div>
-              ) : (
+              </div>
+            )}
+
+            {/* NEET Pattern */}
+            {level === "NEET" && (
+              <div className="grid grid-cols-2 gap-2">
+                <div className="bg-white p-2 rounded border flex items-center justify-between">
+                  <span className="text-xs text-gray-600">MCQs</span>
+                  <input
+                    type="number"
+                    value={numMCQs}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value) || 0;
+                      if (val >= 0 && val <= 50) handleSplitChange('mcq', val);
+                    }}
+                    className="w-14 text-center text-sm border rounded p-1 font-medium"
+                    min={0}
+                    max={50}
+                    disabled={isLoading}
+                  />
+                </div>
                 <div className="bg-white p-2 rounded border flex items-center justify-center">
                   <span className="text-xs text-gray-400">No Numericals</span>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
 
           {/* Generate Button */}
