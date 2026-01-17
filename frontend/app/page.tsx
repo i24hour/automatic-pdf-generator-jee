@@ -549,11 +549,11 @@ export default function Home() {
         )}
 
         {/* Main Card */}
-        <div className="bg-white border border-gray-200 rounded-2xl p-4 md:p-8 shadow-lg">
+        <div className="bg-white border border-gray-200 rounded-2xl p-4 md:p-6 shadow-lg">
           {/* Subject Selection */}
-          <div className="mb-4 md:mb-6">
-            <label className="block mb-2 md:mb-3 font-medium text-gray-700 text-sm md:text-base">Select Subject</label>
-            <div className="grid grid-cols-3 gap-2 md:gap-3">
+          <div className="mb-3 md:mb-4">
+            <label className="block mb-2 font-medium text-gray-700 text-sm">Select Subject</label>
+            <div className="grid grid-cols-3 gap-2">
               {subjects.map((sub) => {
                 const IconComponent = sub.icon;
                 const isSelected = subject === sub.name;
@@ -562,13 +562,13 @@ export default function Home() {
                     key={sub.name}
                     onClick={() => setSubject(sub.name)}
                     disabled={isLoading}
-                    className={`p-2 md:p-4 rounded-xl border transition-all duration-300 flex flex-col items-center gap-1 md:gap-2 ${isSelected
+                    className={`p-2 md:p-3 rounded-xl border transition-all duration-300 flex flex-col items-center gap-1 ${isSelected
                       ? "border-indigo-500 bg-indigo-50 text-indigo-600"
                       : "border-gray-200 hover:border-gray-300 text-gray-600 hover:text-gray-800 bg-white"
                       } ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
                   >
-                    <IconComponent className="w-5 h-5 md:w-6 md:h-6" />
-                    <span className="text-xs md:text-sm font-medium">{sub.name}</span>
+                    <IconComponent className="w-5 h-5" />
+                    <span className="text-xs font-medium">{sub.name}</span>
                   </button>
                 );
               })}
@@ -576,9 +576,9 @@ export default function Home() {
           </div>
 
           {/* Level Selection */}
-          <div className="mb-4 md:mb-6">
-            <label className="block mb-2 md:mb-3 font-medium text-gray-700 text-sm md:text-base">Select Exam Type</label>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
+          <div className="mb-3 md:mb-4">
+            <label className="block mb-2 font-medium text-gray-700 text-sm">Select Exam Type</label>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
               {levels.map((lvl) => {
                 const IconComponent = lvl.icon;
                 const isSelected = level === lvl.name;
@@ -587,13 +587,13 @@ export default function Home() {
                     key={lvl.name}
                     onClick={() => setLevel(lvl.name)}
                     disabled={isLoading}
-                    className={`p-2 md:p-3 rounded-xl border transition-all duration-300 flex flex-col items-center gap-1 md:gap-2 ${isSelected
+                    className={`p-2 rounded-xl border transition-all duration-300 flex flex-col items-center gap-1 ${isSelected
                       ? "border-indigo-500 bg-indigo-50 text-indigo-600"
                       : "border-gray-200 hover:border-gray-300 text-gray-600 hover:text-gray-800 bg-white"
                       } ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
                   >
-                    <IconComponent className="w-4 h-4 md:w-5 md:h-5" />
-                    <span className="text-[10px] md:text-xs font-medium text-center">{lvl.name}</span>
+                    <IconComponent className="w-4 h-4" />
+                    <span className="text-[10px] font-medium text-center">{lvl.name}</span>
                   </button>
                 );
               })}
@@ -601,9 +601,9 @@ export default function Home() {
           </div>
 
           {/* Difficulty Selection */}
-          <div className="mb-4 md:mb-6">
-            <label className="block mb-2 md:mb-3 font-medium text-gray-700 text-sm md:text-base">Select Difficulty</label>
-            <div className="grid grid-cols-3 gap-2 md:gap-3">
+          <div className="mb-3 md:mb-4">
+            <label className="block mb-2 font-medium text-gray-700 text-sm">Select Difficulty</label>
+            <div className="grid grid-cols-3 gap-2">
               {difficulties.map((diff) => {
                 const isSelected = difficulty === diff.name;
                 return (
@@ -611,12 +611,12 @@ export default function Home() {
                     key={diff.name}
                     onClick={() => setDifficulty(diff.name)}
                     disabled={isLoading}
-                    className={`p-2 md:p-3 rounded-xl border transition-all duration-300 flex items-center justify-center gap-2 ${isSelected
+                    className={`p-2 rounded-xl border transition-all duration-300 flex items-center justify-center ${isSelected
                       ? `${diff.borderColor} ${diff.bgColor} ${diff.color}`
                       : "border-gray-200 hover:border-gray-300 text-gray-600 hover:text-gray-800 bg-white"
                       } ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
                   >
-                    <span className="text-xs md:text-sm font-medium">{diff.name}</span>
+                    <span className="text-xs font-medium">{diff.name}</span>
                   </button>
                 );
               })}
