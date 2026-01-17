@@ -63,9 +63,8 @@
 \BLOCK{ endif }
 \vspace{0.3cm}
 
-% --- QUESTIONS SECTION ---
-\begin{multicols}{2}
-\begin{enumerate}[label=\textbf{Q.\arabic*}]
+% --- QUESTIONS SECTION (Single Column) ---
+\begin{enumerate}[label=\textbf{Q.\arabic*}, itemsep=10pt]
 
     % JINJA LOOP START
     \BLOCK{ for q in questions }
@@ -96,7 +95,6 @@
     % JINJA LOOP END
 
 \end{enumerate}
-\end{multicols}
 
 \newpage
 
