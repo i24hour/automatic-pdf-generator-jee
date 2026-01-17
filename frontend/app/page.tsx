@@ -637,127 +637,78 @@ export default function Home() {
             />
           </div>
 
-          {/* Dynamic Exam Pattern */}
-          <div className="mb-4 md:mb-6">
-            <label className="block mb-2 md:mb-3 font-medium text-gray-700 text-sm md:text-base">
-              {level === "Boards" ? "CBSE Pattern" : `${level} Pattern`}
+          {/* Total Questions Slider */}
+          <div className="mb-3 md:mb-4">
+            <label className="block mb-2 font-medium text-gray-700 text-sm">
+              Total Questions: <span className="text-indigo-600 font-bold">{questionCount}</span>
             </label>
+            <input
+              type="range"
+              min={5}
+              max={50}
+              value={questionCount}
+              onChange={(e) => handleSliderChange(parseInt(e.target.value))}
+              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+              disabled={isLoading}
+            />
+            <div className="flex justify-between text-xs text-gray-400 mt-1">
+              <span>5</span>
+              <span>50</span>
+            </div>
+          </div>
 
-            {/* Boards Pattern */}
-            {level === "Boards" && (
-              <div className="space-y-2 md:space-y-3 p-3 md:p-4 bg-gray-50 rounded-lg border border-gray-200">
-                <div className="grid grid-cols-2 gap-2 md:gap-3">
-                  <div className="flex items-center justify-between bg-white p-2 rounded border">
-                    <span className="text-xs md:text-sm">📝 VSA (1-2M)</span>
-                    <input type="number" min={0} max={10} defaultValue={4} className="w-12 md:w-14 text-center text-sm border rounded p-1" />
-                  </div>
-                  <div className="flex items-center justify-between bg-white p-2 rounded border">
-                    <span className="text-xs md:text-sm">📄 SA (2-3M)</span>
-                    <input type="number" min={0} max={10} defaultValue={4} className="w-12 md:w-14 text-center text-sm border rounded p-1" />
-                  </div>
-                  <div className="flex items-center justify-between bg-white p-2 rounded border">
-                    <span className="text-xs md:text-sm">📖 LA (5M)</span>
-                    <input type="number" min={0} max={5} defaultValue={2} className="w-12 md:w-14 text-center text-sm border rounded p-1" />
-                  </div>
-                  <div className="flex items-center justify-between bg-white p-2 rounded border">
-                    <span className="text-xs md:text-sm">📋 Case-Based</span>
-                    <input type="number" min={0} max={3} defaultValue={1} className="w-12 md:w-14 text-center text-sm border rounded p-1" />
-                  </div>
-                </div>
-                <div className="flex items-center justify-between bg-white p-2 rounded border">
-                  <span className="text-xs md:text-sm">🔢 Numericals (3-5M)</span>
-                  <input type="number" min={0} max={10} defaultValue={4} className="w-12 md:w-14 text-center text-sm border rounded p-1" />
-                </div>
+          {/* Exam Pattern Defaults */}
+          <div className="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-gray-700">{level} Pattern</span>
+              <span className="text-xs text-gray-400">Total: {numMCQs + numNumericals}</span>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="bg-white p-2 rounded border flex items-center justify-between">
+                <span className="text-xs text-gray-600">{level === "NEET" ? "MCQs" : "MCQs"}</span>
+                <input
+                  type="number"
+                  value={numMCQs}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value) || 0;
+                    if (val + numNumericals <= 50) handleSplitChange('mcq', val);
+                  }}
+                  className="w-14 text-center text-sm border rounded p-1 font-medium"
+                  min={0}
+                  max={50 - numNumericals}
+                  disabled={isLoading}
+                />
               </div>
-            )}
-
-            {/* JEE Mains Pattern */}
-            {level === "JEE Mains" && (
-              <div className="grid grid-cols-2 gap-3 p-3 md:p-4 bg-gray-50 rounded-lg border border-gray-200">
-                <div className="bg-white p-3 rounded border text-center">
-                  <div className="text-lg md:text-xl font-bold text-indigo-600">{numMCQs}</div>
-                  <div className="text-xs text-gray-500">MCQs</div>
+              {level !== "NEET" && (
+                <div className="bg-white p-2 rounded border flex items-center justify-between">
+                  <span className="text-xs text-gray-600">Numerical</span>
                   <input
-                    type="range" min={10} max={30} value={numMCQs}
-                    onChange={(e) => handleSplitChange('mcq', parseInt(e.target.value))}
-                    className="w-full mt-2 accent-indigo-600"
+                    type="number"
+                    value={numNumericals}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value) || 0;
+                      if (numMCQs + val <= 50) handleSplitChange('numerical', val);
+                    }}
+                    className="w-14 text-center text-sm border rounded p-1 font-medium"
+                    min={0}
+                    max={50 - numMCQs}
+                    disabled={isLoading}
                   />
                 </div>
-                <div className="bg-white p-3 rounded border text-center">
-                  <div className="text-lg md:text-xl font-bold text-green-600">{numNumericals}</div>
-                  <div className="text-xs text-gray-500">Numerical</div>
-                  <input
-                    type="range" min={0} max={15} value={numNumericals}
-                    onChange={(e) => handleSplitChange('numerical', parseInt(e.target.value))}
-                    className="w-full mt-2 accent-green-600"
-                  />
+              )}
+              {level === "NEET" && (
+                <div className="bg-white p-2 rounded border flex items-center justify-center">
+                  <span className="text-xs text-gray-400">No Numericals</span>
                 </div>
-              </div>
-            )}
-
-            {/* JEE Advanced Pattern */}
-            {level === "JEE Advanced" && (
-              <div className="grid grid-cols-2 gap-3 p-3 md:p-4 bg-gray-50 rounded-lg border border-gray-200">
-                <div className="bg-white p-3 rounded border text-center">
-                  <div className="text-lg md:text-xl font-bold text-purple-600">{numMCQs}</div>
-                  <div className="text-xs text-gray-500">MCQs (Single + Multi)</div>
-                  <input
-                    type="range" min={10} max={30} value={numMCQs}
-                    onChange={(e) => handleSplitChange('mcq', parseInt(e.target.value))}
-                    className="w-full mt-2 accent-purple-600"
-                  />
-                </div>
-                <div className="bg-white p-3 rounded border text-center">
-                  <div className="text-lg md:text-xl font-bold text-green-600">{numNumericals}</div>
-                  <div className="text-xs text-gray-500">Numerical</div>
-                  <input
-                    type="range" min={0} max={15} value={numNumericals}
-                    onChange={(e) => handleSplitChange('numerical', parseInt(e.target.value))}
-                    className="w-full mt-2 accent-green-600"
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* NEET Pattern */}
-            {level === "NEET" && (
-              <div className="p-3 md:p-4 bg-gray-50 rounded-lg border border-gray-200">
-                <div className="bg-white p-3 rounded border text-center">
-                  <div className="text-2xl font-bold text-pink-600">{questionCount}</div>
-                  <div className="text-sm text-gray-500">MCQs Only</div>
-                  <input
-                    type="range" min={10} max={50} value={questionCount}
-                    onChange={(e) => handleSliderChange(parseInt(e.target.value))}
-                    className="w-full mt-2 accent-pink-600"
-                  />
-                  <p className="text-xs text-gray-400 mt-2">NEET has MCQs only, no numericals</p>
-                </div>
-              </div>
-            )}
-
-            {/* Olympiad Pattern */}
-            {level === "Olympiad" && (
-              <div className="grid grid-cols-2 gap-3 p-3 md:p-4 bg-gray-50 rounded-lg border border-gray-200">
-                <div className="bg-white p-3 rounded border text-center">
-                  <div className="text-lg md:text-xl font-bold text-yellow-600">{numMCQs}</div>
-                  <div className="text-xs text-gray-500">Theoretical</div>
-                  <input
-                    type="range" min={5} max={20} value={numMCQs}
-                    onChange={(e) => handleSplitChange('mcq', parseInt(e.target.value))}
-                    className="w-full mt-2 accent-yellow-600"
-                  />
-                </div>
-                <div className="bg-white p-3 rounded border text-center">
-                  <div className="text-lg md:text-xl font-bold text-green-600">{numNumericals}</div>
-                  <div className="text-xs text-gray-500">Problems</div>
-                  <input
-                    type="range" min={0} max={10} value={numNumericals}
-                    onChange={(e) => handleSplitChange('numerical', parseInt(e.target.value))}
-                    className="w-full mt-2 accent-green-600"
-                  />
-                </div>
-              </div>
-            )}
+              )}
+            </div>
+            <p className="text-xs text-gray-400 mt-2 text-center">
+              {level === "JEE Mains" && "Default: 20 MCQ + 5 Numerical"}
+              {level === "JEE Advanced" && "Default: 15 MCQ + 5 Numerical"}
+              {level === "NEET" && "NEET has MCQs only"}
+              {level === "Boards" && "Default: 15 Questions (Mix of VSA/SA/LA)"}
+              {level === "Olympiad" && "Default: 10 Theory + 5 Problems"}
+            </p>
           </div>
 
           {/* Generate Button */}
