@@ -111,7 +111,6 @@ export default function SignupPage() {
                                     onError={() => setError("Google signup failed")}
                                     theme="outline"
                                     size="large"
-                                    width="100%"
                                     text="signup_with"
                                 />
                             )}

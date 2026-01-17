@@ -481,7 +481,7 @@ async def generate_test_verified(
         safe_topic = safe_topic.replace(" ", "_")
         safe_level = request.level.replace(" ", "_")
         safe_difficulty = request.difficulty
-        filename = f"Verified_Top{request.total_questions}_{safe_topic}_{safe_level}_{safe_difficulty}"
+        filename = f"Top{request.total_questions}_{safe_topic}_{safe_level}_{safe_difficulty}"
         
         # Generate PDF
         llm_result["level"] = request.level
