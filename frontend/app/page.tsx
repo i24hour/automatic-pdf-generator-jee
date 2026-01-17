@@ -687,8 +687,92 @@ export default function Home() {
               </div>
             )}
 
-            {/* JEE Mains / JEE Advanced / Olympiad Pattern */}
-            {(level === "JEE Mains" || level === "JEE Advanced" || level === "Olympiad") && (
+            {/* JEE Mains Pattern */}
+            {level === "JEE Mains" && (
+              <div className="grid grid-cols-2 gap-3">
+                <div className="relative">
+                  <input
+                    type="number"
+                    defaultValue={20}
+                    min={0}
+                    max={50}
+                    disabled={isLoading}
+                    className="peer w-full px-3 pt-5 pb-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                    placeholder=" "
+                  />
+                  <label className="absolute left-3 top-1 text-[10px] text-indigo-600 font-medium">
+                    MCQs
+                  </label>
+                </div>
+                <div className="relative">
+                  <input
+                    type="number"
+                    defaultValue={5}
+                    min={0}
+                    max={50}
+                    disabled={isLoading}
+                    className="peer w-full px-3 pt-5 pb-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                    placeholder=" "
+                  />
+                  <label className="absolute left-3 top-1 text-[10px] text-indigo-600 font-medium">
+                    Numerical
+                  </label>
+                </div>
+              </div>
+            )}
+
+            {/* JEE Advanced Pattern */}
+            {level === "JEE Advanced" && (
+              <div className="space-y-3">
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="relative">
+                    <input
+                      type="number"
+                      defaultValue={10}
+                      min={0}
+                      max={30}
+                      disabled={isLoading}
+                      className="peer w-full px-3 pt-5 pb-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                      placeholder=" "
+                    />
+                    <label className="absolute left-3 top-1 text-[10px] text-indigo-600 font-medium">
+                      Single Correct
+                    </label>
+                  </div>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      defaultValue={5}
+                      min={0}
+                      max={20}
+                      disabled={isLoading}
+                      className="peer w-full px-3 pt-5 pb-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                      placeholder=" "
+                    />
+                    <label className="absolute left-3 top-1 text-[10px] text-indigo-600 font-medium">
+                      Multi Correct
+                    </label>
+                  </div>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      defaultValue={5}
+                      min={0}
+                      max={20}
+                      disabled={isLoading}
+                      className="peer w-full px-3 pt-5 pb-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                      placeholder=" "
+                    />
+                    <label className="absolute left-3 top-1 text-[10px] text-indigo-600 font-medium">
+                      Numerical
+                    </label>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Olympiad Pattern */}
+            {level === "Olympiad" && (
               <div className="grid grid-cols-2 gap-3">
                 <div className="relative">
                   <input
@@ -705,7 +789,7 @@ export default function Home() {
                     placeholder=" "
                   />
                   <label className="absolute left-3 top-1 text-[10px] text-indigo-600 font-medium">
-                    {level === "Olympiad" ? "Theoretical" : "MCQs"}
+                    Theoretical
                   </label>
                 </div>
                 <div className="relative">
@@ -723,7 +807,7 @@ export default function Home() {
                     placeholder=" "
                   />
                   <label className="absolute left-3 top-1 text-[10px] text-indigo-600 font-medium">
-                    {level === "Olympiad" ? "Problems" : "Numerical"}
+                    Problems
                   </label>
                 </div>
               </div>
