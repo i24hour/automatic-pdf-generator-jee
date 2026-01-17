@@ -638,7 +638,7 @@ export default function Home() {
           </div>
 
           {/* Dynamic Exam Pattern */}
-          <div className="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+          <div className="mb-4">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium text-gray-700">
                 {level === "Boards" ? "CBSE Pattern" : `${level} Pattern`}
@@ -648,39 +648,49 @@ export default function Home() {
 
             {/* Boards Pattern */}
             {level === "Boards" && (
-              <div className="space-y-2">
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="flex items-center justify-between bg-white p-2 rounded border">
-                    <span className="text-xs text-gray-600">Very Short Ans (1-2M)</span>
-                    <input type="number" min={0} max={20} defaultValue={4} className="w-12 text-center text-sm border rounded p-1" />
-                  </div>
-                  <div className="flex items-center justify-between bg-white p-2 rounded border">
-                    <span className="text-xs text-gray-600">Short Ans (2-3M)</span>
-                    <input type="number" min={0} max={20} defaultValue={4} className="w-12 text-center text-sm border rounded p-1" />
-                  </div>
-                  <div className="flex items-center justify-between bg-white p-2 rounded border">
-                    <span className="text-xs text-gray-600">Long Ans (5M)</span>
-                    <input type="number" min={0} max={10} defaultValue={2} className="w-12 text-center text-sm border rounded p-1" />
-                  </div>
-                  <div className="flex items-center justify-between bg-white p-2 rounded border">
-                    <span className="text-xs text-gray-600">Case-Based</span>
-                    <input type="number" min={0} max={5} defaultValue={1} className="w-12 text-center text-sm border rounded p-1" />
-                  </div>
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { label: "Very Short Answer (1-2M)", defaultVal: 4 },
+                    { label: "Short Answer (2-3M)", defaultVal: 4 },
+                    { label: "Long Answer (5M)", defaultVal: 2 },
+                    { label: "Case-Based", defaultVal: 1 },
+                  ].map((item) => (
+                    <div key={item.label} className="relative">
+                      <input
+                        type="number"
+                        min={0}
+                        max={20}
+                        defaultValue={item.defaultVal}
+                        className="peer w-full px-3 pt-5 pb-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                        placeholder=" "
+                      />
+                      <label className="absolute left-3 top-1 text-[10px] text-indigo-600 font-medium transition-all peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-xs peer-placeholder-shown:text-gray-400 peer-placeholder-shown:font-normal peer-focus:top-1 peer-focus:text-[10px] peer-focus:text-indigo-600 peer-focus:font-medium">
+                        {item.label}
+                      </label>
+                    </div>
+                  ))}
                 </div>
-                <div className="flex items-center justify-between bg-white p-2 rounded border">
-                  <span className="text-xs text-gray-600">Numericals (3-5M)</span>
-                  <input type="number" min={0} max={20} defaultValue={4} className="w-12 text-center text-sm border rounded p-1" />
+                <div className="relative">
+                  <input
+                    type="number"
+                    min={0}
+                    max={20}
+                    defaultValue={4}
+                    className="peer w-full px-3 pt-5 pb-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                    placeholder=" "
+                  />
+                  <label className="absolute left-3 top-1 text-[10px] text-indigo-600 font-medium transition-all peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-xs peer-placeholder-shown:text-gray-400 peer-placeholder-shown:font-normal peer-focus:top-1 peer-focus:text-[10px] peer-focus:text-indigo-600 peer-focus:font-medium">
+                    Numericals (3-5M)
+                  </label>
                 </div>
               </div>
             )}
 
             {/* JEE Mains / JEE Advanced / Olympiad Pattern */}
             {(level === "JEE Mains" || level === "JEE Advanced" || level === "Olympiad") && (
-              <div className="grid grid-cols-2 gap-2">
-                <div className="bg-white p-2 rounded border flex items-center justify-between">
-                  <span className="text-xs text-gray-600">
-                    {level === "Olympiad" ? "Theoretical" : "MCQs"}
-                  </span>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="relative">
                   <input
                     type="number"
                     value={numMCQs}
@@ -688,16 +698,17 @@ export default function Home() {
                       const val = parseInt(e.target.value) || 0;
                       if (val >= 0 && val + numNumericals <= 50) handleSplitChange('mcq', val);
                     }}
-                    className="w-14 text-center text-sm border rounded p-1 font-medium"
                     min={0}
                     max={50 - numNumericals}
                     disabled={isLoading}
+                    className="peer w-full px-3 pt-5 pb-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                    placeholder=" "
                   />
+                  <label className="absolute left-3 top-1 text-[10px] text-indigo-600 font-medium">
+                    {level === "Olympiad" ? "Theoretical" : "MCQs"}
+                  </label>
                 </div>
-                <div className="bg-white p-2 rounded border flex items-center justify-between">
-                  <span className="text-xs text-gray-600">
-                    {level === "Olympiad" ? "Problems" : "Numerical"}
-                  </span>
+                <div className="relative">
                   <input
                     type="number"
                     value={numNumericals}
@@ -705,20 +716,23 @@ export default function Home() {
                       const val = parseInt(e.target.value) || 0;
                       if (val >= 0 && numMCQs + val <= 50) handleSplitChange('numerical', val);
                     }}
-                    className="w-14 text-center text-sm border rounded p-1 font-medium"
                     min={0}
                     max={50 - numMCQs}
                     disabled={isLoading}
+                    className="peer w-full px-3 pt-5 pb-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                    placeholder=" "
                   />
+                  <label className="absolute left-3 top-1 text-[10px] text-indigo-600 font-medium">
+                    {level === "Olympiad" ? "Problems" : "Numerical"}
+                  </label>
                 </div>
               </div>
             )}
 
             {/* NEET Pattern */}
             {level === "NEET" && (
-              <div className="grid grid-cols-2 gap-2">
-                <div className="bg-white p-2 rounded border flex items-center justify-between">
-                  <span className="text-xs text-gray-600">MCQs</span>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="relative">
                   <input
                     type="number"
                     value={numMCQs}
@@ -726,13 +740,17 @@ export default function Home() {
                       const val = parseInt(e.target.value) || 0;
                       if (val >= 0 && val <= 50) handleSplitChange('mcq', val);
                     }}
-                    className="w-14 text-center text-sm border rounded p-1 font-medium"
                     min={0}
                     max={50}
                     disabled={isLoading}
+                    className="peer w-full px-3 pt-5 pb-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                    placeholder=" "
                   />
+                  <label className="absolute left-3 top-1 text-[10px] text-indigo-600 font-medium">
+                    MCQs
+                  </label>
                 </div>
-                <div className="bg-white p-2 rounded border flex items-center justify-center">
+                <div className="flex items-center justify-center border border-gray-200 rounded-lg bg-gray-50">
                   <span className="text-xs text-gray-400">No Numericals</span>
                 </div>
               </div>
