@@ -652,7 +652,7 @@ export default function Home() {
                   } ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
               >
                 <span className="text-sm font-medium">Without Solutions</span>
-                <span className="text-[10px] text-green-600">⚡ Faster (~1-2 min)</span>
+                <span className="text-[10px] text-green-600">Faster (~1-2 min)</span>
               </button>
               <button
                 onClick={() => setIncludeSolutions(true)}
@@ -663,7 +663,7 @@ export default function Home() {
                   } ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
               >
                 <span className="text-sm font-medium">With Solutions</span>
-                <span className="text-[10px] text-indigo-600">📝 Slower (~3-5 min)</span>
+                <span className="text-[10px] text-indigo-600">Slower (~3-5 min)</span>
               </button>
             </div>
             {includeSolutions && (
