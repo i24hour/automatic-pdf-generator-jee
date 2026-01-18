@@ -490,6 +490,14 @@ async def generate_test_verified(
         llm_result["level"] = request.level
         llm_result["difficulty"] = request.difficulty
         llm_result["include_solutions"] = request.include_solutions
+        
+        # Debug logging
+        print(f"DEBUG: include_solutions = {request.include_solutions}")
+        print(f"DEBUG: llm_result has include_solutions = {llm_result.get('include_solutions')}")
+        questions = llm_result.get("questions", [])
+        solutions_count = sum(1 for q in questions if q.get("solution"))
+        print(f"DEBUG: {solutions_count}/{len(questions)} questions have solutions")
+        
         pdf_path = pdf_engine.generate_pdf(llm_result, filename)
         
         if not pdf_path:

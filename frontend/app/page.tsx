@@ -943,22 +943,20 @@ export default function Home() {
               {/* Progress Steps */}
               <div className="space-y-3">
                 {[
-                  { text: "🤔 Analyzing topic and difficulty...", minTime: 0 },
-                  { text: "📚 Researching question patterns...", minTime: 5 },
-                  { text: "✍️ Creating MCQ questions...", minTime: 10 },
-                  { text: "🔢 Generating numerical problems...", minTime: 20 },
-                  { text: "✅ Verifying answers...", minTime: 35 },
-                  { text: "📄 Formatting PDF document...", minTime: 50 },
-                ].map((step, index) => {
+                  { text: "Analyzing topic and difficulty", minTime: 0 },
+                  { text: "Researching question patterns", minTime: 5 },
+                  { text: "Creating MCQ questions", minTime: 10 },
+                  { text: "Generating numerical problems", minTime: 20 },
+                  { text: "Verifying answers", minTime: 35 },
+                  { text: "Formatting PDF document", minTime: 50 },
+                ].map((step, index, arr) => {
                   const isActive = elapsedTime >= step.minTime;
-                  const isCompleted = [
-                    { text: "🤔 Analyzing topic and difficulty...", minTime: 0 },
-                    { text: "📚 Researching question patterns...", minTime: 5 },
-                    { text: "✍️ Creating MCQ questions...", minTime: 10 },
-                    { text: "🔢 Generating numerical problems...", minTime: 20 },
-                    { text: "✅ Verifying answers...", minTime: 35 },
-                    { text: "📄 Formatting PDF document...", minTime: 50 },
-                  ][index + 1]?.minTime <= elapsedTime;
+                  const nextStep = arr[index + 1];
+                  const isCompleted = nextStep ? nextStep.minTime <= elapsedTime : false;
+                  const isCurrent = isActive && !isCompleted;
+
+                  // Animated dots for current step
+                  const dots = isCurrent ? '.'.repeat((elapsedTime % 3) + 1) : '...';
 
                   return (
                     <div
@@ -975,7 +973,7 @@ export default function Home() {
                       )}
                       <span className={`text-sm ${isCompleted ? 'text-green-600' : isActive ? 'text-indigo-700 font-medium' : 'text-gray-400'
                         }`}>
-                        {step.text}
+                        {step.text}{isCurrent ? dots : '...'}
                       </span>
                     </div>
                   );
