@@ -65,6 +65,7 @@ export default function Home() {
   const [difficulty, setDifficulty] = useState("Medium");
   const [numMCQs, setNumMCQs] = useState(16);
   const [numNumericals, setNumNumericals] = useState(4);
+  const [includeSolutions, setIncludeSolutions] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<GenerateResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -300,6 +301,7 @@ export default function Home() {
           difficulty,
           num_mcqs: numMCQs,
           num_numerical: numNumericals,
+          include_solutions: includeSolutions,
         }),
         signal: abortControllerRef.current.signal,
       });
@@ -624,7 +626,7 @@ export default function Home() {
           </div>
 
           {/* Topic Input */}
-          <div className="mb-6">
+          <div className="mb-4">
             <label htmlFor="topic" className="block mb-3 font-medium text-gray-700">Topic</label>
             <input
               type="text"
@@ -635,6 +637,40 @@ export default function Home() {
               className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
               disabled={isLoading}
             />
+          </div>
+
+          {/* Solutions Toggle */}
+          <div className="mb-4">
+            <label className="block mb-2 font-medium text-gray-700 text-sm">Include Solutions</label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => setIncludeSolutions(false)}
+                disabled={isLoading}
+                className={`p-3 rounded-xl border transition-all duration-300 flex flex-col items-center gap-1 ${!includeSolutions
+                  ? "border-green-500 bg-green-50 text-green-600"
+                  : "border-gray-200 hover:border-gray-300 text-gray-600 hover:text-gray-800 bg-white"
+                  } ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
+              >
+                <span className="text-sm font-medium">Without Solutions</span>
+                <span className="text-[10px] text-green-600">⚡ Faster (~1-2 min)</span>
+              </button>
+              <button
+                onClick={() => setIncludeSolutions(true)}
+                disabled={isLoading}
+                className={`p-3 rounded-xl border transition-all duration-300 flex flex-col items-center gap-1 ${includeSolutions
+                  ? "border-indigo-500 bg-indigo-50 text-indigo-600"
+                  : "border-gray-200 hover:border-gray-300 text-gray-600 hover:text-gray-800 bg-white"
+                  } ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
+              >
+                <span className="text-sm font-medium">With Solutions</span>
+                <span className="text-[10px] text-indigo-600">📝 Slower (~3-5 min)</span>
+              </button>
+            </div>
+            {includeSolutions && (
+              <p className="text-xs text-gray-500 mt-2 text-center">
+                Solutions are verified for accuracy before PDF generation
+              </p>
+            )}
           </div>
 
           {/* Dynamic Exam Pattern */}

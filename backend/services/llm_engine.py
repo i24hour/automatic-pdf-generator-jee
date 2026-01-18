@@ -903,13 +903,14 @@ Solve now:"""
         mcq_count: int,
         numerical_count: int,
         level: str = "JEE Mains",
-        difficulty: str = "Medium"
+        difficulty: str = "Medium",
+        include_solutions: bool = False
     ) -> Dict[str, Any]:
         """
         Generate questions and verify numerical answers in PARALLEL.
+        If include_solutions=True, also generate solutions for MCQs.
         """
-        # First, generate questions normally (this is still sync for now, or we could make it async too if needed)
-        # But the bottleneck is the verification loop, so we focus on that.
+        # First, generate questions normally
         result = self.generate_questions(subject, topic, mcq_count, numerical_count, level, difficulty)
         
         if not result.get("success"):
@@ -968,7 +969,79 @@ Solve now:"""
                 "corrected": 0
             }
         
+        # If include_solutions is True, generate solutions for MCQs
+        if include_solutions:
+            mcq_solution_tasks = []
+            mcq_indices = []
+            
+            for i, q in enumerate(questions):
+                if q.get("type") in ["mcq", "mcq_multi"] and not q.get("solution"):
+                    mcq_indices.append(i)
+                    mcq_solution_tasks.append(
+                        self._generate_mcq_solution_async(
+                            q.get("text", ""),
+                            q.get("options", []),
+                            q.get("answer", ""),
+                            subject
+                        )
+                    )
+            
+            if mcq_solution_tasks:
+                mcq_solutions = await asyncio.gather(*mcq_solution_tasks)
+                for i, solution in enumerate(mcq_solutions):
+                    q_index = mcq_indices[i]
+                    questions[q_index]["solution"] = solution
+            
+            result["include_solutions"] = True
+        
         return result
+    
+    async def _generate_mcq_solution_async(
+        self,
+        question: str,
+        options: list,
+        answer: str,
+        subject: str
+    ) -> str:
+        """Generate step-by-step solution for an MCQ question."""
+        import asyncio
+        
+        prompt = f"""You are an expert {subject} teacher. Generate a concise but complete solution for this MCQ.
+
+QUESTION: {question}
+
+OPTIONS:
+(A) {options[0] if len(options) > 0 else ''}
+(B) {options[1] if len(options) > 1 else ''}
+(C) {options[2] if len(options) > 2 else ''}
+(D) {options[3] if len(options) > 3 else ''}
+
+CORRECT ANSWER: {answer}
+
+Generate a step-by-step solution that:
+1. Identifies the key concept being tested
+2. Shows the reasoning or calculation to arrive at the answer
+3. Uses LaTeX math mode ($...$) for formulas
+4. Is concise - max 3-4 steps
+
+Return ONLY the solution text, no JSON or extra formatting."""
+
+        try:
+            loop = asyncio.get_event_loop()
+            response = await loop.run_in_executor(
+                None,
+                lambda: litellm.completion(
+                    model=self.model,
+                    messages=[{"role": "user", "content": prompt}],
+                    temperature=0.3
+                )
+            )
+            
+            solution = response.choices[0].message.content.strip()
+            return self._fix_spacing(solution)
+        except Exception as e:
+            print(f"MCQ solution generation failed: {e}")
+            return f"Correct answer: {answer}"
 
 
 # Singleton instance

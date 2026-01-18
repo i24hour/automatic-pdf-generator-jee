@@ -76,6 +76,7 @@ class GenerateRequest(BaseModel):
     difficulty: str = Field(default="Medium", description="Difficulty within exam: Easy, Medium, Hard")
     num_mcqs: Optional[int] = Field(default=None, description="Number of MCQs (optional)")
     num_numerical: Optional[int] = Field(default=None, description="Number of numerical questions (optional)")
+    include_solutions: bool = Field(default=False, description="Include step-by-step solutions")
 
 
 class GenerateResponse(BaseModel):
@@ -467,7 +468,8 @@ async def generate_test_verified(
             mcq_count=mcq_count,
             numerical_count=numerical_count,
             level=request.level,
-            difficulty=request.difficulty
+            difficulty=request.difficulty,
+            include_solutions=request.include_solutions
         )
         
         if not llm_result.get("success"):
@@ -481,11 +483,13 @@ async def generate_test_verified(
         safe_topic = safe_topic.replace(" ", "_")
         safe_level = request.level.replace(" ", "_")
         safe_difficulty = request.difficulty
-        filename = f"Top{request.total_questions}_{safe_topic}_{safe_level}_{safe_difficulty}"
+        solutions_suffix = "_with_solutions" if request.include_solutions else ""
+        filename = f"Top{request.total_questions}_{safe_topic}_{safe_level}_{safe_difficulty}{solutions_suffix}"
         
         # Generate PDF
         llm_result["level"] = request.level
         llm_result["difficulty"] = request.difficulty
+        llm_result["include_solutions"] = request.include_solutions
         pdf_path = pdf_engine.generate_pdf(llm_result, filename)
         
         if not pdf_path:

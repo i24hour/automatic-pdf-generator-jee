@@ -158,4 +158,32 @@
 \end{tabular}
 \end{table}
 
+% --- SOLUTIONS SECTION (conditional) ---
+\BLOCK{ if include_solutions }
+\newpage
+
+\begin{center}
+    {\Large \textbf{DETAILED SOLUTIONS}}
+\end{center}
+\vspace{0.5cm}
+
+\begin{enumerate}[label=\textbf{Q.\arabic*.}, itemsep=15pt, leftmargin=*]
+\BLOCK{ for q in questions }
+    \item \textbf{Answer: \VAR{q.answer}}
+    \BLOCK{ if q.solution }
+    
+    \textit{Solution:}
+    
+    \VAR{q.solution}
+    \BLOCK{ else }
+    
+    \textit{Correct option is \VAR{q.answer}.}
+    \BLOCK{ endif }
+    
+    \vspace{0.2cm}
+    \hrule
+\BLOCK{ endfor }
+\end{enumerate}
+\BLOCK{ endif }
+
 \end{document}

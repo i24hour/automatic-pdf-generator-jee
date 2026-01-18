@@ -200,7 +200,8 @@ class PDFEngine:
             institute_name=sanitize_for_latex(data.get("institute_name", "")),
             institute_contact=sanitize_for_latex(data.get("institute_contact", "")),
             institute_email=sanitize_for_latex(data.get("institute_email", "")),
-            is_institute=is_institute
+            is_institute=is_institute,
+            include_solutions=data.get("include_solutions", False)
         )
         
         return rendered
