@@ -63,8 +63,8 @@ export default function Home() {
   const [questionCount, setQuestionCount] = useState(20);
   const [level, setLevel] = useState("JEE Mains");
   const [difficulty, setDifficulty] = useState("Medium");
-  const [numMCQs, setNumMCQs] = useState(16);
-  const [numNumericals, setNumNumericals] = useState(4);
+  const [numMCQs, setNumMCQs] = useState(20);
+  const [numNumericals, setNumNumericals] = useState(5);
   const [includeSolutions, setIncludeSolutions] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<GenerateResponse | null>(null);
@@ -587,7 +587,26 @@ export default function Home() {
                 return (
                   <button
                     key={lvl.name}
-                    onClick={() => setLevel(lvl.name)}
+                    onClick={() => {
+                      setLevel(lvl.name);
+                      // Set default MCQ/Numerical counts based on exam type
+                      if (lvl.name === "JEE Mains") {
+                        setNumMCQs(20);
+                        setNumNumericals(5);
+                      } else if (lvl.name === "JEE Advanced") {
+                        setNumMCQs(15);
+                        setNumNumericals(5);
+                      } else if (lvl.name === "NEET") {
+                        setNumMCQs(20);
+                        setNumNumericals(0);
+                      } else if (lvl.name === "Olympiad") {
+                        setNumMCQs(10);
+                        setNumNumericals(5);
+                      } else {
+                        setNumMCQs(15);
+                        setNumNumericals(5);
+                      }
+                    }}
                     disabled={isLoading}
                     className={`p-2 rounded-xl border transition-all duration-300 flex flex-col items-center gap-1 ${isSelected
                       ? "border-indigo-500 bg-indigo-50 text-indigo-600"
@@ -729,9 +748,13 @@ export default function Home() {
                 <div className="relative">
                   <input
                     type="number"
-                    defaultValue={20}
+                    value={numMCQs}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value) || 0;
+                      if (val >= 0 && val + numNumericals <= 50) setNumMCQs(val);
+                    }}
                     min={0}
-                    max={50}
+                    max={50 - numNumericals}
                     disabled={isLoading}
                     className="peer w-full px-3 pt-5 pb-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                     placeholder=" "
@@ -743,9 +766,13 @@ export default function Home() {
                 <div className="relative">
                   <input
                     type="number"
-                    defaultValue={5}
+                    value={numNumericals}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value) || 0;
+                      if (val >= 0 && numMCQs + val <= 50) setNumNumericals(val);
+                    }}
                     min={0}
-                    max={50}
+                    max={50 - numMCQs}
                     disabled={isLoading}
                     className="peer w-full px-3 pt-5 pb-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                     placeholder=" "
