@@ -63,7 +63,7 @@ export default function Leaderboard() {
     };
 
     return (
-        <div className="max-w-2xl mx-auto p-4">
+        <div className="p-4">
             <div className="flex items-center gap-3 mb-6">
                 <div className="bg-yellow-100 dark:bg-yellow-900/30 p-3 rounded-xl">
                     <Trophy className="w-8 h-8 text-yellow-600 dark:text-yellow-500" />

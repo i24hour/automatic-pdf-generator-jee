@@ -161,8 +161,6 @@ export default function PostsFeed() {
 
             {/* Filters */}
             <div style={{
-                maxWidth: '600px',
-                margin: '0 auto',
                 padding: '16px 24px',
                 borderBottom: '1px solid var(--border)',
                 display: 'flex',
@@ -194,7 +192,7 @@ export default function PostsFeed() {
             </div>
 
             {/* Posts Feed */}
-            <main style={{ maxWidth: '600px', margin: '0 auto' }}>
+            <main>
                 {loading ? (
                     <div style={{ padding: '48px', textAlign: 'center' }}>
                         <div className="spinner" style={{ margin: '0 auto', borderColor: 'var(--border)', borderTopColor: 'var(--primary)' }} />
