@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, LayoutGrid, Trophy, User, Infinity as InfinityIcon, LogOut, MoreHorizontal, Sun, Moon } from "lucide-react";
@@ -10,6 +12,7 @@ export default function DesktopSidebar() {
     const pathname = usePathname();
     const { user, logout } = useAuth();
     const { theme, toggleTheme } = useTheme();
+    const [showLogoutMenu, setShowLogoutMenu] = useState(false);
 
     const isActive = (path: string) => pathname === path;
 
@@ -93,19 +96,40 @@ export default function DesktopSidebar() {
                     <span className="text-xl">Theme</span>
                 </button>
 
-                <button
-                    onClick={() => logout()}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-full hover:bg-gray-100 dark:hover:bg-[#181818] transition-colors text-left"
-                >
-                    <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-semibold flex-shrink-0">
-                        {user?.name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || "U"}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                        <p className="font-bold text-gray-900 dark:text-white truncate">{user?.name || "User"}</p>
-                        <p className="text-sm text-gray-500 truncate">@{user?.username || user?.email?.split('@')[0]}</p>
-                    </div>
-                    <MoreHorizontal className="w-5 h-5 text-gray-400" />
-                </button>
+                <div className="relative">
+                    {showLogoutMenu && (
+                        <>
+                            <div
+                                className="fixed inset-0 z-40"
+                                onClick={() => setShowLogoutMenu(false)}
+                            />
+                            <div className="absolute bottom-full left-0 w-[300px] mb-4 bg-white dark:bg-black rounded-2xl shadow-[0_0_15px_rgba(0,0,0,0.1)] dark:shadow-[0_0_15px_rgba(255,255,255,0.1)] border border-gray-100 dark:border-[#2f3336] overflow-hidden z-50 py-2">
+                                <button
+                                    onClick={() => {
+                                        logout();
+                                        setShowLogoutMenu(false);
+                                    }}
+                                    className="w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-[#16181c] transition-colors font-bold text-gray-900 dark:text-white"
+                                >
+                                    Log out @{user?.username || user?.email?.split('@')[0]}
+                                </button>
+                            </div>
+                        </>
+                    )}
+                    <button
+                        onClick={() => setShowLogoutMenu(!showLogoutMenu)}
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-full hover:bg-gray-100 dark:hover:bg-[#181818] transition-colors text-left"
+                    >
+                        <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-semibold flex-shrink-0">
+                            {user?.name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || "U"}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <p className="font-bold text-gray-900 dark:text-white truncate">{user?.name || "User"}</p>
+                            <p className="text-sm text-gray-500 truncate">@{user?.username || user?.email?.split('@')[0]}</p>
+                        </div>
+                        <MoreHorizontal className="w-5 h-5 text-gray-400" />
+                    </button>
+                </div>
             </div>
         </aside>
     );
