@@ -39,6 +39,17 @@ export default function DesktopSidebar() {
                 </Link>
 
                 <Link
+                    href="/"
+                    className={`flex items-center gap-4 px-4 py-3 rounded-full text-xl transition-colors ${isActive("/")
+                        ? "font-bold text-gray-900 dark:text-white"
+                        : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#181818]"
+                        }`}
+                >
+                    <InfinityIcon className={`w-7 h-7 ${isActive("/") ? "stroke-[2.5px]" : ""}`} />
+                    <span>INFINITEST</span>
+                </Link>
+
+                <Link
                     href="/posts"
                     className={`flex items-center gap-4 px-4 py-3 rounded-full text-xl transition-colors ${isActive("/posts")
                         ? "font-bold text-gray-900 dark:text-white"
