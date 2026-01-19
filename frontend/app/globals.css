@@ -40,10 +40,16 @@
 }
 
 body {
-  background: var(--background);
+  background: linear-gradient(135deg, #EEF2FF 0%, #FFFFFF 50%, #ECFEFF 100%);
+  background-attachment: fixed;
   color: var(--foreground);
   font-family: var(--font-sans), 'Inter', Arial, Helvetica, sans-serif;
   min-height: 100vh;
+}
+
+.dark body {
+  background: #000000;
+  background-image: none;
 }
 
 /* Clean card */
