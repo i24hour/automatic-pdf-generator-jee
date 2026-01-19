@@ -59,7 +59,7 @@ interface RateLimitInfo {
 }
 
 export default function TestGenerator() {
-    const { user, isLoading: authLoading, isAuthenticated, logout, authFetch, refreshUser } = useAuth();
+    const { user, token, isLoading: authLoading, isAuthenticated, logout, authFetch, refreshUser } = useAuth();
     const router = useRouter();
 
     const [subject, setSubject] = useState("Physics");
@@ -1003,7 +1003,7 @@ export default function TestGenerator() {
                     subject={subject}
                     topic={topic}
                     level={level}
-                    token={localStorage.getItem('token') || ''}
+                    token={token || ''}
                     onSuccess={() => {
                         // Optional: refresh feed or show success toast
                     }}
@@ -1014,7 +1014,7 @@ export default function TestGenerator() {
             <UsernameModal
                 isOpen={showUsernameModal}
                 onClose={() => setShowUsernameModal(false)}
-                token={localStorage.getItem('token') || ''}
+                token={token || ''}
                 currentUsername={user?.username}
                 onSuccess={(newUsername) => {
                     refreshUser();
