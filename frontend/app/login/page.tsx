@@ -75,7 +75,7 @@ export default function LoginPage() {
     };
 
     return (
-        <main className="min-h-screen flex items-center justify-center py-12 px-4 bg-[#FAF9F6]">
+        <main className="min-h-screen flex items-center justify-center py-12 px-4 bg-white">
             <div className="w-full max-w-md">
                 {/* Card */}
                 <div className="bg-white border border-gray-200 rounded-2xl p-10 shadow-lg">

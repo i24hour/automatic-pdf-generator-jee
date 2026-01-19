@@ -8,7 +8,7 @@ import DesktopSidebar from "@/components/layout/DesktopSidebar";
 
 export default function PostsPage() {
     return (
-        <div className="min-h-screen bg-[#FAF9F6] dark:bg-black">
+        <div className="min-h-screen bg-white dark:bg-black">
             {/* Mobile View: Show Posts Feed */}
             <div className="md:hidden pb-20">
                 <PostsFeed />

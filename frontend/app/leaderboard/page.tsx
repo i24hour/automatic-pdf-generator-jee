@@ -13,7 +13,7 @@ import PostsFeed from "@/components/PostsFeed"; // Optional: if we want feed in 
 
 export default function LeaderboardPage() {
     return (
-        <div className="min-h-screen bg-[#FAF9F6] dark:bg-black">
+        <div className="min-h-screen bg-white dark:bg-black">
             {/* Mobile View: Show Leaderboard */}
             <div className="md:hidden pb-20">
                 <Leaderboard />

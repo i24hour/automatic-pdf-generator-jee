@@ -8,7 +8,7 @@ import DesktopSidebar from "@/components/layout/DesktopSidebar";
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-[#FAF9F6] dark:bg-black">
+    <div className="min-h-screen bg-white dark:bg-black">
       {/* Mobile View: Show Test Generator (Home) */}
       <div className="md:hidden pb-20">
         <TestGenerator />

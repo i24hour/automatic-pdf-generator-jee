@@ -432,7 +432,7 @@ export default function TestGenerator() {
     // Show verification required screen if email not verified
     if (user && !user.is_verified) {
         return (
-            <main className="min-h-screen flex items-center justify-center py-12 px-4 bg-[#FAF9F6] dark:bg-black">
+            <main className="min-h-screen flex items-center justify-center py-12 px-4 bg-white dark:bg-black">
                 <div className="max-w-md w-full text-center">
                     <div className="bg-white dark:bg-[#16181c] border border-gray-200 dark:border-[#2f3336] rounded-2xl p-10 shadow-lg">
                         <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">

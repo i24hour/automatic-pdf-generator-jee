@@ -398,7 +398,7 @@ export default function TrialPage() {
   // Show verification required screen if email not verified
   if (user && !user.is_verified) {
     return (
-      <main className="min-h-screen flex items-center justify-center py-12 px-4 bg-[#FAF9F6]">
+      <main className="min-h-screen flex items-center justify-center py-12 px-4 bg-white">
         <div className="max-w-md w-full text-center">
           <div className="bg-white border border-gray-200 rounded-2xl p-10 shadow-lg">
             <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-amber-100 flex items-center justify-center">
@@ -444,7 +444,7 @@ export default function TrialPage() {
   }
 
   return (
-    <main className="min-h-screen py-12 px-4 bg-[#FAF9F6]">
+    <main className="min-h-screen py-12 px-4 bg-white">
       <div className="max-w-2xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <div className="flex items-center gap-3">

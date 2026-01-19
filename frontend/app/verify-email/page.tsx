@@ -91,7 +91,7 @@ function VerifyEmailContent() {
 
 export default function VerifyEmailPage() {
     return (
-        <main className="min-h-screen flex items-center justify-center py-12 px-4 bg-[#FAF9F6]">
+        <main className="min-h-screen flex items-center justify-center py-12 px-4 bg-white">
             <div className="w-full max-w-md text-center">
                 <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-indigo-600 mb-6">
                     <BookOpen className="w-7 h-7 text-white" />
