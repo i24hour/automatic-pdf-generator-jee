@@ -16,7 +16,7 @@ export default function Home() {
       </div>
 
       {/* Desktop View: 3-Column Layout */}
-      <div className="hidden md:flex min-h-screen max-w-[1300px] mx-auto">
+      <div className="hidden md:flex min-h-screen w-full">
         {/* Left Sidebar: Navigation */}
         <DesktopSidebar />
 
