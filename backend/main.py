@@ -46,6 +46,8 @@ origins = [
     "https://infinitest.tech",
     "https://www.infinitest.tech",
     "https://mentors-mantra-test-generator.vercel.app",
+    "https://mentors-mantra-test-generator-git-main-priyanshu85953s-projects.vercel.app",
+    "https://mentors-mantra-test-generator-*.vercel.app",
 ]
 
 app.add_middleware(
