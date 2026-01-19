@@ -432,7 +432,6 @@ export default function TestGenerator() {
     // Show verification required screen if email not verified
     if (user && !user.is_verified) {
         return (
-        return (
             <main className="min-h-screen flex items-center justify-center py-12 px-4 bg-[#FAF9F6] dark:bg-black">
                 <div className="max-w-md w-full text-center">
                     <div className="bg-white dark:bg-[#16181c] border border-gray-200 dark:border-[#2f3336] rounded-2xl p-10 shadow-lg">
@@ -527,8 +526,7 @@ export default function TestGenerator() {
                             placeholder="Enter promo code"
                             value={promoCode}
                             onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
-                            value={promoCode}
-                            onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+
                             className="pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent w-48 bg-white dark:bg-black text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600"
                         />
                     </div>
@@ -655,8 +653,7 @@ export default function TestGenerator() {
                         value={topic}
                         onChange={(e) => setTopic(e.target.value)}
                         placeholder="e.g., Electrostatics, Organic Chemistry, Integration"
-                        onChange={(e) => setTopic(e.target.value)}
-                        placeholder="e.g., Electrostatics, Organic Chemistry, Integration"
+
                         className="w-full px-4 py-3 bg-white dark:bg-black border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900"
                         disabled={isLoading}
                     />
@@ -995,38 +992,35 @@ export default function TestGenerator() {
                     <p className="text-gray-400 mt-2 italic">A Mentors Mantra Product</p>
                 </div>
             </div>
-        </div>
 
-            {/* Post Modal */ }
-    {
-        result?.shared_pdf_id && (
-            <PostModal
-                isOpen={showPostModal}
-                onClose={() => setShowPostModal(false)}
-                sharedPdfId={result.shared_pdf_id}
-                pdfFilename={result.pdf_filename || `${subject} - ${topic}`}
-                subject={subject}
-                topic={topic}
-                level={level}
+            {/* Post Modal */}
+            {result?.shared_pdf_id && (
+                <PostModal
+                    isOpen={showPostModal}
+                    onClose={() => setShowPostModal(false)}
+                    sharedPdfId={result.shared_pdf_id}
+                    pdfFilename={result.pdf_filename || `${subject} - ${topic}`}
+                    subject={subject}
+                    topic={topic}
+                    level={level}
+                    token={localStorage.getItem('token') || ''}
+                    onSuccess={() => {
+                        // Optional: refresh feed or show success toast
+                    }}
+                />
+            )}
+
+            {/* Username Modal */}
+            <UsernameModal
+                isOpen={showUsernameModal}
+                onClose={() => setShowUsernameModal(false)}
                 token={localStorage.getItem('token') || ''}
-                onSuccess={() => {
-                    // Optional: refresh feed or show success toast
+                currentUsername={user?.username}
+                onSuccess={(newUsername) => {
+                    refreshUser();
+                    setShowUsernameModal(false);
                 }}
             />
-        )
-    }
-
-    {/* Username Modal */ }
-    <UsernameModal
-        isOpen={showUsernameModal}
-        onClose={() => setShowUsernameModal(false)}
-        token={localStorage.getItem('token') || ''}
-        currentUsername={user?.username}
-        onSuccess={(newUsername) => {
-            refreshUser();
-            setShowUsernameModal(false);
-        }}
-    />
-        </div >
+        </div>
     );
 }
