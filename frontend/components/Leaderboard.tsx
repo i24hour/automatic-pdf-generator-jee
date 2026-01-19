@@ -10,8 +10,8 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 interface LeaderboardEntry {
     user_id: string;
     username: string | null;
-    value: int;
-    rank: int;
+    value: number;
+    rank: number;
 }
 
 interface LeaderboardResponse {
@@ -79,8 +79,8 @@ export default function Leaderboard() {
                 <button
                     onClick={() => setCategory("most_likes")}
                     className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${category === "most_likes"
-                            ? "bg-white text-indigo-600 shadow-sm"
-                            : "text-gray-500 hover:text-gray-700"
+                        ? "bg-white text-indigo-600 shadow-sm"
+                        : "text-gray-500 hover:text-gray-700"
                         }`}
                 >
                     <Star className="w-4 h-4" />
@@ -89,8 +89,8 @@ export default function Leaderboard() {
                 <button
                     onClick={() => setCategory("most_posts")}
                     className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${category === "most_posts"
-                            ? "bg-white text-indigo-600 shadow-sm"
-                            : "text-gray-500 hover:text-gray-700"
+                        ? "bg-white text-indigo-600 shadow-sm"
+                        : "text-gray-500 hover:text-gray-700"
                         }`}
                 >
                     <Award className="w-4 h-4" />
