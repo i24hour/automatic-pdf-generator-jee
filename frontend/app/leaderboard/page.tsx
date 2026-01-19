@@ -13,7 +13,7 @@ import PostsFeed from "@/components/PostsFeed"; // Optional: if we want feed in 
 
 export default function LeaderboardPage() {
     return (
-        <div className="min-h-screen bg-[#FAF9F6]">
+        <div className="min-h-screen bg-[#FAF9F6] dark:bg-black">
             {/* Mobile View: Show Leaderboard */}
             <div className="md:hidden pb-20">
                 <Leaderboard />
@@ -26,14 +26,14 @@ export default function LeaderboardPage() {
                 <DesktopSidebar />
 
                 {/* Center Column: Leaderboard */}
-                <main className="flex-1 ml-[275px] border-r border-gray-200 min-h-screen">
+                <main className="flex-1 ml-[275px] border-r border-gray-200 dark:border-[#2f3336] min-h-screen">
                     <Leaderboard />
                 </main>
 
                 {/* Right Sidebar: Test Generator */}
-                <aside className="w-[400px] p-4 h-screen sticky top-0 overflow-y-auto border-l border-gray-200 bg-white hidden lg:block">
+                <aside className="w-[400px] p-4 h-screen sticky top-0 overflow-y-auto border-l border-gray-200 dark:border-[#2f3336] bg-white dark:bg-black hidden lg:block">
                     <div className="mb-4">
-                        <h2 className="text-xl font-bold text-gray-900 px-2">Generate Test</h2>
+                        <h2 className="text-xl font-bold text-gray-900 dark:text-white px-2">Generate Test</h2>
                     </div>
                     <TestGenerator />
                 </aside>

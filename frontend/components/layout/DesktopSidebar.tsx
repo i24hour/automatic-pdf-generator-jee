@@ -14,14 +14,14 @@ export default function DesktopSidebar() {
     const isActive = (path: string) => pathname === path;
 
     return (
-        <aside className="hidden md:flex flex-col w-[275px] h-screen fixed left-0 top-0 border-r border-gray-200 bg-white px-4 py-4 z-50">
+        <aside className="hidden md:flex flex-col w-[275px] h-screen fixed left-0 top-0 border-r border-gray-200 dark:border-[#2f3336] bg-white dark:bg-black px-4 py-4 z-50">
             {/* Logo */}
             <div className="mb-8 px-4">
                 <Link href="/" className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white">
                         <BookOpen className="w-6 h-6" />
                     </div>
-                    <span className="text-xl font-bold text-gray-900">INFINITEST</span>
+                    <span className="text-xl font-bold text-gray-900 dark:text-white">INFINITEST</span>
                 </Link>
             </div>
 
@@ -30,8 +30,8 @@ export default function DesktopSidebar() {
                 <Link
                     href="/"
                     className={`flex items-center gap-4 px-4 py-3 rounded-full text-xl transition-colors ${isActive("/")
-                        ? "font-bold text-gray-900"
-                        : "text-gray-700 hover:bg-gray-100"
+                        ? "font-bold text-gray-900 dark:text-white"
+                        : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#181818]"
                         }`}
                 >
                     <Home className={`w-7 h-7 ${isActive("/") ? "stroke-[2.5px]" : ""}`} />
@@ -41,8 +41,8 @@ export default function DesktopSidebar() {
                 <Link
                     href="/posts"
                     className={`flex items-center gap-4 px-4 py-3 rounded-full text-xl transition-colors ${isActive("/posts")
-                        ? "font-bold text-gray-900"
-                        : "text-gray-700 hover:bg-gray-100"
+                        ? "font-bold text-gray-900 dark:text-white"
+                        : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#181818]"
                         }`}
                 >
                     <LayoutGrid className={`w-7 h-7 ${isActive("/posts") ? "stroke-[2.5px]" : ""}`} />
@@ -52,8 +52,8 @@ export default function DesktopSidebar() {
                 <Link
                     href="/leaderboard"
                     className={`flex items-center gap-4 px-4 py-3 rounded-full text-xl transition-colors ${isActive("/leaderboard")
-                        ? "font-bold text-gray-900"
-                        : "text-gray-700 hover:bg-gray-100"
+                        ? "font-bold text-gray-900 dark:text-white"
+                        : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#181818]"
                         }`}
                 >
                     <Trophy className={`w-7 h-7 ${isActive("/leaderboard") ? "stroke-[2.5px]" : ""}`} />
@@ -63,8 +63,8 @@ export default function DesktopSidebar() {
                 <Link
                     href="/profile"
                     className={`flex items-center gap-4 px-4 py-3 rounded-full text-xl transition-colors ${isActive("/profile")
-                        ? "font-bold text-gray-900"
-                        : "text-gray-700 hover:bg-gray-100"
+                        ? "font-bold text-gray-900 dark:text-white"
+                        : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#181818]"
                         }`}
                 >
                     <User className={`w-7 h-7 ${isActive("/profile") ? "stroke-[2.5px]" : ""}`} />
@@ -76,7 +76,7 @@ export default function DesktopSidebar() {
             <div className="mt-auto space-y-2">
                 <button
                     onClick={toggleTheme}
-                    className="w-full flex items-center gap-4 px-4 py-3 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-left text-gray-700 dark:text-gray-300"
+                    className="w-full flex items-center gap-4 px-4 py-3 rounded-full hover:bg-gray-100 dark:hover:bg-[#181818] transition-colors text-left text-gray-700 dark:text-gray-300"
                 >
                     {theme === 'dark' ? <Sun className="w-7 h-7" /> : <Moon className="w-7 h-7" />}
                     <span className="text-xl">Theme</span>
@@ -84,7 +84,7 @@ export default function DesktopSidebar() {
 
                 <button
                     onClick={() => logout()}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-left"
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-full hover:bg-gray-100 dark:hover:bg-[#181818] transition-colors text-left"
                 >
                     <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-semibold flex-shrink-0">
                         {user?.name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || "U"}

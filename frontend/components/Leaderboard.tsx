@@ -65,22 +65,22 @@ export default function Leaderboard() {
     return (
         <div className="max-w-2xl mx-auto p-4">
             <div className="flex items-center gap-3 mb-6">
-                <div className="bg-yellow-100 p-3 rounded-xl">
-                    <Trophy className="w-8 h-8 text-yellow-600" />
+                <div className="bg-yellow-100 dark:bg-yellow-900/30 p-3 rounded-xl">
+                    <Trophy className="w-8 h-8 text-yellow-600 dark:text-yellow-500" />
                 </div>
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Leaderboard</h1>
-                    <p className="text-gray-500 text-sm">Top contributors and popular creators</p>
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Leaderboard</h1>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm">Top contributors and popular creators</p>
                 </div>
             </div>
 
             {/* Tabs */}
-            <div className="flex bg-gray-100 p-1 rounded-xl mb-6">
+            <div className="flex bg-gray-100 dark:bg-[#16181c] p-1 rounded-xl mb-6">
                 <button
                     onClick={() => setCategory("most_likes")}
                     className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${category === "most_likes"
-                        ? "bg-white text-indigo-600 shadow-sm"
-                        : "text-gray-500 hover:text-gray-700"
+                        ? "bg-white dark:bg-black text-indigo-600 dark:text-indigo-400 shadow-sm"
+                        : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
                         }`}
                 >
                     <Star className="w-4 h-4" />
@@ -89,8 +89,8 @@ export default function Leaderboard() {
                 <button
                     onClick={() => setCategory("most_posts")}
                     className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${category === "most_posts"
-                        ? "bg-white text-indigo-600 shadow-sm"
-                        : "text-gray-500 hover:text-gray-700"
+                        ? "bg-white dark:bg-black text-indigo-600 dark:text-indigo-400 shadow-sm"
+                        : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
                         }`}
                 >
                     <Award className="w-4 h-4" />
@@ -99,7 +99,7 @@ export default function Leaderboard() {
             </div>
 
             {/* Content */}
-            <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+            <div className="bg-white dark:bg-[#16181c] border border-gray-200 dark:border-[#2f3336] rounded-2xl shadow-sm overflow-hidden">
                 {isLoading ? (
                     <div className="p-12 flex justify-center">
                         <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
@@ -111,14 +111,14 @@ export default function Leaderboard() {
                         No data available yet. Be the first to climb the leaderboard!
                     </div>
                 ) : (
-                    <div className="divide-y divide-gray-100">
-                        <div className="grid grid-cols-12 gap-4 p-4 bg-gray-50 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <div className="divide-y divide-gray-100 dark:divide-gray-800">
+                        <div className="grid grid-cols-12 gap-4 p-4 bg-gray-50 dark:bg-black/50 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                             <div className="col-span-2 text-center">Rank</div>
                             <div className="col-span-7">User</div>
                             <div className="col-span-3 text-right">{category === "most_likes" ? "Likes" : "Posts"}</div>
                         </div>
                         {data.map((entry) => (
-                            <div key={entry.user_id} className="grid grid-cols-12 gap-4 p-4 items-center hover:bg-gray-50 transition-colors">
+                            <div key={entry.user_id} className="grid grid-cols-12 gap-4 p-4 items-center hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
                                 <div className="col-span-2 flex justify-center">
                                     {getRankIcon(entry.rank)}
                                 </div>
@@ -126,11 +126,11 @@ export default function Leaderboard() {
                                     <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-xs">
                                         {entry.username?.[0]?.toUpperCase() || <User className="w-4 h-4" />}
                                     </div>
-                                    <span className="font-medium text-gray-900 truncate">
+                                    <span className="font-medium text-gray-900 dark:text-white truncate">
                                         {entry.username || "Anonymous User"}
                                     </span>
                                 </div>
-                                <div className="col-span-3 text-right font-bold text-gray-900">
+                                <div className="col-span-3 text-right font-bold text-gray-900 dark:text-white">
                                     {entry.value}
                                 </div>
                             </div>

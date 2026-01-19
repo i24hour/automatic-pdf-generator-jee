@@ -150,17 +150,10 @@ export default function PostsFeed() {
     return (
         <div style={{ minHeight: '100vh', background: 'var(--background)' }}>
             {/* Header */}
-            <header style={{
-                position: 'sticky',
-                top: 0,
-                background: 'rgba(255, 255, 255, 0.95)',
-                backdropFilter: 'blur(10px)',
-                borderBottom: '1px solid var(--border)',
-                zIndex: 100,
-                padding: '16px 24px'
-            }}>
-                <div style={{ maxWidth: '600px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <h1 style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0 }}>
+            {/* Header */}
+            <header className="sticky top-0 bg-white/95 dark:bg-black/95 backdrop-blur-md border-b border-gray-200 dark:border-[#2f3336] z-50 px-6 py-4">
+                <div className="max-w-[600px] mx-auto flex justify-between items-center">
+                    <h1 className="text-2xl font-bold m-0">
                         <span className="gradient-text">Community</span>
                     </h1>
                 </div>
