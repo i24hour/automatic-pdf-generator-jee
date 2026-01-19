@@ -152,7 +152,7 @@ export default function PostsFeed() {
             {/* Header */}
             {/* Header */}
             <header className="sticky top-0 bg-white/95 dark:bg-black/95 backdrop-blur-md border-b border-gray-200 dark:border-[#2f3336] z-50 px-6 py-4">
-                <div className="max-w-[600px] mx-auto flex justify-between items-center">
+                <div className="w-full flex justify-between items-center">
                     <h1 className="text-2xl font-bold m-0">
                         <span className="gradient-text">Community</span>
                     </h1>

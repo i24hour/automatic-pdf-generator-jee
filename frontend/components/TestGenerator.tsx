@@ -485,14 +485,14 @@ export default function TestGenerator() {
                     <div className="inline-flex items-center justify-center w-14 h-14 md:w-20 md:h-20 rounded-2xl bg-indigo-600 mb-3 md:mb-6">
                         <BookOpen className="w-7 h-7 md:w-10 md:h-10 text-white" />
                     </div>
-                </div>
-                <h1 className="text-2xl md:text-5xl font-bold mb-2 md:mb-4 text-gray-900 dark:text-white">
-                    INFINITEST
-                </h1>
-                <div className="flex items-center justify-center gap-2 text-sm md:text-xl text-gray-500 font-medium">
-                    <span>Trained by IITians</span>
-                    <span className="text-gray-300">•</span>
-                    <span>NEET Rankers</span>
+                    <h1 className="text-2xl md:text-5xl font-bold mb-2 md:mb-4 text-gray-900 dark:text-white">
+                        INFINITEST
+                    </h1>
+                    <div className="flex items-center justify-center gap-2 text-sm md:text-xl text-gray-500 font-medium">
+                        <span>Trained by IITians</span>
+                        <span className="text-gray-300">•</span>
+                        <span>NEET Rankers</span>
+                    </div>
                 </div>
             </div>
 
