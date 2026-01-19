@@ -18,16 +18,18 @@ from dotenv import load_dotenv
 from services.llm_engine import llm_engine
 from services.pdf_engine import pdf_engine
 from database import get_db, init_db
-from models import User, PDFGeneration, PromoCode, PromoCodeUsage, TopicSubjectCache
+from models import User, PDFGeneration, PromoCode, PromoCodeUsage, TopicSubjectCache, SharedPDF
 from auth import get_current_user_required, get_current_user
 from routers.auth_router import router as auth_router
 from routers.institute_router import router as institute_router
+from routers.posts_router import router as posts_router
+from services.r2_storage import r2_storage
 
 # Load environment variables
 load_dotenv()
 
 # Rate limiting configuration
-RATE_LIMIT_COUNT = int(os.getenv("RATE_LIMIT_COUNT", "30"))
+RATE_LIMIT_COUNT = int(os.getenv("RATE_LIMIT_COUNT", "8"))
 RATE_LIMIT_HOURS = int(os.getenv("RATE_LIMIT_HOURS", "24"))
 
 # Initialize FastAPI app
@@ -43,6 +45,7 @@ origins = [
     "https://localhost:3000",
     "https://infinitest.tech",
     "https://www.infinitest.tech",
+    "https://mentors-mantra-test-generator.vercel.app",
 ]
 
 app.add_middleware(
@@ -55,15 +58,17 @@ app.add_middleware(
     expose_headers=["*"],
 )
 
-# Include auth router
+# Include routers
 app.include_router(auth_router)
 app.include_router(institute_router)
+app.include_router(posts_router)
 
 
 # Initialize database on startup
 @app.on_event("startup")
 async def startup_event():
-    init_db()
+    # init_db()
+    pass
 
 
 # Request/Response Models
@@ -85,6 +90,7 @@ class GenerateResponse(BaseModel):
     message: str
     pdf_filename: Optional[str] = None
     pdf_base64: Optional[str] = None  # Base64-encoded PDF for immediate download
+    shared_pdf_id: Optional[str] = None  # ID for sharing/posting
     total_mcq: int = 0
     total_numerical: int = 0
     rate_limit_remaining: int = 0
@@ -342,12 +348,13 @@ async def generate_test(
         
         
         # Generate filename: Top{N}_{Topic}_{Level}_{Difficulty}.pdf
-        # Sanitize topic for filename (replace special chars)
+        # Use actual generated count, not request.total_questions
+        actual_total = mcq_count + numerical_count
         safe_topic = request.topic.replace("&", "and").replace("/", "-").replace("\\", "-")
         safe_topic = safe_topic.replace(" ", "_")
         safe_level = request.level.replace(" ", "_")
         safe_difficulty = request.difficulty
-        filename = f"Top{request.total_questions}_{safe_topic}_{safe_level}_{safe_difficulty}"
+        filename = f"Top{actual_total}_{safe_topic}_{safe_level}_{safe_difficulty}"
         
         # Generate PDF
         llm_result["level"] = request.level  # Pass level to PDF template
@@ -362,6 +369,34 @@ async def generate_test(
         
         # Record this generation for rate limiting
         record_generation(current_user, request, os.path.basename(pdf_path), db)
+        
+        # Upload to R2 and create SharedPDF record
+        pdf_url = None
+        shared_pdf_id = None
+        if r2_storage.is_configured():
+            try:
+                object_key = r2_storage.get_object_key(current_user.id, os.path.basename(pdf_path))
+                pdf_url = r2_storage.upload_pdf(pdf_path, object_key)
+                if pdf_url:
+                    # Create SharedPDF record (default: private)
+                    shared_pdf = SharedPDF(
+                        user_id=current_user.id,
+                        pdf_url=pdf_url,
+                        pdf_filename=os.path.basename(pdf_path),
+                        subject=request.subject,
+                        topic=request.topic,
+                        level=request.level,
+                        difficulty=request.difficulty,
+                        question_count=mcq_count + numerical_count,
+                        has_solutions=False,
+                        visibility="private"
+                    )
+                    db.add(shared_pdf)
+                    db.commit()
+                    shared_pdf_id = shared_pdf.id
+                    print(f"PDF uploaded to R2: {pdf_url}, SharedPDF ID: {shared_pdf_id}")
+            except Exception as e:
+                print(f"Warning: Failed to upload to R2: {e}")
         
         # Get updated rate limit info
         _, new_remaining, new_reset_hours, _ = check_rate_limit(current_user, db)
@@ -379,6 +414,7 @@ async def generate_test(
             message="Test paper generated successfully",
             pdf_filename=os.path.basename(pdf_path),
             pdf_base64=pdf_base64_str,
+            shared_pdf_id=shared_pdf_id,
             total_mcq=mcq_count,
             total_numerical=numerical_count,
             rate_limit_remaining=new_remaining,
@@ -417,6 +453,7 @@ class GenerateVerifiedResponse(BaseModel):
     message: str
     pdf_filename: Optional[str] = None
     pdf_base64: Optional[str] = None  # Base64-encoded PDF for immediate download
+    shared_pdf_id: Optional[str] = None  # ID for sharing/posting
     total_mcq: Optional[int] = None
     total_numerical: Optional[int] = None
     verification_stats: Optional[Dict] = None
@@ -478,13 +515,14 @@ async def generate_test_verified(
                 detail=llm_result.get("error", "Failed to generate questions")
             )
         
-        # Generate filename
+        # Generate filename - use actual generated count
+        actual_total = mcq_count + numerical_count
         safe_topic = request.topic.replace("&", "and").replace("/", "-").replace("\\", "-")
         safe_topic = safe_topic.replace(" ", "_")
         safe_level = request.level.replace(" ", "_")
         safe_difficulty = request.difficulty
         solutions_suffix = "_with_solutions" if request.include_solutions else ""
-        filename = f"Top{request.total_questions}_{safe_topic}_{safe_level}_{safe_difficulty}{solutions_suffix}"
+        filename = f"Top{actual_total}_{safe_topic}_{safe_level}_{safe_difficulty}{solutions_suffix}"
         
         # Generate PDF
         llm_result["level"] = request.level
@@ -506,6 +544,34 @@ async def generate_test_verified(
         # Record generation
         record_generation(current_user, request, os.path.basename(pdf_path), db)
         
+        # Upload to R2 and create SharedPDF record
+        pdf_url = None
+        shared_pdf_id = None
+        if r2_storage.is_configured():
+            try:
+                object_key = r2_storage.get_object_key(current_user.id, os.path.basename(pdf_path))
+                pdf_url = r2_storage.upload_pdf(pdf_path, object_key)
+                if pdf_url:
+                    # Create SharedPDF record (default: private)
+                    shared_pdf = SharedPDF(
+                        user_id=current_user.id,
+                        pdf_url=pdf_url,
+                        pdf_filename=os.path.basename(pdf_path),
+                        subject=request.subject,
+                        topic=request.topic,
+                        level=request.level,
+                        difficulty=request.difficulty,
+                        question_count=mcq_count + numerical_count,
+                        has_solutions=request.include_solutions,
+                        visibility="private"
+                    )
+                    db.add(shared_pdf)
+                    db.commit()
+                    shared_pdf_id = shared_pdf.id
+                    print(f"PDF uploaded to R2: {pdf_url}, SharedPDF ID: {shared_pdf_id}")
+            except Exception as e:
+                print(f"Warning: Failed to upload to R2: {e}")
+        
         # Get updated rate limit info
         _, new_remaining, new_reset_hours, _ = check_rate_limit(current_user, db)
         
@@ -522,6 +588,7 @@ async def generate_test_verified(
             message="Test paper generated with verified answers",
             pdf_filename=os.path.basename(pdf_path),
             pdf_base64=pdf_base64_str,
+            shared_pdf_id=shared_pdf_id,
             total_mcq=mcq_count,
             total_numerical=numerical_count,
             verification_stats=llm_result.get("verification_stats"),

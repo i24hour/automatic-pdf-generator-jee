@@ -1,0 +1,401 @@
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
+import { useAuth } from '@/lib/auth-context';
+import Link from 'next/link';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://mentors-mantra-api-87253755436.us-central1.run.app';
+
+interface Post {
+    id: string;
+    user_id: string;
+    username: string | null;
+    pdf_url: string;
+    pdf_filename: string;
+    caption: string | null;
+    subject: string;
+    topic: string;
+    level: string;
+    difficulty: string;
+    question_count: number;
+    has_solutions: boolean;
+    visibility: string;
+    download_count: number;
+    like_count: number;
+    view_count: number;
+    created_at: string;
+    is_liked: boolean;
+}
+
+interface FeedResponse {
+    posts: Post[];
+    has_more: boolean;
+    next_cursor: string | null;
+}
+
+export default function PostsPage() {
+    const { token, user } = useAuth();
+    const [posts, setPosts] = useState<Post[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
+    const [hasMore, setHasMore] = useState(false);
+    const [nextCursor, setNextCursor] = useState<string | null>(null);
+    const [filter, setFilter] = useState({ subject: '', level: '' });
+    const [error, setError] = useState('');
+
+    const fetchPosts = useCallback(async (cursor?: string) => {
+        try {
+            const params = new URLSearchParams();
+            if (filter.subject) params.append('subject', filter.subject);
+            if (filter.level) params.append('level', filter.level);
+            if (cursor) params.append('cursor', cursor);
+            params.append('limit', '20');
+
+            const headers: Record<string, string> = {};
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+
+            const res = await fetch(`${API_URL}/api/posts?${params}`, { headers });
+            if (!res.ok) throw new Error('Failed to fetch posts');
+
+            const data: FeedResponse = await res.json();
+
+            if (cursor) {
+                setPosts(prev => [...prev, ...data.posts]);
+            } else {
+                setPosts(data.posts);
+            }
+            setHasMore(data.has_more);
+            setNextCursor(data.next_cursor);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to load posts');
+        } finally {
+            setLoading(false);
+            setLoadingMore(false);
+        }
+    }, [token, filter]);
+
+    useEffect(() => {
+        setLoading(true);
+        setPosts([]);
+        fetchPosts();
+    }, [fetchPosts]);
+
+    const loadMore = () => {
+        if (loadingMore || !hasMore || !nextCursor) return;
+        setLoadingMore(true);
+        fetchPosts(nextCursor);
+    };
+
+    const handleLike = async (postId: string, isLiked: boolean) => {
+        if (!token) {
+            alert('Please login to like posts');
+            return;
+        }
+
+        try {
+            const method = isLiked ? 'DELETE' : 'POST';
+            const res = await fetch(`${API_URL}/api/posts/${postId}/like`, {
+                method,
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                setPosts(prev => prev.map(p =>
+                    p.id === postId
+                        ? { ...p, is_liked: !isLiked, like_count: data.like_count }
+                        : p
+                ));
+            }
+        } catch (err) {
+            console.error('Like failed:', err);
+        }
+    };
+
+    const handleDownload = async (post: Post) => {
+        // Track download
+        try {
+            await fetch(`${API_URL}/api/posts/${post.id}/download`, { method: 'POST' });
+        } catch (err) {
+            console.error('Track download failed:', err);
+        }
+
+        // Open PDF in new tab
+        window.open(post.pdf_url, '_blank');
+    };
+
+    const formatTimeAgo = (dateStr: string) => {
+        const date = new Date(dateStr);
+        const now = new Date();
+        const diffMs = now.getTime() - date.getTime();
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMs / 3600000);
+        const diffDays = Math.floor(diffMs / 86400000);
+
+        if (diffMins < 60) return `${diffMins}m ago`;
+        if (diffHours < 24) return `${diffHours}h ago`;
+        if (diffDays < 7) return `${diffDays}d ago`;
+        return date.toLocaleDateString();
+    };
+
+    const getLevelColor = (level: string) => {
+        switch (level) {
+            case 'JEE Advanced': return '#ef4444';
+            case 'JEE Mains': return '#f59e0b';
+            case 'NEET': return '#10b981';
+            default: return '#6b7280';
+        }
+    };
+
+    return (
+        <div style={{ minHeight: '100vh', background: 'var(--background)' }}>
+            {/* Header */}
+            <header style={{
+                position: 'sticky',
+                top: 0,
+                background: 'rgba(255, 255, 255, 0.95)',
+                backdropFilter: 'blur(10px)',
+                borderBottom: '1px solid var(--border)',
+                zIndex: 100,
+                padding: '16px 24px'
+            }}>
+                <div style={{ maxWidth: '600px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <h1 style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0 }}>
+                        <span className="gradient-text">Community</span>
+                    </h1>
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                        <Link href="/" style={{ color: 'var(--primary)', fontWeight: 500, textDecoration: 'none' }}>
+                            Generate
+                        </Link>
+                        <Link href="/leaderboard" style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>
+                            Leaderboard
+                        </Link>
+                    </div>
+                </div>
+            </header>
+
+            {/* Filters */}
+            <div style={{
+                maxWidth: '600px',
+                margin: '0 auto',
+                padding: '16px 24px',
+                borderBottom: '1px solid var(--border)',
+                display: 'flex',
+                gap: '12px'
+            }}>
+                <select
+                    className="form-select"
+                    value={filter.subject}
+                    onChange={(e) => setFilter(f => ({ ...f, subject: e.target.value }))}
+                    style={{ flex: 1, padding: '10px 16px' }}
+                >
+                    <option value="">All Subjects</option>
+                    <option value="Physics">Physics</option>
+                    <option value="Chemistry">Chemistry</option>
+                    <option value="Mathematics">Mathematics</option>
+                    <option value="Biology">Biology</option>
+                </select>
+                <select
+                    className="form-select"
+                    value={filter.level}
+                    onChange={(e) => setFilter(f => ({ ...f, level: e.target.value }))}
+                    style={{ flex: 1, padding: '10px 16px' }}
+                >
+                    <option value="">All Levels</option>
+                    <option value="JEE Mains">JEE Mains</option>
+                    <option value="JEE Advanced">JEE Advanced</option>
+                    <option value="NEET">NEET</option>
+                </select>
+            </div>
+
+            {/* Posts Feed */}
+            <main style={{ maxWidth: '600px', margin: '0 auto' }}>
+                {loading ? (
+                    <div style={{ padding: '48px', textAlign: 'center' }}>
+                        <div className="spinner" style={{ margin: '0 auto', borderColor: 'var(--border)', borderTopColor: 'var(--primary)' }} />
+                        <p style={{ marginTop: '16px', color: 'var(--text-muted)' }}>Loading posts...</p>
+                    </div>
+                ) : error ? (
+                    <div style={{ padding: '48px', textAlign: 'center' }}>
+                        <p style={{ color: 'var(--error)' }}>{error}</p>
+                    </div>
+                ) : posts.length === 0 ? (
+                    <div style={{ padding: '48px', textAlign: 'center' }}>
+                        <p style={{ fontSize: '3rem', marginBottom: '16px' }}>📚</p>
+                        <p style={{ color: 'var(--text-muted)', marginBottom: '24px' }}>No posts yet. Be the first to share!</p>
+                        <Link href="/" className="btn-primary">Generate & Share</Link>
+                    </div>
+                ) : (
+                    <>
+                        {posts.map(post => (
+                            <article
+                                key={post.id}
+                                style={{
+                                    padding: '20px 24px',
+                                    borderBottom: '1px solid var(--border)',
+                                    transition: 'background 0.2s'
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.background = 'var(--secondary)'}
+                                onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                            >
+                                {/* Header */}
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                        <div style={{
+                                            width: '40px',
+                                            height: '40px',
+                                            borderRadius: '50%',
+                                            background: 'linear-gradient(135deg, var(--primary), #06b6d4)',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            color: 'white',
+                                            fontWeight: 600,
+                                            fontSize: '1rem'
+                                        }}>
+                                            {post.username?.[0]?.toUpperCase() || '?'}
+                                        </div>
+                                        <div>
+                                            <p style={{ fontWeight: 600, margin: 0, fontSize: '0.95rem' }}>
+                                                @{post.username || 'anonymous'}
+                                            </p>
+                                            <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', margin: 0 }}>
+                                                {formatTimeAgo(post.created_at)}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <span style={{
+                                        padding: '4px 10px',
+                                        borderRadius: '20px',
+                                        fontSize: '0.75rem',
+                                        fontWeight: 600,
+                                        color: 'white',
+                                        background: getLevelColor(post.level)
+                                    }}>
+                                        {post.level}
+                                    </span>
+                                </div>
+
+                                {/* Content */}
+                                {post.caption && (
+                                    <p style={{ marginBottom: '12px', lineHeight: 1.5 }}>{post.caption}</p>
+                                )}
+
+                                {/* PDF Card */}
+                                <div
+                                    onClick={() => handleDownload(post)}
+                                    style={{
+                                        background: 'var(--background)',
+                                        border: '1px solid var(--border)',
+                                        borderRadius: '12px',
+                                        padding: '16px',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s'
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.currentTarget.style.borderColor = 'var(--primary)';
+                                        e.currentTarget.style.boxShadow = '0 2px 8px rgba(79, 70, 229, 0.1)';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.currentTarget.style.borderColor = 'var(--border)';
+                                        e.currentTarget.style.boxShadow = 'none';
+                                    }}
+                                >
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                        <div style={{
+                                            width: '48px',
+                                            height: '48px',
+                                            borderRadius: '8px',
+                                            background: 'linear-gradient(135deg, #ef4444, #f97316)',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            color: 'white',
+                                            fontSize: '1.2rem'
+                                        }}>
+                                            📄
+                                        </div>
+                                        <div style={{ flex: 1 }}>
+                                            <p style={{ fontWeight: 600, margin: 0, fontSize: '0.9rem' }}>
+                                                {post.topic}
+                                            </p>
+                                            <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', margin: 0 }}>
+                                                {post.subject} • {post.question_count} questions • {post.difficulty}
+                                                {post.has_solutions && ' • With Solutions'}
+                                            </p>
+                                        </div>
+                                        <span style={{ color: 'var(--primary)', fontSize: '1.2rem' }}>↓</span>
+                                    </div>
+                                </div>
+
+                                {/* Actions */}
+                                <div style={{
+                                    display: 'flex',
+                                    gap: '24px',
+                                    marginTop: '16px',
+                                    paddingLeft: '4px'
+                                }}>
+                                    <button
+                                        onClick={() => handleLike(post.id, post.is_liked)}
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '6px',
+                                            background: 'none',
+                                            border: 'none',
+                                            cursor: 'pointer',
+                                            color: post.is_liked ? '#ef4444' : 'var(--text-muted)',
+                                            fontSize: '0.9rem',
+                                            padding: '4px 8px',
+                                            borderRadius: '8px',
+                                            transition: 'all 0.2s'
+                                        }}
+                                        onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'}
+                                        onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+                                    >
+                                        <span style={{ fontSize: '1.1rem' }}>{post.is_liked ? '❤️' : '🤍'}</span>
+                                        <span>{post.like_count}</span>
+                                    </button>
+                                    <div style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '6px',
+                                        color: 'var(--text-muted)',
+                                        fontSize: '0.9rem'
+                                    }}>
+                                        <span>⬇️</span>
+                                        <span>{post.download_count}</span>
+                                    </div>
+                                    <div style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '6px',
+                                        color: 'var(--text-muted)',
+                                        fontSize: '0.9rem'
+                                    }}>
+                                        <span>👁️</span>
+                                        <span>{post.view_count}</span>
+                                    </div>
+                                </div>
+                            </article>
+                        ))}
+
+                        {/* Load More */}
+                        {hasMore && (
+                            <div style={{ padding: '24px', textAlign: 'center' }}>
+                                <button
+                                    onClick={loadMore}
+                                    disabled={loadingMore}
+                                    className="btn-secondary"
+                                    style={{ padding: '10px 24px' }}
+                                >
+                                    {loadingMore ? 'Loading...' : 'Load More'}
+                                </button>
+                            </div>
+                        )}
+                    </>
+                )}
+            </main>
+        </div>
+    );
+}
