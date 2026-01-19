@@ -9,6 +9,8 @@ interface User {
     email: string;
     name?: string;
     username?: string;
+    phone?: string;
+    class_grade?: string;
     is_verified: boolean;
 }
 
