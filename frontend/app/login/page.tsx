@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Loader2, AlertCircle, BookOpen, AlertTriangle } from "lucide-react";
+import { Loader2, AlertCircle, Infinity as InfinityIcon, AlertTriangle } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { FloatingInput } from "@/components/FloatingInput";
 import { GoogleLogin } from "@react-oauth/google";
@@ -82,7 +82,7 @@ export default function LoginPage() {
                     {/* Logo */}
                     <div className="flex justify-center mb-6">
                         <div className="w-14 h-14 rounded-xl bg-indigo-600 flex items-center justify-center">
-                            <BookOpen className="w-7 h-7 text-white" />
+                            <InfinityIcon className="w-7 h-7 text-white" />
                         </div>
                     </div>
 
