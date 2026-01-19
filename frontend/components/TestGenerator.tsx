@@ -892,9 +892,9 @@ export default function TestGenerator() {
                     <button
                         onClick={handleGenerate}
                         disabled={isLoading || isDetectingSubject}
-                        className={`w-full py-4 rounded-xl text-white font-semibold text-lg shadow-lg transition-all duration-300 flex items-center justify-center gap-2 mb-4 ${isLoading || isDetectingSubject
+                        className={`w-full py-4 rounded-xl text-white font-semibold text-lg shadow-lg transition-all duration-300 flex items-center justify-center gap-2 mb-4 btn-primary ${isLoading || isDetectingSubject
                             ? "bg-gray-400 cursor-not-allowed"
-                            : "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 hover:shadow-xl transform hover:-translate-y-0.5"
+                            : "hover:shadow-xl transform hover:-translate-y-0.5"
                             }`}
                     >
                         {isLoading ? (
