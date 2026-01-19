@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, LayoutGrid, Trophy, User, BookOpen, LogOut, MoreHorizontal } from "lucide-react";
+import { Home, LayoutGrid, Trophy, User, BookOpen, LogOut, MoreHorizontal, Sun, Moon } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
+import { useTheme } from "@/lib/theme-context";
 
 export default function DesktopSidebar() {
     const pathname = usePathname();
