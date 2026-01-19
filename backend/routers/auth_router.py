@@ -336,6 +336,8 @@ async def get_current_user_info(
         email=current_user.email,
         name=current_user.name,
         phone=current_user.phone,
+        username=current_user.username,
+        class_grade=current_user.class_grade,
         is_verified=current_user.is_verified
     )
 
