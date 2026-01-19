@@ -40,14 +40,23 @@ class UserCreate(BaseModel):
     password: str
     name: str = None
     phone: str = None
+    phone: str = None
 
 
+class UserUpdate(BaseModel):
+    """User profile update request."""
+    name: Optional[str] = None
+    phone: Optional[str] = None
+    class_grade: Optional[str] = None
+    username: Optional[str] = None
 class UserResponse(BaseModel):
     """User response (without password)."""
     id: str
     email: str
     name: Optional[str] = None
     phone: Optional[str] = None
+    username: Optional[str] = None
+    class_grade: Optional[str] = None
     is_verified: bool = False
     
     class Config:
@@ -454,4 +463,33 @@ async def reset_password(request: ResetPasswordRequest, db: Session = Depends(ge
 @router.get("/me", response_model=UserResponse)
 async def get_me(current_user: User = Depends(get_current_user_required)):
     """Get current user info."""
+    return UserResponse.model_validate(current_user)
+
+
+@router.put("/profile", response_model=UserResponse)
+async def update_profile(
+    user_update: UserUpdate,
+    current_user: User = Depends(get_current_user_required),
+    db: Session = Depends(get_db)
+):
+    """Update user profile."""
+    # Check if username is taken if being updated
+    if user_update.username and user_update.username != current_user.username:
+        existing_user = db.query(User).filter(User.username == user_update.username).first()
+        if existing_user:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Username already taken"
+            )
+        current_user.username = user_update.username
+
+    if user_update.name is not None:
+        current_user.name = user_update.name
+    if user_update.phone is not None:
+        current_user.phone = user_update.phone
+    if user_update.class_grade is not None:
+        current_user.class_grade = user_update.class_grade
+    
+    db.commit()
+    db.refresh(current_user)
     return UserResponse.model_validate(current_user)

@@ -41,6 +41,13 @@ def run_migration():
         except Exception as e:
             print(f"Skipped (maybe exists): {e}")
             
+        print("Adding class_grade to users...")
+        try:
+            conn.execute(text("ALTER TABLE users ADD COLUMN class_grade VARCHAR"))
+            print("Success.")
+        except Exception as e:
+            print(f"Skipped (maybe exists): {e}")
+            
         conn.commit()
 
 if __name__ == "__main__":

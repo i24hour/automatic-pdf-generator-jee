@@ -28,6 +28,7 @@ class User(Base):
     name = Column(String, nullable=True)
     username = Column(String, unique=True, index=True, nullable=True)  # Public display name
     phone = Column(String, nullable=True)  # Phone number
+    class_grade = Column(String, nullable=True)  # Class/Grade (Optional)
     is_verified = Column(Boolean, default=False)
     bonus_limit = Column(Integer, default=0)  # Permanent extra limit
     monthly_bonus_limit = Column(Integer, default=0)  # Monthly extra limit (resets every month)
