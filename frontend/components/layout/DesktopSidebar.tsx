@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, LayoutGrid, Trophy, User, BookOpen, LogOut, MoreHorizontal, Sun, Moon } from "lucide-react";
+import { Home, LayoutGrid, Trophy, User, Infinity as InfinityIcon, LogOut, MoreHorizontal, Sun, Moon } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { useTheme } from "@/lib/theme-context";
 
@@ -19,7 +19,7 @@ export default function DesktopSidebar() {
             <div className="mb-8 px-4">
                 <Link href="/" className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white">
-                        <BookOpen className="w-6 h-6" />
+                        <InfinityIcon className="w-6 h-6" />
                     </div>
                     <span className="text-xl font-bold text-gray-900 dark:text-white">INFINITEST</span>
                 </Link>

@@ -7,7 +7,7 @@ import {
     Sparkles,
     Download,
     Loader2,
-    BookOpen,
+    Infinity as InfinityIcon,
     Atom,
     Calculator,
     FlaskConical,
@@ -483,7 +483,7 @@ export default function TestGenerator() {
                 {/* Header */}
                 <div className="text-center mb-4 md:mb-8">
                     <div className="inline-flex items-center justify-center w-14 h-14 md:w-20 md:h-20 rounded-2xl bg-indigo-600 mb-3 md:mb-6">
-                        <BookOpen className="w-7 h-7 md:w-10 md:h-10 text-white" />
+                        <InfinityIcon className="w-7 h-7 md:w-10 md:h-10 text-white" />
                     </div>
                     <h1 className="text-2xl md:text-5xl font-bold mb-2 md:mb-4 text-gray-900 dark:text-white">
                         INFINITEST
