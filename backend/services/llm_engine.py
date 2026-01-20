@@ -84,6 +84,53 @@ class LLMEngine:
             "error": f"All models failed. Last error: {last_error}",
             "questions": []
         }
+
+    async def generate_with_fallback_async(
+        self,
+        subject: str,
+        topic: str,
+        mcq_count: int,
+        numerical_count: int,
+        level: str = "JEE Mains",
+        difficulty: str = "Medium"
+    ) -> Dict[str, Any]:
+        """
+        ASYNC version of generate_with_fallback.
+        Uses litellm.acompletion for true non-blocking parallelism.
+        """
+        all_models = [self.primary_model] + self.fallback_models
+        last_error = None
+        
+        for model in all_models:
+            try:
+                self.model = model
+                print(f"Trying model (async): {model}")
+                # Call the async generation method
+                result = await self.generate_questions_async(
+                    subject=subject,
+                    topic=topic,
+                    mcq_count=mcq_count,
+                    numerical_count=numerical_count,
+                    level=level,
+                    difficulty=difficulty
+                )
+                if result.get("success") and result.get("questions"):
+                    print(f"✓ Success with model (async): {model}")
+                    return result
+                else:
+                    print(f"✗ Model {model} returned no questions, trying next...")
+                    last_error = result.get("error", "No questions generated")
+            except Exception as e:
+                print(f"✗ Model {model} failed (async): {str(e)}")
+                last_error = str(e)
+                continue
+        
+        # All models failed
+        return {
+            "success": False,
+            "error": f"All models failed. Last error: {last_error}",
+            "questions": []
+        }
     
     async def generate_parallel(
         self,
@@ -127,14 +174,16 @@ class LLMEngine:
         
         # Create async tasks for each chunk
         async def generate_chunk(index, mcq_cnt, num_cnt):
-            """Run sync generation in thread pool"""
+            """Run async generation"""
             print(f"--- Starting chunk {index} (MCQ: {mcq_cnt}, Num: {num_cnt}) ---")
             import time
             start_time = time.time()
-            result = await asyncio.to_thread(
-                self.generate_with_fallback,
+            
+            # Use ASYNC method directly - no to_thread needed
+            result = await self.generate_with_fallback_async(
                 subject, topic, mcq_cnt, num_cnt, level, difficulty
             )
+            
             duration = time.time() - start_time
             print(f"--- Finished chunk {index} in {duration:.2f}s ---")
             return result
@@ -967,8 +1016,8 @@ Return ONLY valid JSON:
                 
                 if missing_mcq > 0 or missing_num > 0:
                     print(f"Supplementing async: need {missing_mcq} more MCQs and {missing_num} more numericals")
-                    # Recursive call for missing questions (call sync version to avoid infinite loop)
-                    supplement_result = self.generate_questions(
+                    # Recursive call for missing questions (ASYNC)
+                    supplement_result = await self.generate_with_fallback_async(
                         subject=subject,
                         topic=topic,
                         mcq_count=max(missing_mcq, 0),
