@@ -906,20 +906,21 @@ export default function TestGenerator() {
                 <button
                     onClick={handleGenerate}
                     disabled={isLoading || isDetectingSubject}
-                    className={`w-full py-2.5 md:py-4 rounded-xl text-white font-semibold text-sm md:text-lg shadow-lg transition-all duration-300 flex items-center justify-center gap-2 mb-4 btn-primary ${isLoading || isDetectingSubject
+                    className={`w-full py-2 md:py-4 rounded-lg md:rounded-xl text-white font-semibold text-xs md:text-lg shadow-lg transition-all duration-300 flex items-center justify-center gap-1.5 md:gap-2 mb-4 btn-primary ${isLoading || isDetectingSubject
                         ? "bg-gray-400 cursor-not-allowed"
                         : "hover:shadow-xl transform hover:-translate-y-0.5"
                         }`}
                 >
                     {isLoading ? (
                         <>
-                            <Loader2 className="w-6 h-6 animate-spin" />
-                            <span>Generating Test Paper...</span>
+                            <Loader2 className="w-4 h-4 md:w-6 md:h-6 animate-spin" />
+                            <span>Generating...</span>
                         </>
                     ) : (
                         <>
-                            <Sparkles className="w-6 h-6" />
-                            <span>Generate {level} ({difficulty}) Test Paper</span>
+                            <Sparkles className="w-4 h-4 md:w-6 md:h-6" />
+                            <span className="hidden md:inline">Generate {level} ({difficulty}) Test Paper</span>
+                            <span className="md:hidden">Generate Test</span>
                         </>
                     )}
                 </button>
@@ -994,13 +995,13 @@ export default function TestGenerator() {
             </div>
 
             {/* Footer */}
-            <div className="text-center mt-8 text-gray-500 text-sm">
+            <div className="text-center mt-8 text-gray-500 dark:text-gray-400 text-sm bg-white dark:bg-black py-4">
                 <div className="flex flex-col items-center justify-center gap-1">
                     <a href="https://www.mentorsmantra.co.in" target="_blank" rel="noopener noreferrer" className="hover:text-indigo-600 transition-colors font-medium">
                         www.mentorsmantra.co.in
                     </a>
                     <p>Contact: 9821040290 / 7982387231</p>
-                    <p className="text-gray-400 mt-2 italic">A Mentors Mantra Product</p>
+                    <p className="text-gray-400 dark:text-gray-500 mt-2 italic">A Mentors Mantra Product</p>
                 </div>
             </div>
 
