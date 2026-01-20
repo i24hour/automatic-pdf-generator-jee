@@ -674,11 +674,36 @@ Return ONLY valid JSON:
                     if actual_count > total_requested:
                         data["questions"] = data["questions"][:total_requested]
                 
+                # After all retries, supplement if still short
+                final_questions = data.get("questions", [])
+                actual_mcq = sum(1 for q in final_questions if q.get("type") in ["mcq", "mcq_multi"])
+                actual_num = sum(1 for q in final_questions if q.get("type") == "numerical")
+                
+                # FORCE EXACT COUNT: If we're short, generate more questions
+                missing_mcq = mcq_count - actual_mcq
+                missing_num = numerical_count - actual_num
+                
+                if missing_mcq > 0 or missing_num > 0:
+                    print(f"Supplementing: need {missing_mcq} more MCQs and {missing_num} more numericals")
+                    # Recursive call for missing questions
+                    supplement_result = self.generate_questions(
+                        subject=subject,
+                        topic=topic,
+                        mcq_count=max(missing_mcq, 0),
+                        numerical_count=max(missing_num, 0),
+                        level=level,
+                        difficulty=difficulty
+                    )
+                    if supplement_result.get("success") and supplement_result.get("questions"):
+                        final_questions.extend(supplement_result["questions"])
+                        # Deduplicate again after supplementing
+                        final_questions = self._deduplicate_questions(final_questions)
+                
                 return {
                     "success": True,
                     "subject": subject,
                     "topic": topic,
-                    "questions": data.get("questions", [])
+                    "questions": final_questions
                 }
                 
             except json.JSONDecodeError as e:
@@ -790,11 +815,36 @@ Return ONLY valid JSON:
                     if actual_count > total_requested:
                         data["questions"] = data["questions"][:total_requested]
                 
+                # After all retries, supplement if still short
+                final_questions = data.get("questions", [])
+                actual_mcq = sum(1 for q in final_questions if q.get("type") in ["mcq", "mcq_multi"])
+                actual_num = sum(1 for q in final_questions if q.get("type") == "numerical")
+                
+                # FORCE EXACT COUNT: If we're short, generate more questions
+                missing_mcq = mcq_count - actual_mcq
+                missing_num = numerical_count - actual_num
+                
+                if missing_mcq > 0 or missing_num > 0:
+                    print(f"Supplementing async: need {missing_mcq} more MCQs and {missing_num} more numericals")
+                    # Recursive call for missing questions (call sync version to avoid infinite loop)
+                    supplement_result = self.generate_questions(
+                        subject=subject,
+                        topic=topic,
+                        mcq_count=max(missing_mcq, 0),
+                        numerical_count=max(missing_num, 0),
+                        level=level,
+                        difficulty=difficulty
+                    )
+                    if supplement_result.get("success") and supplement_result.get("questions"):
+                        final_questions.extend(supplement_result["questions"])
+                        # Deduplicate again after supplementing
+                        final_questions = self._deduplicate_questions(final_questions)
+                
                 return {
                     "success": True,
                     "subject": subject,
                     "topic": topic,
-                    "questions": data.get("questions", [])
+                    "questions": final_questions
                 }
                 
             except Exception as e:
