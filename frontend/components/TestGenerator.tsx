@@ -905,8 +905,8 @@ export default function TestGenerator() {
                 {/* Generate Button */}
                 <button
                     onClick={handleGenerate}
-                    disabled={isLoading || isDetectingSubject}
-                    className={`w-full py-2 md:py-4 rounded-lg md:rounded-xl text-white font-semibold text-xs md:text-lg shadow-lg transition-all duration-300 flex items-center justify-center gap-1.5 md:gap-2 mb-4 btn-primary ${isLoading || isDetectingSubject
+                    disabled={isLoading || isDetectingSubject || !topic.trim() || (rateLimit?.remaining === 0)}
+                    className={`w-full py-2 md:py-4 rounded-lg md:rounded-xl text-white font-semibold text-xs md:text-lg shadow-lg transition-all duration-300 flex items-center justify-center gap-1.5 md:gap-2 mb-4 btn-primary ${isLoading || isDetectingSubject || !topic.trim() || (rateLimit?.remaining === 0)
                         ? "bg-gray-400 cursor-not-allowed"
                         : "hover:shadow-xl transform hover:-translate-y-0.5"
                         }`}
