@@ -28,7 +28,7 @@ export default function MobileNav() {
             )}
 
             {/* Bottom Navigation Bar */}
-            <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-black border-t border-gray-200 dark:border-[#2f3336] px-4 py-2 flex justify-between items-center z-50 md:hidden">
+            <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-black px-4 py-2 flex justify-between items-center z-50 md:hidden">
                 <Link
                     href="/"
                     className={`flex flex-col items-center gap-1 p-2 ${isActive("/") ? "text-indigo-600 dark:text-indigo-400" : "text-gray-500 dark:text-gray-400"
