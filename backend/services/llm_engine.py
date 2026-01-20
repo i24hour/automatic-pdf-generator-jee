@@ -93,7 +93,7 @@ class LLMEngine:
         numerical_count: int,
         level: str = "JEE Mains",
         difficulty: str = "Medium",
-        chunk_size: int = 10
+        chunk_size: int = 5  # Smaller chunks = faster parallel
     ) -> Dict[str, Any]:
         """
         Generate questions in PARALLEL for faster performance.
