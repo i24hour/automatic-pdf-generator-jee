@@ -843,33 +843,34 @@ export default function TestGenerator() {
                         </div>
                     )}
 
-                    {/* NEET Pattern */}
+                    {/* NEET Pattern - Only MCQs (no numericals) */}
                     {level === "NEET" && (
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="relative">
-                                <input
-                                    type="number"
-                                    defaultValue={35}
-                                    className="peer w-full px-3 pt-5 pb-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
-                                    placeholder=" "
-                                    readOnly
-                                />
-                                <label className="absolute left-3 top-1 text-[10px] text-indigo-600 font-medium">
-                                    Section A (Compulsory)
-                                </label>
+                        <div className="space-y-2">
+                            <div className="flex justify-between items-center">
+                                <span className="text-sm text-gray-600 dark:text-gray-400">NEET Pattern (MCQ Only)</span>
+                                <span className="text-xs text-gray-500">Total: {numMCQs} (max 50)</span>
                             </div>
                             <div className="relative">
                                 <input
                                     type="number"
-                                    defaultValue={15}
-                                    className="peer w-full px-3 pt-5 pb-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                                    value={numMCQs}
+                                    onChange={(e) => {
+                                        const val = parseInt(e.target.value) || 0;
+                                        if (val >= 0 && val <= 50) setNumMCQs(val);
+                                    }}
+                                    min={0}
+                                    max={50}
+                                    disabled={isLoading}
+                                    className="peer w-full px-3 pt-5 pb-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-black text-gray-900 dark:text-white"
                                     placeholder=" "
-                                    readOnly
                                 />
                                 <label className="absolute left-3 top-1 text-[10px] text-indigo-600 font-medium">
-                                    Section B (Any 10)
+                                    MCQs
                                 </label>
                             </div>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 italic">
+                                NEET is MCQ-only. No numerical questions.
+                            </p>
                         </div>
                     )}
 
