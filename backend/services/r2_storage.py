@@ -28,6 +28,10 @@ class R2StorageService:
     
     def _init_client(self):
         """Initialize the S3-compatible client for R2."""
+        import urllib3
+        # Suppress SSL warnings if needed
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+        
         self.client = boto3.client(
             "s3",
             endpoint_url=f"https://{self.account_id}.r2.cloudflarestorage.com",
@@ -35,9 +39,13 @@ class R2StorageService:
             aws_secret_access_key=self.secret_access_key,
             config=Config(
                 signature_version="s3v4",
-                s3={"addressing_style": "path"}
+                s3={"addressing_style": "path"},
+                connect_timeout=10,
+                read_timeout=30,
+                retries={"max_attempts": 2}
             ),
-            region_name="auto"
+            region_name="auto",
+            verify=True  # Keep SSL verification enabled
         )
     
     def is_configured(self) -> bool:
