@@ -51,7 +51,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-white dark:bg-black">
       {/* Mobile View: Show Test Generator (Home) */}
-      <div className="md:hidden pb-24 bg-white dark:bg-black">
+      <div className="md:hidden bg-white dark:bg-black">
         <TestGenerator />
         <MobileNav />
       </div>
