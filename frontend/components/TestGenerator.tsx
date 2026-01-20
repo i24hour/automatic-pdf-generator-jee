@@ -480,8 +480,19 @@ export default function TestGenerator() {
     return (
         <div className="w-full">
             <div className="max-w-2xl mx-auto">
+                {/* Mobile Header with Logout */}
+                <div className="md:hidden flex justify-end px-4 pt-4">
+                    <button
+                        onClick={logout}
+                        className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                    >
+                        <LogOut className="w-4 h-4" />
+                        <span>Logout</span>
+                    </button>
+                </div>
+
                 {/* Header */}
-                <div className="text-center mb-4 md:mb-8">
+                <div className="text-center mb-4 md:mb-8 pt-2 md:pt-0">
                     <div className="inline-flex items-center justify-center w-14 h-14 md:w-20 md:h-20 rounded-2xl bg-indigo-600 mb-3 md:mb-6">
                         <InfinityIcon className="w-7 h-7 md:w-10 md:h-10 text-white" />
                     </div>
