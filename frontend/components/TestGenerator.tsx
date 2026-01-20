@@ -906,7 +906,7 @@ export default function TestGenerator() {
                 <button
                     onClick={handleGenerate}
                     disabled={isLoading || isDetectingSubject}
-                    className={`w-full py-3 md:py-4 rounded-xl text-white font-semibold text-base md:text-lg shadow-lg transition-all duration-300 flex items-center justify-center gap-2 mb-4 btn-primary ${isLoading || isDetectingSubject
+                    className={`w-full py-2.5 md:py-4 rounded-xl text-white font-semibold text-sm md:text-lg shadow-lg transition-all duration-300 flex items-center justify-center gap-2 mb-4 btn-primary ${isLoading || isDetectingSubject
                         ? "bg-gray-400 cursor-not-allowed"
                         : "hover:shadow-xl transform hover:-translate-y-0.5"
                         }`}
