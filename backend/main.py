@@ -546,33 +546,55 @@ async def generate_test_verified(
         # Record generation
         record_generation(current_user, request, os.path.basename(pdf_path), db)
         
-        # Upload to R2 and create SharedPDF record
-        pdf_url = None
+        # Upload to R2 in BACKGROUND (non-blocking) - don't wait for it
+        # This allows PDF to return immediately to user
         shared_pdf_id = None
         if r2_storage.is_configured():
+            # Create placeholder SharedPDF record (will be updated when upload completes)
             try:
-                object_key = r2_storage.get_object_key(current_user.id, os.path.basename(pdf_path))
-                pdf_url = r2_storage.upload_pdf(pdf_path, object_key)
-                if pdf_url:
-                    # Create SharedPDF record (default: private)
-                    shared_pdf = SharedPDF(
-                        user_id=current_user.id,
-                        pdf_url=pdf_url,
-                        pdf_filename=os.path.basename(pdf_path),
-                        subject=request.subject,
-                        topic=request.topic,
-                        level=request.level,
-                        difficulty=request.difficulty,
-                        question_count=mcq_count + numerical_count,
-                        has_solutions=request.include_solutions,
-                        visibility="private"
-                    )
-                    db.add(shared_pdf)
-                    db.commit()
-                    shared_pdf_id = shared_pdf.id
-                    print(f"PDF uploaded to R2: {pdf_url}, SharedPDF ID: {shared_pdf_id}")
+                shared_pdf = SharedPDF(
+                    user_id=current_user.id,
+                    pdf_url="pending",  # Will be updated by background task
+                    pdf_filename=os.path.basename(pdf_path),
+                    subject=request.subject,
+                    topic=request.topic,
+                    level=request.level,
+                    difficulty=request.difficulty,
+                    question_count=mcq_count + numerical_count,
+                    has_solutions=request.include_solutions,
+                    visibility="private"
+                )
+                db.add(shared_pdf)
+                db.commit()
+                shared_pdf_id = shared_pdf.id
+                
+                # Schedule background upload (non-blocking)
+                import asyncio
+                
+                async def upload_to_r2_background():
+                    try:
+                        object_key = r2_storage.get_object_key(current_user.id, os.path.basename(pdf_path))
+                        pdf_url = await asyncio.to_thread(r2_storage.upload_pdf, pdf_path, object_key)
+                        if pdf_url:
+                            # Update the SharedPDF record with the actual URL
+                            from database import SessionLocal
+                            db_session = SessionLocal()
+                            try:
+                                shared = db_session.query(SharedPDF).filter(SharedPDF.id == shared_pdf_id).first()
+                                if shared:
+                                    shared.pdf_url = pdf_url
+                                    db_session.commit()
+                                    print(f"✓ Background R2 upload complete: {pdf_url}")
+                            finally:
+                                db_session.close()
+                    except Exception as e:
+                        print(f"✗ Background R2 upload failed: {e}")
+                
+                # Fire and forget - don't await
+                asyncio.create_task(upload_to_r2_background())
+                print("R2 upload scheduled in background")
             except Exception as e:
-                print(f"Warning: Failed to upload to R2: {e}")
+                print(f"Warning: Failed to schedule R2 upload: {e}")
         
         # Get updated rate limit info
         _, new_remaining, new_reset_hours, _ = check_rate_limit(current_user, db)
