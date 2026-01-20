@@ -991,16 +991,16 @@ export default function TestGenerator() {
                         </div>
                     </div>
                 )}
-            </div>
 
-            {/* Footer */}
-            <div className="text-center mt-8 text-gray-500 dark:text-gray-400 text-sm">
-                <div className="flex flex-col items-center justify-center gap-1">
-                    <a href="https://www.mentorsmantra.co.in" target="_blank" rel="noopener noreferrer" className="hover:text-indigo-600 transition-colors font-medium">
-                        www.mentorsmantra.co.in
-                    </a>
-                    <p>Contact: 9821040290 / 7982387231</p>
-                    <p className="text-gray-400 dark:text-gray-500 mt-2 italic">A Mentors Mantra Product</p>
+                {/* Footer */}
+                <div className="text-center mt-8 text-gray-500 dark:text-gray-400 text-sm pb-4">
+                    <div className="flex flex-col items-center justify-center gap-1">
+                        <a href="https://www.mentorsmantra.co.in" target="_blank" rel="noopener noreferrer" className="hover:text-indigo-600 transition-colors font-medium">
+                            www.mentorsmantra.co.in
+                        </a>
+                        <p>Contact: 9821040290 / 7982387231</p>
+                        <p className="text-gray-400 dark:text-gray-500 mt-2 italic">A Mentors Mantra Product</p>
+                    </div>
                 </div>
             </div>
 
