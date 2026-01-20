@@ -478,7 +478,7 @@ export default function TestGenerator() {
     }
 
     return (
-        <div className="w-full min-h-screen md:min-h-0 bg-white dark:bg-black pb-24 md:pb-0">
+        <div className="w-full min-h-screen md:min-h-0 bg-white dark:bg-black pb-16 md:pb-0">
             <div className="max-w-2xl mx-auto px-4">
                 {/* Mobile Header with Logout */}
                 <div className="md:hidden flex justify-end px-4 pt-4">
