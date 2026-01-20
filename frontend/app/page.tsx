@@ -49,9 +49,9 @@ export default function Home() {
   }, [isResizing, handleMouseMove, handleMouseUp]);
 
   return (
-    <div className="min-h-screen dark:bg-black">
+    <div className="min-h-screen bg-white dark:bg-black">
       {/* Mobile View: Show Test Generator (Home) */}
-      <div className="md:hidden pb-20">
+      <div className="md:hidden pb-24 bg-white dark:bg-black">
         <TestGenerator />
         <MobileNav />
       </div>
