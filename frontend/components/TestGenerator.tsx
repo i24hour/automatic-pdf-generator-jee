@@ -906,7 +906,7 @@ export default function TestGenerator() {
                 <button
                     onClick={handleGenerate}
                     disabled={isLoading || isDetectingSubject || !topic.trim() || (rateLimit?.remaining === 0)}
-                    className={`w-full py-2 md:py-4 rounded-lg md:rounded-xl text-white font-semibold text-xs md:text-lg shadow-lg transition-all duration-300 flex items-center justify-center gap-1.5 md:gap-2 mb-4 btn-primary ${isLoading || isDetectingSubject || !topic.trim() || (rateLimit?.remaining === 0)
+                    className={`w-full py-2.5 md:py-4 rounded-lg md:rounded-xl text-white font-semibold text-[11px] md:text-lg shadow-lg transition-all duration-300 flex items-center justify-center gap-1.5 md:gap-2 mb-4 btn-primary ${isLoading || isDetectingSubject || !topic.trim() || (rateLimit?.remaining === 0)
                         ? "bg-gray-400 cursor-not-allowed"
                         : "hover:shadow-xl transform hover:-translate-y-0.5"
                         }`}
@@ -919,8 +919,7 @@ export default function TestGenerator() {
                     ) : (
                         <>
                             <Sparkles className="w-4 h-4 md:w-6 md:h-6" />
-                            <span className="hidden md:inline">Generate {level} ({difficulty}) Test Paper</span>
-                            <span className="md:hidden">Generate Test</span>
+                            <span>Generate {level} ({difficulty}) Test Paper</span>
                         </>
                     )}
                 </button>
@@ -995,7 +994,7 @@ export default function TestGenerator() {
             </div>
 
             {/* Footer */}
-            <div className="text-center mt-8 text-gray-500 dark:text-gray-400 text-sm bg-white dark:bg-black py-4">
+            <div className="text-center mt-8 text-gray-500 dark:text-gray-400 text-sm">
                 <div className="flex flex-col items-center justify-center gap-1">
                     <a href="https://www.mentorsmantra.co.in" target="_blank" rel="noopener noreferrer" className="hover:text-indigo-600 transition-colors font-medium">
                         www.mentorsmantra.co.in
