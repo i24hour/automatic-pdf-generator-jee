@@ -1007,13 +1007,15 @@ export default function TestGenerator() {
                                 Download PDF
                             </button>
 
-                            <button
-                                onClick={() => setShowPostModal(true)}
-                                className="flex-1 py-3.5 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2"
-                            >
-                                <Share2 className="w-5 h-5" />
-                                Post
-                            </button>
+                            {result.shared_pdf_id && (
+                                <button
+                                    onClick={() => setShowPostModal(true)}
+                                    className="flex-1 py-3.5 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2"
+                                >
+                                    <Share2 className="w-5 h-5" />
+                                    Post
+                                </button>
+                            )}
                         </div>
                     </div>
                 )}
