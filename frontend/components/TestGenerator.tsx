@@ -478,8 +478,8 @@ export default function TestGenerator() {
     }
 
     return (
-        <div className="w-full">
-            <div className="max-w-2xl mx-auto">
+        <div className="w-full min-h-screen bg-white dark:bg-black">
+            <div className="max-w-2xl mx-auto px-4">
                 {/* Mobile Header with Logout */}
                 <div className="md:hidden flex justify-end px-4 pt-4">
                     <button
