@@ -126,20 +126,26 @@ class LLMEngine:
         print(f"Parallel generation: {len(mcq_chunks)} MCQ chunks + {len(num_chunks)} numerical chunks")
         
         # Create async tasks for each chunk
-        async def generate_chunk(mcq_cnt, num_cnt):
+        async def generate_chunk(index, mcq_cnt, num_cnt):
             """Run sync generation in thread pool"""
-            return await asyncio.to_thread(
+            print(f"--- Starting chunk {index} (MCQ: {mcq_cnt}, Num: {num_cnt}) ---")
+            import time
+            start_time = time.time()
+            result = await asyncio.to_thread(
                 self.generate_with_fallback,
                 subject, topic, mcq_cnt, num_cnt, level, difficulty
             )
+            duration = time.time() - start_time
+            print(f"--- Finished chunk {index} in {duration:.2f}s ---")
+            return result
         
         tasks = []
         # MCQ-only chunks
-        for mcq_chunk in mcq_chunks:
-            tasks.append(generate_chunk(mcq_chunk, 0))
+        for i, mcq_chunk in enumerate(mcq_chunks):
+            tasks.append(generate_chunk(f"M{i}", mcq_chunk, 0))
         # Numerical-only chunks
-        for num_chunk in num_chunks:
-            tasks.append(generate_chunk(0, num_chunk))
+        for i, num_chunk in enumerate(num_chunks):
+            tasks.append(generate_chunk(f"N{i}", 0, num_chunk))
         
         # Run all in parallel
         results = await asyncio.gather(*tasks, return_exceptions=True)
