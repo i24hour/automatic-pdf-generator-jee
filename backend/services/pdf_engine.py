@@ -231,19 +231,18 @@ class PDFEngine:
             with open(tex_path, "w", encoding="utf-8") as f:
                 f.write(latex_content)
             
-            # Run pdflatex twice (for references and TOC)
-            for _ in range(2):
-                result = subprocess.run(
-                    [
-                        "pdflatex",
-                        "-interaction=nonstopmode",
-                        "-output-directory", temp_dir,
-                        tex_path
-                    ],
-                    capture_output=True,
-                    text=True,
-                    timeout=60
-                )
+            # Run pdflatex (single run is enough for test papers without TOC)
+            result = subprocess.run(
+                [
+                    "pdflatex",
+                    "-interaction=nonstopmode",
+                    "-output-directory", temp_dir,
+                    tex_path
+                ],
+                capture_output=True,
+                text=True,
+                timeout=180  # Increased timeout for large papers
+            )
             
             # Check if PDF was generated
             if os.path.exists(pdf_path):
