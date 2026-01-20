@@ -25,7 +25,7 @@ import {
     Dna,
     Stethoscope,
     X,
-    Share2,
+    Share2
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import PostModal from "@/components/PostModal";
@@ -925,29 +925,55 @@ export default function TestGenerator() {
                 </button>
 
                 {/* Progress Bar */}
+                {/* Detailed Loading Steps */}
                 {isLoading && (
-                    <div className="mb-6">
-                        <div className="flex justify-between text-sm text-gray-600 mb-2">
-                            <span>Generating...</span>
-                            <span>{elapsedTime}s</span>
+                    <div className="mb-6 bg-indigo-50 dark:bg-indigo-900/10 rounded-xl p-5 border border-indigo-100 dark:border-indigo-900/30">
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 rounded-full bg-indigo-600 animate-pulse"></div>
+                                <span className="font-semibold text-indigo-900 dark:text-indigo-300">Working...</span>
+                            </div>
+                            <div className="flex items-center gap-1 text-indigo-600 dark:text-indigo-400 bg-white dark:bg-black px-2 py-1 rounded-lg border border-indigo-100 dark:border-indigo-900/30 text-xs font-mono">
+                                <Clock className="w-3 h-3" />
+                                <span>{Math.floor(elapsedTime / 60)}:{String(elapsedTime % 60).padStart(2, '0')}</span>
+                            </div>
                         </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
-                            <div
-                                className="bg-indigo-600 h-2.5 rounded-full transition-all duration-1000 ease-in-out"
-                                style={{ width: `${Math.min((elapsedTime / 45) * 100, 95)}%` }}
-                            ></div>
+
+                        <div className="space-y-3">
+                            {[
+                                { text: "Analyzing topic and difficulty...", start: 0, end: 5 },
+                                { text: "Researching question patterns...", start: 5, end: 12 },
+                                ...(numMCQs > 0 ? [{ text: "Creating MCQ questions...", start: 12, end: 25 }] : []),
+                                ...(numNumericals > 0 ? [{ text: "Generating numerical problems...", start: 25, end: 35 }] : []),
+                                { text: "Verifying answers...", start: 35, end: 42 },
+                                { text: "Formatting PDF document...", start: 42, end: 1000 }
+                            ].map((step, index) => {
+                                const isCompleted = elapsedTime > step.end;
+                                const isCurrent = elapsedTime >= step.start && elapsedTime <= step.end;
+                                const isPending = elapsedTime < step.start;
+
+                                return (
+                                    <div key={index} className={`flex items-center gap-3 text-sm transition-all duration-300 ${isPending ? 'opacity-50' : 'opacity-100'}`}>
+                                        {isCompleted ? (
+                                            <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
+                                        ) : isCurrent ? (
+                                            <Loader2 className="w-5 h-5 text-indigo-600 animate-spin flex-shrink-0" />
+                                        ) : (
+                                            <div className="w-5 h-5 rounded-full border-2 border-gray-300 dark:border-gray-600 flex-shrink-0" />
+                                        )}
+                                        <span className={`${isCompleted ? 'text-green-700 dark:text-green-400' : isCurrent ? 'text-indigo-700 dark:text-indigo-300 font-medium' : 'text-gray-500 dark:text-gray-400'}`}>
+                                            {step.text}
+                                        </span>
+                                    </div>
+                                );
+                            })}
                         </div>
-                        <p className="text-xs text-center text-gray-500 mt-2 animate-pulse">
-                            {elapsedTime < 10 && "Analyzing topic and difficulty..."}
-                            {elapsedTime >= 10 && elapsedTime < 20 && "Crafting questions with AI..."}
-                            {elapsedTime >= 20 && elapsedTime < 30 && "Verifying solutions and answers..."}
-                            {elapsedTime >= 30 && "Formatting PDF document..."}
-                        </p>
 
                         <button
                             onClick={handleCancelGeneration}
-                            className="w-full mt-3 py-2 text-sm text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                            className="w-full mt-6 py-2.5 bg-white dark:bg-black border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:text-red-600 hover:border-red-200 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2"
                         >
+                            <X className="w-4 h-4" />
                             Cancel Generation
                         </button>
                     </div>
