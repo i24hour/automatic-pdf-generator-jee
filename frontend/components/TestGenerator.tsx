@@ -906,7 +906,7 @@ export default function TestGenerator() {
                 <button
                     onClick={handleGenerate}
                     disabled={isLoading || isDetectingSubject}
-                    className={`w-full py-4 rounded-xl text-white font-semibold text-lg shadow-lg transition-all duration-300 flex items-center justify-center gap-2 mb-4 btn-primary ${isLoading || isDetectingSubject
+                    className={`w-full py-3 md:py-4 rounded-xl text-white font-semibold text-base md:text-lg shadow-lg transition-all duration-300 flex items-center justify-center gap-2 mb-4 btn-primary ${isLoading || isDetectingSubject
                         ? "bg-gray-400 cursor-not-allowed"
                         : "hover:shadow-xl transform hover:-translate-y-0.5"
                         }`}
@@ -986,7 +986,7 @@ export default function TestGenerator() {
                                 className="flex-1 py-3.5 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2"
                             >
                                 <Share2 className="w-5 h-5" />
-                                Share
+                                Post
                             </button>
                         </div>
                     </div>
