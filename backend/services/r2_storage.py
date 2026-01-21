@@ -45,7 +45,7 @@ class R2StorageService:
                 retries={"max_attempts": 2}
             ),
             region_name="auto",
-            verify=True  # Keep SSL verification enabled
+            verify=False  # Disable SSL verification to fix Cloud Run handshake issue
         )
     
     def is_configured(self) -> bool:

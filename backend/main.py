@@ -298,7 +298,7 @@ async def generate_test(
     if not is_allowed:
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail=f"Rate limit exceeded. You can generate {user_limit} PDFs every {RATE_LIMIT_HOURS} hours. Try again in {reset_hours:.1f} hours."
+            detail=f"Rate limit exceeded. You can generate {user_limit} PDFs per month. Limit resets on the 1st of next month."
         )
     
     try:
@@ -480,7 +480,7 @@ async def generate_test_verified(
         if not is_allowed:
             raise HTTPException(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                detail=f"Rate limit exceeded. You have used all {total_limit} generations this month. Resets in {reset_hours:.1f} hours."
+                detail=f"Rate limit exceeded. You have used all {total_limit} generations this month. Limit resets on the 1st of next month."
             )
         
         # Determine question split
