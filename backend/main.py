@@ -6,11 +6,12 @@ Main application entry point with API endpoints.
 import os
 import uuid
 import base64
+import json
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict
-from fastapi import FastAPI, HTTPException, Depends, status
+from fastapi import FastAPI, HTTPException, Depends, status, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from dotenv import load_dotenv
@@ -24,6 +25,7 @@ from routers.auth_router import router as auth_router
 from routers.institute_router import router as institute_router
 from routers.posts_router import router as posts_router
 from services.r2_storage import r2_storage
+from services.job_store import job_store, JobStatus
 
 # Load environment variables
 load_dotenv()
@@ -765,6 +767,282 @@ async def list_models():
             "anthropic/claude-3-haiku-20240307"
         ]
     }
+
+
+# ============== SSE ENDPOINTS FOR RESILIENT GENERATION ==============
+
+class SSEStartResponse(BaseModel):
+    """Response for SSE start endpoint."""
+    job_id: str
+    message: str
+
+
+@app.post("/api/generate-sse/start", response_model=SSEStartResponse)
+async def start_sse_generation(
+    request: GenerateRequest,
+    background_tasks: BackgroundTasks,
+    current_user: User = Depends(get_current_user_required),
+    db: Session = Depends(get_db)
+):
+    """
+    Start a PDF generation job and return job_id for SSE streaming.
+    The actual generation happens in the background.
+    """
+    # Check rate limit
+    is_allowed, remaining, reset_hours, total_limit = check_rate_limit(current_user, db)
+    
+    if not is_allowed:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=f"Rate limit exceeded. You have used all {total_limit} generations this month."
+        )
+    
+    # Create job
+    job = job_store.create_job(str(current_user.id))
+    
+    # Start generation in background
+    background_tasks.add_task(
+        run_generation_job,
+        job.job_id,
+        request,
+        current_user,
+        db
+    )
+    
+    return SSEStartResponse(
+        job_id=job.job_id,
+        message="Generation started. Connect to SSE stream for progress."
+    )
+
+
+async def run_generation_job(
+    job_id: str,
+    request: GenerateRequest,
+    user: User,
+    db: Session
+):
+    """Background task to run PDF generation with progress updates."""
+    import asyncio
+    
+    try:
+        # Update: Analyzing
+        job_store.update_job(job_id, JobStatus.ANALYZING, 5, "Analyzing topic and difficulty...")
+        
+        # Determine question split
+        if request.num_mcqs is not None and request.num_numerical is not None:
+            mcq_count = request.num_mcqs
+            numerical_count = request.num_numerical
+        else:
+            if request.level == "NEET":
+                mcq_count = request.total_questions
+                numerical_count = 0
+            else:
+                mcq_count = int(request.total_questions * 0.8)
+                numerical_count = request.total_questions - mcq_count
+                if mcq_count < 1:
+                    mcq_count = 1
+                if numerical_count < 1:
+                    numerical_count = 1
+                    mcq_count = request.total_questions - 1
+        
+        # Update: Generating MCQs
+        job_store.update_job(job_id, JobStatus.GENERATING_MCQS, 15, f"Generating {mcq_count} MCQ questions...")
+        
+        # Generate questions WITH VERIFICATION
+        llm_result = await llm_engine.generate_questions_with_verification_async(
+            subject=request.subject,
+            topic=request.topic,
+            mcq_count=mcq_count,
+            numerical_count=numerical_count,
+            level=request.level,
+            difficulty=request.difficulty,
+            include_solutions=request.include_solutions
+        )
+        
+        if not llm_result.get("success"):
+            job_store.update_job(
+                job_id,
+                JobStatus.FAILED,
+                0,
+                "Failed to generate questions",
+                error=llm_result.get("error", "Unknown error")
+            )
+            return
+        
+        # Update: Verifying
+        job_store.update_job(job_id, JobStatus.VERIFYING, 60, "Verifying answers...")
+        
+        # Generate filename
+        actual_total = mcq_count + numerical_count
+        safe_topic = request.topic.replace("&", "and").replace("/", "-").replace("\\", "-")
+        safe_topic = safe_topic.replace(" ", "_")
+        safe_level = request.level.replace(" ", "_")
+        safe_difficulty = request.difficulty
+        solutions_suffix = "_with_solutions" if request.include_solutions else ""
+        filename = f"Top{actual_total}_{safe_topic}_{safe_level}_{safe_difficulty}{solutions_suffix}"
+        
+        # Update: Compiling PDF
+        job_store.update_job(job_id, JobStatus.COMPILING_PDF, 75, "Compiling PDF document...")
+        
+        # Generate PDF
+        llm_result["level"] = request.level
+        llm_result["difficulty"] = request.difficulty
+        llm_result["include_solutions"] = request.include_solutions
+        
+        pdf_path = pdf_engine.generate_pdf(llm_result, filename)
+        
+        if not pdf_path:
+            job_store.update_job(
+                job_id,
+                JobStatus.FAILED,
+                0,
+                "PDF generation failed",
+                error="PDF engine returned no path"
+            )
+            return
+        
+        # Record generation
+        record_generation(user, request, os.path.basename(pdf_path), db)
+        
+        # Read PDF and encode
+        with open(pdf_path, "rb") as f:
+            pdf_base64 = base64.b64encode(f.read()).decode("utf-8")
+        
+        # Count questions
+        questions = llm_result.get("questions", [])
+        total_mcq = sum(1 for q in questions if q.get("type") in ["mcq", "mcq_multi"])
+        total_numerical = sum(1 for q in questions if q.get("type") == "numerical")
+        
+        # Get updated rate limit
+        _, new_remaining, new_reset_hours, _ = check_rate_limit(user, db)
+        
+        # Update: Done
+        job_store.update_job(
+            job_id,
+            JobStatus.DONE,
+            100,
+            "PDF ready for download!",
+            result={
+                "success": True,
+                "message": f"Generated {len(questions)} questions successfully!",
+                "pdf_filename": os.path.basename(pdf_path),
+                "pdf_base64": pdf_base64,
+                "total_mcq": total_mcq,
+                "total_numerical": total_numerical,
+                "rate_limit_remaining": new_remaining,
+                "rate_limit_reset_hours": new_reset_hours
+            }
+        )
+        
+    except Exception as e:
+        print(f"[SSE Job {job_id}] Error: {str(e)}")
+        job_store.update_job(
+            job_id,
+            JobStatus.FAILED,
+            0,
+            "An error occurred",
+            error=str(e)
+        )
+
+
+@app.get("/api/generate-sse/{job_id}/stream")
+async def stream_job_progress(
+    job_id: str, 
+    token: Optional[str] = None,
+    db: Session = Depends(get_db)
+):
+    """
+    SSE endpoint to stream job progress updates.
+    Client should connect here after getting job_id from /start.
+    Note: Uses token query param since EventSource doesn't support headers.
+    """
+    import asyncio
+    from auth import decode_token
+    
+    # Authenticate via query param token
+    if not token:
+        raise HTTPException(status_code=401, detail="Token required")
+    
+    payload = decode_token(token)
+    if not payload or payload.get("type") != "access":
+        raise HTTPException(status_code=401, detail="Invalid token")
+    
+    user_id = payload.get("sub")
+    current_user = db.query(User).filter(User.id == user_id).first()
+    if not current_user:
+        raise HTTPException(status_code=401, detail="User not found")
+    
+    job = job_store.get_job(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    
+    # Verify user owns this job
+    if job.user_id != str(current_user.id):
+        raise HTTPException(status_code=403, detail="Not authorized to view this job")
+    
+    async def event_generator():
+        # Subscribe to job updates
+        queue = job_store.subscribe(job_id)
+        
+        try:
+            # Send current state first
+            current_job = job_store.get_job(job_id)
+            if current_job:
+                yield f"data: {json.dumps(current_job.to_dict())}\n\n"
+            
+            # If already done/failed, close
+            if current_job and current_job.status in [JobStatus.DONE, JobStatus.FAILED]:
+                return
+            
+            # Wait for updates
+            while True:
+                try:
+                    update = await asyncio.wait_for(queue.get(), timeout=30)
+                    yield f"data: {json.dumps(update)}\n\n"
+                    
+                    # Check if done
+                    if update.get("status") in ["done", "failed"]:
+                        break
+                except asyncio.TimeoutError:
+                    # Send keepalive
+                    yield f": keepalive\n\n"
+                    
+                    # Check if job still exists
+                    current_job = job_store.get_job(job_id)
+                    if not current_job or current_job.status in [JobStatus.DONE, JobStatus.FAILED]:
+                        break
+        finally:
+            job_store.unsubscribe(job_id, queue)
+    
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no"
+        }
+    )
+
+
+@app.get("/api/generate-sse/{job_id}/status")
+async def get_job_status(job_id: str, current_user: User = Depends(get_current_user_required)):
+    """
+    Poll endpoint to get current job status.
+    Useful for reconnection after network drops.
+    """
+    job = job_store.get_job(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found or expired")
+    
+    # Verify user owns this job
+    if job.user_id != str(current_user.id):
+        raise HTTPException(status_code=403, detail="Not authorized to view this job")
+    
+    return job.to_dict()
+
+
+# ============== END SSE ENDPOINTS ==============
 
 
 # Run with: uvicorn main:app --reload

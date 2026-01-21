@@ -85,6 +85,9 @@ export default function TestGenerator() {
     const [progressStep, setProgressStep] = useState(0);
     const timerRef = useRef<NodeJS.Timeout | null>(null);
     const abortControllerRef = useRef<AbortController | null>(null);
+    const eventSourceRef = useRef<EventSource | null>(null);
+    const [jobId, setJobId] = useState<string | null>(null);
+    const [progressMessage, setProgressMessage] = useState<string>("Ready to generate...");
     const [showPostModal, setShowPostModal] = useState(false);
     const [showUsernameModal, setShowUsernameModal] = useState(false);
 
@@ -290,14 +293,13 @@ export default function TestGenerator() {
             return;
         }
 
-        // Create new abort controller for this request
-        abortControllerRef.current = new AbortController();
-
         setIsLoading(true);
         setError(null);
         setResult(null);
         setElapsedTime(0);
         setProgressStep(0);
+        setProgressMessage("Starting generation...");
+        setJobId(null);
 
         // Start timer
         timerRef.current = setInterval(() => {
@@ -305,7 +307,8 @@ export default function TestGenerator() {
         }, 1000);
 
         try {
-            const response = await authFetch(`${API_BASE_URL}/api/generate-verified`, {
+            // Step 1: Start the job
+            const startResponse = await authFetch(`${API_BASE_URL}/api/generate-sse/start`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -320,50 +323,152 @@ export default function TestGenerator() {
                     num_numerical: numNumericals,
                     include_solutions: includeSolutions,
                 }),
-                signal: abortControllerRef.current.signal,
             });
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.detail || "Failed to generate test paper");
+            if (!startResponse.ok) {
+                const errorData = await startResponse.json();
+                throw new Error(errorData.detail || "Failed to start generation");
             }
 
-            const data: GenerateResponse = await response.json();
-            setResult(data);
+            const startData = await startResponse.json();
+            const newJobId = startData.job_id;
+            setJobId(newJobId);
+            setProgressMessage("Connecting to progress stream...");
 
-            // Update rate limit locally
-            setRateLimit((prev) => prev ? {
-                ...prev,
-                remaining: data.rate_limit_remaining,
-                used: prev.limit - data.rate_limit_remaining,
-            } : null);
+            // Step 2: Connect to SSE stream
+            await connectToSSEStream(newJobId);
 
         } catch (err: unknown) {
-            // Check if it was cancelled
-            if (err instanceof Error && err.name === 'AbortError') {
-                setError("Generation cancelled.");
-                return;
-            }
-            // Log technical error to console for debugging
             console.error("Generation error:", err);
-            // Show generic message to user
-            setError("Failed to generate test paper. Please try again.");
-        } finally {
-            setIsLoading(false);
-            abortControllerRef.current = null;
-            // Clear timer
-            if (timerRef.current) {
-                clearInterval(timerRef.current);
-                timerRef.current = null;
+            if (err instanceof Error && err.message.includes("Rate limit")) {
+                setError(err.message);
+            } else {
+                setError("Failed to generate test paper. Please try again.");
             }
+            cleanupGeneration();
+        }
+    };
+
+    const connectToSSEStream = (streamJobId: string): Promise<void> => {
+        return new Promise((resolve, reject) => {
+            // Close any existing connection
+            if (eventSourceRef.current) {
+                eventSourceRef.current.close();
+            }
+
+            // SSE URL with token as query param (EventSource doesn't support headers)
+            const sseUrl = `${API_BASE_URL}/api/generate-sse/${streamJobId}/stream?token=${encodeURIComponent(token || '')}`;
+
+            const eventSource = new EventSource(sseUrl);
+            eventSourceRef.current = eventSource;
+
+            eventSource.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    console.log("SSE update:", data);
+
+                    // Update progress
+                    setProgressStep(data.progress || 0);
+                    setProgressMessage(data.message || "Working...");
+
+                    // Map status to progress step for visual
+                    const statusToStep: Record<string, number> = {
+                        "pending": 0,
+                        "analyzing": 1,
+                        "generating_mcqs": 2,
+                        "generating_numericals": 3,
+                        "verifying": 4,
+                        "compiling_pdf": 5,
+                        "done": 6,
+                        "failed": 0,
+                    };
+                    if (data.status in statusToStep) {
+                        setProgressStep(statusToStep[data.status]);
+                    }
+
+                    // Check if done
+                    if (data.status === "done" && data.result) {
+                        setResult(data.result as GenerateResponse);
+                        if (data.result.rate_limit_remaining !== undefined) {
+                            setRateLimit((prev) => prev ? {
+                                ...prev,
+                                remaining: data.result.rate_limit_remaining,
+                                used: prev.limit - data.result.rate_limit_remaining,
+                            } : null);
+                        }
+                        cleanupGeneration();
+                        resolve();
+                    } else if (data.status === "failed") {
+                        setError(data.error || "Generation failed");
+                        cleanupGeneration();
+                        reject(new Error(data.error || "Generation failed"));
+                    }
+                } catch (e) {
+                    console.error("Error parsing SSE data:", e);
+                }
+            };
+
+            eventSource.onerror = async (error) => {
+                console.error("SSE connection error:", error);
+                eventSource.close();
+
+                // Try to reconnect
+                setProgressMessage("Connection interrupted, reconnecting...");
+
+                try {
+                    // Wait a bit before reconnecting
+                    await new Promise(r => setTimeout(r, 2000));
+
+                    // Poll the status endpoint
+                    const statusResponse = await authFetch(`${API_BASE_URL}/api/generate-sse/${streamJobId}/status`);
+
+                    if (statusResponse.ok) {
+                        const statusData = await statusResponse.json();
+
+                        if (statusData.status === "done" && statusData.result) {
+                            setResult(statusData.result as GenerateResponse);
+                            cleanupGeneration();
+                            resolve();
+                            return;
+                        } else if (statusData.status === "failed") {
+                            setError(statusData.error || "Generation failed");
+                            cleanupGeneration();
+                            reject(new Error(statusData.error));
+                            return;
+                        }
+
+                        // Job still in progress, reconnect to stream
+                        setProgressMessage("Reconnecting to stream...");
+                        await connectToSSEStream(streamJobId);
+                        resolve();
+                    } else {
+                        throw new Error("Failed to get job status");
+                    }
+                } catch (reconnectError) {
+                    console.error("Reconnection failed:", reconnectError);
+                    setError("Connection lost. Please try again.");
+                    cleanupGeneration();
+                    reject(reconnectError);
+                }
+            };
+        });
+    };
+
+    const cleanupGeneration = () => {
+        setIsLoading(false);
+        if (timerRef.current) {
+            clearInterval(timerRef.current);
+            timerRef.current = null;
+        }
+        if (eventSourceRef.current) {
+            eventSourceRef.current.close();
+            eventSourceRef.current = null;
         }
     };
 
     const handleCancelGeneration = () => {
-        if (abortControllerRef.current) {
-            abortControllerRef.current.abort();
-            abortControllerRef.current = null;
-        }
+        cleanupGeneration();
+        setError("Generation cancelled.");
     };
 
 
