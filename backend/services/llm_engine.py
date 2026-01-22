@@ -784,7 +784,59 @@ EXAMPLE NEET-LEVEL QUESTIONS:
     ]
 }}"""
         
-        prompt = f"""You are an expert exam setter with 20+ years of experience setting {level} level examination papers for top coaching institutes like FIITJEE, Allen, and Resonance.
+        # Special handling for Boards - generate CBSE pattern questions, not just MCQs
+        if level == "Boards":
+            # Calculate CBSE question distribution based on totals
+            total_cbse_theory = mcq_count  # VSA+SA+LA+Case from frontend
+            total_numericals = numerical_count
+            
+            # Approximate distribution
+            vsa_count = max(1, int(total_cbse_theory * 0.4))
+            sa_count = max(1, int(total_cbse_theory * 0.3))
+            la_count = max(1, int(total_cbse_theory * 0.15))
+            case_count = max(0, total_cbse_theory - vsa_count - sa_count - la_count)
+            
+            boards_json_example = """{{
+    "questions": [
+        {{"type": "short_answer", "marks": 1, "text": "Define electric flux.", "answer": "Electric flux is..."}},
+        {{"type": "short_answer", "marks": 2, "text": "State the principle of superposition.", "answer": "When two waves..."}},
+        {{"type": "short_answer", "marks": 3, "text": "Derive E = -dV/dr.", "answer": "Work done = qE.dr..."}},
+        {{"type": "long_answer", "marks": 5, "text": "State and prove Gauss's law.", "answer": "Gauss's law states..."}},
+        {{"type": "case_based", "marks": 4, "passage": "Electromagnetic induction...", "sub_questions": [
+            {{"text": "Who discovered it?", "options": ["Newton", "Faraday", "Maxwell", "Ampere"], "answer": "B"}},
+            {{"text": "What is required?", "options": ["Static field", "Changing flux", "Electric field", "Gravity"], "answer": "B"}},
+            {{"text": "Which device uses it?", "options": ["Capacitor", "Resistor", "Transformer", "Diode"], "answer": "C"}},
+            {{"text": "In which year?", "options": ["1820", "1831", "1840", "1850"], "answer": "B"}}
+        ], "answer": "B, B, C, B"}},
+        {{"type": "numerical", "marks": 3, "text": "A wire of resistance $10\\\\Omega$...", "answer": "2.5"}}
+    ]
+}}"""
+            
+            prompt = f"""You are an expert CBSE Board exam setter. Generate CBSE pattern questions on "{topic}" for {subject}.
+
+{level_prompt}
+
+{difficulty_prompt}
+
+GENERATE EXACTLY:
+- {vsa_count} Very Short Answer (1-2 marks, type: "short_answer", marks: 1 or 2)
+- {sa_count} Short Answer (2-3 marks, type: "short_answer", marks: 2 or 3)  
+- {la_count} Long Answer (5 marks, type: "long_answer", marks: 5)
+- {case_count} Case-Based (4 marks, type: "case_based" with passage and 4 MCQ sub_questions)
+- {total_numericals} Numerical (3-5 marks, type: "numerical", marks: 3 or 5)
+
+TOTAL: {total_cbse_theory + total_numericals} questions
+
+REQUIREMENTS:
+- NCERT-aligned content
+- Each question MUST be UNIQUE
+- Use LaTeX math mode: $F = ma$, $\\\\frac{{a}}{{b}}$
+- For case_based: include "passage", "sub_questions" array with 4 MCQs
+
+Return ONLY valid JSON:
+{boards_json_example}"""
+        else:
+            prompt = f"""You are an expert exam setter with 20+ years of experience setting {level} level examination papers for top coaching institutes like FIITJEE, Allen, and Resonance.
 
 TASK: Generate exactly {mcq_count} MCQs and {numerical_count} Numerical questions on "{topic}" for {subject}.
 
@@ -805,11 +857,11 @@ FORMATTING REQUIREMENTS (VERY IMPORTANT):
 - Use proper spacing between words and sentences
 - Write complete, grammatically correct sentences
 - Use LaTeX math mode for ALL mathematical expressions: $...$
-  Examples: $F = ma$, $\\frac{{a}}{{b}}$, $\\sqrt{{x}}$, $\\int_0^1 f(x) dx$
+  Examples: $F = ma$, $\\\\frac{{a}}{{b}}$, $\\\\sqrt{{x}}$, $\\\\int_0^1 f(x) dx$
 - For subscripts use: $W_0$, $v_1$, $x_2$ (NOT W₀, v₁, x₂)
 - For superscripts use: $x^2$, $10^3$ (NOT x², 10³)
-- For Greek letters use: $\\alpha$, $\\beta$, $\\theta$, $\\omega$ (NOT α, β, θ, ω)
-- For special symbols: $\\times$ (multiplication), $\\div$ (division), $\\pm$ (plus-minus)
+- For Greek letters use: $\\\\alpha$, $\\\\beta$, $\\\\theta$, $\\\\omega$ (NOT α, β, θ, ω)
+- For special symbols: $\\\\times$ (multiplication), $\\\\div$ (division), $\\\\pm$ (plus-minus)
 - Separate distinct concepts with proper punctuation and spacing
 - DO NOT concatenate words or run sentences together
 
@@ -953,7 +1005,45 @@ Return ONLY valid JSON:
         }
         level_prompt = level_prompts.get(level, level_prompts.get("JEE Mains"))
         
-        prompt = f"""You are an expert question paper setter for competitive exams like FIITJEE, Allen, Resonance.
+        # Special handling for Boards - generate CBSE pattern questions
+        if level == "Boards":
+            total_cbse_theory = mcq_count
+            total_numericals = numerical_count
+            vsa_count = max(1, int(total_cbse_theory * 0.4))
+            sa_count = max(1, int(total_cbse_theory * 0.3))
+            la_count = max(1, int(total_cbse_theory * 0.15))
+            case_count = max(0, total_cbse_theory - vsa_count - sa_count - la_count)
+            
+            prompt = f"""You are a CBSE Board exam setter. Generate CBSE pattern questions.
+
+SUBJECT: {subject}
+TOPIC: {topic}
+{difficulty_prompt}
+
+GENERATE EXACTLY:
+- {vsa_count} Very Short Answer (1-2 marks, type: "short_answer", marks: 1 or 2)
+- {sa_count} Short Answer (2-3 marks, type: "short_answer", marks: 2 or 3)
+- {la_count} Long Answer (5 marks, type: "long_answer", marks: 5)
+- {case_count} Case-Based (4 marks, type: "case_based" with passage and 4 sub_questions)
+- {total_numericals} Numerical (3-5 marks, type: "numerical", marks: 3 or 5)
+
+Use LaTeX: $F = ma$, $\\\\frac{{a}}{{b}}$
+
+Return ONLY JSON:
+{{"questions": [
+  {{"type": "short_answer", "marks": 2, "text": "Define electric flux.", "answer": "Electric flux is..."}},
+  {{"type": "long_answer", "marks": 5, "text": "State and prove Gauss's law.", "answer": "Gauss's law states..."}},
+  {{"type": "case_based", "marks": 4, "passage": "EM induction paragraph...", "sub_questions": [
+    {{"text": "Q1?", "options": ["A", "B", "C", "D"], "answer": "B"}},
+    {{"text": "Q2?", "options": ["A", "B", "C", "D"], "answer": "C"}},
+    {{"text": "Q3?", "options": ["A", "B", "C", "D"], "answer": "A"}},
+    {{"text": "Q4?", "options": ["A", "B", "C", "D"], "answer": "D"}}
+  ], "answer": "B, C, A, D"}},
+  {{"type": "numerical", "marks": 3, "text": "Find resistance...", "answer": "5"}}
+]}}
+"""
+        else:
+            prompt = f"""You are an expert question paper setter for competitive exams like FIITJEE, Allen, Resonance.
 
 GENERATE EXACTLY:
 - {mcq_count} MCQ questions (type "mcq", with options array and answer as A/B/C/D)
@@ -969,13 +1059,13 @@ FORMATTING REQUIREMENTS (CRITICAL):
 - Use LaTeX math mode for ALL mathematical expressions: $...$
 - For subscripts: $W_0$, $v_1$ (NOT W₀, v₁)
 - For superscripts: $x^2$, $10^3$ (NOT x², 10³)
-- For Greek letters: $\\alpha$, $\\beta$, $\\theta$ (NOT α, β, θ)
-- For fractions: $\\frac{{a}}{{b}}$ 
+- For Greek letters: $\\\\alpha$, $\\\\beta$, $\\\\theta$ (NOT α, β, θ)
+- For fractions: $\\\\frac{{a}}{{b}}$ 
 - DO NOT concatenate words or run sentences together
 
 Return ONLY valid JSON:
 {{"questions": [
-  {{"type": "mcq", "text": "A body of mass $m$ is dropped from height $h$. What is the velocity?", "options": ["$\\sqrt{{2gh}}$", "$\\sqrt{{gh}}$", "$2gh$", "$gh$"], "answer": "A"}},
+  {{"type": "mcq", "text": "A body of mass $m$ is dropped from height $h$. What is the velocity?", "options": ["$\\\\sqrt{{2gh}}$", "$\\\\sqrt{{gh}}$", "$2gh$", "$gh$"], "answer": "A"}},
   {{"type": "numerical", "text": "If $F = 10$ N and $m = 2$ kg, find acceleration in m/s$^2$.", "answer": "5"}}
 ]}}
 """
