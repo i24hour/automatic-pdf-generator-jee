@@ -29,9 +29,18 @@ class R2StorageService:
     def _init_client(self):
         """Initialize the S3-compatible client for R2."""
         import urllib3
-        # Suppress SSL warnings if needed
+        import ssl
+        import os
+        from botocore.config import Config as BotoConfig
+        
+        # Suppress SSL warnings
         urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
         
+        # Set environment variable to disable SSL verification
+        os.environ['CURL_CA_BUNDLE'] = ''
+        os.environ['REQUESTS_CA_BUNDLE'] = ''
+        
+        # Create client with SSL verification disabled
         self.client = boto3.client(
             "s3",
             endpoint_url=f"https://{self.account_id}.r2.cloudflarestorage.com",
@@ -40,12 +49,12 @@ class R2StorageService:
             config=Config(
                 signature_version="s3v4",
                 s3={"addressing_style": "path"},
-                connect_timeout=10,
-                read_timeout=30,
-                retries={"max_attempts": 2}
+                connect_timeout=30,
+                read_timeout=60,
+                retries={"max_attempts": 3}
             ),
             region_name="auto",
-            verify=False  # Disable SSL verification to fix Cloud Run handshake issue
+            verify=False
         )
     
     def is_configured(self) -> bool:
