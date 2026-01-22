@@ -159,30 +159,38 @@
 \end{table}
 
 
-% --- SOLUTIONS SECTION (FIITJEE Style) ---
+% --- SOLUTIONS SECTION (Step-by-Step Format) ---
 \BLOCK{ if include_solutions }
 \newpage
 
 \begin{center}
-    {\Large \textbf{Hints \& Solutions}}\\[0.1cm]
-    {\normalsize \VAR{subject}}
+    {\Large \textbf{Detailed Solutions}}\\[0.1cm]
+    {\normalsize \VAR{subject} -- \VAR{topic}}
 \end{center}
+\vspace{0.5cm}
+
+\BLOCK{ for q in questions }
+\noindent\rule{\textwidth}{0.4pt}
 \vspace{0.3cm}
 
-\begin{multicols}{2}
-\raggedcolumns
-\small
-\BLOCK{ for q in questions }
-\noindent\textbf{\VAR{loop.index}.} \hspace{0.3em} \textbf{\VAR{q.answer}}\\[2pt]
-\BLOCK{ if q.solution }
-\textbf{Sol.} \VAR{q.solution}
-\BLOCK{ else }
-\textbf{Sol.} Correct option is \VAR{q.answer}.
-\BLOCK{ endif }
+\noindent{\large \textbf{Question \VAR{loop.index}.}} \hfill \fbox{\textbf{Answer: \VAR{q.answer}}}
+
+\vspace{0.3cm}
+\noindent\textit{Q: \VAR{q.text}}
 
 \vspace{0.4cm}
+\noindent\textbf{Solution:}
+\vspace{0.2cm}
+
+\BLOCK{ if q.solution }
+\VAR{q.solution}
+\BLOCK{ else }
+The correct option is \textbf{\VAR{q.answer}}.
+\BLOCK{ endif }
+
+\vspace{0.5cm}
 \BLOCK{ endfor }
-\end{multicols}
+
 \BLOCK{ endif }
 
 \end{document}

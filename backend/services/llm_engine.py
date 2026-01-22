@@ -1147,15 +1147,24 @@ Return ONLY valid JSON:
         Verify a numerical answer by asking LLM to solve the question step-by-step (ASYNC).
         Returns the verified answer and whether it matches the original.
         """
-        prompt = f"""Solve this {subject} numerical concisely (FIITJEE style):
+        prompt = f"""Solve this {subject} numerical problem step-by-step.
 
 QUESTION: {question_text}
 
-Show minimal steps: formula → substitution → answer
-Use LaTeX: $F = ma$, $\\frac{{a}}{{b}}$
-End with: FINAL ANSWER: [number]
+FORMAT:
+\\\\textbf{{Step 1: Given}}
+[List given values]
 
-Solve:"""
+\\\\textbf{{Step 2: Formula}}
+$$[formula]$$
+
+\\\\textbf{{Step 3: Calculation}}
+$$[substitute and calculate]$$
+
+FINAL ANSWER: [numerical value]
+
+Use LaTeX: $F = ma$, $\\\\frac{{a}}{{b}}$
+Solve now:"""
 
         try:
             # Use acompletion for async call
@@ -1318,30 +1327,39 @@ Solve:"""
         """Generate step-by-step solution for an MCQ question."""
         import asyncio
         
-        prompt = f"""You are a FIITJEE faculty. Generate a CONCISE solution like coaching institute style.
+        prompt = f"""You are an expert {subject} teacher. Generate a clear, step-by-step solution.
 
 QUESTION: {question}
 OPTIONS: (A) {options[0] if len(options) > 0 else ''} (B) {options[1] if len(options) > 1 else ''} (C) {options[2] if len(options) > 2 else ''} (D) {options[3] if len(options) > 3 else ''}
-ANSWER: {answer}
+CORRECT ANSWER: {answer}
 
-RULES FOR SOLUTION:
-1. Be EXTREMELY CONCISE - like FIITJEE hint sheets (2-4 lines max)
-2. Start directly with the key equation or concept
-3. Show minimal steps: formula → substitution → final answer
-4. Use LaTeX: $F = ma$, $\\frac{{a}}{{b}}$, $\\sqrt{{x}}$
-5. NO lengthy explanations, NO "The answer is...", NO "Therefore..."
-6. Just math steps separated by semicolons or line breaks
+FORMAT YOUR SOLUTION LIKE THIS:
 
-GOOD EXAMPLE (Physics):
-$v = u + at = 0 + 10 \\times 2 = 20$ m/s
+\\\\textbf{{Step 1: Identify the concept}}
 
-GOOD EXAMPLE (Chemistry): 
-$n = \\frac{{PV}}{{RT}} = \\frac{{1 \\times 22.4}}{{0.082 \\times 273}} = 1$ mol
+[Explain the key concept or formula in 1-2 lines]
 
-GOOD EXAMPLE (Maths):
-$\\frac{{dy}}{{dx}} = 2x$; At $x=3$, $\\frac{{dy}}{{dx}} = 6$
+\\\\textbf{{Step 2: Apply the formula}}
 
-Return ONLY the concise solution, nothing else."""
+[Show the main equation with substitution]
+$$[equation]$$
+
+\\\\textbf{{Step 3: Calculate}}
+
+[Show calculation steps, each on new line]
+$$[result]$$
+
+\\\\textbf{{Final Answer:}} Option {answer}
+
+RULES:
+1. Use \\\\textbf{{Step N:}} for each step header
+2. Put each equation on its own line using $$ $$ for display math
+3. Leave blank lines between steps for spacing
+4. Use LaTeX: $F = ma$, $\\\\frac{{a}}{{b}}$, $\\\\sqrt{{x}}$
+5. Be clear but not too lengthy (3-5 steps max)
+6. End with \\\\textbf{{Final Answer:}} Option X
+
+Generate the solution now:"""
 
         try:
             loop = asyncio.get_event_loop()
