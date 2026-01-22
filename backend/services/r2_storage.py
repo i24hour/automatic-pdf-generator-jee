@@ -76,6 +76,7 @@ class R2StorageService:
             print("R2 not configured, skipping upload")
             return None
         
+        # Try boto3 first
         try:
             with open(file_path, "rb") as file:
                 self.client.put_object(
@@ -89,11 +90,92 @@ class R2StorageService:
             if self.public_url:
                 return f"{self.public_url}/{object_key}"
             else:
-                # Fallback to S3-style URL (requires public bucket)
                 return f"https://{self.bucket_name}.{self.account_id}.r2.cloudflarestorage.com/{object_key}"
                 
         except Exception as e:
-            print(f"Error uploading to R2: {e}")
+            print(f"Boto3 upload failed: {e}")
+            print("Trying fallback upload with requests...")
+            
+            # Fallback: Use requests with AWS4 signing
+            try:
+                return self._upload_with_requests(file_path, object_key)
+            except Exception as e2:
+                print(f"Fallback upload also failed: {e2}")
+                return None
+    
+    def _upload_with_requests(self, file_path: str, object_key: str) -> Optional[str]:
+        """Fallback upload using requests library with manual AWS4 signing."""
+        import requests
+        import hashlib
+        import hmac
+        from datetime import datetime
+        
+        # Disable SSL warnings
+        import urllib3
+        urllib3.disable_warnings()
+        
+        endpoint = f"https://{self.account_id}.r2.cloudflarestorage.com"
+        url = f"{endpoint}/{self.bucket_name}/{object_key}"
+        
+        # Read file
+        with open(file_path, "rb") as f:
+            file_content = f.read()
+        
+        # AWS4 signing
+        method = "PUT"
+        service = "s3"
+        region = "auto"
+        
+        t = datetime.utcnow()
+        amz_date = t.strftime('%Y%m%dT%H%M%SZ')
+        date_stamp = t.strftime('%Y%m%d')
+        
+        content_hash = hashlib.sha256(file_content).hexdigest()
+        
+        # Create canonical request
+        canonical_uri = f"/{self.bucket_name}/{object_key}"
+        canonical_querystring = ""
+        canonical_headers = f"host:{self.account_id}.r2.cloudflarestorage.com\nx-amz-content-sha256:{content_hash}\nx-amz-date:{amz_date}\n"
+        signed_headers = "host;x-amz-content-sha256;x-amz-date"
+        
+        canonical_request = f"{method}\n{canonical_uri}\n{canonical_querystring}\n{canonical_headers}\n{signed_headers}\n{content_hash}"
+        
+        # Create string to sign
+        algorithm = "AWS4-HMAC-SHA256"
+        credential_scope = f"{date_stamp}/{region}/{service}/aws4_request"
+        string_to_sign = f"{algorithm}\n{amz_date}\n{credential_scope}\n{hashlib.sha256(canonical_request.encode('utf-8')).hexdigest()}"
+        
+        # Create signing key
+        def sign(key, msg):
+            return hmac.new(key, msg.encode('utf-8'), hashlib.sha256).digest()
+        
+        k_date = sign(('AWS4' + self.secret_access_key).encode('utf-8'), date_stamp)
+        k_region = sign(k_date, region)
+        k_service = sign(k_region, service)
+        k_signing = sign(k_service, 'aws4_request')
+        
+        signature = hmac.new(k_signing, string_to_sign.encode('utf-8'), hashlib.sha256).hexdigest()
+        
+        authorization_header = f"{algorithm} Credential={self.access_key_id}/{credential_scope}, SignedHeaders={signed_headers}, Signature={signature}"
+        
+        headers = {
+            'Host': f"{self.account_id}.r2.cloudflarestorage.com",
+            'x-amz-date': amz_date,
+            'x-amz-content-sha256': content_hash,
+            'Authorization': authorization_header,
+            'Content-Type': 'application/pdf'
+        }
+        
+        # Make request with SSL verification disabled
+        response = requests.put(url, data=file_content, headers=headers, verify=False, timeout=60)
+        
+        if response.status_code in [200, 201]:
+            print(f"✓ Fallback upload successful: {response.status_code}")
+            if self.public_url:
+                return f"{self.public_url}/{object_key}"
+            return url
+        else:
+            print(f"✗ Fallback upload failed: {response.status_code} - {response.text}")
             return None
     
     def delete_pdf(self, object_key: str) -> bool:
