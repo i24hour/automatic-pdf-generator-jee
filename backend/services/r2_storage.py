@@ -194,9 +194,52 @@ class R2StorageService:
                 return url
             else:
                 print(f"✗ Fallback upload failed: {response.status_code} - {response.text}")
-                return None
+                # Try curl as last resort
+                return self._upload_with_curl(url, file_path, headers)
         except Exception as e:
             print(f"✗ Fallback upload exception: {e}")
+            # Try curl as last resort
+            return self._upload_with_curl(url, file_path, headers)
+
+    def _upload_with_curl(self, url: str, file_path: str, headers: dict) -> Optional[str]:
+        """Last resort: Upload using system curl to bypass Python SSL limitations."""
+        import subprocess
+        print("Trying curl upload as last resort...")
+        
+        try:
+            # Construct curl command
+            cmd = ["curl", "-X", "PUT", "-s", "-w", "%{http_code}", "--insecure"]
+            
+            # Add headers
+            for k, v in headers.items():
+                cmd.extend(["-H", f"{k}: {v}"])
+            
+            # Add file
+            cmd.extend(["--data-binary", f"@{file_path}"])
+            
+            # Add URL
+            cmd.append(url)
+            
+            # Run curl
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+            
+            # Check status code (last line of output due to -w %{http_code})
+            output = result.stdout.strip()
+            status_code = output[-3:] if len(output) >= 3 else "000"
+            
+            if status_code in ["200", "201"]:
+                print(f"✓ Curl upload successful: {status_code}")
+                # Extract object key from URL for return value
+                object_key = url.split('/')[-1]
+                if self.public_url:
+                    return f"{self.public_url}/{object_key}"
+                return url
+            else:
+                print(f"✗ Curl upload failed: {status_code} - {result.stderr}")
+                return None
+                
+        except Exception as e:
+            print(f"✗ Curl upload exception: {e}")
             return None
     
     def delete_pdf(self, object_key: str) -> bool:
