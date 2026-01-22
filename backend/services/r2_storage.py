@@ -104,15 +104,29 @@ class R2StorageService:
                 return None
     
     def _upload_with_requests(self, file_path: str, object_key: str) -> Optional[str]:
-        """Fallback upload using requests library with manual AWS4 signing."""
+        """Fallback upload using requests library with manual AWS4 signing and custom SSL."""
         import requests
         import hashlib
         import hmac
+        import ssl
         from datetime import datetime
+        from requests.adapters import HTTPAdapter
+        from urllib3.util.ssl_ import create_urllib3_context
         
         # Disable SSL warnings
         import urllib3
         urllib3.disable_warnings()
+        
+        # Create a custom SSL context with legacy renegotiation enabled
+        class CustomSSLAdapter(HTTPAdapter):
+            def init_poolmanager(self, *args, **kwargs):
+                ctx = create_urllib3_context()
+                ctx.check_hostname = False
+                ctx.verify_mode = ssl.CERT_NONE
+                # Enable legacy server connect for older TLS versions
+                ctx.options |= 0x4  # SSL_OP_LEGACY_SERVER_CONNECT
+                kwargs['ssl_context'] = ctx
+                return super().init_poolmanager(*args, **kwargs)
         
         endpoint = f"https://{self.account_id}.r2.cloudflarestorage.com"
         url = f"{endpoint}/{self.bucket_name}/{object_key}"
@@ -166,16 +180,23 @@ class R2StorageService:
             'Content-Type': 'application/pdf'
         }
         
-        # Make request with SSL verification disabled
-        response = requests.put(url, data=file_content, headers=headers, verify=False, timeout=60)
+        # Try with custom SSL adapter
+        session = requests.Session()
+        session.mount('https://', CustomSSLAdapter())
         
-        if response.status_code in [200, 201]:
-            print(f"✓ Fallback upload successful: {response.status_code}")
-            if self.public_url:
-                return f"{self.public_url}/{object_key}"
-            return url
-        else:
-            print(f"✗ Fallback upload failed: {response.status_code} - {response.text}")
+        try:
+            response = session.put(url, data=file_content, headers=headers, verify=False, timeout=60)
+            
+            if response.status_code in [200, 201]:
+                print(f"✓ Fallback upload successful: {response.status_code}")
+                if self.public_url:
+                    return f"{self.public_url}/{object_key}"
+                return url
+            else:
+                print(f"✗ Fallback upload failed: {response.status_code} - {response.text}")
+                return None
+        except Exception as e:
+            print(f"✗ Fallback upload exception: {e}")
             return None
     
     def delete_pdf(self, object_key: str) -> bool:
