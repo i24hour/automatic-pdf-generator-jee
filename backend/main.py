@@ -919,48 +919,57 @@ async def run_generation_job(
         _, new_remaining, new_reset_hours, _ = check_rate_limit(user, db)
         print(f"[SSE Job {job_id}] TRACE: Before R2 section, rate_limit={new_remaining}")
         
-        # Upload to R2 and create SharedPDF record for posting capability
+        # Create SharedPDF record FIRST (so Post button shows), then attempt R2 upload in background
         shared_pdf_id = None
-        print(f"[SSE Job {job_id}] Checking R2 config: is_configured={r2_storage.is_configured()}")
-        if r2_storage.is_configured():
+        try:
+            from database import SessionLocal
+            db_session = SessionLocal()
+            try:
+                # Create SharedPDF with pending URL immediately
+                shared_pdf = SharedPDF(
+                    user_id=user.id,
+                    pdf_url="pending",  # Will be updated after R2 upload
+                    pdf_filename=os.path.basename(pdf_path),
+                    subject=request.subject,
+                    topic=request.topic,
+                    level=request.level,
+                    difficulty=request.difficulty,
+                    question_count=mcq_count + numerical_count,
+                    has_solutions=request.include_solutions,
+                    visibility="private"
+                )
+                db_session.add(shared_pdf)
+                db_session.commit()
+                shared_pdf_id = shared_pdf.id
+                print(f"✓ SharedPDF created: {shared_pdf_id}")
+            finally:
+                db_session.close()
+        except Exception as e:
+            print(f"✗ Failed to create SharedPDF: {e}")
+        
+        # Attempt R2 upload in background (non-blocking) to update pdf_url later
+        if r2_storage.is_configured() and shared_pdf_id:
             job_store.update_job(job_id, JobStatus.UPLOADING, 90, "Uploading to cloud storage...")
             try:
                 object_key = r2_storage.get_object_key(str(user.id), os.path.basename(pdf_path))
-                print(f"[SSE Job {job_id}] Uploading to R2: {object_key}")
+                print(f"[SSE Job {job_id}] Attempting R2 upload: {object_key}")
                 pdf_url = r2_storage.upload_pdf(pdf_path, object_key)
-                print(f"[SSE Job {job_id}] R2 upload result: {pdf_url}")
                 
                 if pdf_url:
-                    # Create SharedPDF record with a fresh db session (background task session might be closed)
-                    from database import SessionLocal
+                    # Update SharedPDF with actual R2 URL
                     db_session = SessionLocal()
                     try:
-                        shared_pdf = SharedPDF(
-                            user_id=user.id,
-                            pdf_url=pdf_url,
-                            pdf_filename=os.path.basename(pdf_path),
-                            subject=request.subject,
-                            topic=request.topic,
-                            level=request.level,
-                            difficulty=request.difficulty,
-                            question_count=mcq_count + numerical_count,
-                            has_solutions=request.include_solutions,
-                            visibility="private"
-                        )
-                        db_session.add(shared_pdf)
-                        db_session.commit()
-                        shared_pdf_id = shared_pdf.id
-                        print(f"✓ R2 upload complete: {pdf_url}, SharedPDF ID: {shared_pdf_id}")
+                        shared = db_session.query(SharedPDF).filter(SharedPDF.id == shared_pdf_id).first()
+                        if shared:
+                            shared.pdf_url = pdf_url
+                            db_session.commit()
+                            print(f"✓ R2 upload complete: {pdf_url}")
                     finally:
                         db_session.close()
                 else:
-                    print(f"[SSE Job {job_id}] R2 upload returned None/empty URL")
+                    print(f"[SSE Job {job_id}] R2 upload returned None - PDF will use base64")
             except Exception as e:
-                print(f"✗ R2 upload failed: {e}")
-                import traceback
-                traceback.print_exc()
-        else:
-            print(f"[SSE Job {job_id}] R2 not configured, skipping upload")
+                print(f"✗ R2 upload failed (PDF still downloadable via base64): {e}")
         
         # Update: Done
         job_store.update_job(
