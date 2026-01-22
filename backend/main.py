@@ -916,6 +916,35 @@ async def run_generation_job(
         # Get updated rate limit
         _, new_remaining, new_reset_hours, _ = check_rate_limit(user, db)
         
+        # Upload to R2 and create SharedPDF record for posting capability
+        shared_pdf_id = None
+        if r2_storage.is_configured():
+            job_store.update_job(job_id, JobStatus.UPLOADING, 90, "Uploading to cloud storage...")
+            try:
+                object_key = r2_storage.get_object_key(str(user.id), os.path.basename(pdf_path))
+                pdf_url = r2_storage.upload_pdf(pdf_path, object_key)
+                
+                if pdf_url:
+                    # Create SharedPDF record
+                    shared_pdf = SharedPDF(
+                        user_id=user.id,
+                        pdf_url=pdf_url,
+                        pdf_filename=os.path.basename(pdf_path),
+                        subject=request.subject,
+                        topic=request.topic,
+                        level=request.level,
+                        difficulty=request.difficulty,
+                        question_count=mcq_count + numerical_count,
+                        has_solutions=request.include_solutions,
+                        visibility="private"
+                    )
+                    db.add(shared_pdf)
+                    db.commit()
+                    shared_pdf_id = shared_pdf.id
+                    print(f"✓ R2 upload complete: {pdf_url}, SharedPDF ID: {shared_pdf_id}")
+            except Exception as e:
+                print(f"✗ R2 upload failed: {e}")
+        
         # Update: Done
         job_store.update_job(
             job_id,
@@ -927,6 +956,7 @@ async def run_generation_job(
                 "message": f"Generated {len(questions)} questions successfully!",
                 "pdf_filename": os.path.basename(pdf_path),
                 "pdf_base64": pdf_base64,
+                "shared_pdf_id": shared_pdf_id,
                 "total_mcq": total_mcq,
                 "total_numerical": total_numerical,
                 "rate_limit_remaining": new_remaining,
