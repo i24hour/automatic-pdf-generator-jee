@@ -158,32 +158,31 @@
 \end{tabular}
 \end{table}
 
-% --- SOLUTIONS SECTION (conditional) ---
+
+% --- SOLUTIONS SECTION (FIITJEE Style) ---
 \BLOCK{ if include_solutions }
 \newpage
 
 \begin{center}
-    {\Large \textbf{DETAILED SOLUTIONS}}
+    {\Large \textbf{Hints \& Solutions}}\\[0.1cm]
+    {\normalsize \VAR{subject}}
 \end{center}
-\vspace{0.5cm}
+\vspace{0.3cm}
 
-\begin{enumerate}[label=\textbf{Q.\arabic*.}, itemsep=15pt, leftmargin=*]
+\begin{multicols}{2}
+\raggedcolumns
+\small
 \BLOCK{ for q in questions }
-    \item \textbf{Answer: \VAR{q.answer}}
-    \BLOCK{ if q.solution }
-    
-    \textit{Solution:}
-    
-    \VAR{q.solution}
-    \BLOCK{ else }
-    
-    \textit{Correct option is \VAR{q.answer}.}
-    \BLOCK{ endif }
-    
-    \vspace{0.2cm}
-    \hrule
+\noindent\textbf{\VAR{loop.index}.} \hspace{0.3em} \textbf{\VAR{q.answer}}\\[2pt]
+\BLOCK{ if q.solution }
+\textbf{Sol.} \VAR{q.solution}
+\BLOCK{ else }
+\textbf{Sol.} Correct option is \VAR{q.answer}.
+\BLOCK{ endif }
+
+\vspace{0.4cm}
 \BLOCK{ endfor }
-\end{enumerate}
+\end{multicols}
 \BLOCK{ endif }
 
 \end{document}
