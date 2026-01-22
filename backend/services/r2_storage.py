@@ -207,8 +207,8 @@ class R2StorageService:
         print("Trying curl upload as last resort...")
         
         try:
-            # Construct curl command
-            cmd = ["curl", "-X", "PUT", "-s", "-w", "%{http_code}", "--insecure"]
+            # Construct curl command - verbose, show error, insecure
+            cmd = ["curl", "-v", "-X", "PUT", "--insecure"]
             
             # Add headers
             for k, v in headers.items():
@@ -220,22 +220,27 @@ class R2StorageService:
             # Add URL
             cmd.append(url)
             
+            print(f"Running curl command: {' '.join(cmd)}")
+            
             # Run curl
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
             
-            # Check status code (last line of output due to -w %{http_code})
-            output = result.stdout.strip()
-            status_code = output[-3:] if len(output) >= 3 else "000"
+            print(f"Curl stdout: {result.stdout}")
+            print(f"Curl stderr: {result.stderr}")
             
-            if status_code in ["200", "201"]:
-                print(f"✓ Curl upload successful: {status_code}")
+            # Check if successful (200 or 201 in stderr or stdout)
+            # Since we removed -w %{http_code}, we check logs or assume success if no error
+            # But better to check for "HTTP/1.1 200 OK" or "HTTP/2 200" in stderr (verbose output goes to stderr)
+            
+            if "200 OK" in result.stderr or "201 Created" in result.stderr or "HTTP/1.1 200" in result.stderr:
+                print("✓ Curl upload successful (detected 200/201 in verbose output)")
                 # Extract object key from URL for return value
                 object_key = url.split('/')[-1]
                 if self.public_url:
                     return f"{self.public_url}/{object_key}"
                 return url
             else:
-                print(f"✗ Curl upload failed: {status_code} - {result.stderr}")
+                print("✗ Curl upload failed (no 200/201 found in output)")
                 return None
                 
         except Exception as e:
