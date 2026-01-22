@@ -918,11 +918,14 @@ async def run_generation_job(
         
         # Upload to R2 and create SharedPDF record for posting capability
         shared_pdf_id = None
+        print(f"[SSE Job {job_id}] Checking R2 config: is_configured={r2_storage.is_configured()}")
         if r2_storage.is_configured():
             job_store.update_job(job_id, JobStatus.UPLOADING, 90, "Uploading to cloud storage...")
             try:
                 object_key = r2_storage.get_object_key(str(user.id), os.path.basename(pdf_path))
+                print(f"[SSE Job {job_id}] Uploading to R2: {object_key}")
                 pdf_url = r2_storage.upload_pdf(pdf_path, object_key)
+                print(f"[SSE Job {job_id}] R2 upload result: {pdf_url}")
                 
                 if pdf_url:
                     # Create SharedPDF record with a fresh db session (background task session might be closed)
@@ -947,10 +950,14 @@ async def run_generation_job(
                         print(f"✓ R2 upload complete: {pdf_url}, SharedPDF ID: {shared_pdf_id}")
                     finally:
                         db_session.close()
+                else:
+                    print(f"[SSE Job {job_id}] R2 upload returned None/empty URL")
             except Exception as e:
                 print(f"✗ R2 upload failed: {e}")
                 import traceback
                 traceback.print_exc()
+        else:
+            print(f"[SSE Job {job_id}] R2 not configured, skipping upload")
         
         # Update: Done
         job_store.update_job(
