@@ -925,25 +925,32 @@ async def run_generation_job(
                 pdf_url = r2_storage.upload_pdf(pdf_path, object_key)
                 
                 if pdf_url:
-                    # Create SharedPDF record
-                    shared_pdf = SharedPDF(
-                        user_id=user.id,
-                        pdf_url=pdf_url,
-                        pdf_filename=os.path.basename(pdf_path),
-                        subject=request.subject,
-                        topic=request.topic,
-                        level=request.level,
-                        difficulty=request.difficulty,
-                        question_count=mcq_count + numerical_count,
-                        has_solutions=request.include_solutions,
-                        visibility="private"
-                    )
-                    db.add(shared_pdf)
-                    db.commit()
-                    shared_pdf_id = shared_pdf.id
-                    print(f"✓ R2 upload complete: {pdf_url}, SharedPDF ID: {shared_pdf_id}")
+                    # Create SharedPDF record with a fresh db session (background task session might be closed)
+                    from database import SessionLocal
+                    db_session = SessionLocal()
+                    try:
+                        shared_pdf = SharedPDF(
+                            user_id=user.id,
+                            pdf_url=pdf_url,
+                            pdf_filename=os.path.basename(pdf_path),
+                            subject=request.subject,
+                            topic=request.topic,
+                            level=request.level,
+                            difficulty=request.difficulty,
+                            question_count=mcq_count + numerical_count,
+                            has_solutions=request.include_solutions,
+                            visibility="private"
+                        )
+                        db_session.add(shared_pdf)
+                        db_session.commit()
+                        shared_pdf_id = shared_pdf.id
+                        print(f"✓ R2 upload complete: {pdf_url}, SharedPDF ID: {shared_pdf_id}")
+                    finally:
+                        db_session.close()
             except Exception as e:
                 print(f"✗ R2 upload failed: {e}")
+                import traceback
+                traceback.print_exc()
         
         # Update: Done
         job_store.update_job(

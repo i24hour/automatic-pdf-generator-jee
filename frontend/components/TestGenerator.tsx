@@ -399,6 +399,7 @@ export default function TestGenerator() {
                         "generating_numericals": 3,
                         "verifying": 4,
                         "compiling_pdf": 5,
+                        "uploading": 5,
                         "done": 6,
                         "failed": 0,
                     };
