@@ -903,10 +903,12 @@ async def run_generation_job(
         
         # Record generation
         record_generation(user, request, os.path.basename(pdf_path), db)
+        print(f"[SSE Job {job_id}] TRACE: After record_generation")
         
         # Read PDF and encode
         with open(pdf_path, "rb") as f:
             pdf_base64 = base64.b64encode(f.read()).decode("utf-8")
+        print(f"[SSE Job {job_id}] TRACE: After PDF encoding, size={len(pdf_base64)}")
         
         # Count questions
         questions = llm_result.get("questions", [])
@@ -915,6 +917,7 @@ async def run_generation_job(
         
         # Get updated rate limit
         _, new_remaining, new_reset_hours, _ = check_rate_limit(user, db)
+        print(f"[SSE Job {job_id}] TRACE: Before R2 section, rate_limit={new_remaining}")
         
         # Upload to R2 and create SharedPDF record for posting capability
         shared_pdf_id = None
