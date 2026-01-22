@@ -69,6 +69,12 @@ export default function TestGenerator() {
     const [difficulty, setDifficulty] = useState("Medium");
     const [numMCQs, setNumMCQs] = useState(20);
     const [numNumericals, setNumNumericals] = useState(5);
+    // CBSE Pattern state (for Boards level)
+    const [cbseVeryShort, setCbseVeryShort] = useState(4);
+    const [cbseShort, setCbseShort] = useState(4);
+    const [cbseLong, setCbseLong] = useState(2);
+    const [cbseCaseBased, setCbseCaseBased] = useState(1);
+    const [cbseNumericals, setCbseNumericals] = useState(4);
     const [includeSolutions, setIncludeSolutions] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [result, setResult] = useState<GenerateResponse | null>(null);
@@ -307,6 +313,20 @@ export default function TestGenerator() {
         }, 1000);
 
         try {
+            // Calculate question counts based on level
+            let requestMcqs = numMCQs;
+            let requestNumericals = numNumericals;
+            let requestTotal = questionCount;
+
+            if (level === "Boards") {
+                // For Boards: combine CBSE pattern
+                // Very Short + Short + Long + Case-Based = MCQ-style (text answers)
+                // Numericals stay as numericals
+                requestMcqs = cbseVeryShort + cbseShort + cbseLong + cbseCaseBased;
+                requestNumericals = cbseNumericals;
+                requestTotal = requestMcqs + requestNumericals;
+            }
+
             // Step 1: Start the job
             const startResponse = await authFetch(`${API_BASE_URL}/api/generate-sse/start`, {
                 method: "POST",
@@ -316,11 +336,11 @@ export default function TestGenerator() {
                 body: JSON.stringify({
                     subject,
                     topic: topic.trim(),
-                    total_questions: questionCount,
+                    total_questions: requestTotal,
                     level,
                     difficulty,
-                    num_mcqs: numMCQs,
-                    num_numerical: numNumericals,
+                    num_mcqs: requestMcqs,
+                    num_numerical: requestNumericals,
                     include_solutions: includeSolutions,
                 }),
             });
@@ -815,44 +835,90 @@ export default function TestGenerator() {
                         <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                             {level === "Boards" ? "CBSE Pattern" : `${level} Pattern`}
                         </span>
-                        <span className="text-xs text-gray-400">Total: {numMCQs + numNumericals} (max 50)</span>
+                        <span className="text-xs text-gray-400">
+                            Total: {level === "Boards"
+                                ? cbseVeryShort + cbseShort + cbseLong + cbseCaseBased + cbseNumericals
+                                : numMCQs + numNumericals} (max 50)
+                        </span>
                     </div>
 
                     {/* Boards Pattern */}
                     {level === "Boards" && (
                         <div className="space-y-3">
                             <div className="grid grid-cols-2 gap-3">
-                                {[
-                                    { label: "Very Short Answer (1-2M)", defaultVal: 4 },
-                                    { label: "Short Answer (2-3M)", defaultVal: 4 },
-                                    { label: "Long Answer (5M)", defaultVal: 2 },
-                                    { label: "Case-Based", defaultVal: 1 },
-                                ].map((item) => (
-                                    <div key={item.label} className="relative">
-                                        <input
-                                            type="number"
-                                            min={0}
-                                            max={20}
-                                            defaultValue={item.defaultVal}
-                                            className="peer w-full px-3 pt-5 pb-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-black text-gray-900 dark:text-white"
-                                            placeholder=" "
-                                        />
-                                        <label className="absolute left-3 top-1 text-[10px] text-indigo-600 font-medium transition-all peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-xs peer-placeholder-shown:text-gray-400 peer-placeholder-shown:font-normal peer-focus:top-1 peer-focus:text-[10px] peer-focus:text-indigo-600 peer-focus:font-medium">
-                                            {item.label}
-                                        </label>
-                                    </div>
-                                ))}
+                                <div className="relative">
+                                    <input
+                                        type="number"
+                                        min={0}
+                                        max={20}
+                                        value={cbseVeryShort}
+                                        onChange={(e) => setCbseVeryShort(parseInt(e.target.value) || 0)}
+                                        disabled={isLoading}
+                                        className="peer w-full px-3 pt-5 pb-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-black text-gray-900 dark:text-white"
+                                        placeholder=" "
+                                    />
+                                    <label className="absolute left-3 top-1 text-[10px] text-indigo-600 font-medium">
+                                        Very Short Answer (1-2M)
+                                    </label>
+                                </div>
+                                <div className="relative">
+                                    <input
+                                        type="number"
+                                        min={0}
+                                        max={20}
+                                        value={cbseShort}
+                                        onChange={(e) => setCbseShort(parseInt(e.target.value) || 0)}
+                                        disabled={isLoading}
+                                        className="peer w-full px-3 pt-5 pb-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-black text-gray-900 dark:text-white"
+                                        placeholder=" "
+                                    />
+                                    <label className="absolute left-3 top-1 text-[10px] text-indigo-600 font-medium">
+                                        Short Answer (2-3M)
+                                    </label>
+                                </div>
+                                <div className="relative">
+                                    <input
+                                        type="number"
+                                        min={0}
+                                        max={20}
+                                        value={cbseLong}
+                                        onChange={(e) => setCbseLong(parseInt(e.target.value) || 0)}
+                                        disabled={isLoading}
+                                        className="peer w-full px-3 pt-5 pb-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-black text-gray-900 dark:text-white"
+                                        placeholder=" "
+                                    />
+                                    <label className="absolute left-3 top-1 text-[10px] text-indigo-600 font-medium">
+                                        Long Answer (5M)
+                                    </label>
+                                </div>
+                                <div className="relative">
+                                    <input
+                                        type="number"
+                                        min={0}
+                                        max={20}
+                                        value={cbseCaseBased}
+                                        onChange={(e) => setCbseCaseBased(parseInt(e.target.value) || 0)}
+                                        disabled={isLoading}
+                                        className="peer w-full px-3 pt-5 pb-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-black text-gray-900 dark:text-white"
+                                        placeholder=" "
+                                    />
+                                    <label className="absolute left-3 top-1 text-[10px] text-indigo-600 font-medium">
+                                        Case-Based
+                                    </label>
+                                </div>
                             </div>
                             <div className="relative">
                                 <input
                                     type="number"
                                     min={0}
                                     max={20}
-                                    defaultValue={4}
+                                    value={cbseNumericals}
+                                    onChange={(e) => setCbseNumericals(parseInt(e.target.value) || 0)}
+                                    disabled={isLoading}
                                     className="peer w-full px-3 pt-5 pb-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-black text-gray-900 dark:text-white"
                                     placeholder=" "
                                 />
-                                <label className="absolute left-3 top-1 text-[10px] text-indigo-600 font-medium transition-all peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-xs peer-placeholder-shown:text-gray-400 peer-placeholder-shown:font-normal peer-focus:top-1 peer-focus:text-[10px] peer-focus:text-indigo-600 peer-focus:font-medium">
+                                <label className="absolute left-3 top-1 text-[10px] text-indigo-600 font-medium">
                                     Numericals (3-5M)
                                 </label>
                             </div>
