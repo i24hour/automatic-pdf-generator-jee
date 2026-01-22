@@ -12,6 +12,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     texlive-pictures \
     texlive-science \
     lmodern \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better caching
