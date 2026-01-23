@@ -2,6 +2,7 @@ import os
 from google.cloud import storage
 from typing import Optional
 import datetime
+import uuid
 
 class GCSStorage:
     def __init__(self):
@@ -24,8 +25,9 @@ class GCSStorage:
     def get_object_key(self, user_id: str, filename: str) -> str:
         """Generate a unique object key for the file."""
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        # Structure: pdfs/user_id/timestamp_filename
-        return f"pdfs/{user_id}/{timestamp}_{filename}"
+        unique_id = uuid.uuid4().hex[:8]
+        # Structure: pdfs/user_id/timestamp_uuid_filename
+        return f"pdfs/{user_id}/{timestamp}_{unique_id}_{filename}"
 
     def upload_pdf(self, file_path: str, object_key: str) -> Optional[str]:
         """Upload a PDF file to GCS and return the public URL."""
