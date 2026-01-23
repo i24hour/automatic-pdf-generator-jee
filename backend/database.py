@@ -23,12 +23,12 @@ if DATABASE_URL.startswith("sqlite"):
         connect_args={"check_same_thread": False}
     )
 else:
-    # PostgreSQL for production - use small pool to avoid exhausting Heroku connections
+    # PostgreSQL for production
     engine = create_engine(
         DATABASE_URL, 
         pool_pre_ping=True,
-        pool_size=2,  # Small pool to avoid Heroku connection limits
-        max_overflow=3,  # Allow up to 5 total connections
+        pool_size=10,  # Increased from 2 to handle more concurrency
+        max_overflow=20,  # Increased overflow
         pool_recycle=300,  # Recycle connections every 5 min
         connect_args={"sslmode": "require"}
     )
@@ -74,21 +74,50 @@ def init_db():
                 conn.execute(text("ALTER TABLE users ADD COLUMN bonus_limit INTEGER DEFAULT 0"))
                 conn.commit()
             except Exception:
-                conn.rollback()  # Column already exists
+                conn.rollback()
             
             # Add phone column to users if it doesn't exist
             try:
                 conn.execute(text("ALTER TABLE users ADD COLUMN phone VARCHAR(20)"))
                 conn.commit()
             except Exception:
-                conn.rollback()  # Column already exists
+                conn.rollback()
             
             # Add expires_at column to promo_codes if it doesn't exist
             try:
                 conn.execute(text("ALTER TABLE promo_codes ADD COLUMN expires_at TIMESTAMP WITH TIME ZONE"))
                 conn.commit()
             except Exception:
-                conn.rollback()  # Column already exists
+                conn.rollback()
+
+            # Add total_posts to users
+            try:
+                conn.execute(text("ALTER TABLE users ADD COLUMN total_posts INTEGER DEFAULT 0"))
+                conn.commit()
+            except Exception:
+                conn.rollback()
+
+            # Add total_likes_received to users
+            try:
+                conn.execute(text("ALTER TABLE users ADD COLUMN total_likes_received INTEGER DEFAULT 0"))
+                conn.commit()
+            except Exception:
+                conn.rollback()
+
+            # Add monthly_bonus_limit to users
+            try:
+                conn.execute(text("ALTER TABLE users ADD COLUMN monthly_bonus_limit INTEGER DEFAULT 0"))
+                conn.commit()
+            except Exception:
+                conn.rollback()
+
+            # Add last_bonus_month to users
+            try:
+                conn.execute(text("ALTER TABLE users ADD COLUMN last_bonus_month VARCHAR(10)"))
+                conn.commit()
+            except Exception:
+                conn.rollback()
+                
     except Exception as e:
         print(f"Migration warning (can be ignored if columns exist): {e}")
 
