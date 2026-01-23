@@ -194,57 +194,53 @@ class R2StorageService:
                 return url
             else:
                 print(f"✗ Fallback upload failed: {response.status_code} - {response.text}")
-                # Try curl as last resort
-                return self._upload_with_curl(url, file_path, headers)
+                # Try AWS CLI as last resort
+                return self._upload_with_awscli(url, file_path, object_key)
         except Exception as e:
             print(f"✗ Fallback upload exception: {e}")
-            # Try curl as last resort
-            return self._upload_with_curl(url, file_path, headers)
+            # Try AWS CLI as last resort
+            return self._upload_with_awscli(url, file_path, object_key)
 
-    def _upload_with_curl(self, url: str, file_path: str, headers: dict) -> Optional[str]:
-        """Last resort: Upload using system curl to bypass Python SSL limitations."""
+    def _upload_with_awscli(self, url: str, file_path: str, object_key: str) -> Optional[str]:
+        """Last resort: Upload using AWS CLI to bypass Python SSL limitations."""
         import subprocess
-        print("Trying curl upload as last resort...")
+        print("Trying AWS CLI upload as last resort...")
         
         try:
-            # Construct curl command - verbose, show error, insecure
-            cmd = ["curl", "-v", "-X", "PUT", "--insecure"]
+            # Construct AWS CLI command
+            # We use the s3api put-object or s3 cp command
+            # s3 cp is higher level and easier
             
-            # Add headers
-            for k, v in headers.items():
-                cmd.extend(["-H", f"{k}: {v}"])
+            # Need to set env vars for AWS CLI if not already set, but Cloud Run env vars should work
+            # R2 requires endpoint url
+            endpoint_url = f"https://{self.account_id}.r2.cloudflarestorage.com"
+            s3_uri = f"s3://{self.bucket_name}/{object_key}"
             
-            # Add file
-            cmd.extend(["--data-binary", f"@{file_path}"])
+            cmd = [
+                "aws", "s3", "cp", file_path, s3_uri,
+                "--endpoint-url", endpoint_url,
+                "--no-verify-ssl"  # The magic flag
+            ]
             
-            # Add URL
-            cmd.append(url)
+            print(f"Running AWS CLI command: {' '.join(cmd)}")
             
-            print(f"Running curl command: {' '.join(cmd)}")
-            
-            # Run curl
+            # Run aws cli
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
             
-            print(f"Curl stdout: {result.stdout}")
-            print(f"Curl stderr: {result.stderr}")
+            print(f"AWS CLI stdout: {result.stdout}")
+            print(f"AWS CLI stderr: {result.stderr}")
             
-            # Check if successful (200 or 201 in stderr or stdout)
-            # Since we removed -w %{http_code}, we check logs or assume success if no error
-            # But better to check for "HTTP/1.1 200 OK" or "HTTP/2 200" in stderr (verbose output goes to stderr)
-            
-            if "200 OK" in result.stderr or "201 Created" in result.stderr or "HTTP/1.1 200" in result.stderr:
-                print("✓ Curl upload successful (detected 200/201 in verbose output)")
-                # Extract object key from URL for return value
-                object_key = url.split('/')[-1]
+            if result.returncode == 0:
+                print("✓ AWS CLI upload successful")
                 if self.public_url:
                     return f"{self.public_url}/{object_key}"
                 return url
             else:
-                print("✗ Curl upload failed (no 200/201 found in output)")
+                print(f"✗ AWS CLI upload failed with code {result.returncode}")
                 return None
                 
         except Exception as e:
-            print(f"✗ Curl upload exception: {e}")
+            print(f"✗ AWS CLI upload exception: {e}")
             return None
     
     def delete_pdf(self, object_key: str) -> bool:
