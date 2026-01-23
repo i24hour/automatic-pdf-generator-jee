@@ -27,8 +27,8 @@ else:
     engine = create_engine(
         DATABASE_URL, 
         pool_pre_ping=True,
-        pool_size=10,  # Increased from 2 to handle more concurrency
-        max_overflow=20,  # Increased overflow
+        pool_size=20,  # Increased to 20 as requested
+        max_overflow=30,  # Increased overflow to 30 as requested
         pool_recycle=300,  # Recycle connections every 5 min
         connect_args={"sslmode": "require"}
     )
