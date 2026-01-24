@@ -20,7 +20,8 @@ import {
     FileText,
     Copy,
     Check,
-    ChevronRight
+    ChevronRight,
+    Download
 } from "lucide-react";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -240,8 +241,8 @@ export default function SettingsPage() {
                         className="bg-gray-50 dark:bg-[#1a1d21] rounded-xl p-4 border border-gray-200 dark:border-[#2f3336]"
                     >
                         <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                                <h3 className="font-medium text-gray-900 dark:text-white">
+                            <div className="flex-1 cursor-pointer" onClick={() => window.open(pdf.pdf_url, '_blank')}>
+                                <h3 className="font-medium text-gray-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
                                     {pdf.topic}
                                 </h3>
                                 <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -252,27 +253,38 @@ export default function SettingsPage() {
                                     <span>📥 {pdf.download_count}</span>
                                 </div>
                             </div>
-                            {showLink && (
+                            <div className="flex gap-2">
+                                {/* Download Button */}
                                 <button
-                                    onClick={() => pdf.slug
-                                        ? copyToClipboard(`https://infinitest.tech/pdf/${pdf.slug}`, pdf.slug)
-                                        : generateLink(pdf.id)
-                                    }
-                                    className="flex items-center gap-1 px-3 py-1.5 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-lg text-sm hover:bg-indigo-200 dark:hover:bg-indigo-900/50 transition-colors"
+                                    onClick={() => window.open(pdf.pdf_url, '_blank')}
+                                    className="flex items-center gap-1 px-3 py-1.5 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-lg text-sm hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors"
+                                    title="Download PDF"
                                 >
-                                    {copiedSlug === pdf.slug ? (
-                                        <>
-                                            <Check className="w-4 h-4" />
-                                            Copied!
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Copy className="w-4 h-4" />
-                                            {pdf.slug ? "Copy Link" : "Get Link"}
-                                        </>
-                                    )}
+                                    <Download className="w-4 h-4" />
                                 </button>
-                            )}
+                                {/* Copy Link Button (for unlisted) */}
+                                {showLink && (
+                                    <button
+                                        onClick={() => pdf.slug
+                                            ? copyToClipboard(`https://infinitest.tech/pdf/${pdf.slug}`, pdf.slug)
+                                            : generateLink(pdf.id)
+                                        }
+                                        className="flex items-center gap-1 px-3 py-1.5 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-lg text-sm hover:bg-indigo-200 dark:hover:bg-indigo-900/50 transition-colors"
+                                    >
+                                        {copiedSlug === pdf.slug ? (
+                                            <>
+                                                <Check className="w-4 h-4" />
+                                                Copied!
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Copy className="w-4 h-4" />
+                                                {pdf.slug ? "Copy Link" : "Get Link"}
+                                            </>
+                                        )}
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     </div>
                 ))}
@@ -293,8 +305,8 @@ export default function SettingsPage() {
                         key={section.id}
                         onClick={() => setActiveSection(section.id)}
                         className={`flex items-center gap-2 px-4 py-2 rounded-xl whitespace-nowrap transition-all ${activeSection === section.id
-                                ? "bg-indigo-600 text-white"
-                                : "bg-gray-100 dark:bg-[#1a1d21] text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-[#2f3336]"
+                            ? "bg-indigo-600 text-white"
+                            : "bg-gray-100 dark:bg-[#1a1d21] text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-[#2f3336]"
                             }`}
                     >
                         <section.icon className="w-4 h-4" />
@@ -410,8 +422,8 @@ export default function SettingsPage() {
                             <button
                                 onClick={() => theme !== "light" && toggleTheme()}
                                 className={`p-4 rounded-xl border-2 transition-all ${theme === "light"
-                                        ? "border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20"
-                                        : "border-gray-200 dark:border-[#2f3336] hover:border-gray-300"
+                                    ? "border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20"
+                                    : "border-gray-200 dark:border-[#2f3336] hover:border-gray-300"
                                     }`}
                             >
                                 <Sun className="w-8 h-8 mx-auto mb-2 text-orange-500" />
@@ -421,8 +433,8 @@ export default function SettingsPage() {
                             <button
                                 onClick={() => theme !== "dark" && toggleTheme()}
                                 className={`p-4 rounded-xl border-2 transition-all ${theme === "dark"
-                                        ? "border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20"
-                                        : "border-gray-200 dark:border-[#2f3336] hover:border-gray-300"
+                                    ? "border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20"
+                                    : "border-gray-200 dark:border-[#2f3336] hover:border-gray-300"
                                     }`}
                             >
                                 <Moon className="w-8 h-8 mx-auto mb-2 text-indigo-500" />
@@ -452,8 +464,8 @@ export default function SettingsPage() {
                             <button
                                 onClick={toggleFreshQuestions}
                                 className={`relative w-14 h-7 rounded-full transition-colors ${freshQuestionsEnabled
-                                        ? "bg-indigo-600"
-                                        : "bg-gray-300 dark:bg-gray-600"
+                                    ? "bg-indigo-600"
+                                    : "bg-gray-300 dark:bg-gray-600"
                                     }`}
                             >
                                 <div
