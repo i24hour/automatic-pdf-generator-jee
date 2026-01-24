@@ -154,10 +154,14 @@ class LLMEngine:
         """
         import asyncio
         
-        # If small enough OR GATE, just do single call
+        # If small enough, just do single call
         total_requested = mcq_count + numerical_count
-        if total_requested <= chunk_size or level == "GATE":
+        if total_requested <= chunk_size:
             return await self.generate_with_fallback_async(subject, topic, mcq_count, numerical_count, level, difficulty, **kwargs)
+            
+        # GATE Parallel Strategy
+        if level == "GATE":
+            return await self._generate_gate_parallel(subject, topic, mcq_count, numerical_count, level, difficulty, **kwargs)
         
         # Calculate chunks for MCQs
         mcq_chunks = []
@@ -217,6 +221,98 @@ class LLMEngine:
         all_questions = self._deduplicate_questions(all_questions)
         
         print(f"Parallel generation complete: {len(all_questions)} total questions")
+        
+        return {
+            "success": len(all_questions) > 0,
+            "subject": subject,
+            "topic": topic,
+            "questions": all_questions
+        }
+
+    async def _generate_gate_parallel(
+        self,
+        subject: str,
+        topic: str,
+        mcq_count: int,
+        numerical_count: int,
+        level: str,
+        difficulty: str,
+        **kwargs
+    ) -> Dict[str, Any]:
+        """
+        Special parallel generation for GATE exams.
+        Splits into 4 parallel tasks: GA, MCQ, MSQ, NAT.
+        """
+        import asyncio
+        import time
+        
+        num_ga = kwargs.get("num_ga", 0)
+        num_msq = kwargs.get("num_msq", 0)
+        num_nat = kwargs.get("num_nat", 0)
+        num_mcq = mcq_count
+        
+        print(f"GATE Parallel: GA={num_ga}, MCQ={num_mcq}, MSQ={num_msq}, NAT={num_nat}")
+        
+        async def generate_gate_part(part_name, **part_kwargs):
+            print(f"--- Starting GATE Part: {part_name} ---")
+            start_time = time.time()
+            
+            # Merge original kwargs with part-specific kwargs
+            call_kwargs = kwargs.copy()
+            call_kwargs.update(part_kwargs)
+            
+            # For MCQ part, we pass mcq_count=num_mcq. For others, mcq_count=0 (but they use their own counts)
+            # Actually, generate_questions uses mcq_count as num_mcq.
+            # So for GA, MSQ, NAT, we can pass mcq_count=0, but we must ensure they don't generate MCQs.
+            # Our updated generate_questions handles this via gate_subset.
+            
+            # However, generate_with_fallback_async takes mcq_count as arg.
+            # If gate_subset="GA", num_mcq is ignored by generate_questions logic, but we should pass 0 to be safe/clean.
+            
+            result = await self.generate_with_fallback_async(
+                subject, topic, 
+                mcq_count=part_kwargs.get("mcq_count_arg", 0), 
+                numerical_count=0, 
+                level=level, 
+                difficulty=difficulty, 
+                **call_kwargs
+            )
+            
+            duration = time.time() - start_time
+            print(f"--- Finished GATE Part: {part_name} in {duration:.2f}s ---")
+            return result
+
+        tasks = []
+        
+        # 1. General Aptitude
+        if num_ga > 0:
+            tasks.append(generate_gate_part("GA", gate_subset="GA", mcq_count_arg=0))
+            
+        # 2. MCQs
+        if num_mcq > 0:
+            # Split MCQs if too many? For now, 20-30 is fine in one go.
+            tasks.append(generate_gate_part("MCQ", gate_subset="MCQ", mcq_count_arg=num_mcq))
+            
+        # 3. MSQs
+        if num_msq > 0:
+            tasks.append(generate_gate_part("MSQ", gate_subset="MSQ", mcq_count_arg=0))
+            
+        # 4. NATs
+        if num_nat > 0:
+            tasks.append(generate_gate_part("NAT", gate_subset="NAT", mcq_count_arg=0))
+            
+        # Run all
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        
+        all_questions = []
+        for result in results:
+            if isinstance(result, Exception):
+                print(f"GATE Part failed: {result}")
+                continue
+            if result.get("success") and result.get("questions"):
+                all_questions.extend(result["questions"])
+                
+        print(f"GATE Parallel complete: {len(all_questions)} questions")
         
         return {
             "success": len(all_questions) > 0,
@@ -1163,24 +1259,49 @@ Return ONLY JSON:
 """
         elif level == "GATE":
             gate_paper = kwargs.get("gate_paper", "CSE")
+            gate_subset = kwargs.get("gate_subset", "ALL")  # NEW: Support partial generation
+            
             num_msq = kwargs.get("num_msq", 0)
             num_nat = kwargs.get("num_nat", 0)
             num_ga = kwargs.get("num_ga", 0)
             num_mcq = mcq_count
             
-            prompt = f"""You are a GATE Exam Setter for {gate_paper}. Generate GATE pattern questions.
+            # Adjust counts based on subset
+            if gate_subset == "GA":
+                prompt_type = f"{num_ga} General Aptitude (GA) Questions"
+                req_list = f"- {num_ga} General Aptitude (GA) Questions (Verbal/Quant)"
+                total_q = num_ga
+            elif gate_subset == "MCQ":
+                prompt_type = f"{num_mcq} MCQs (Single Correct)"
+                req_list = f"- {num_mcq} MCQs (Single Correct) on Core Subject"
+                total_q = num_mcq
+            elif gate_subset == "MSQ":
+                prompt_type = f"{num_msq} MSQs (Multiple Select)"
+                req_list = f"- {num_msq} MSQs (Multiple Select) on Core Subject (type: \"mcq_multi\")"
+                total_q = num_msq
+            elif gate_subset == "NAT":
+                prompt_type = f"{num_nat} NATs (Numerical Answer)"
+                req_list = f"- {num_nat} NATs (Numerical Answer) on Core Subject (type: \"numerical\")"
+                total_q = num_nat
+            else:
+                # Default ALL
+                prompt_type = "GATE pattern questions"
+                req_list = f"""- {num_ga} General Aptitude (GA) Questions (Verbal/Quant)
+- {num_mcq} MCQs (Single Correct) on Core Subject
+- {num_msq} MSQs (Multiple Select) on Core Subject (type: "mcq_multi")
+- {num_nat} NATs (Numerical Answer) on Core Subject (type: "numerical")"""
+                total_q = num_ga + num_mcq + num_msq + num_nat
+
+            prompt = f"""You are a GATE Exam Setter for {gate_paper}. Generate {prompt_type}.
 
 SUBJECT: {gate_paper} (GATE)
 TOPIC: {topic}
 {difficulty_prompt}
 
 GENERATE EXACTLY:
-- {num_ga} General Aptitude (GA) Questions (Verbal/Quant)
-- {num_mcq} MCQs (Single Correct) on Core Subject
-- {num_msq} MSQs (Multiple Select) on Core Subject (type: "mcq_multi")
-- {num_nat} NATs (Numerical Answer) on Core Subject (type: "numerical")
+{req_list}
 
-TOTAL: {num_ga + num_mcq + num_msq + num_nat} Questions
+TOTAL: {total_q} Questions
 
 Use LaTeX: $...$
 
