@@ -46,7 +46,8 @@ class LLMEngine:
         mcq_count: int,
         numerical_count: int,
         level: str = "JEE Mains",
-        difficulty: str = "Medium"
+        difficulty: str = "Medium",
+        **kwargs
     ) -> Dict[str, Any]:
         """
         Generate questions with automatic model fallback for reliability.
@@ -65,7 +66,8 @@ class LLMEngine:
                     mcq_count=mcq_count,
                     numerical_count=numerical_count,
                     level=level,
-                    difficulty=difficulty
+                    difficulty=difficulty,
+                    **kwargs
                 )
                 if result.get("success") and result.get("questions"):
                     print(f"✓ Success with model: {model}")
@@ -92,7 +94,8 @@ class LLMEngine:
         mcq_count: int,
         numerical_count: int,
         level: str = "JEE Mains",
-        difficulty: str = "Medium"
+        difficulty: str = "Medium",
+        **kwargs
     ) -> Dict[str, Any]:
         """
         ASYNC version of generate_with_fallback.
@@ -112,7 +115,8 @@ class LLMEngine:
                     mcq_count=mcq_count,
                     numerical_count=numerical_count,
                     level=level,
-                    difficulty=difficulty
+                    difficulty=difficulty,
+                    **kwargs
                 )
                 if result.get("success") and result.get("questions"):
                     print(f"✓ Success with model (async): {model}")
@@ -140,7 +144,8 @@ class LLMEngine:
         numerical_count: int,
         level: str = "JEE Mains",
         difficulty: str = "Medium",
-        chunk_size: int = 5  # Smaller chunks = faster parallel
+        chunk_size: int = 5,  # Smaller chunks = faster parallel
+        **kwargs
     ) -> Dict[str, Any]:
         """
         Generate questions in PARALLEL for faster performance.
@@ -545,7 +550,8 @@ Example: {{"subject":"Chemistry","confidence":"high"}}
         mcq_count: int,
         numerical_count: int,
         level: str = "JEE Mains",
-        difficulty: str = "Medium"
+        difficulty: str = "Medium",
+        **kwargs
     ) -> Dict[str, Any]:
         """
         Generate test questions using the configured LLM.
@@ -560,6 +566,21 @@ Example: {{"subject":"Chemistry","confidence":"high"}}
             
         Returns:
             Dictionary with questions data
+        """
+        total_requested = mcq_count + numerical_count
+
+    async def generate_questions_async(
+        self,
+        subject: str,
+        topic: str,
+        mcq_count: int,
+        numerical_count: int,
+        level: str = "JEE Mains",
+        difficulty: str = "Medium",
+        **kwargs
+    ) -> Dict[str, Any]:
+        """
+        ASYNC version of generate_questions.
         """
         total_requested = mcq_count + numerical_count
         
@@ -719,7 +740,26 @@ EXAMPLE NEET-LEVEL QUESTIONS:
 - "Assertion: Mitochondria are called powerhouse of cell. Reason: ATP synthesis occurs here. Options: (a) Both A and R are true, R explains A (b) Both A and R are true, R does not explain A..."
 - "The correct sequence of air passage in humans is:"
 - "Which of the following statements about photosynthesis is incorrect?"
-- Questions from NEET, AIIMS, JIPMER past papers"""
+- Questions from NEET, AIIMS, JIPMER past papers""",
+
+            "GATE": """EXAM TYPE: GATE (Graduate Aptitude Test in Engineering)
+CHARACTERISTICS:
+- High conceptual depth and problem-solving required
+- Questions test fundamental understanding of core engineering subjects
+- Mix of theoretical and numerical problems
+- Questions often link multiple concepts
+- Similar to actual GATE PYQs (Past Year Questions)
+
+QUESTION TYPES:
+1. MCQ (Multiple Choice): 1 correct option (Negative marking)
+2. MSQ (Multiple Select): 1 or more correct options (NO negative marking)
+3. NAT (Numerical Answer Type): Enter a number (NO negative marking)
+4. GA (General Aptitude): Verbal and Numerical ability
+
+IMPORTANT:
+- For MSQ, use type "mcq_multi" and answer like "AC"
+- For NAT, use type "numerical" and answer must be a number
+- For GA, cover both Verbal (English) and Quantitative Aptitude"""
         }
         
         level_prompt = level_prompts.get(level, level_prompts["JEE Mains"])
@@ -727,6 +767,8 @@ EXAMPLE NEET-LEVEL QUESTIONS:
         # JEE Mains uses integer-type numerical questions (0-999)
         if level == "JEE Mains":
             numerical_answer_instruction = "7. NUMERICAL ANSWERS: Must be INTEGERS ONLY (whole numbers like 42, 150, 0, 999). NO decimals, NO formulas, NO fractions, NO symbols. Design questions so answers fall in range 0-999."
+        elif level == "GATE":
+            numerical_answer_instruction = "7. NUMERICAL ANSWERS: Can be integers or decimals (e.g., 25, 3.14, -1.5). NO formulas, NO fractions."
         else:
             numerical_answer_instruction = "7. NUMERICAL ANSWERS: Must be ONLY integers or decimals (e.g., \"42\", \"3.14\", \"-5.5\"). NO formulas, NO fractions, NO symbols."
         
@@ -760,6 +802,48 @@ EXAMPLE NEET-LEVEL QUESTIONS:
             "options": [],
             "answer": "3.14",
             "diagram_tikz": null
+        }}
+    ]
+}}"""
+        elif level == "GATE":
+            # GATE Logic
+            gate_paper = kwargs.get("gate_paper", "CSE")
+            num_msq = kwargs.get("num_msq", 0)
+            num_nat = kwargs.get("num_nat", 0)
+            num_ga = kwargs.get("num_ga", 0)
+            num_mcq = mcq_count  # Remaining are MCQs
+            
+            mcq_instruction = f"""FOR GATE PATTERN:
+- Generate {num_ga} General Aptitude (GA) questions (Verbal/Quant)
+- Generate {num_mcq} MCQs (Single Correct) on {gate_paper} Core Subject
+- Generate {num_msq} MSQs (Multiple Select) on {gate_paper} Core Subject (type: "mcq_multi")
+- Generate {num_nat} NATs (Numerical Answer) on {gate_paper} Core Subject (type: "numerical")"""
+            
+            json_example = """{{
+    "questions": [
+        {{
+            "type": "mcq",
+            "text": "GA Question: Choose the correct word...",
+            "options": ["A", "B", "C", "D"],
+            "answer": "A"
+        }},
+        {{
+            "type": "mcq",
+            "text": "Core Subject MCQ...",
+            "options": ["A", "B", "C", "D"],
+            "answer": "B"
+        }},
+        {{
+            "type": "mcq_multi",
+            "text": "Core Subject MSQ...",
+            "options": ["A", "B", "C", "D"],
+            "answer": "AC"
+        }},
+        {{
+            "type": "numerical",
+            "text": "Core Subject NAT...",
+            "options": [],
+            "answer": "25.5"
         }}
     ]
 }}"""
@@ -835,6 +919,39 @@ REQUIREMENTS:
 
 Return ONLY valid JSON:
 {boards_json_example}"""
+        elif level == "GATE":
+            gate_paper = kwargs.get("gate_paper", "CSE")
+            num_msq = kwargs.get("num_msq", 0)
+            num_nat = kwargs.get("num_nat", 0)
+            num_ga = kwargs.get("num_ga", 0)
+            num_mcq = mcq_count # In GATE logic, mcq_count passed in is actually just MCQs
+            
+            prompt = f"""You are an expert GATE exam setter for {gate_paper} paper.
+            
+TASK: Generate a GATE {gate_paper} Exam Paper on "{topic}".
+
+{level_prompt}
+
+{difficulty_prompt}
+
+STRICT DISTRIBUTION:
+1. General Aptitude (GA): {num_ga} Questions (Verbal/Quant)
+2. Core Subject ({gate_paper}):
+   - {num_mcq} MCQs (Single Correct)
+   - {num_msq} MSQs (Multiple Select)
+   - {num_nat} NATs (Numerical Answer)
+
+TOTAL: {num_ga + num_mcq + num_msq + num_nat} Questions
+
+REQUIREMENTS:
+- GA questions should be relevant to GATE pattern
+- Core questions should be strictly from {gate_paper} syllabus for "{topic}"
+- MSQs must have 1 or more correct options
+- NATs must have numerical answers (integers or decimals)
+- Use LaTeX for math: $...$
+
+Return ONLY valid JSON:
+{json_example}"""
         else:
             prompt = f"""You are an expert exam setter with 20+ years of experience setting {level} level examination papers for top coaching institutes like FIITJEE, Allen, and Resonance.
 
@@ -977,7 +1094,8 @@ Return ONLY valid JSON:
         mcq_count: int,
         numerical_count: int,
         level: str = "JEE Mains",
-        difficulty: str = "Medium"
+        difficulty: str = "Medium",
+        **kwargs
     ) -> Dict[str, Any]:
         """
         ASYNC version of generate_questions using litellm.acompletion.
@@ -1001,7 +1119,8 @@ Return ONLY valid JSON:
             "JEE Advanced": "JEE Advanced Level - Multi-concept, 4-5 step solutions, ~20% MCQs should be multi-correct.",
             "Advanced": "JEE Advanced Level - Multi-concept, 4-5 step solutions, ~20% MCQs should be multi-correct.",
             "Olympiad": "Olympiad Level - Research-level problem-solving, creative approaches.",
-            "NEET": "NEET Level - Biology/Medical focus, emphasis on conceptual understanding and factual recall."
+            "NEET": "NEET Level - Biology/Medical focus, emphasis on conceptual understanding and factual recall.",
+            "GATE": "GATE Level - High conceptual depth, mix of MCQ (Negative), MSQ (No Negative), NAT (No Negative), and GA."
         }
         level_prompt = level_prompts.get(level, level_prompts.get("JEE Mains"))
         
@@ -1030,7 +1149,32 @@ GENERATE EXACTLY:
 Use LaTeX: $F = ma$, $\\\\frac{{a}}{{b}}$
 
 Return ONLY JSON:
-{{"questions": [
+{{"questions": ["""
+        elif level == "GATE":
+            gate_paper = kwargs.get("gate_paper", "CSE")
+            num_msq = kwargs.get("num_msq", 0)
+            num_nat = kwargs.get("num_nat", 0)
+            num_ga = kwargs.get("num_ga", 0)
+            num_mcq = mcq_count
+            
+            prompt = f"""You are a GATE Exam Setter for {gate_paper}. Generate GATE pattern questions.
+
+SUBJECT: {gate_paper} (GATE)
+TOPIC: {topic}
+{difficulty_prompt}
+
+GENERATE EXACTLY:
+- {num_ga} General Aptitude (GA) Questions (Verbal/Quant)
+- {num_mcq} MCQs (Single Correct) on Core Subject
+- {num_msq} MSQs (Multiple Select) on Core Subject (type: "mcq_multi")
+- {num_nat} NATs (Numerical Answer) on Core Subject (type: "numerical")
+
+TOTAL: {num_ga + num_mcq + num_msq + num_nat} Questions
+
+Use LaTeX: $...$
+
+Return ONLY JSON:
+{{"questions": ["""
   {{"type": "short_answer", "marks": 2, "text": "Define electric flux.", "answer": "Electric flux is..."}},
   {{"type": "long_answer", "marks": 5, "text": "State and prove Gauss's law.", "answer": "Gauss's law states..."}},
   {{"type": "case_based", "marks": 4, "passage": "EM induction paragraph...", "sub_questions": [

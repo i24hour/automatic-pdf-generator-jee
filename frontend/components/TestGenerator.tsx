@@ -69,6 +69,12 @@ export default function TestGenerator() {
     const [difficulty, setDifficulty] = useState("Medium");
     const [numMCQs, setNumMCQs] = useState(20);
     const [numNumericals, setNumNumericals] = useState(5);
+    // GATE Pattern state
+    const [gatePaper, setGatePaper] = useState("CSE");
+    const [numMSQ, setNumMSQ] = useState(0);
+    const [numNAT, setNumNAT] = useState(0);
+    const [numGA, setNumGA] = useState(10); // Standard is 10, but user can change
+
     // CBSE Pattern state (for Boards level)
     const [cbseVeryShort, setCbseVeryShort] = useState(4);
     const [cbseShort, setCbseShort] = useState(4);
@@ -116,12 +122,23 @@ export default function TestGenerator() {
         { name: "Botany", icon: Leaf },
     ];
 
+    const gatePapers = [
+        { name: "CSE", label: "Computer Science (CS)" },
+        { name: "DA", label: "Data Science & AI (DA)" },
+        { name: "ECE", label: "Electronics (EC)" },
+        { name: "EE", label: "Electrical (EE)" },
+        { name: "ME", label: "Mechanical (ME)" },
+        { name: "CE", label: "Civil (CE)" },
+        { name: "IN", label: "Instrumentation (IN)" },
+    ];
+
     const allLevels = [
         { name: "Boards", icon: GraduationCap, color: "text-green-400", bgColor: "bg-green-500/20", borderColor: "border-green-500" },
         { name: "JEE Mains", icon: Target, color: "text-blue-400", bgColor: "bg-blue-500/20", borderColor: "border-blue-500" },
         { name: "JEE Advanced", icon: Award, color: "text-purple-400", bgColor: "bg-purple-500/20", borderColor: "border-purple-500" },
         { name: "Olympiad", icon: Trophy, color: "text-yellow-400", bgColor: "bg-yellow-500/20", borderColor: "border-yellow-500" },
         { name: "NEET", icon: Stethoscope, color: "text-pink-400", bgColor: "bg-pink-500/20", borderColor: "border-pink-500" },
+        { name: "GATE", icon: Zap, color: "text-orange-400", bgColor: "bg-orange-500/20", borderColor: "border-orange-500" },
     ];
 
     const difficulties = [
@@ -151,6 +168,13 @@ export default function TestGenerator() {
         if (level === "NEET") {
             setNumMCQs(questionCount);
             setNumNumericals(0);
+        } else if (level === "GATE") {
+            // Default GATE distribution (Total 50)
+            setNumGA(10);
+            setNumMCQs(20);
+            setNumMSQ(10);
+            setNumNAT(10);
+            setQuestionCount(50);
         } else {
             // Recalculate based on current total
             const mcqs = Math.round(questionCount * 0.8);
@@ -325,6 +349,11 @@ export default function TestGenerator() {
                 requestMcqs = cbseVeryShort + cbseShort + cbseLong + cbseCaseBased;
                 requestNumericals = cbseNumericals;
                 requestTotal = requestMcqs + requestNumericals;
+            } else if (level === "GATE") {
+                // For GATE: combine all types
+                requestMcqs = numMCQs; // Single correct MCQs
+                requestNumericals = numNAT; // NATs are numericals
+                requestTotal = numGA + numMCQs + numMSQ + numNAT;
             }
 
             // Step 1: Start the job
@@ -334,7 +363,7 @@ export default function TestGenerator() {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    subject,
+                    subject: level === "GATE" ? gatePaper : subject, // Use GATE paper as subject
                     topic: topic.trim(),
                     total_questions: requestTotal,
                     level,
@@ -342,6 +371,11 @@ export default function TestGenerator() {
                     num_mcqs: requestMcqs,
                     num_numerical: requestNumericals,
                     include_solutions: includeSolutions,
+                    // GATE Params
+                    gate_paper: level === "GATE" ? gatePaper : undefined,
+                    num_msq: level === "GATE" ? numMSQ : undefined,
+                    num_nat: level === "GATE" ? numNAT : undefined,
+                    num_ga: level === "GATE" ? numGA : undefined,
                 }),
             });
 
@@ -689,30 +723,58 @@ export default function TestGenerator() {
 
             {/* Main Card */}
             <div className="bg-white dark:bg-[#16181c] border border-gray-200 dark:border-[#2f3336] rounded-2xl p-4 md:p-6 shadow-lg">
-                {/* Subject Selection */}
-                <div className="mb-3 md:mb-4">
-                    <label className="block mb-2 font-medium text-gray-700 dark:text-gray-300 text-sm">Select Subject</label>
-                    <div className="grid grid-cols-3 gap-2">
-                        {subjects.map((sub) => {
-                            const IconComponent = sub.icon;
-                            const isSelected = subject === sub.name;
-                            return (
-                                <button
-                                    key={sub.name}
-                                    onClick={() => setSubject(sub.name)}
-                                    disabled={isLoading}
-                                    className={`p-2 md:p-3 rounded-xl border transition-all duration-300 flex flex-col items-center gap-1 ${isSelected
-                                        ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400"
-                                        : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 bg-white dark:bg-[#16181c]"
-                                        } ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
-                                >
-                                    <IconComponent className="w-5 h-5" />
-                                    <span className="text-xs font-medium">{sub.name}</span>
-                                </button>
-                            );
-                        })}
+                {/* Subject Selection - Hide for GATE */}
+                {level !== "GATE" && (
+                    <div className="mb-3 md:mb-4">
+                        <label className="block mb-2 font-medium text-gray-700 dark:text-gray-300 text-sm">Select Subject</label>
+                        <div className="grid grid-cols-3 gap-2">
+                            {subjects.map((sub) => {
+                                const IconComponent = sub.icon;
+                                const isSelected = subject === sub.name;
+                                return (
+                                    <button
+                                        key={sub.name}
+                                        onClick={() => setSubject(sub.name)}
+                                        disabled={isLoading}
+                                        className={`p-2 md:p-3 rounded-xl border transition-all duration-300 flex flex-col items-center gap-1 ${isSelected
+                                            ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400"
+                                            : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 bg-white dark:bg-[#16181c]"
+                                            } ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
+                                    >
+                                        <IconComponent className="w-5 h-5" />
+                                        <span className="text-xs font-medium">{sub.name}</span>
+                                    </button>
+                                );
+                            })}
+                        </div>
                     </div>
-                </div>
+                )}
+
+                {/* GATE Paper Selection */}
+                {level === "GATE" && (
+                    <div className="mb-3 md:mb-4">
+                        <label className="block mb-2 font-medium text-gray-700 dark:text-gray-300 text-sm">Select GATE Paper</label>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                            {gatePapers.map((paper) => {
+                                const isSelected = gatePaper === paper.name;
+                                return (
+                                    <button
+                                        key={paper.name}
+                                        onClick={() => setGatePaper(paper.name)}
+                                        disabled={isLoading}
+                                        className={`p-2 rounded-xl border transition-all duration-300 flex flex-col items-center gap-1 ${isSelected
+                                            ? "border-orange-500 bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400"
+                                            : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 bg-white dark:bg-[#16181c]"
+                                            } ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
+                                    >
+                                        <span className="text-sm font-bold">{paper.name}</span>
+                                        <span className="text-[10px] text-center opacity-70">{paper.label.split('(')[0]}</span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
 
                 {/* Level Selection */}
                 <div className="mb-3 md:mb-4">
@@ -839,7 +901,9 @@ export default function TestGenerator() {
                         <span className="text-xs text-gray-400">
                             Total: {level === "Boards"
                                 ? cbseVeryShort + cbseShort + cbseLong + cbseCaseBased + cbseNumericals
-                                : numMCQs + numNumericals} (max 50)
+                                : level === "GATE"
+                                    ? numGA + numMCQs + numMSQ + numNAT
+                                    : numMCQs + numNumericals} (max 50)
                         </span>
                     </div>
 
@@ -1009,6 +1073,74 @@ export default function TestGenerator() {
                                     />
                                     <label className="absolute left-3 top-1 text-[10px] text-indigo-600 font-medium">
                                         Integer
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* GATE Pattern */}
+                    {level === "GATE" && (
+                        <div className="space-y-3">
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="relative">
+                                    <input
+                                        type="number"
+                                        value={numGA}
+                                        onChange={(e) => setNumGA(parseInt(e.target.value) || 0)}
+                                        min={0}
+                                        max={10}
+                                        disabled={isLoading}
+                                        className="peer w-full px-3 pt-5 pb-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-black text-gray-900 dark:text-white"
+                                        placeholder=" "
+                                    />
+                                    <label className="absolute left-3 top-1 text-[10px] text-indigo-600 font-medium">
+                                        General Aptitude
+                                    </label>
+                                </div>
+                                <div className="relative">
+                                    <input
+                                        type="number"
+                                        value={numMCQs}
+                                        onChange={(e) => setNumMCQs(parseInt(e.target.value) || 0)}
+                                        min={0}
+                                        max={50}
+                                        disabled={isLoading}
+                                        className="peer w-full px-3 pt-5 pb-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-black text-gray-900 dark:text-white"
+                                        placeholder=" "
+                                    />
+                                    <label className="absolute left-3 top-1 text-[10px] text-indigo-600 font-medium">
+                                        MCQs (1 Mark)
+                                    </label>
+                                </div>
+                                <div className="relative">
+                                    <input
+                                        type="number"
+                                        value={numMSQ}
+                                        onChange={(e) => setNumMSQ(parseInt(e.target.value) || 0)}
+                                        min={0}
+                                        max={50}
+                                        disabled={isLoading}
+                                        className="peer w-full px-3 pt-5 pb-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-black text-gray-900 dark:text-white"
+                                        placeholder=" "
+                                    />
+                                    <label className="absolute left-3 top-1 text-[10px] text-indigo-600 font-medium">
+                                        MSQs (Multi Select)
+                                    </label>
+                                </div>
+                                <div className="relative">
+                                    <input
+                                        type="number"
+                                        value={numNAT}
+                                        onChange={(e) => setNumNAT(parseInt(e.target.value) || 0)}
+                                        min={0}
+                                        max={50}
+                                        disabled={isLoading}
+                                        className="peer w-full px-3 pt-5 pb-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-black text-gray-900 dark:text-white"
+                                        placeholder=" "
+                                    />
+                                    <label className="absolute left-3 top-1 text-[10px] text-indigo-600 font-medium">
+                                        NAT (Numerical)
                                     </label>
                                 </div>
                             </div>

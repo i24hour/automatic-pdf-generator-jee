@@ -88,6 +88,10 @@ class GenerateRequest(BaseModel):
     num_mcqs: Optional[int] = Field(default=None, description="Number of MCQs (optional)")
     num_numerical: Optional[int] = Field(default=None, description="Number of numerical questions (optional)")
     include_solutions: bool = Field(default=False, description="Include step-by-step solutions")
+    # GATE Specific Fields
+    gate_paper: Optional[str] = Field(default=None, description="GATE Paper Code (CSE, DA, etc.)")
+    num_msq: Optional[int] = Field(default=None, description="Number of MSQs (GATE only)")
+    num_ga: Optional[int] = Field(default=None, description="Number of General Aptitude questions (GATE only)")
 
 
 class GenerateResponse(BaseModel):
@@ -858,7 +862,12 @@ async def run_generation_job(
             numerical_count=numerical_count,
             level=request.level,
             difficulty=request.difficulty,
-            include_solutions=request.include_solutions
+            include_solutions=request.include_solutions,
+            # GATE Parameters
+            gate_paper=request.gate_paper,
+            num_msq=request.num_msq,
+            num_nat=request.num_nat,
+            num_ga=request.num_ga
         )
         
         if not llm_result.get("success"):
