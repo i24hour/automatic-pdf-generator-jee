@@ -1149,7 +1149,18 @@ GENERATE EXACTLY:
 Use LaTeX: $F = ma$, $\\\\frac{{a}}{{b}}$
 
 Return ONLY JSON:
-{{"questions": ["""
+{{"questions": [
+  {{"type": "short_answer", "marks": 2, "text": "Define electric flux.", "answer": "Electric flux is..."}},
+  {{"type": "long_answer", "marks": 5, "text": "State and prove Gauss's law.", "answer": "Gauss's law states..."}},
+  {{"type": "case_based", "marks": 4, "passage": "EM induction paragraph...", "sub_questions": [
+    {{"text": "Q1?", "options": ["A", "B", "C", "D"], "answer": "B"}},
+    {{"text": "Q2?", "options": ["A", "B", "C", "D"], "answer": "C"}},
+    {{"text": "Q3?", "options": ["A", "B", "C", "D"], "answer": "A"}},
+    {{"text": "Q4?", "options": ["A", "B", "C", "D"], "answer": "D"}}
+  ], "answer": "B, C, A, D"}},
+  {{"type": "numerical", "marks": 3, "text": "Find resistance...", "answer": "5"}}
+]}}
+"""
         elif level == "GATE":
             gate_paper = kwargs.get("gate_paper", "CSE")
             num_msq = kwargs.get("num_msq", 0)
@@ -1175,17 +1186,6 @@ Use LaTeX: $...$
 
 Return ONLY JSON:
 {{"questions": ["""
-  {{"type": "short_answer", "marks": 2, "text": "Define electric flux.", "answer": "Electric flux is..."}},
-  {{"type": "long_answer", "marks": 5, "text": "State and prove Gauss's law.", "answer": "Gauss's law states..."}},
-  {{"type": "case_based", "marks": 4, "passage": "EM induction paragraph...", "sub_questions": [
-    {{"text": "Q1?", "options": ["A", "B", "C", "D"], "answer": "B"}},
-    {{"text": "Q2?", "options": ["A", "B", "C", "D"], "answer": "C"}},
-    {{"text": "Q3?", "options": ["A", "B", "C", "D"], "answer": "A"}},
-    {{"text": "Q4?", "options": ["A", "B", "C", "D"], "answer": "D"}}
-  ], "answer": "B, C, A, D"}},
-  {{"type": "numerical", "marks": 3, "text": "Find resistance...", "answer": "5"}}
-]}}
-"""
         else:
             prompt = f"""You are an expert question paper setter for competitive exams like FIITJEE, Allen, Resonance.
 
