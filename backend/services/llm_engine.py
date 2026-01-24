@@ -971,10 +971,17 @@ IMPORTANT:
             total_numericals = numerical_count
             
             # Approximate distribution
-            vsa_count = max(1, int(total_cbse_theory * 0.4))
-            sa_count = max(1, int(total_cbse_theory * 0.3))
-            la_count = max(1, int(total_cbse_theory * 0.15))
-            case_count = max(0, total_cbse_theory - vsa_count - sa_count - la_count)
+            # Approximate distribution
+            if total_cbse_theory > 0:
+                vsa_count = max(1, int(total_cbse_theory * 0.4))
+                sa_count = max(1, int(total_cbse_theory * 0.3))
+                la_count = max(1, int(total_cbse_theory * 0.15))
+                case_count = max(0, total_cbse_theory - vsa_count - sa_count - la_count)
+            else:
+                vsa_count = 0
+                sa_count = 0
+                la_count = 0
+                case_count = 0
             
             boards_json_example = """{{
     "questions": [
@@ -1017,27 +1024,51 @@ Return ONLY valid JSON:
 {boards_json_example}"""
         elif level == "GATE":
             gate_paper = kwargs.get("gate_paper", "CSE")
+            gate_subset = kwargs.get("gate_subset", "ALL")  # NEW: Support partial generation
+            
             num_msq = kwargs.get("num_msq", 0)
             num_nat = kwargs.get("num_nat", 0)
             num_ga = kwargs.get("num_ga", 0)
             num_mcq = mcq_count # In GATE logic, mcq_count passed in is actually just MCQs
             
+            # Adjust counts based on subset
+            if gate_subset == "GA":
+                prompt_type = f"{num_ga} General Aptitude (GA) Questions"
+                req_list = f"- {num_ga} General Aptitude (GA) Questions (Verbal/Quant)"
+                total_q = num_ga
+            elif gate_subset == "MCQ":
+                prompt_type = f"{num_mcq} MCQs (Single Correct)"
+                req_list = f"- {num_mcq} MCQs (Single Correct) on Core Subject"
+                total_q = num_mcq
+            elif gate_subset == "MSQ":
+                prompt_type = f"{num_msq} MSQs (Multiple Select)"
+                req_list = f"- {num_msq} MSQs (Multiple Select) on Core Subject (type: \"mcq_multi\")"
+                total_q = num_msq
+            elif gate_subset == "NAT":
+                prompt_type = f"{num_nat} NATs (Numerical Answer)"
+                req_list = f"- {num_nat} NATs (Numerical Answer) on Core Subject (type: \"numerical\")"
+                total_q = num_nat
+            else:
+                # Default ALL
+                prompt_type = "GATE pattern questions"
+                req_list = f"""- {num_ga} General Aptitude (GA) Questions (Verbal/Quant)
+- {num_mcq} MCQs (Single Correct) on Core Subject
+- {num_msq} MSQs (Multiple Select) on Core Subject (type: "mcq_multi")
+- {num_nat} NATs (Numerical Answer) on Core Subject (type: "numerical")"""
+                total_q = num_ga + num_mcq + num_msq + num_nat
+
             prompt = f"""You are an expert GATE exam setter for {gate_paper} paper.
             
-TASK: Generate a GATE {gate_paper} Exam Paper on "{topic}".
+            TASK: Generate a GATE {gate_paper} Exam Paper on "{topic}".
 
 {level_prompt}
 
 {difficulty_prompt}
 
-STRICT DISTRIBUTION:
-1. General Aptitude (GA): {num_ga} Questions (Verbal/Quant)
-2. Core Subject ({gate_paper}):
-   - {num_mcq} MCQs (Single Correct)
-   - {num_msq} MSQs (Multiple Select)
-   - {num_nat} NATs (Numerical Answer)
+GENERATE EXACTLY:
+{req_list}
 
-TOTAL: {num_ga + num_mcq + num_msq + num_nat} Questions
+TOTAL: {total_q} Questions
 
 REQUIREMENTS:
 - GA questions should be relevant to GATE pattern
@@ -1224,10 +1255,17 @@ Return ONLY valid JSON:
         if level == "Boards":
             total_cbse_theory = mcq_count
             total_numericals = numerical_count
-            vsa_count = max(1, int(total_cbse_theory * 0.4))
-            sa_count = max(1, int(total_cbse_theory * 0.3))
-            la_count = max(1, int(total_cbse_theory * 0.15))
-            case_count = max(0, total_cbse_theory - vsa_count - sa_count - la_count)
+            
+            if total_cbse_theory > 0:
+                vsa_count = max(1, int(total_cbse_theory * 0.4))
+                sa_count = max(1, int(total_cbse_theory * 0.3))
+                la_count = max(1, int(total_cbse_theory * 0.15))
+                case_count = max(0, total_cbse_theory - vsa_count - sa_count - la_count)
+            else:
+                vsa_count = 0
+                sa_count = 0
+                la_count = 0
+                case_count = 0
             
             prompt = f"""You are a CBSE Board exam setter. Generate CBSE pattern questions.
 
