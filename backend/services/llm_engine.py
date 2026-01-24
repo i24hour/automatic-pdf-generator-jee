@@ -154,10 +154,10 @@ class LLMEngine:
         """
         import asyncio
         
-        # If small enough, just do single call
+        # If small enough OR GATE, just do single call
         total_requested = mcq_count + numerical_count
-        if total_requested <= chunk_size:
-            return self.generate_with_fallback(subject, topic, mcq_count, numerical_count, level, difficulty)
+        if total_requested <= chunk_size or level == "GATE":
+            return await self.generate_with_fallback_async(subject, topic, mcq_count, numerical_count, level, difficulty, **kwargs)
         
         # Calculate chunks for MCQs
         mcq_chunks = []
@@ -1369,14 +1369,15 @@ Solve now:"""
         numerical_count: int,
         level: str = "JEE Mains",
         difficulty: str = "Medium",
-        include_solutions: bool = False
+        include_solutions: bool = False,
+        **kwargs
     ) -> Dict[str, Any]:
         """
         Generate questions and verify numerical answers in PARALLEL.
         If include_solutions=True, also generate solutions for MCQs.
         """
         # First, generate questions normally
-        result = await self.generate_parallel(subject, topic, mcq_count, numerical_count, level, difficulty)
+        result = await self.generate_parallel(subject, topic, mcq_count, numerical_count, level, difficulty, **kwargs)
         
         if not result.get("success"):
             return result
