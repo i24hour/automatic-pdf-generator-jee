@@ -91,6 +91,7 @@ class GenerateRequest(BaseModel):
     # GATE Specific Fields
     gate_paper: Optional[str] = Field(default=None, description="GATE Paper Code (CSE, DA, etc.)")
     num_msq: Optional[int] = Field(default=None, description="Number of MSQs (GATE only)")
+    num_nat: Optional[int] = Field(default=None, description="Number of NATs (GATE only)")
     num_ga: Optional[int] = Field(default=None, description="Number of General Aptitude questions (GATE only)")
 
 
