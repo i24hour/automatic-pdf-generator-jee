@@ -299,17 +299,17 @@ export default function SettingsPage() {
             </div>
 
             {/* Navigation Tabs */}
-            <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
+            <div className="flex flex-col gap-2 mb-6">
                 {sections.map((section) => (
                     <button
                         key={section.id}
                         onClick={() => setActiveSection(section.id)}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-xl whitespace-nowrap transition-all ${activeSection === section.id
+                        className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeSection === section.id
                             ? "bg-indigo-600 text-white"
                             : "bg-gray-100 dark:bg-[#1a1d21] text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-[#2f3336]"
                             }`}
                     >
-                        <section.icon className="w-4 h-4" />
+                        <section.icon className="w-5 h-5" />
                         <span className="text-sm font-medium">{section.label}</span>
                     </button>
                 ))}
