@@ -35,6 +35,7 @@ class User(Base):
     last_bonus_month = Column(String, nullable=True)  # Track which month the monthly bonus belongs to (YYYY-MM)
     total_likes_received = Column(Integer, default=0)  # Cache for leaderboard
     total_posts = Column(Integer, default=0)  # Cache for leaderboard
+    fresh_questions_enabled = Column(Boolean, default=True)  # Toggle for fresh questions feature
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     
     # Relationships
@@ -265,6 +266,9 @@ class SharedPDF(Base):
     # Visibility: public, unlisted, private
     visibility = Column(String, default="private")
     
+    # Slug for unlisted access (e.g., /pdf/{slug})
+    slug = Column(String, unique=True, index=True, nullable=True)
+    
     # Engagement metrics
     download_count = Column(Integer, default=0)
     like_count = Column(Integer, default=0)
@@ -317,3 +321,22 @@ class UserBadge(Base):
     
     def __repr__(self):
         return f"<UserBadge {self.badge_type} for {self.user_id}>"
+
+
+class UserQuestionHistory(Base):
+    """Store generated questions per user+topic+level for fresh question generation."""
+    __tablename__ = "user_question_history"
+    __table_args__ = (
+        UniqueConstraint("user_id", "topic", "level", "question_hash", name="uq_user_topic_question"),
+    )
+    
+    id = Column(String, primary_key=True, default=generate_uuid)
+    user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    topic = Column(String, nullable=False, index=True)
+    level = Column(String, nullable=False)  # JEE, NEET, GATE, Boards
+    question_text = Column(Text, nullable=False)
+    question_hash = Column(String(32), nullable=False)  # MD5 hash for fast duplicate detection
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    def __repr__(self):
+        return f"<UserQuestionHistory {self.topic} for {self.user_id}>"

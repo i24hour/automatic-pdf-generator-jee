@@ -8,7 +8,8 @@ import os
 import json
 import re
 import asyncio
-from typing import Dict, List, Any
+import hashlib
+from typing import Dict, List, Any, Optional
 from dotenv import load_dotenv
 import litellm
 
@@ -22,6 +23,103 @@ FALLBACK_MODELS = [
     "gemini/gemini-1.5-flash",
     "gemini/gemini-1.5-pro",
 ]
+
+
+# =============================================
+# Question History Helpers for Fresh Questions
+# =============================================
+
+def hash_question(question_text: str) -> str:
+    """Generate MD5 hash of question text for fast duplicate detection."""
+    # Normalize: lowercase, strip whitespace
+    normalized = question_text.lower().strip()
+    return hashlib.md5(normalized.encode()).hexdigest()
+
+
+def get_user_question_history(db, user_id: str, topic: str, level: str, limit: int = 50) -> List[str]:
+    """
+    Fetch the last N questions for a user+topic+level combination.
+    Returns list of question texts to include in the "do not repeat" prompt.
+    """
+    from models import UserQuestionHistory
+    try:
+        history = db.query(UserQuestionHistory).filter(
+            UserQuestionHistory.user_id == user_id,
+            UserQuestionHistory.topic == topic,
+            UserQuestionHistory.level == level
+        ).order_by(UserQuestionHistory.created_at.desc()).limit(limit).all()
+        
+        return [h.question_text for h in history]
+    except Exception as e:
+        print(f"Error fetching question history: {e}")
+        return []
+
+
+def save_question_history(db, user_id: str, topic: str, level: str, questions: List[str], max_history: int = 50):
+    """
+    Save new questions to history and prune old ones to keep only max_history.
+    Uses rolling window approach to prevent database bloat.
+    """
+    from models import UserQuestionHistory, generate_uuid
+    try:
+        # Get existing count for this user+topic+level
+        existing_count = db.query(UserQuestionHistory).filter(
+            UserQuestionHistory.user_id == user_id,
+            UserQuestionHistory.topic == topic,
+            UserQuestionHistory.level == level
+        ).count()
+        
+        # Add new questions
+        added_count = 0
+        for q_text in questions:
+            if not q_text or len(q_text.strip()) < 10:
+                continue  # Skip empty or very short questions
+            
+            q_hash = hash_question(q_text)
+            
+            # Check if already exists (same hash = same question)
+            exists = db.query(UserQuestionHistory).filter(
+                UserQuestionHistory.user_id == user_id,
+                UserQuestionHistory.topic == topic,
+                UserQuestionHistory.level == level,
+                UserQuestionHistory.question_hash == q_hash
+            ).first()
+            
+            if not exists:
+                history_entry = UserQuestionHistory(
+                    id=generate_uuid(),
+                    user_id=user_id,
+                    topic=topic,
+                    level=level,
+                    question_text=q_text[:2000],  # Limit text length
+                    question_hash=q_hash
+                )
+                db.add(history_entry)
+                added_count += 1
+        
+        db.commit()
+        
+        # Prune old entries if we exceed max_history
+        total_count = existing_count + added_count
+        if total_count > max_history:
+            # Delete oldest entries
+            to_delete = total_count - max_history
+            oldest_entries = db.query(UserQuestionHistory).filter(
+                UserQuestionHistory.user_id == user_id,
+                UserQuestionHistory.topic == topic,
+                UserQuestionHistory.level == level
+            ).order_by(UserQuestionHistory.created_at.asc()).limit(to_delete).all()
+            
+            for entry in oldest_entries:
+                db.delete(entry)
+            
+            db.commit()
+        
+        print(f"Saved {added_count} new questions to history for {topic}/{level}")
+        
+    except Exception as e:
+        db.rollback()
+        print(f"Error saving question history: {e}")
 
 
 class LLMEngine:
@@ -1372,6 +1470,22 @@ Return ONLY valid JSON:
   {{"type": "numerical", "text": "If $F = 10$ N and $m = 2$ kg, find acceleration in m/s$^2$.", "answer": "5"}}
 ]}}
 """
+        # Fresh Questions: Add anti-repetition instruction if past questions provided
+        past_questions = kwargs.get("past_questions")
+        if past_questions and len(past_questions) > 0:
+            # Format past questions as a numbered list (limit to avoid token overflow)
+            past_qs_formatted = "\n".join([f"{i+1}. {q[:200]}" for i, q in enumerate(past_questions[:30])])
+            anti_repeat_instruction = f"""
+
+IMPORTANT - AVOID REPETITION:
+DO NOT generate any questions similar to these previously generated questions:
+{past_qs_formatted}
+
+Generate COMPLETELY DIFFERENT questions with different wording, scenarios, and values.
+"""
+            prompt += anti_repeat_instruction
+            print(f"Added anti-repetition instruction with {len(past_questions)} past questions")
+        
         max_retries = 2
         for attempt in range(max_retries + 1):
             try:

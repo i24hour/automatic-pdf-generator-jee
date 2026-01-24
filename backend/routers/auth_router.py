@@ -495,3 +495,86 @@ async def update_profile(
     db.commit()
     db.refresh(current_user)
     return UserResponse.model_validate(current_user)
+
+
+# =============================================
+# Settings Endpoints
+# =============================================
+
+class FreshQuestionsToggle(BaseModel):
+    """Toggle request for fresh questions setting."""
+    enabled: bool
+
+
+class SettingsResponse(BaseModel):
+    """Current user settings."""
+    fresh_questions_enabled: bool
+
+
+@router.get("/settings")
+async def get_settings(current_user: User = Depends(get_current_user_required)):
+    """Get current user settings."""
+    return {
+        "fresh_questions_enabled": getattr(current_user, 'fresh_questions_enabled', True)
+    }
+
+
+@router.put("/settings/fresh-questions")
+async def toggle_fresh_questions(
+    toggle: FreshQuestionsToggle,
+    current_user: User = Depends(get_current_user_required),
+    db: Session = Depends(get_db)
+):
+    """Toggle the 'Generate Fresh Questions Always' setting."""
+    current_user.fresh_questions_enabled = toggle.enabled
+    db.commit()
+    return {
+        "success": True,
+        "fresh_questions_enabled": toggle.enabled,
+        "message": f"Fresh questions {'enabled' if toggle.enabled else 'disabled'}"
+    }
+
+
+# =============================================
+# User PDFs Endpoints
+# =============================================
+
+from models import SharedPDF
+
+
+@router.get("/me/pdfs")
+async def get_user_pdfs(
+    visibility: Optional[str] = None,
+    current_user: User = Depends(get_current_user_required),
+    db: Session = Depends(get_db)
+):
+    """Get current user's PDFs filtered by visibility (public, unlisted, private)."""
+    query = db.query(SharedPDF).filter(SharedPDF.user_id == current_user.id)
+    
+    if visibility:
+        query = query.filter(SharedPDF.visibility == visibility)
+    
+    pdfs = query.order_by(SharedPDF.created_at.desc()).all()
+    
+    return {
+        "success": True,
+        "count": len(pdfs),
+        "pdfs": [
+            {
+                "id": pdf.id,
+                "slug": pdf.slug,
+                "pdf_url": pdf.pdf_url,
+                "pdf_filename": pdf.pdf_filename,
+                "caption": pdf.caption,
+                "subject": pdf.subject,
+                "topic": pdf.topic,
+                "level": pdf.level,
+                "difficulty": pdf.difficulty,
+                "visibility": pdf.visibility,
+                "download_count": pdf.download_count,
+                "like_count": pdf.like_count,
+                "created_at": pdf.created_at.isoformat() if pdf.created_at else None
+            }
+            for pdf in pdfs
+        ]
+    }

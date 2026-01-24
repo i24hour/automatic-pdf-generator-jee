@@ -16,7 +16,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from dotenv import load_dotenv
 
-from services.llm_engine import llm_engine
+from services.llm_engine import llm_engine, get_user_question_history, save_question_history
 from services.pdf_engine import pdf_engine
 from database import get_db, init_db
 from models import User, PDFGeneration, PromoCode, PromoCodeUsage, TopicSubjectCache, SharedPDF
@@ -24,6 +24,7 @@ from auth import get_current_user_required, get_current_user
 from routers.auth_router import router as auth_router
 from routers.institute_router import router as institute_router
 from routers.posts_router import router as posts_router
+from routers.pdf_router import router as pdf_router
 from services.email_service import email_service
 # from services.r2_storage import r2_storage  # Deprecated
 from services.gcs_storage import gcs_storage
@@ -68,6 +69,7 @@ app.add_middleware(
 app.include_router(auth_router)
 app.include_router(institute_router)
 app.include_router(posts_router)
+app.include_router(pdf_router)
 
 
 # Initialize database on startup
@@ -855,6 +857,24 @@ async def run_generation_job(
         # Update: Generating MCQs
         job_store.update_job(job_id, JobStatus.GENERATING_MCQS, 15, f"Generating {mcq_count} MCQ questions...")
         
+        # Fresh Questions: Fetch history if enabled
+        past_questions = []
+        fresh_questions_enabled = getattr(user, 'fresh_questions_enabled', True)
+        if fresh_questions_enabled:
+            try:
+                past_questions = get_user_question_history(
+                    db=db,
+                    user_id=user.id,
+                    topic=request.topic,
+                    level=request.level,
+                    limit=50
+                )
+                if past_questions:
+                    print(f"Found {len(past_questions)} past questions for {request.topic}/{request.level}")
+            except Exception as e:
+                print(f"Warning: Could not fetch question history: {e}")
+                past_questions = []
+        
         # Generate questions WITH VERIFICATION
         llm_result = await llm_engine.generate_questions_with_verification_async(
             subject=request.subject,
@@ -868,7 +888,9 @@ async def run_generation_job(
             gate_paper=request.gate_paper,
             num_msq=request.num_msq,
             num_nat=request.num_nat,
-            num_ga=request.num_ga
+            num_ga=request.num_ga,
+            # Fresh Questions: Pass past questions to avoid repetition
+            past_questions=past_questions if fresh_questions_enabled else None
         )
         
         if not llm_result.get("success"):
@@ -883,6 +905,20 @@ async def run_generation_job(
         
         # Update: Verifying
         job_store.update_job(job_id, JobStatus.VERIFYING, 60, "Verifying answers...")
+        
+        # Fresh Questions: Save generated questions to history
+        if fresh_questions_enabled and llm_result.get("questions"):
+            try:
+                question_texts = [q.get("question", "") for q in llm_result.get("questions", [])]
+                save_question_history(
+                    db=db,
+                    user_id=user.id,
+                    topic=request.topic,
+                    level=request.level,
+                    questions=question_texts
+                )
+            except Exception as e:
+                print(f"Warning: Could not save question history: {e}")
         
         # Generate filename
         actual_total = mcq_count + numerical_count

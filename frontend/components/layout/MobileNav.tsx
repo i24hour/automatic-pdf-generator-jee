@@ -2,12 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, LayoutGrid, Trophy, Search, Feather, Sun, Moon } from "lucide-react";
-import { useTheme } from "@/lib/theme-context";
+import { Home, LayoutGrid, Trophy, Settings, Feather } from "lucide-react";
 
 export default function MobileNav() {
     const pathname = usePathname();
-    const { theme, toggleTheme } = useTheme();
 
     const isActive = (path: string) => pathname === path;
 
@@ -56,14 +54,16 @@ export default function MobileNav() {
                     <span className="text-[10px] font-medium">Rank</span>
                 </Link>
 
-                <button
-                    className="flex flex-col items-center gap-1 p-2 text-gray-500 dark:text-gray-400"
-                    onClick={toggleTheme}
+                <Link
+                    href="/settings"
+                    className={`flex flex-col items-center gap-1 p-2 ${isActive("/settings") ? "text-indigo-600 dark:text-indigo-400" : "text-gray-500 dark:text-gray-400"
+                        }`}
                 >
-                    {theme === 'dark' ? <Sun className="w-6 h-6" /> : <Moon className="w-6 h-6" />}
-                    <span className="text-[10px] font-medium">Theme</span>
-                </button>
+                    <Settings className="w-6 h-6" />
+                    <span className="text-[10px] font-medium">Settings</span>
+                </Link>
             </nav>
         </>
     );
 }
+

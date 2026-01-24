@@ -117,6 +117,40 @@ def init_db():
                 conn.commit()
             except Exception:
                 conn.rollback()
+            
+            # Add fresh_questions_enabled to users (default=True)
+            try:
+                conn.execute(text("ALTER TABLE users ADD COLUMN fresh_questions_enabled BOOLEAN DEFAULT TRUE"))
+                conn.commit()
+            except Exception:
+                conn.rollback()
+            
+            # Add slug to shared_pdfs for unlisted access
+            try:
+                conn.execute(text("ALTER TABLE shared_pdfs ADD COLUMN slug VARCHAR(50) UNIQUE"))
+                conn.commit()
+            except Exception:
+                conn.rollback()
+            
+            # Create user_question_history table if not exists
+            try:
+                conn.execute(text("""
+                    CREATE TABLE IF NOT EXISTS user_question_history (
+                        id VARCHAR PRIMARY KEY,
+                        user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                        topic VARCHAR NOT NULL,
+                        level VARCHAR NOT NULL,
+                        question_text TEXT NOT NULL,
+                        question_hash VARCHAR(32) NOT NULL,
+                        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+                        CONSTRAINT uq_user_topic_question UNIQUE (user_id, topic, level, question_hash)
+                    )
+                """))
+                conn.execute(text("CREATE INDEX IF NOT EXISTS ix_uqh_user_id ON user_question_history(user_id)"))
+                conn.execute(text("CREATE INDEX IF NOT EXISTS ix_uqh_topic ON user_question_history(topic)"))
+                conn.commit()
+            except Exception:
+                conn.rollback()
                 
     except Exception as e:
         print(f"Migration warning (can be ignored if columns exist): {e}")
