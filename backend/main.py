@@ -75,8 +75,7 @@ app.include_router(pdf_router)
 # Initialize database on startup
 @app.on_event("startup")
 async def startup_event():
-    # init_db()
-    pass
+    init_db()  # Run migrations for new columns
 
 
 # Request/Response Models
