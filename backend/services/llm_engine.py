@@ -257,9 +257,8 @@ class LLMEngine:
         if total_requested <= chunk_size:
             return await self.generate_with_fallback_async(subject, topic, mcq_count, numerical_count, level, difficulty, **kwargs)
             
-        # GATE Parallel Strategy
-        if level == "GATE":
-            return await self._generate_gate_parallel(subject, topic, mcq_count, numerical_count, level, difficulty, **kwargs)
+        # NOTE: GATE now uses same flow as other exams (no special parallel strategy)
+        # This avoids rate limit issues from multiple simultaneous API calls
         
         # Calculate chunks for MCQs
         mcq_chunks = []
