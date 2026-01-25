@@ -842,7 +842,20 @@ async def run_generation_job(
         print(f"[DEBUG] GATE params: gate_paper={request.gate_paper}, num_ga={request.num_ga}, num_msq={request.num_msq}, num_nat={request.num_nat}")
         
         # Determine question split
-        if request.num_mcqs is not None and request.num_numerical is not None:
+        # GATE has special handling - all questions go through mcq_count for the prompt
+        if request.level == "GATE":
+            # For GATE, combine all question types into a single count
+            num_ga = request.num_ga or 0
+            num_mcq = request.num_mcqs or 0
+            num_msq = request.num_msq or 0
+            num_nat = request.num_nat or 0
+            total_gate = num_ga + num_mcq + num_msq + num_nat
+            
+            # Pass total as mcq_count, the prompt will handle the distribution
+            mcq_count = total_gate
+            numerical_count = 0  # NATs are handled inside the prompt
+            print(f"[DEBUG] GATE: Using total count mcq_count={mcq_count}, numerical_count={numerical_count}")
+        elif request.num_mcqs is not None and request.num_numerical is not None:
             mcq_count = request.num_mcqs
             numerical_count = request.num_numerical
             print(f"[DEBUG] Using explicit counts: mcq_count={mcq_count}, numerical_count={numerical_count}")
