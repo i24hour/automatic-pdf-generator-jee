@@ -836,10 +836,16 @@ async def run_generation_job(
         # Update: Analyzing
         job_store.update_job(job_id, JobStatus.ANALYZING, 5, "Analyzing topic and difficulty...")
         
+        # DEBUG: Log incoming request values
+        print(f"[DEBUG] Request received: level={request.level}, total_questions={request.total_questions}")
+        print(f"[DEBUG] num_mcqs={request.num_mcqs}, num_numerical={request.num_numerical}")
+        print(f"[DEBUG] GATE params: gate_paper={request.gate_paper}, num_ga={request.num_ga}, num_msq={request.num_msq}, num_nat={request.num_nat}")
+        
         # Determine question split
         if request.num_mcqs is not None and request.num_numerical is not None:
             mcq_count = request.num_mcqs
             numerical_count = request.num_numerical
+            print(f"[DEBUG] Using explicit counts: mcq_count={mcq_count}, numerical_count={numerical_count}")
         else:
             if request.level == "NEET":
                 mcq_count = request.total_questions
@@ -852,6 +858,7 @@ async def run_generation_job(
                 if numerical_count < 1:
                     numerical_count = 1
                     mcq_count = request.total_questions - 1
+            print(f"[DEBUG] Using fallback split: mcq_count={mcq_count}, numerical_count={numerical_count}")
         
         # Update: Generating MCQs
         job_store.update_job(job_id, JobStatus.GENERATING_MCQS, 15, f"Generating {mcq_count} MCQ questions...")
