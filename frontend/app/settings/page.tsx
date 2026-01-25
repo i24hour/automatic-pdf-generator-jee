@@ -483,9 +483,7 @@ export default function SettingsPage() {
                             </button>
                         </div>
 
-                        <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl text-sm text-blue-700 dark:text-blue-300">
-                            💡 The system stores your last 50 questions per topic to ensure variety
-                        </div>
+
                     </div>
                 )}
 
