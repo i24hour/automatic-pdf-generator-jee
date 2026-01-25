@@ -590,7 +590,14 @@ Example: {{"subject":"Chemistry","confidence":"high"}}
         end_idx = cleaned.rfind("}") + 1
         
         if start_idx != -1 and end_idx > start_idx:
-            cleaned = cleaned[start_idx:end_idx]
+            candidate = cleaned[start_idx:end_idx]
+            # Handle double-braced JSON {{...}} which some models might output if prompted with {{
+            if candidate.startswith("{{") and candidate.endswith("}}"):
+                # Check if it's not just a nested object, but truly double braced
+                # Heuristic: if len > 2 and char at 1 is {, and char at -2 is }
+                if len(candidate) > 2 and candidate[1] == "{" and candidate[-2] == "}":
+                     candidate = candidate[1:-1]
+            cleaned = candidate
         
         # CRITICAL FIX: Escape LaTeX backslashes BEFORE JSON parsing
         # Common LaTeX commands that start with characters that are invalid JSON escapes
@@ -1012,54 +1019,54 @@ IMPORTANT:
 - Generate {num_msq} MSQs (Multiple Select) on {gate_paper} Core Subject (type: "mcq_multi")
 - Generate {num_nat} NATs (Numerical Answer) on {gate_paper} Core Subject (type: "numerical")"""
             
-            json_example = """{{
+            json_example = """{
     "questions": [
-        {{
+        {
             "type": "mcq",
             "text": "GA Question: Choose the correct word...",
             "options": ["A", "B", "C", "D"],
             "answer": "A"
-        }},
-        {{
+        },
+        {
             "type": "mcq",
             "text": "Core Subject MCQ...",
             "options": ["A", "B", "C", "D"],
             "answer": "B"
-        }},
-        {{
+        },
+        {
             "type": "mcq_multi",
             "text": "Core Subject MSQ...",
             "options": ["A", "B", "C", "D"],
             "answer": "AC"
-        }},
-        {{
+        },
+        {
             "type": "numerical",
             "text": "Core Subject NAT...",
             "options": [],
             "answer": "25.5"
-        }}
+        }
     ]
-}}"""
+}"""
         else:
             mcq_instruction = "FOR MCQs: All MCQs should be single-correct (type: \"mcq\", answer: \"A\", \"B\", \"C\", or \"D\")"
-            json_example = """{{
+            json_example = """{
     "questions": [
-        {{
+        {
             "type": "mcq",
             "text": "Question with $math$ notation",
             "options": ["Option A", "Option B", "Option C", "Option D"],
             "answer": "A",
             "diagram_tikz": null
-        }},
-        {{
+        },
+        {
             "type": "numerical", 
             "text": "Numerical question with $math$",
             "options": [],
             "answer": "numerical_value",
             "diagram_tikz": null
-        }}
+        }
     ]
-}}"""
+}"""
         
         # Special handling for Boards - generate CBSE pattern questions, not just MCQs
         if level == "Boards":
@@ -1080,21 +1087,21 @@ IMPORTANT:
                 la_count = 0
                 case_count = 0
             
-            boards_json_example = """{{
+            boards_json_example = """{
     "questions": [
-        {{"type": "short_answer", "marks": 1, "text": "Define electric flux.", "answer": "Electric flux is..."}},
-        {{"type": "short_answer", "marks": 2, "text": "State the principle of superposition.", "answer": "When two waves..."}},
-        {{"type": "short_answer", "marks": 3, "text": "Derive E = -dV/dr.", "answer": "Work done = qE.dr..."}},
-        {{"type": "long_answer", "marks": 5, "text": "State and prove Gauss's law.", "answer": "Gauss's law states..."}},
-        {{"type": "case_based", "marks": 4, "passage": "Electromagnetic induction...", "sub_questions": [
-            {{"text": "Who discovered it?", "options": ["Newton", "Faraday", "Maxwell", "Ampere"], "answer": "B"}},
-            {{"text": "What is required?", "options": ["Static field", "Changing flux", "Electric field", "Gravity"], "answer": "B"}},
-            {{"text": "Which device uses it?", "options": ["Capacitor", "Resistor", "Transformer", "Diode"], "answer": "C"}},
-            {{"text": "In which year?", "options": ["1820", "1831", "1840", "1850"], "answer": "B"}}
-        ], "answer": "B, B, C, B"}},
-        {{"type": "numerical", "marks": 3, "text": "A wire of resistance $10\\\\Omega$...", "answer": "2.5"}}
+        {"type": "short_answer", "marks": 1, "text": "Define electric flux.", "answer": "Electric flux is..."},
+        {"type": "short_answer", "marks": 2, "text": "State the principle of superposition.", "answer": "When two waves..."},
+        {"type": "short_answer", "marks": 3, "text": "Derive E = -dV/dr.", "answer": "Work done = qE.dr..."},
+        {"type": "long_answer", "marks": 5, "text": "State and prove Gauss's law.", "answer": "Gauss's law states..."},
+        {"type": "case_based", "marks": 4, "passage": "Electromagnetic induction...", "sub_questions": [
+            {"text": "Who discovered it?", "options": ["Newton", "Faraday", "Maxwell", "Ampere"], "answer": "B"},
+            {"text": "What is required?", "options": ["Static field", "Changing flux", "Electric field", "Gravity"], "answer": "B"},
+            {"text": "Which device uses it?", "options": ["Capacitor", "Resistor", "Transformer", "Diode"], "answer": "C"},
+            {"text": "In which year?", "options": ["1820", "1831", "1840", "1850"], "answer": "B"}
+        ], "answer": "B, B, C, B"},
+        {"type": "numerical", "marks": 3, "text": "A wire of resistance $10\\\\Omega$...", "answer": "2.5"}
     ]
-}}"""
+}"""
             
             prompt = f"""You are an expert CBSE Board exam setter. Generate CBSE pattern questions on "{topic}" for {subject}.
 
