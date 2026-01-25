@@ -1223,9 +1223,16 @@ Return ONLY valid JSON:
                 
                 response_text = response.choices[0].message.content
                 
+                # DEBUG: Log raw response for troubleshooting
+                print(f"[DEBUG] LLM raw response (first 500 chars): {response_text[:500] if response_text else 'EMPTY'}")
+                
                 # Clean and parse JSON
                 cleaned_json = self._clean_json_response(response_text)
                 data = json.loads(cleaned_json)
+                
+                # DEBUG: Log parsed data structure
+                print(f"[DEBUG] Parsed JSON keys: {data.keys() if isinstance(data, dict) else 'Not a dict'}")
+                print(f"[DEBUG] Questions count: {len(data.get('questions', []))}")
                 
                 # Process questions (escape LaTeX special chars)
                 if "questions" in data:
