@@ -723,6 +723,21 @@ export default function TestGenerator() {
 
             {/* Main Card */}
             <div className="bg-white dark:bg-[#16181c] border border-gray-200 dark:border-[#2f3336] rounded-2xl p-4 md:p-6 shadow-lg">
+                {/* Topic Input - Moved to Top */}
+                <div className="mb-6">
+                    <label htmlFor="topic" className="block mb-3 font-medium text-gray-700 dark:text-gray-300">Topic</label>
+                    <input
+                        type="text"
+                        id="topic"
+                        value={topic}
+                        onChange={(e) => setTopic(e.target.value)}
+                        placeholder="e.g., Electrostatics, Organic Chemistry, Integration"
+
+                        className="w-full px-4 py-3 bg-white dark:bg-black border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900"
+                        disabled={isLoading}
+                    />
+                </div>
+
                 {/* Subject Selection - Hide for GATE */}
                 {level !== "GATE" && (
                     <div className="mb-3 md:mb-4">
@@ -843,20 +858,7 @@ export default function TestGenerator() {
                     </div>
                 </div>
 
-                {/* Topic Input */}
-                <div className="mb-4">
-                    <label htmlFor="topic" className="block mb-3 font-medium text-gray-700 dark:text-gray-300">Topic</label>
-                    <input
-                        type="text"
-                        id="topic"
-                        value={topic}
-                        onChange={(e) => setTopic(e.target.value)}
-                        placeholder="e.g., Electrostatics, Organic Chemistry, Integration"
 
-                        className="w-full px-4 py-3 bg-white dark:bg-black border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900"
-                        disabled={isLoading}
-                    />
-                </div>
 
                 {/* Solutions Toggle */}
                 <div className="mb-4">
