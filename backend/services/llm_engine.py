@@ -1121,42 +1121,29 @@ Return ONLY valid JSON:
 {boards_json_example}"""
         elif level == "GATE":
             gate_paper = kwargs.get("gate_paper", "CSE")
-            gate_subset = kwargs.get("gate_subset", "ALL")  # NEW: Support partial generation
+            num_msq = kwargs.get("num_msq", 0) or 0
+            num_nat = kwargs.get("num_nat", 0) or 0
+            num_ga = kwargs.get("num_ga", 0) or 0
+            # mcq_count now contains total questions, we need actual MCQ count
+            num_mcq_actual = max(0, mcq_count - num_ga - num_msq - num_nat)
             
-            num_msq = kwargs.get("num_msq", 0)
-            num_nat = kwargs.get("num_nat", 0)
-            num_ga = kwargs.get("num_ga", 0)
-            num_mcq = mcq_count # In GATE logic, mcq_count passed in is actually just MCQs
+            # Build requirement list based on what user requested
+            req_parts = []
+            if num_ga > 0:
+                req_parts.append(f"- {num_ga} General Aptitude (GA) MCQs (Verbal Reasoning, Quantitative Aptitude)")
+            if num_mcq_actual > 0:
+                req_parts.append(f"- {num_mcq_actual} Core Subject MCQs (single correct answer)")
+            if num_msq > 0:
+                req_parts.append(f"- {num_msq} Multiple Select Questions (MSQ - one or more correct options)")
+            if num_nat > 0:
+                req_parts.append(f"- {num_nat} Numerical Answer Type (NAT - type: \"numerical\")")
             
-            # Adjust counts based on subset
-            if gate_subset == "GA":
-                prompt_type = f"{num_ga} General Aptitude (GA) Questions"
-                req_list = f"- {num_ga} General Aptitude (GA) Questions (Verbal/Quant)"
-                total_q = num_ga
-            elif gate_subset == "MCQ":
-                prompt_type = f"{num_mcq} MCQs (Single Correct)"
-                req_list = f"- {num_mcq} MCQs (Single Correct) on Core Subject"
-                total_q = num_mcq
-            elif gate_subset == "MSQ":
-                prompt_type = f"{num_msq} MSQs (Multiple Select)"
-                req_list = f"- {num_msq} MSQs (Multiple Select) on Core Subject (type: \"mcq_multi\")"
-                total_q = num_msq
-            elif gate_subset == "NAT":
-                prompt_type = f"{num_nat} NATs (Numerical Answer)"
-                req_list = f"- {num_nat} NATs (Numerical Answer) on Core Subject (type: \"numerical\")"
-                total_q = num_nat
-            else:
-                # Default ALL
-                prompt_type = "GATE pattern questions"
-                req_list = f"""- {num_ga} General Aptitude (GA) Questions (Verbal/Quant)
-- {num_mcq} MCQs (Single Correct) on Core Subject
-- {num_msq} MSQs (Multiple Select) on Core Subject (type: "mcq_multi")
-- {num_nat} NATs (Numerical Answer) on Core Subject (type: "numerical")"""
-                total_q = num_ga + num_mcq + num_msq + num_nat
+            req_list = "\n".join(req_parts) if req_parts else f"- {mcq_count} MCQs"
+            total_q = mcq_count
+            
+            prompt = f"""You are an expert GATE {gate_paper} exam question setter.
 
-            prompt = f"""You are an expert GATE exam setter for {gate_paper} paper.
-            
-            TASK: Generate a GATE {gate_paper} Exam Paper on "{topic}".
+Generate exactly {total_q} GATE-style questions on "{topic}".
 
 {level_prompt}
 
@@ -1168,11 +1155,11 @@ GENERATE EXACTLY:
 TOTAL: {total_q} Questions
 
 REQUIREMENTS:
-- GA questions should be relevant to GATE pattern
-- Core questions should be strictly from {gate_paper} syllabus for "{topic}"
-- MSQs must have 1 or more correct options
-- NATs must have numerical answers (integers or decimals)
-- Use LaTeX for math: $...$
+- All questions should be MCQ format with 4 options (A, B, C, D)
+- Questions should match GATE {gate_paper} difficulty and syllabus
+- Use LaTeX for math: $...$, $\\frac{{a}}{{b}}$
+- Each question must have exactly one correct answer for MCQs
+- NO explanations, just question, options, and answer
 
 Return ONLY valid JSON:
 {json_example}"""
