@@ -83,7 +83,7 @@ class GenerateRequest(BaseModel):
     """Request model for test generation."""
     subject: str = Field(..., description="Subject: Physics, Chemistry, or Maths")
     topic: str = Field(..., description="Specific topic for the test")
-    total_questions: int = Field(default=20, ge=5, le=50, description="Total number of questions")
+    total_questions: int = Field(default=20, ge=1, le=50, description="Total number of questions")
     level: str = Field(default="JEE Mains", description="Exam type: Boards, JEE Mains, JEE Advanced, Olympiad, NEET")
     difficulty: str = Field(default="Medium", description="Difficulty within exam: Easy, Medium, Hard")
     num_mcqs: Optional[int] = Field(default=None, description="Number of MCQs (optional)")
