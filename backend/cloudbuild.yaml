@@ -2,10 +2,12 @@ steps:
   # Build the container image
   - name: 'gcr.io/cloud-builders/docker'
     args: ['build', '-t', 'gcr.io/$PROJECT_ID/mentors-mantra-api', '.']
+    dir: 'backend'
 
   # Push the image to Container Registry
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 'gcr.io/$PROJECT_ID/mentors-mantra-api']
+    dir: 'backend'
 
   # Deploy container to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
@@ -21,6 +23,7 @@ steps:
     - '--platform'
     - 'managed'
     - '--allow-unauthenticated'
+    dir: 'backend'
 
 images:
 - 'gcr.io/$PROJECT_ID/mentors-mantra-api'
