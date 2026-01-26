@@ -12,10 +12,49 @@ from typing import Dict, Any, Optional
 import jinja2
 
 
+def escape_latex_outside_math(text: str) -> str:
+    """
+    Escape special LaTeX characters in text, but PRESERVE math mode content.
+    Handles both inline $...$ and block $$...$$ math modes correctly.
+    """
+    if not text:
+        return text
+    
+    # Use regex to find all math regions:
+    # 1. Block math: $$ ... $$
+    # 2. Inline math: $ ... $
+    # 3. Explicit environments: \begin{...} ... \end{...} (using backreference \2 to match end tag)
+    # 4. Use (?s) flag to ensure . matches newlines (crucial for matrices)
+    math_pattern = r'(?s)(\$\$.*?\$\$|\\begin\{([a-zA-Z]+\*?)\}.*?\\end\{\2\}|\$[^$]+?\$)'
+    
+    result = []
+    last_end = 0
+    
+    for match in re.finditer(math_pattern, text):
+        # Process content BEFORE this math block (non-math text)
+        non_math_part = text[last_end:match.start()]
+        if non_math_part:
+            # Escape & and # which are problematic outside math
+            escaped = non_math_part.replace('#', r'\#').replace('&', r'\&')
+            result.append(escaped)
+        
+        # Process the math block itself (preserve as is)
+        result.append(match.group(0))  # group(0) is the full match, ignoring subgroups
+        
+        last_end = match.end()
+        
+    # Process remaining text after the last math block
+    remaining_part = text[last_end:]
+    if remaining_part:
+        escaped = remaining_part.replace('#', r'\#').replace('&', r'\&')
+        result.append(escaped)
+    
+    return ''.join(result)
+
 def sanitize_for_latex(text: str) -> str:
     """
     Sanitize text to be LaTeX-safe by escaping problematic Unicode characters.
-    Preserves spacing and handles mathematical expressions.
+    Preserves spacing and handles mathematical expressions using robust parsing.
     """
     if not isinstance(text, str):
         return str(text) if text else ""
@@ -23,14 +62,8 @@ def sanitize_for_latex(text: str) -> str:
     # First, ensure valid UTF-8
     text = text.encode('utf-8', errors='ignore').decode('utf-8')
     
-    # ONLY escape characters that are problematic outside math mode
-    # Do NOT escape { } _ ^ $ \ as they're used for LaTeX math
-    # Only escape # and & which cause issues in text
-    text = text.replace('#', r'\#')
-    text = text.replace('&', r'\&')
-    
-    # Replace ~ with proper LaTeX (but carefully)
-    # text = text.replace('~', r'\textasciitilde{}')  # Disabled - too aggressive
+    # Use robust escaping for & and # (respecting math mode)
+    text = escape_latex_outside_math(text)
     
     # Map problematic Unicode chars to LaTeX equivalents
     replacements = {
@@ -112,7 +145,6 @@ def sanitize_for_latex(text: str) -> str:
         text = text.replace(char, replacement)
     
     # Replace remaining non-ASCII with space (preserve word boundaries)
-    # This keeps spacing intact instead of concatenating words
     text = re.sub(r'[^\x00-\x7F]+', ' ', text)
     
     # Clean up multiple spaces
