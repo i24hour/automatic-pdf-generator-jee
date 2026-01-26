@@ -387,6 +387,11 @@ export default function TestGenerator() {
                     num_msq: level === "GATE" || level === "JEE Advanced" ? (level === "JEE Advanced" ? jeeMulti : numMSQ) : undefined,
                     num_nat: level === "GATE" ? numNAT : undefined,
                     num_ga: level === "GATE" ? numGA : undefined,
+                    // Boards Params
+                    cbse_vsa: level === "Boards" ? cbseVeryShort : undefined,
+                    cbse_sa: level === "Boards" ? cbseShort : undefined,
+                    cbse_la: level === "Boards" ? cbseLong : undefined,
+                    cbse_case: level === "Boards" ? cbseCaseBased : undefined,
                 }),
             });
 

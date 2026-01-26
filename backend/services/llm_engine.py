@@ -1104,18 +1104,22 @@ IMPORTANT:
             total_cbse_theory = mcq_count  # VSA+SA+LA+Case from frontend
             total_numericals = numerical_count
             
-            # Approximate distribution
-            # Approximate distribution
-            if total_cbse_theory > 0:
-                vsa_count = max(1, int(total_cbse_theory * 0.4))
-                sa_count = max(1, int(total_cbse_theory * 0.3))
-                la_count = max(1, int(total_cbse_theory * 0.15))
-                case_count = max(0, total_cbse_theory - vsa_count - sa_count - la_count)
-            else:
-                vsa_count = 0
-                sa_count = 0
-                la_count = 0
-                case_count = 0
+            # Get detailed breakdown if provided (from frontend), otherwise approximate
+            vsa_count = kwargs.get("cbse_vsa", 0) or 0
+            sa_count = kwargs.get("cbse_sa", 0) or 0
+            la_count = kwargs.get("cbse_la", 0) or 0
+            case_count = kwargs.get("cbse_case", 0) or 0
+            
+            # If explicit counts are not provided (all zero), fallback to approximation
+            if vsa_count + sa_count + la_count + case_count == 0:
+                if total_cbse_theory > 0:
+                    vsa_count = max(1, int(total_cbse_theory * 0.4))
+                    sa_count = max(1, int(total_cbse_theory * 0.3))
+                    la_count = max(1, int(total_cbse_theory * 0.15))
+                    case_count = max(0, total_cbse_theory - vsa_count - sa_count - la_count)
+            
+            # Ensure total numericals is respecting user input or backend logic
+            total_numericals = numerical_count
             
             boards_json_example = """{
     "questions": [
