@@ -1270,7 +1270,7 @@ Return ONLY valid JSON:
                 if missing_mcq > 0 or missing_num > 0:
                     print(f"Supplementing: need {missing_mcq} more MCQs and {missing_num} more numericals")
                     # Recursive call for missing questions
-                    supplement_result = self.generate_questions(
+                    supplement_result = await self.generate_questions_async(
                         subject=subject,
                         topic=topic,
                         mcq_count=max(missing_mcq, 0),
