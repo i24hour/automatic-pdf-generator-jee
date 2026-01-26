@@ -663,23 +663,33 @@ Example: {{"subject":"Chemistry","confidence":"high"}}
         
         import re
         
-        # Use regex to find all math regions (both $$ and $)
-        # Match $$...$$ first (greedy for block math), then $...$ (for inline)
-        math_pattern = r'(\$\$.*?\$\$|\$[^$]+?\$)'
+        # Use regex to find all math regions:
+        # 1. Block math: $$ ... $$
+        # 2. Inline math: $ ... $
+        # 3. Explicit environments: \begin{...} ... \end{...} (using backreference \2 to match end tag)
+        # 4. Use (?s) flag to ensure . matches newlines (crucial for matrices)
+        math_pattern = r'(?s)(\$\$.*?\$\$|\\begin\{([a-zA-Z]+\*?)\}.*?\\end\{\2\}|\$[^$]+?\$)'
         
-        # Split text into math and non-math segments
-        segments = re.split(math_pattern, text)
         result = []
+        last_end = 0
         
-        for segment in segments:
-            if segment.startswith('$$') or (segment.startswith('$') and segment.endswith('$') and len(segment) > 1):
-                # This is inside math mode - keep as is (preserve & for matrices)
-                result.append(segment)
-            else:
-                # This is outside math mode - escape special chars
-                # Only escape & and % which are problematic outside math
-                escaped = segment.replace('&', r'\&').replace('%', r'\%')
+        for match in re.finditer(math_pattern, text):
+            # Process content BEFORE this math block (non-math text)
+            non_math_part = text[last_end:match.start()]
+            if non_math_part:
+                escaped = non_math_part.replace('&', r'\&').replace('%', r'\%')
                 result.append(escaped)
+            
+            # Process the math block itself (preserve as is)
+            result.append(match.group(0))  # group(0) is the full match, ignoring subgroups
+            
+            last_end = match.end()
+            
+        # Process remaining text after the last math block
+        remaining_part = text[last_end:]
+        if remaining_part:
+            escaped = remaining_part.replace('&', r'\&').replace('%', r'\%')
+            result.append(escaped)
         
         return ''.join(result)
     
