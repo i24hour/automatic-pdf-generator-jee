@@ -611,6 +611,21 @@ Example: {{"subject":"Chemistry","confidence":"high"}}
             'right', 'rangle', 'rceil', 'rfloor', 'rm',
             'nabla', 'neg', 'neq', 'newline', 'nu',
             'tan', 'tau', 'text', 'textbf', 'therefore', 'theta', 'times', 'to', 'triangle',
+            'alpha', 'gamma', 'delta', 'epsilon', 'zeta', 'eta', 'theta', 'iota', 'kappa',
+            'lambda', 'mu', 'nu', 'xi', 'pi', 'rho', 'sigma', 'tau', 'upsilon', 'phi', 'chi', 'psi', 'omega',
+            'Gamma', 'Delta', 'Theta', 'Lambda', 'Xi', 'Pi', 'Sigma', 'Upsilon', 'Phi', 'Psi', 'Omega',
+            'inf', 'infty', 'int', 'item',
+            'left', 'lim', 'limits',
+            'matrix', 'pmatrix', 'bmatrix', 'vmatrix', 'Vmatrix', 'Bmatrix',
+            'hat', 'hline', 'huge', 'Huge',
+            'prod', 'partial',
+            'sum', 'sqrt', 'sim', 'sin', 'cos', 'sec', 'csc', 'cot', 'log', 'ln', 'exp',
+            'end', 'exists', 'epsilon',
+            'det', 'dim', 'div',
+            'subset', 'subseteq', 'sum',
+            'vec', 'vert',
+            'approx', 'angle', 'arc',
+            'cap', 'cup', 'cdot',
         ]
         
         # Replace \cmd with \\cmd for all LaTeX commands (double the backslash)
@@ -1192,11 +1207,15 @@ FORMATTING REQUIREMENTS (VERY IMPORTANT):
 - Use proper spacing between words and sentences
 - Write complete, grammatically correct sentences
 - Use LaTeX math mode for ALL mathematical expressions: $...$
-  Examples: $F = ma$, $\\\\frac{{a}}{{b}}$, $\\\\sqrt{{x}}$, $\\\\int_0^1 f(x) dx$
+  Examples: $F = ma$, $\\frac{{a}}{{b}}$, $\\sqrt{{x}}$, $\\int_0^1 f(x) dx$
+- FOR CHEMICAL REACTIONS OR LONG EQUATIONS:
+  - MUST use double dollar signs $$...$$ for block display
+  - Example: $$2H_2 + O_2 \\rightarrow 2H_2O$$
+  - This ensures proper centered alignment and spacing on new lines
 - For subscripts use: $W_0$, $v_1$, $x_2$ (NOT W₀, v₁, x₂)
 - For superscripts use: $x^2$, $10^3$ (NOT x², 10³)
-- For Greek letters use: $\\\\alpha$, $\\\\beta$, $\\\\theta$, $\\\\omega$ (NOT α, β, θ, ω)
-- For special symbols: $\\\\times$ (multiplication), $\\\\div$ (division), $\\\\pm$ (plus-minus)
+- For Greek letters use: $\\alpha$, $\\beta$, $\\theta$, $\\omega$ (NOT α, β, θ, ω)
+- For special symbols: $\\times$ (multiplication), $\\div$ (division), $\\pm$ (plus-minus)
 - Separate distinct concepts with proper punctuation and spacing
 - DO NOT concatenate words or run sentences together
 
