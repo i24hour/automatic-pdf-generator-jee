@@ -1156,6 +1156,34 @@ REQUIREMENTS:
 
 Return ONLY valid JSON:
 {boards_json_example}"""
+        elif level == "JEE Advanced":
+            num_msq = kwargs.get("num_msq", 0) or 0
+            # mcq_count contains (Single Correct + Multi Correct)
+            num_single = max(0, mcq_count - num_msq)
+            
+            prompt = f"""You are an expert JEE Advanced question setter.
+            
+Generate exactly:
+- {num_single} Single Correct MCQ(s) (Type: "mcq", 4 options only 1 correct, Marks: 3)
+- {num_msq} Multi Correct MCQ(s) (Type: "mcq_multi", 4 options 1 or more correct, Marks: 4)
+- {numerical_count} Integer Type Question(s) (Type: "numerical", answer is an integer, Marks: 3)
+
+Topic: "{topic}" for {subject}
+
+{level_prompt}
+
+{difficulty_prompt}
+
+TOTAL: {num_single + num_msq + numerical_count} Questions
+
+REQUIREMENTS:
+- For multi-correct: "answer" field should be comma separated like "A, C"
+- For integer type: "answer" field should be a number string like "5"
+- Use LaTeX for math: $...$, $$...$$
+- NO explanations, just question, options, and answer
+
+Return ONLY valid JSON:
+{json_example}"""
         elif level == "GATE":
             gate_paper = kwargs.get("gate_paper", "CSE")
             num_msq = kwargs.get("num_msq", 0) or 0

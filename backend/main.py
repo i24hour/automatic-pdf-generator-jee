@@ -349,7 +349,12 @@ async def generate_test(
             mcq_count=mcq_count,
             numerical_count=numerical_count,
             level=request.level,
-            difficulty=request.difficulty
+            difficulty=request.difficulty,
+            # Pass extended params for GATE/JEE Advanced
+            gate_paper=request.gate_paper,
+            num_msq=request.num_msq,
+            num_nat=request.num_nat,
+            num_ga=request.num_ga
         )
         
         if not llm_result.get("success"):
@@ -518,7 +523,12 @@ async def generate_test_verified(
             numerical_count=numerical_count,
             level=request.level,
             difficulty=request.difficulty,
-            include_solutions=request.include_solutions
+            include_solutions=request.include_solutions,
+            # Pass extended params
+            gate_paper=request.gate_paper,
+            num_msq=request.num_msq,
+            num_nat=request.num_nat,
+            num_ga=request.num_ga
         )
         
         if not llm_result.get("success"):
