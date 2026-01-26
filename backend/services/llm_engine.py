@@ -656,27 +656,32 @@ Example: {{"subject":"Chemistry","confidence":"high"}}
     def _escape_latex_outside_math(self, text: str) -> str:
         """
         Escape special LaTeX characters in text, but PRESERVE math mode content.
-        Only escapes text that is OUTSIDE of $...$ delimiters.
+        Handles both inline $...$ and block $$...$$ math modes correctly.
         """
         if not text:
             return text
         
-        # Split by $ to separate math and non-math parts
-        parts = text.split('$')
+        import re
+        
+        # Use regex to find all math regions (both $$ and $)
+        # Match $$...$$ first (greedy for block math), then $...$ (for inline)
+        math_pattern = r'(\$\$.*?\$\$|\$[^$]+?\$)'
+        
+        # Split text into math and non-math segments
+        segments = re.split(math_pattern, text)
         result = []
         
-        for i, part in enumerate(parts):
-            if i % 2 == 0:
+        for segment in segments:
+            if segment.startswith('$$') or (segment.startswith('$') and segment.endswith('$') and len(segment) > 1):
+                # This is inside math mode - keep as is (preserve & for matrices)
+                result.append(segment)
+            else:
                 # This is outside math mode - escape special chars
                 # Only escape & and % which are problematic outside math
-                # Don't escape _ { } as they might be in chemical formulas etc.
-                escaped = part.replace('&', r'\&').replace('%', r'\%')
+                escaped = segment.replace('&', r'\&').replace('%', r'\%')
                 result.append(escaped)
-            else:
-                # This is inside math mode - keep as is
-                result.append(part)
         
-        return '$'.join(result)
+        return ''.join(result)
     
     def _fix_spacing(self, text: str) -> str:
         """Fix common spacing issues in LLM output and convert markdown to LaTeX."""
