@@ -19,7 +19,7 @@ from dotenv import load_dotenv
 from services.llm_engine import llm_engine, get_user_question_history, save_question_history
 from services.pdf_engine import pdf_engine
 from database import get_db, init_db
-from models import User, PDFGeneration, PromoCode, PromoCodeUsage, TopicSubjectCache, SharedPDF
+from models import User, PDFGeneration, PromoCode, PromoCodeUsage, TopicSubjectCache, SharedPDF, SystemErrorLog
 from auth import get_current_user_required, get_current_user
 from routers.auth_router import router as auth_router
 from routers.institute_router import router as institute_router
@@ -148,6 +148,16 @@ class DetectSubjectRequest(BaseModel):
 
 class DetectSubjectResponse(BaseModel):
     """Response model for subject detection."""
+    subject: str
+    confidence: float
+
+
+class ErrorLogRequest(BaseModel):
+    """Request model for client-side error logging."""
+    error_type: str = Field(..., description="Type of error (e.g. LOGIN_FAILURE, GENERATION_TIMEOUT)")
+    error_details: str = Field(..., description="Detailed error message or stack trace")
+    user_email: Optional[str] = None
+    metadata_info: Optional[str] = None
     subject: str
     confidence: str = "high"
     cached: bool = False
@@ -738,6 +748,41 @@ async def apply_promo_code(
     )
 
 
+
+@app.post("/api/log-error")
+async def log_system_error(
+    request: ErrorLogRequest,
+    current_user: Optional[User] = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Log a system error reported by the frontend.
+    Accepts anonymous reports (if login fails).
+    """
+    try:
+        # If user is authenticated, use their ID
+        user_id = str(current_user.id) if current_user else None
+        
+        # Create log entry
+        error_log = SystemErrorLog(
+            error_type=request.error_type,
+            error_details=request.error_details,
+            user_id=user_id,
+            user_email=request.user_email or (current_user.email if current_user else None),
+            metadata_info=request.metadata_info
+        )
+        
+        db.add(error_log)
+        db.commit()
+        
+        return {"success": True, "message": "Error logged"}
+        
+    except Exception as e:
+        print(f"Failed to log error: {e}")
+        # Don't throw error to client, just fail silently
+        return {"success": False, "message": "Failed to log error"}
+
+
 @app.post("/api/admin/seed-promo")
 async def seed_promo_code(
     admin_key: str,
@@ -1082,6 +1127,31 @@ async def run_generation_job(
         
     except Exception as e:
         print(f"[SSE Job {job_id}] Error: {str(e)}")
+        
+        # Auto-log generation failure
+        try:
+            # Use local import to avoid circular dependency issues if any
+            from database import SessionLocal
+            from models import SystemErrorLog
+            err_db = SessionLocal()
+            try:
+                err_log = SystemErrorLog(
+                    error_type="GENERATION_FAILURE",
+                    error_details=f"Job {job_id} failed: {str(e)}",
+                    user_id=str(user.id),
+                    user_email=user.email,
+                    metadata_info=json.dumps({"level": request.level, "subject": request.subject, "topic": request.topic})
+                )
+                err_db.add(err_log)
+                err_db.commit()
+                print(f"[SystemLog] Logged generation failure for {job_id}")
+            except Exception as log_err:
+                print(f"Failed to auto-log error: {log_err}")
+            finally:
+                err_db.close()
+        except Exception:
+            pass
+            
         job_store.update_job(
             job_id,
             JobStatus.FAILED,

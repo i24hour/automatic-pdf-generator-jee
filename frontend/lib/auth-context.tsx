@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef } from "react";
+import { logError } from "@/lib/logger";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -161,28 +162,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, [refreshTokenValue, refreshAccessToken]);
 
     const login = async (email: string, password: string) => {
-        const response = await fetch(`${API_BASE_URL}/auth/login`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email, password }),
-        });
+        try {
+            const response = await fetch(`${API_BASE_URL}/auth/login`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password }),
+            });
 
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.detail || "Login failed");
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.detail || "Login failed");
+            }
+
+            const data = await response.json();
+
+            setToken(data.access_token);
+            setRefreshTokenValue(data.refresh_token);
+            setUser(data.user);
+
+            localStorage.setItem("auth_token", data.access_token);
+            localStorage.setItem("refresh_token", data.refresh_token);
+            localStorage.setItem("auth_user", JSON.stringify(data.user));
+
+            return { user: data.user };
+        } catch (error) {
+            // Log login failures (network errors or invalid credentials)
+            logError({
+                error_type: "LOGIN_FAILURE",
+                error_details: error instanceof Error ? error.message : "Unknown login error",
+                user_email: email
+            });
+            throw error;
         }
-
-        const data = await response.json();
-
-        setToken(data.access_token);
-        setRefreshTokenValue(data.refresh_token);
-        setUser(data.user);
-
-        localStorage.setItem("auth_token", data.access_token);
-        localStorage.setItem("refresh_token", data.refresh_token);
-        localStorage.setItem("auth_user", JSON.stringify(data.user));
-
-        return { user: data.user };
     };
 
     const register = async (email: string, password: string, name?: string, phone?: string) => {

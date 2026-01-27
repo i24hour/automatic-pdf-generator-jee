@@ -323,6 +323,22 @@ class UserBadge(Base):
         return f"<UserBadge {self.badge_type} for {self.user_id}>"
 
 
+class SystemErrorLog(Base):
+    """Log system errors (login failures, generation failures)."""
+    __tablename__ = "system_error_logs"
+    
+    id = Column(String, primary_key=True, default=generate_uuid)
+    error_type = Column(String, nullable=False)  # 'LOGIN_FAILURE', 'GENERATION_FAILURE', 'CLIENT_ERROR'
+    error_details = Column(Text, nullable=False)  # JSON or text details
+    user_id = Column(String, nullable=True)  # Optional: user ID if known
+    user_email = Column(String, nullable=True)  # Optional: email used during attempt
+    timestamp = Column(DateTime(timezone=True), server_default=func.now())
+    metadata_info = Column(Text, nullable=True)  # JSON string for extra metadata (e.g. browser, IST time string)
+
+    def __repr__(self):
+        return f"<SystemErrorLog {self.error_type} at {self.timestamp}>"
+
+
 class UserQuestionHistory(Base):
     """Store generated questions per user+topic+level for fresh question generation."""
     __tablename__ = "user_question_history"

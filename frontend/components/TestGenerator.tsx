@@ -28,6 +28,7 @@ import {
     Share2
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
+import { logError } from "@/lib/logger";
 import PostModal from "@/components/PostModal";
 import UsernameModal from "@/components/UsernameModal";
 
@@ -345,6 +346,14 @@ export default function TestGenerator() {
                     if (timerRef.current) clearInterval(timerRef.current);
                     cleanupGeneration();
                     setError("Generation timed out (limit: 10 mins). Please try again.");
+
+                    // Log timeout error
+                    logError({
+                        error_type: "GENERATION_TIMEOUT",
+                        error_details: `Generation timed out after 600s for topic: ${topic}`,
+                        metadata_info: JSON.stringify({ level, subject, difficulty })
+                    });
+
                     return prev;
                 }
                 return prev + 1;
@@ -353,6 +362,7 @@ export default function TestGenerator() {
 
         try {
             // Calculate question counts based on level
+
             let requestMcqs = numMCQs;
             let requestNumericals = numNumericals;
             let requestTotal = questionCount;
@@ -419,6 +429,14 @@ export default function TestGenerator() {
 
         } catch (err: unknown) {
             console.error("Generation error:", err);
+
+            // Log generation error
+            logError({
+                error_type: "GENERATION_ERROR",
+                error_details: err instanceof Error ? err.message : "Unknown generation error",
+                metadata_info: JSON.stringify({ level, subject, topic })
+            });
+
             if (err instanceof Error && err.message.includes("Rate limit")) {
                 setError(err.message);
             } else {
