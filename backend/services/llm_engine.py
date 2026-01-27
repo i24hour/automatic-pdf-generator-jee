@@ -1420,7 +1420,14 @@ Return ONLY valid JSON:
             total_cbse_theory = mcq_count
             total_numericals = numerical_count
             
-            if total_cbse_theory > 0:
+            # Check if specific counts were provided via kwargs
+            if kwargs.get('cbse_vsa') is not None:
+                vsa_count = kwargs.get('cbse_vsa')
+                sa_count = kwargs.get('cbse_sa') or 0
+                la_count = kwargs.get('cbse_la') or 0
+                case_count = kwargs.get('cbse_case') or 0
+                print(f"[DEBUG] Using explicit Boards counts: VSA={vsa_count}, SA={sa_count}, LA={la_count}, Case={case_count}")
+            elif total_cbse_theory > 0:
                 vsa_count = max(1, int(total_cbse_theory * 0.4))
                 sa_count = max(1, int(total_cbse_theory * 0.3))
                 la_count = max(1, int(total_cbse_theory * 0.15))

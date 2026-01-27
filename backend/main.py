@@ -149,7 +149,8 @@ class DetectSubjectRequest(BaseModel):
 class DetectSubjectResponse(BaseModel):
     """Response model for subject detection."""
     subject: str
-    confidence: float
+    confidence: str = "high"
+    cached: bool = False
 
 
 class ErrorLogRequest(BaseModel):
@@ -977,7 +978,13 @@ async def run_generation_job(
             num_nat=request.num_nat,
             num_ga=request.num_ga,
             # Fresh Questions: Pass past questions to avoid repetition
-            past_questions=past_questions if fresh_questions_enabled else None
+            past_questions=past_questions if fresh_questions_enabled else None,
+            # Boards Parameters
+            cbse_vsa=request.cbse_vsa,
+            cbse_sa=request.cbse_sa,
+            cbse_la=request.cbse_la,
+            cbse_case=request.cbse_case
+        )
         )
         
         if not llm_result.get("success"):
