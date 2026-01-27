@@ -338,8 +338,17 @@ export default function TestGenerator() {
         setJobId(null);
 
         // Start timer
+        // Start timer with 10-minute timeout check
         timerRef.current = setInterval(() => {
-            setElapsedTime(prev => prev + 1);
+            setElapsedTime(prev => {
+                if (prev >= 600) { // 600 seconds = 10 minutes
+                    if (timerRef.current) clearInterval(timerRef.current);
+                    cleanupGeneration();
+                    setError("Generation timed out (limit: 10 mins). Please try again.");
+                    return prev;
+                }
+                return prev + 1;
+            });
         }, 1000);
 
         try {
