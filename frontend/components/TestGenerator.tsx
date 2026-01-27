@@ -427,7 +427,9 @@ export default function TestGenerator() {
             }
 
             // SSE URL with token as query param (EventSource doesn't support headers)
-            const sseUrl = `${API_BASE_URL}/api/generate-sse/${streamJobId}/stream?token=${encodeURIComponent(token || '')}`;
+            // Use localStorage to ensure we have the FRESH refreshed token
+            const freshToken = localStorage.getItem("auth_token") || token;
+            const sseUrl = `${API_BASE_URL}/api/generate-sse/${streamJobId}/stream?token=${encodeURIComponent(freshToken || '')}`;
 
             const eventSource = new EventSource(sseUrl);
             eventSourceRef.current = eventSource;
