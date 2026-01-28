@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import Link from 'next/link';
 
@@ -42,6 +42,8 @@ export default function PostsFeed() {
     const [nextCursor, setNextCursor] = useState<string | null>(null);
     const [filter, setFilter] = useState({ subject: '', level: '' });
     const [error, setError] = useState('');
+    const [searchInput, setSearchInput] = useState('');
+    const [searchQuery, setSearchQuery] = useState('');
 
     const fetchPosts = useCallback(async (cursor?: string) => {
         try {
@@ -79,6 +81,25 @@ export default function PostsFeed() {
         setPosts([]);
         fetchPosts();
     }, [fetchPosts]);
+
+    const applySearch = () => {
+        setSearchQuery(searchInput.trim());
+    };
+
+    const filteredPosts = useMemo(() => {
+        if (!searchQuery) return posts;
+        const query = searchQuery.toLowerCase();
+        return posts.filter(post => {
+            const values = [
+                post.topic,
+                post.subject,
+                post.caption,
+                post.username,
+                post.pdf_filename
+            ];
+            return values.some(value => value && value.toLowerCase().includes(query));
+        });
+    }, [posts, searchQuery]);
 
     const loadMore = () => {
         if (loadingMore || !hasMore || !nextCursor) return;
@@ -164,7 +185,8 @@ export default function PostsFeed() {
                 padding: '16px 24px',
                 borderBottom: '1px solid var(--border)',
                 display: 'flex',
-                gap: '12px'
+                gap: '12px',
+                flexWrap: 'wrap'
             }}>
                 <select
                     className="form-select"
@@ -189,6 +211,27 @@ export default function PostsFeed() {
                     <option value="JEE Advanced">JEE Advanced</option>
                     <option value="NEET">NEET</option>
                 </select>
+                <div style={{ flex: 2, display: 'flex', gap: '8px', minWidth: '220px' }}>
+                    <input
+                        type="text"
+                        placeholder="Search by topic, subject, caption, or username"
+                        value={searchInput}
+                        onChange={(e) => setSearchInput(e.target.value)}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter') applySearch();
+                        }}
+                        className="form-input"
+                        style={{ flex: 1, padding: '10px 14px' }}
+                    />
+                    <button
+                        type="button"
+                        onClick={applySearch}
+                        className="btn-secondary"
+                        style={{ padding: '10px 18px', whiteSpace: 'nowrap' }}
+                    >
+                        Search
+                    </button>
+                </div>
             </div>
 
             {/* Posts Feed */}
@@ -208,9 +251,15 @@ export default function PostsFeed() {
                         <p style={{ color: 'var(--text-muted)', marginBottom: '24px' }}>No posts yet. Be the first to share!</p>
                         <Link href="/" className="btn-primary">Generate & Share</Link>
                     </div>
+                ) : filteredPosts.length === 0 ? (
+                    <div style={{ padding: '48px', textAlign: 'center' }}>
+                        <p style={{ fontSize: '2.5rem', marginBottom: '16px' }}>🔎</p>
+                        <p style={{ color: 'var(--text-muted)', marginBottom: '8px' }}>No results found.</p>
+                        <p style={{ color: 'var(--text-muted)' }}>Try a different keyword or clear your search.</p>
+                    </div>
                 ) : (
                     <>
-                        {posts.map(post => (
+                        {filteredPosts.map(post => (
                             <article
                                 key={post.id}
                                 style={{
