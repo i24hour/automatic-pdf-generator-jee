@@ -78,6 +78,11 @@ class LoginRequest(BaseModel):
     password: str
 
 
+class GoogleAuthRequest(BaseModel):
+    """Google OAuth request with ID token."""
+    credential: str
+
+
 class ForgotPasswordRequest(BaseModel):
     """Forgot password request."""
     email: EmailStr
@@ -197,6 +202,74 @@ async def login(login_data: LoginRequest, db: Session = Depends(get_db)):
         refresh_token=refresh_token,
         user=UserResponse.model_validate(user)
     )
+
+
+@router.post("/google", response_model=TokenResponse)
+async def google_auth(request: GoogleAuthRequest, db: Session = Depends(get_db)):
+    """
+    Authenticate with Google OAuth.
+    Verifies Google ID token and creates/logs in user.
+    """
+    import requests
+
+    GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "87253755436-sovpsbdnimbques0hnhstgjuc78l532p.apps.googleusercontent.com")
+
+    try:
+        google_response = requests.get(
+            f"https://oauth2.googleapis.com/tokeninfo?id_token={request.credential}"
+        )
+
+        if google_response.status_code != 200:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid Google token"
+            )
+
+        token_info = google_response.json()
+
+        if token_info.get("aud") != GOOGLE_CLIENT_ID:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Token not intended for this app"
+            )
+
+        email = token_info.get("email")
+        name = token_info.get("name", "")
+
+        if not email:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email not provided by Google"
+            )
+
+        user = db.query(User).filter(User.email == email).first()
+
+        if not user:
+            user = User(
+                email=email,
+                name=name,
+                hashed_password=get_password_hash(os.urandom(32).hex()),
+                is_verified=True
+            )
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+
+        access_token = create_access_token(data={"sub": user.id})
+        refresh_token, _ = create_refresh_token(user.id, db)
+
+        return TokenResponse(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            user=UserResponse.model_validate(user)
+        )
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Google authentication failed"
+        )
 
 
 @router.post("/refresh", response_model=AccessTokenResponse)
