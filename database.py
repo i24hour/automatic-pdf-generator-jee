@@ -44,5 +44,13 @@ def get_db():
 
 def init_db():
     """Initialize database tables."""
-    from models import User, PDFGeneration  # Import here to avoid circular imports
+    from models import (
+        User,
+        PDFGeneration,
+        RefreshToken,
+        VerificationToken,
+        PasswordResetToken,
+        JobStatus,
+        TopicSubjectCache,
+    )  # Import here to avoid circular imports
     Base.metadata.create_all(bind=engine)

@@ -27,6 +27,42 @@ class LLMEngine:
         # litellm automatically picks up these environment variables
         # GEMINI_API_KEY, OPENAI_API_KEY, ANTHROPIC_API_KEY
         pass
+
+    def detect_subject(self, topic: str) -> Dict[str, str]:
+        """Classify a topic into a subject with confidence using the LLM."""
+        prompt = f"""
+You are a subject classifier for exam topics. Given the topic text, return a JSON with:
+- \"subject\": one of [\"Physics\", \"Chemistry\", \"Maths\", \"Biology\"]
+- \"confidence\": \"high\", \"medium\", or \"low\"
+
+Topic: \"{topic}\"
+
+Return ONLY JSON, no extra text.
+Example: {{\"subject\":\"Physics\",\"confidence\":\"high\"}}
+"""
+
+        try:
+            response = litellm.completion(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": "You are a precise subject classifier. Only return valid JSON."},
+                    {"role": "user", "content": prompt},
+                ],
+                temperature=0.2,
+            )
+            response_text = response.choices[0].message.content
+            cleaned = self._clean_json_response(response_text)
+            data = json.loads(cleaned)
+            subject = str(data.get("subject", "Physics")).strip()
+            confidence = str(data.get("confidence", "medium")).strip().lower()
+            if confidence not in {"high", "medium", "low"}:
+                confidence = "medium"
+            subject_map = {s.lower(): s for s in ["Physics", "Chemistry", "Maths", "Biology"]}
+            subject = subject_map.get(subject.lower(), "Physics")
+            return {"subject": subject, "confidence": confidence}
+        except Exception as e:
+            print(f"detect_subject failed: {e}")
+            return {"subject": "Physics", "confidence": "low"}
     
     def _clean_json_response(self, response_text: str) -> str:
         """

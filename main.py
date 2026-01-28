@@ -18,7 +18,7 @@ from dotenv import load_dotenv
 from services.llm_engine import llm_engine
 from services.pdf_engine import pdf_engine
 from database import get_db, init_db
-from models import User, PDFGeneration, JobStatus
+from models import User, PDFGeneration, JobStatus, TopicSubjectCache
 from auth import get_current_user_required, get_current_user
 from routers.auth_router import router as auth_router
 
@@ -114,6 +114,18 @@ class JobStatusResponse(BaseModel):
     pdf_ready: bool = False
 
 
+class DetectSubjectRequest(BaseModel):
+    """Request model for subject detection."""
+    topic: str = Field(..., description="Topic to classify")
+
+
+class DetectSubjectResponse(BaseModel):
+    """Response model for subject detection."""
+    subject: str
+    confidence: str = "high"
+    cached: bool = False
+
+
 
 def check_rate_limit(user: User, db: Session) -> tuple[bool, int, float]:
     """
@@ -180,6 +192,44 @@ async def health_check():
             "pdf_engine": "ready"
         }
     }
+
+
+@app.post("/api/detect-subject", response_model=DetectSubjectResponse)
+async def detect_subject(request: DetectSubjectRequest, db: Session = Depends(get_db)):
+    """
+    Auto-detect the subject for a given topic using LLM.
+    This helps users by automatically selecting the most likely subject.
+    """
+    if not request.topic or len(request.topic.strip()) < 2:
+        return DetectSubjectResponse(subject="Physics", confidence="low", cached=False)
+
+    normalized_topic = request.topic.strip().lower()
+    cached_entry = db.query(TopicSubjectCache).filter(TopicSubjectCache.normalized_topic == normalized_topic).first()
+    if cached_entry:
+        return DetectSubjectResponse(
+            subject=cached_entry.subject,
+            confidence=cached_entry.confidence or "high",
+            cached=True
+        )
+
+    result = llm_engine.detect_subject(request.topic)
+    subject = result.get("subject", "Physics")
+    confidence = result.get("confidence", "low")
+
+    try:
+        cache_row = TopicSubjectCache(
+            topic=request.topic.strip(),
+            normalized_topic=normalized_topic,
+            subject=subject,
+            confidence=confidence,
+        )
+        db.add(cache_row)
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        print(f"TopicSubjectCache insert failed: {e}")
+
+    return DetectSubjectResponse(subject=subject, confidence=confidence, cached=False)
 
 
 @app.get("/api/rate-limit", response_model=RateLimitInfo)

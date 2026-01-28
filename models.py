@@ -2,7 +2,7 @@
 Database models for User, Tokens, and PDF Generation tracking.
 """
 
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, Boolean
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, Boolean, UniqueConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from database import Base
@@ -122,3 +122,21 @@ class JobStatus(Base):
     
     def __repr__(self):
         return f"<JobStatus {self.id[:8]} - {self.status}>"
+
+
+class TopicSubjectCache(Base):
+    """Cache of detected subjects for topics to avoid repeated LLM calls."""
+    __tablename__ = "topic_subject_cache"
+    __table_args__ = (
+        UniqueConstraint("normalized_topic", name="uq_topic_subject_cache_normalized"),
+    )
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    topic = Column(String, nullable=False)
+    normalized_topic = Column(String, nullable=False, index=True)
+    subject = Column(String, nullable=False)
+    confidence = Column(String, nullable=False, default="high")
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    def __repr__(self):
+        return f"<TopicSubjectCache topic={self.normalized_topic} subject={self.subject}>"
