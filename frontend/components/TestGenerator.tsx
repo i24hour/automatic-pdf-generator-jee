@@ -33,7 +33,32 @@ import PostModal from "@/components/PostModal";
 import UsernameModal from "@/components/UsernameModal";
 
 // API base URL
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_BASE_URL =
+    process.env.NEXT_PUBLIC_API_URL ||
+    "https://mentors-mantra-api-87253755436.us-central1.run.app";
+
+const mapDetectedSubject = (detectedSubject: string, topicText: string) => {
+    if (!detectedSubject) return detectedSubject;
+    const normalized = detectedSubject.trim().toLowerCase();
+    if (normalized !== "biology") return detectedSubject;
+
+    const topic = topicText.toLowerCase();
+    const botanyKeywords = [
+        "plant",
+        "photosynthesis",
+        "chlorophyll",
+        "xylem",
+        "phloem",
+        "stomata",
+        "flower",
+        "seed",
+        "root",
+        "stem",
+        "leaf",
+    ];
+    const isBotany = botanyKeywords.some((keyword) => topic.includes(keyword));
+    return isBotany ? "Botany" : "Zoology";
+};
 
 interface GenerateResponse {
     success: boolean;
@@ -254,8 +279,9 @@ export default function TestGenerator() {
                 if (response.ok) {
                     const data = await response.json();
                     if (data.subject && data.confidence !== 'low') {
+                        const mappedSubject = mapDetectedSubject(data.subject, topic.trim());
                         // Auto-select the detected subject
-                        setSubject(data.subject);
+                        setSubject(mappedSubject);
                     }
                 }
             } catch (error) {
