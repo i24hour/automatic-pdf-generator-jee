@@ -149,7 +149,7 @@ class DetectSubjectRequest(BaseModel):
 class DetectSubjectResponse(BaseModel):
     """Response model for subject detection."""
     subject: str
-    confidence: str = "high"
+    confidence: str | float = "high"
     cached: bool = False
 
 
