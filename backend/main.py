@@ -985,7 +985,7 @@ async def run_generation_job(
             cbse_la=request.cbse_la,
             cbse_case=request.cbse_case
         )
-        )
+
         
         if not llm_result.get("success"):
             job_store.update_job(
