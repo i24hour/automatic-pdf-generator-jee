@@ -140,12 +140,10 @@ export default function TestGenerator() {
     ];
 
     const allLevels = [
-        { name: "Boards", icon: GraduationCap, color: "text-green-400", bgColor: "bg-green-500/20", borderColor: "border-green-500" },
         { name: "JEE Mains", icon: Target, color: "text-blue-400", bgColor: "bg-blue-500/20", borderColor: "border-blue-500" },
         { name: "JEE Advanced", icon: Award, color: "text-purple-400", bgColor: "bg-purple-500/20", borderColor: "border-purple-500" },
         { name: "Olympiad", icon: Trophy, color: "text-yellow-400", bgColor: "bg-yellow-500/20", borderColor: "border-yellow-500" },
         { name: "NEET", icon: Stethoscope, color: "text-pink-400", bgColor: "bg-pink-500/20", borderColor: "border-pink-500" },
-        { name: "GATE", icon: Zap, color: "text-orange-400", bgColor: "bg-orange-500/20", borderColor: "border-orange-500" },
     ];
 
     const difficulties = [
@@ -161,8 +159,8 @@ export default function TestGenerator() {
             return allLevels.filter(l => l.name !== "NEET");
         }
         if (subject === "Zoology" || subject === "Botany") {
-            // Zoology and Botany are only for Boards and NEET
-            return allLevels.filter(l => l.name === "Boards" || l.name === "NEET");
+            // Zoology and Botany are only for NEET (Boards removed)
+            return allLevels.filter(l => l.name === "NEET");
         }
         // Physics and Chemistry: all levels available
         return allLevels;
@@ -175,13 +173,6 @@ export default function TestGenerator() {
         if (level === "NEET") {
             setNumMCQs(questionCount);
             setNumNumericals(0);
-        } else if (level === "GATE") {
-            // Default GATE distribution (Total 50)
-            setNumGA(10);
-            setNumMCQs(20);
-            setNumMSQ(10);
-            setNumNAT(10);
-            setQuestionCount(50);
         } else {
             // Recalculate based on current total
             const mcqs = Math.round(questionCount * 0.8);
@@ -1140,30 +1131,22 @@ export default function TestGenerator() {
                         </div>
                     )}
 
-                    {/* GATE Pattern */}
-                    {level === "GATE" && (
-                        <div className="space-y-3">
-                            <div className="grid grid-cols-2 gap-3">
-                                <div className="relative">
-                                    <input
-                                        type="number"
-                                        value={numGA}
-                                        onChange={(e) => setNumGA(parseInt(e.target.value) || 0)}
-                                        min={0}
-                                        max={10}
-                                        disabled={isLoading}
-                                        className="peer w-full px-3 pt-5 pb-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-black text-gray-900 dark:text-white"
-                                        placeholder=" "
-                                    />
-                                    <label className="absolute left-3 top-1 text-[10px] text-indigo-600 font-medium">
-                                        General Aptitude
-                                    </label>
+                    {/* NEET Pattern - Only MCQs (no numericals) */}
+                    {
+                        level === "NEET" && (
+                            <div className="space-y-2">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-sm text-gray-600 dark:text-gray-400">NEET Pattern (MCQ Only)</span>
+                                    <span className="text-xs text-gray-500">Total: {numMCQs} (max 50)</span>
                                 </div>
                                 <div className="relative">
                                     <input
                                         type="number"
                                         value={numMCQs}
-                                        onChange={(e) => setNumMCQs(parseInt(e.target.value) || 0)}
+                                        onChange={(e) => {
+                                            const val = parseInt(e.target.value) || 0;
+                                            if (val >= 0 && val <= 50) setNumMCQs(val);
+                                        }}
                                         min={0}
                                         max={50}
                                         disabled={isLoading}
@@ -1171,105 +1154,49 @@ export default function TestGenerator() {
                                         placeholder=" "
                                     />
                                     <label className="absolute left-3 top-1 text-[10px] text-indigo-600 font-medium">
-                                        MCQs (1 Mark)
+                                        MCQs
                                     </label>
                                 </div>
-                                <div className="relative">
-                                    <input
-                                        type="number"
-                                        value={numMSQ}
-                                        onChange={(e) => setNumMSQ(parseInt(e.target.value) || 0)}
-                                        min={0}
-                                        max={50}
-                                        disabled={isLoading}
-                                        className="peer w-full px-3 pt-5 pb-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-black text-gray-900 dark:text-white"
-                                        placeholder=" "
-                                    />
-                                    <label className="absolute left-3 top-1 text-[10px] text-indigo-600 font-medium">
-                                        MSQs (Multi Select)
-                                    </label>
-                                </div>
-                                <div className="relative">
-                                    <input
-                                        type="number"
-                                        value={numNAT}
-                                        onChange={(e) => setNumNAT(parseInt(e.target.value) || 0)}
-                                        min={0}
-                                        max={50}
-                                        disabled={isLoading}
-                                        className="peer w-full px-3 pt-5 pb-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-black text-gray-900 dark:text-white"
-                                        placeholder=" "
-                                    />
-                                    <label className="absolute left-3 top-1 text-[10px] text-indigo-600 font-medium">
-                                        NAT (Numerical)
-                                    </label>
-                                </div>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 italic">
+                                    NEET is MCQ-only. No numerical questions.
+                                </p>
                             </div>
-                        </div>
-                    )}
-
-                    {/* NEET Pattern - Only MCQs (no numericals) */}
-                    {level === "NEET" && (
-                        <div className="space-y-2">
-                            <div className="flex justify-between items-center">
-                                <span className="text-sm text-gray-600 dark:text-gray-400">NEET Pattern (MCQ Only)</span>
-                                <span className="text-xs text-gray-500">Total: {numMCQs} (max 50)</span>
-                            </div>
-                            <div className="relative">
-                                <input
-                                    type="number"
-                                    value={numMCQs}
-                                    onChange={(e) => {
-                                        const val = parseInt(e.target.value) || 0;
-                                        if (val >= 0 && val <= 50) setNumMCQs(val);
-                                    }}
-                                    min={0}
-                                    max={50}
-                                    disabled={isLoading}
-                                    className="peer w-full px-3 pt-5 pb-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-black text-gray-900 dark:text-white"
-                                    placeholder=" "
-                                />
-                                <label className="absolute left-3 top-1 text-[10px] text-indigo-600 font-medium">
-                                    MCQs
-                                </label>
-                            </div>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 italic">
-                                NEET is MCQ-only. No numerical questions.
-                            </p>
-                        </div>
-                    )}
+                        )
+                    }
 
                     {/* Olympiad Pattern */}
-                    {level === "Olympiad" && (
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="relative">
-                                <input
-                                    type="number"
-                                    defaultValue={10}
-                                    className="peer w-full px-3 pt-5 pb-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
-                                    placeholder=" "
-                                />
-                                <label className="absolute left-3 top-1 text-[10px] text-indigo-600 font-medium">
-                                    MCQs
-                                </label>
+                    {
+                        level === "Olympiad" && (
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="relative">
+                                    <input
+                                        type="number"
+                                        defaultValue={10}
+                                        className="peer w-full px-3 pt-5 pb-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                                        placeholder=" "
+                                    />
+                                    <label className="absolute left-3 top-1 text-[10px] text-indigo-600 font-medium">
+                                        MCQs
+                                    </label>
+                                </div>
+                                <div className="relative">
+                                    <input
+                                        type="number"
+                                        defaultValue={5}
+                                        className="peer w-full px-3 pt-5 pb-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-black text-gray-900 dark:text-white"
+                                        placeholder=" "
+                                    />
+                                    <label className="absolute left-3 top-1 text-[10px] text-indigo-600 font-medium">
+                                        Subjective
+                                    </label>
+                                </div>
                             </div>
-                            <div className="relative">
-                                <input
-                                    type="number"
-                                    defaultValue={5}
-                                    className="peer w-full px-3 pt-5 pb-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-black text-gray-900 dark:text-white"
-                                    placeholder=" "
-                                />
-                                <label className="absolute left-3 top-1 text-[10px] text-indigo-600 font-medium">
-                                    Subjective
-                                </label>
-                            </div>
-                        </div>
-                    )}
-                </div>
+                        )
+                    }
+                </div >
 
                 {/* Generate Button */}
-                <button
+                < button
                     onClick={handleGenerate}
                     disabled={isLoading || isDetectingSubject || !topic.trim() || (rateLimit?.remaining === 0)}
                     className={`w-full py-2.5 md:py-4 rounded-lg md:rounded-xl text-white font-semibold text-[11px] md:text-lg shadow-lg transition-all duration-300 flex items-center justify-center gap-1.5 md:gap-2 mb-4 btn-primary ${isLoading || isDetectingSubject || !topic.trim() || (rateLimit?.remaining === 0)
@@ -1277,114 +1204,121 @@ export default function TestGenerator() {
                         : "hover:shadow-xl transform hover:-translate-y-0.5"
                         }`}
                 >
-                    {isLoading ? (
-                        <>
-                            <Loader2 className="w-4 h-4 md:w-6 md:h-6 animate-spin" />
-                            <span>Generating...</span>
-                        </>
-                    ) : (
-                        <>
-                            <Sparkles className="w-4 h-4 md:w-6 md:h-6" />
-                            <span>Generate {level} ({difficulty}) Test Paper</span>
-                        </>
-                    )}
-                </button>
+                    {
+                        isLoading ? (
+                            <>
+                                <Loader2 className="w-4 h-4 md:w-6 md:h-6 animate-spin" />
+                                <span>Generating...</span>
+                            </>
+                        ) : (
+                            <>
+                                <Sparkles className="w-4 h-4 md:w-6 md:h-6" />
+                                <span>Generate {level} ({difficulty}) Test Paper</span>
+                            </>
+                        )}
+                </button >
 
                 {/* Progress Bar */}
                 {/* Detailed Loading Steps */}
-                {isLoading && (
-                    <div className="mb-6 bg-indigo-50 dark:bg-indigo-900/10 rounded-xl p-5 border border-indigo-100 dark:border-indigo-900/30">
-                        <div className="flex items-center justify-between mb-4">
-                            <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 rounded-full bg-indigo-600 animate-pulse"></div>
-                                <span className="font-semibold text-indigo-900 dark:text-indigo-300">Working...</span>
+                {
+                    isLoading && (
+                        <div className="mb-6 bg-indigo-50 dark:bg-indigo-900/10 rounded-xl p-5 border border-indigo-100 dark:border-indigo-900/30">
+                            <div className="flex items-center justify-between mb-4">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-2 h-2 rounded-full bg-indigo-600 animate-pulse"></div>
+                                    <span className="font-semibold text-indigo-900 dark:text-indigo-300">Working...</span>
+                                </div>
+                                <div className="flex items-center gap-1 text-indigo-600 dark:text-indigo-400 bg-white dark:bg-black px-2 py-1 rounded-lg border border-indigo-100 dark:border-indigo-900/30 text-xs font-mono">
+                                    <Clock className="w-3 h-3" />
+                                    <span>{Math.floor(elapsedTime / 60)}:{String(elapsedTime % 60).padStart(2, '0')}</span>
+                                </div>
                             </div>
-                            <div className="flex items-center gap-1 text-indigo-600 dark:text-indigo-400 bg-white dark:bg-black px-2 py-1 rounded-lg border border-indigo-100 dark:border-indigo-900/30 text-xs font-mono">
-                                <Clock className="w-3 h-3" />
-                                <span>{Math.floor(elapsedTime / 60)}:{String(elapsedTime % 60).padStart(2, '0')}</span>
+
+                            <div className="space-y-3">
+                                {[
+                                    { text: "Analyzing topic and difficulty...", start: 0, end: 5 },
+                                    { text: "Researching question patterns...", start: 5, end: 12 },
+                                    ...(numMCQs > 0 ? [{ text: "Creating MCQ questions...", start: 12, end: 25 }] : []),
+                                    ...(numNumericals > 0 ? [{ text: "Generating numerical problems...", start: 25, end: 35 }] : []),
+                                    { text: "Verifying answers...", start: 35, end: 42 },
+                                    { text: "Formatting PDF document...", start: 42, end: 1000 }
+                                ].map((step, index) => {
+                                    const isCompleted = elapsedTime > step.end;
+                                    const isCurrent = elapsedTime >= step.start && elapsedTime <= step.end;
+                                    const isPending = elapsedTime < step.start;
+
+                                    return (
+                                        <div key={index} className={`flex items-center gap-3 text-sm transition-all duration-300 ${isPending ? 'opacity-50' : 'opacity-100'}`}>
+                                            {isCompleted ? (
+                                                <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
+                                            ) : isCurrent ? (
+                                                <Loader2 className="w-5 h-5 text-indigo-600 animate-spin flex-shrink-0" />
+                                            ) : (
+                                                <div className="w-5 h-5 rounded-full border-2 border-gray-300 dark:border-gray-600 flex-shrink-0" />
+                                            )}
+                                            <span className={`${isCompleted ? 'text-green-700 dark:text-green-400' : isCurrent ? 'text-indigo-700 dark:text-indigo-300 font-medium' : 'text-gray-500 dark:text-gray-400'}`}>
+                                                {step.text}
+                                            </span>
+                                        </div>
+                                    );
+                                })}
                             </div>
+
+                            <button
+                                onClick={handleCancelGeneration}
+                                className="w-full mt-6 py-2.5 bg-white dark:bg-black border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:text-red-600 hover:border-red-200 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2"
+                            >
+                                <X className="w-4 h-4" />
+                                Cancel Generation
+                            </button>
                         </div>
-
-                        <div className="space-y-3">
-                            {[
-                                { text: "Analyzing topic and difficulty...", start: 0, end: 5 },
-                                { text: "Researching question patterns...", start: 5, end: 12 },
-                                ...(numMCQs > 0 ? [{ text: "Creating MCQ questions...", start: 12, end: 25 }] : []),
-                                ...(numNumericals > 0 ? [{ text: "Generating numerical problems...", start: 25, end: 35 }] : []),
-                                { text: "Verifying answers...", start: 35, end: 42 },
-                                { text: "Formatting PDF document...", start: 42, end: 1000 }
-                            ].map((step, index) => {
-                                const isCompleted = elapsedTime > step.end;
-                                const isCurrent = elapsedTime >= step.start && elapsedTime <= step.end;
-                                const isPending = elapsedTime < step.start;
-
-                                return (
-                                    <div key={index} className={`flex items-center gap-3 text-sm transition-all duration-300 ${isPending ? 'opacity-50' : 'opacity-100'}`}>
-                                        {isCompleted ? (
-                                            <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
-                                        ) : isCurrent ? (
-                                            <Loader2 className="w-5 h-5 text-indigo-600 animate-spin flex-shrink-0" />
-                                        ) : (
-                                            <div className="w-5 h-5 rounded-full border-2 border-gray-300 dark:border-gray-600 flex-shrink-0" />
-                                        )}
-                                        <span className={`${isCompleted ? 'text-green-700 dark:text-green-400' : isCurrent ? 'text-indigo-700 dark:text-indigo-300 font-medium' : 'text-gray-500 dark:text-gray-400'}`}>
-                                            {step.text}
-                                        </span>
-                                    </div>
-                                );
-                            })}
-                        </div>
-
-                        <button
-                            onClick={handleCancelGeneration}
-                            className="w-full mt-6 py-2.5 bg-white dark:bg-black border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:text-red-600 hover:border-red-200 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2"
-                        >
-                            <X className="w-4 h-4" />
-                            Cancel Generation
-                        </button>
-                    </div>
-                )}
+                    )
+                }
 
                 {/* Error Message */}
-                {error && (
-                    <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3 text-red-700 animate-in fade-in slide-in-from-top-2">
-                        <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                        <p>{error}</p>
-                    </div>
-                )}
+                {
+                    error && (
+                        <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3 text-red-700 animate-in fade-in slide-in-from-top-2">
+                            <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                            <p>{error}</p>
+                        </div>
+                    )
+                }
 
                 {/* Success Message */}
-                {result?.success && (
-                    <div className="mt-6 space-y-4">
-                        <div className="flex items-start gap-3 text-green-700 bg-green-50 border border-green-200 rounded-lg px-4 py-3">
-                            <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                            <div>
-                                <p className="font-medium">{result.message}</p>
-                                <p className="text-sm text-green-600">
-                                    {result.total_mcq} MCQs + {result.total_numerical} Numerical Questions
-                                </p>
+                {
+                    result?.success && (
+                        <div className="mt-6 space-y-4">
+                            <div className="flex items-start gap-3 text-green-700 bg-green-50 border border-green-200 rounded-lg px-4 py-3">
+                                <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                                <div>
+                                    <p className="font-medium">{result.message}</p>
+                                    <p className="text-sm text-green-600">
+                                        {result.total_mcq} MCQs + {result.total_numerical} Numerical Questions
+                                    </p>
+                                </div>
+                            </div>
+
+
+                            <div className="flex gap-3">
+                                <button onClick={handleDownload} className="flex-1 py-3.5 border-2 border-indigo-600 text-indigo-600 font-medium rounded-lg hover:bg-indigo-50 transition-colors flex items-center justify-center gap-2">
+                                    <Download className="w-5 h-5" />
+                                    Download PDF
+                                </button>
+
+                                {result.shared_pdf_id && (
+                                    <button
+                                        onClick={() => setShowPostModal(true)}
+                                        className="flex-1 py-3.5 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2"
+                                    >
+                                        <Share2 className="w-5 h-5" />
+                                        Post
+                                    </button>
+                                )}
                             </div>
                         </div>
-
-
-                        <div className="flex gap-3">
-                            <button onClick={handleDownload} className="flex-1 py-3.5 border-2 border-indigo-600 text-indigo-600 font-medium rounded-lg hover:bg-indigo-50 transition-colors flex items-center justify-center gap-2">
-                                <Download className="w-5 h-5" />
-                                Download PDF
-                            </button>
-
-                            {result.shared_pdf_id && (
-                                <button
-                                    onClick={() => setShowPostModal(true)}
-                                    className="flex-1 py-3.5 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2"
-                                >
-                                    <Share2 className="w-5 h-5" />
-                                    Post
-                                </button>
-                            )}
-                        </div>
-                    </div>
-                )}
+                    )
+                }
 
                 {/* Footer */}
                 <div className="text-center mt-8 text-gray-500 dark:text-gray-400 text-sm pb-4">
@@ -1396,24 +1330,26 @@ export default function TestGenerator() {
                         <p className="text-gray-400 dark:text-gray-500 mt-2 italic">A Mentors Mantra Product</p>
                     </div>
                 </div>
-            </div>
+            </div >
 
             {/* Post Modal */}
-            {result?.shared_pdf_id && (
-                <PostModal
-                    isOpen={showPostModal}
-                    onClose={() => setShowPostModal(false)}
-                    sharedPdfId={result.shared_pdf_id}
-                    pdfFilename={result.pdf_filename || `${subject} - ${topic}`}
-                    subject={subject}
-                    topic={topic}
-                    level={level}
-                    token={token || ''}
-                    onSuccess={() => {
-                        // Optional: refresh feed or show success toast
-                    }}
-                />
-            )}
+            {
+                result?.shared_pdf_id && (
+                    <PostModal
+                        isOpen={showPostModal}
+                        onClose={() => setShowPostModal(false)}
+                        sharedPdfId={result.shared_pdf_id}
+                        pdfFilename={result.pdf_filename || `${subject} - ${topic}`}
+                        subject={subject}
+                        topic={topic}
+                        level={level}
+                        token={token || ''}
+                        onSuccess={() => {
+                            // Optional: refresh feed or show success toast
+                        }}
+                    />
+                )
+            }
 
             {/* Username Modal */}
             <UsernameModal
@@ -1426,6 +1362,6 @@ export default function TestGenerator() {
                     setShowUsernameModal(false);
                 }}
             />
-        </div>
+        </div >
     );
 }
