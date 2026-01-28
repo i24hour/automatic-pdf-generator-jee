@@ -52,5 +52,25 @@ def init_db():
         PasswordResetToken,
         JobStatus,
         TopicSubjectCache,
+        SharedPDF,
+        PDFLike,
+        UserBadge,
     )  # Import here to avoid circular imports
     Base.metadata.create_all(bind=engine)
+
+    try:
+        from sqlalchemy import text
+        with engine.connect() as conn:
+            try:
+                conn.execute(text("ALTER TABLE users ADD COLUMN username VARCHAR(50)"))
+                conn.commit()
+            except Exception:
+                conn.rollback()
+
+            try:
+                conn.execute(text("ALTER TABLE users ADD COLUMN total_posts INTEGER DEFAULT 0"))
+                conn.commit()
+            except Exception:
+                conn.rollback()
+    except Exception as e:
+        print(f"Migration warning (can be ignored if columns exist): {e}")

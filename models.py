@@ -26,12 +26,17 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
     name = Column(String, nullable=True)
+    username = Column(String, unique=True, index=True, nullable=True)
     is_verified = Column(Boolean, default=False)
+    total_posts = Column(Integer, default=0)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     
     # Relationships
     pdf_generations = relationship("PDFGeneration", back_populates="user")
     refresh_tokens = relationship("RefreshToken", back_populates="user", cascade="all, delete-orphan")
+    shared_pdfs = relationship("SharedPDF", back_populates="user", cascade="all, delete-orphan")
+    pdf_likes = relationship("PDFLike", back_populates="user", cascade="all, delete-orphan")
+    badges = relationship("UserBadge", back_populates="user", cascade="all, delete-orphan")
     
     def __repr__(self):
         return f"<User {self.email}>"
@@ -140,3 +145,74 @@ class TopicSubjectCache(Base):
 
     def __repr__(self):
         return f"<TopicSubjectCache topic={self.normalized_topic} subject={self.subject}>"
+
+
+class SharedPDF(Base):
+    """Shared/Posted PDFs for community feed."""
+    __tablename__ = "shared_pdfs"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+
+    pdf_url = Column(String, nullable=False)
+    pdf_filename = Column(String, nullable=False)
+    caption = Column(Text, nullable=True)
+
+    subject = Column(String, nullable=False)
+    topic = Column(String, nullable=False)
+    level = Column(String, nullable=False)
+    difficulty = Column(String, nullable=False)
+    question_count = Column(Integer, default=0)
+    has_solutions = Column(Boolean, default=False)
+
+    visibility = Column(String, default="private")
+    slug = Column(String, unique=True, index=True, nullable=True)
+
+    download_count = Column(Integer, default=0)
+    like_count = Column(Integer, default=0)
+    view_count = Column(Integer, default=0)
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    user = relationship("User", back_populates="shared_pdfs")
+    likes = relationship("PDFLike", back_populates="shared_pdf", cascade="all, delete-orphan")
+
+    def __repr__(self):
+        return f"<SharedPDF {self.topic} by {self.user_id}>"
+
+
+class PDFLike(Base):
+    """Track likes on shared PDFs."""
+    __tablename__ = "pdf_likes"
+    __table_args__ = (
+        UniqueConstraint("user_id", "shared_pdf_id", name="uq_user_pdf_like"),
+    )
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    shared_pdf_id = Column(String, ForeignKey("shared_pdfs.id", ondelete="CASCADE"), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    user = relationship("User", back_populates="pdf_likes")
+    shared_pdf = relationship("SharedPDF", back_populates="likes")
+
+    def __repr__(self):
+        return f"<PDFLike user={self.user_id} pdf={self.shared_pdf_id}>"
+
+
+class UserBadge(Base):
+    """Badges earned by users."""
+    __tablename__ = "user_badges"
+    __table_args__ = (
+        UniqueConstraint("user_id", "badge_type", name="uq_user_badge"),
+    )
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    badge_type = Column(String, nullable=False)
+    earned_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    user = relationship("User", back_populates="badges")
+
+    def __repr__(self):
+        return f"<UserBadge {self.badge_type} for {self.user_id}>"
