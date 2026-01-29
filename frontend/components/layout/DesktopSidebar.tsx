@@ -3,13 +3,14 @@
 import { useState } from "react";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Home, LayoutGrid, Trophy, User, Infinity as InfinityIcon, LogOut, MoreHorizontal, Sun, Moon, Settings } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { useTheme } from "@/lib/theme-context";
 
 export default function DesktopSidebar() {
     const pathname = usePathname();
+    const router = useRouter();
     const { user, logout } = useAuth();
     const { theme, toggleTheme } = useTheme();
     const [showLogoutMenu, setShowLogoutMenu] = useState(false);
@@ -116,9 +117,10 @@ export default function DesktopSidebar() {
                             />
                             <div className="absolute bottom-full left-0 w-[300px] mb-4 bg-white dark:bg-black rounded-2xl shadow-[0_0_15px_rgba(0,0,0,0.1)] dark:shadow-[0_0_15px_rgba(255,255,255,0.1)] border border-gray-100 dark:border-[#2f3336] overflow-hidden z-50 py-2">
                                 <button
-                                    onClick={() => {
-                                        logout();
+                                    onClick={async () => {
+                                        await logout();
                                         setShowLogoutMenu(false);
+                                        router.push("/login");
                                     }}
                                     className="w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-[#16181c] transition-colors font-bold text-gray-900 dark:text-white"
                                 >
