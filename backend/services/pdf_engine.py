@@ -149,6 +149,77 @@ def sanitize_for_latex(text: str) -> str:
     
     # Clean up multiple spaces
     text = re.sub(r' +', ' ', text)
+
+    # Detect and convert Markdown Tables to LaTeX tables
+    if '|' in text and '\n|' in text and '---' in text:
+        try:
+            lines = text.strip().split('\n')
+            latex_table = []
+            in_table = False
+            header = []
+            alignments = []
+            
+            i = 0
+            while i < len(lines):
+                line = lines[i].strip()
+                
+                # Check for table start (Header row)
+                if notin_table and line.startswith('|') and line.endswith('|') and i + 1 < len(lines):
+                    next_line = lines[i+1].strip()
+                    if '---' in next_line and '|' in next_line:
+                        in_table = True
+                        # Parse header
+                        header = [c.strip() for c in line.strip('|').split('|')]
+                        # Parse alignments from next line
+                        align_parts = [c.strip() for c in next_line.strip('|').split('|')]
+                        alignments = []
+                        for part in align_parts:
+                            if part.startswith(':') and part.endswith(':'):
+                                alignments.append('c')
+                            elif part.endswith(':'):
+                                alignments.append('r')
+                            else:
+                                alignments.append('l')
+                        
+                        # Start LaTeX Table
+                        col_spec = "|" + "|".join(alignments) + "|"
+                        latex_table.append(r'\begin{center}')
+                        latex_table.append(r'\begin{tabular}{' + col_spec + r'}')
+                        latex_table.append(r'\hline')
+                        
+                        # Add Header
+                        latex_table.append(" & ".join([r'\textbf{' + h + '}' for h in header]) + r' \\ \hline')
+                        
+                        i += 2 # Skip header and separator
+                        continue
+                        
+                if in_table:
+                    if line.startswith('|') and line.endswith('|'):
+                        # Table row
+                        cells = [c.strip() for c in line.strip('|').split('|')]
+                        # Handle math chars inside cells carefully (already escaped, but check ampersands)
+                        # Re-escape & if it was unescaped by mistake, but it should be fine due to earlier escaping
+                        latex_table.append(" & ".join(cells) + r' \\ \hline')
+                    else:
+                        # Table ended
+                        in_table = False
+                        latex_table.append(r'\end{tabular}')
+                        latex_table.append(r'\end{center}')
+                        latex_table.append(line)
+                else:
+                    latex_table.append(line)
+                
+                i += 1
+            
+            if in_table: # Close if checked ended inside table
+                latex_table.append(r'\end{tabular}')
+                latex_table.append(r'\end{center}')
+                
+            return '\n'.join(latex_table)
+        except Exception as e:
+            # If conversion fails, fallback to original text
+            print(f"Table conversion error: {e}")
+            return text
     
     return text
 
