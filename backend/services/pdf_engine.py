@@ -153,6 +153,78 @@ def sanitize_for_latex(text: str) -> str:
     return text
 
 
+import ast
+
+def format_answer(answer: Any, q_type: str = 'mcq') -> str:
+    """
+    Format and validate answer key entries.
+    Handles cleanup of list strings "['A', 'B']" and invalid options.
+    """
+    if answer is None:
+        return ""
+        
+    # Handle numbers (Numerical/Integer)
+    if q_type in ['numerical', 'integer', 'short_answer', 'long_answer']:
+        return str(answer)
+        
+    # Handle MCQs (Single/Multi)
+    # 1. Parse into list
+    options = []
+    if isinstance(answer, list):
+        options = answer
+    elif isinstance(answer, str):
+        answer = answer.strip()
+        # Try parsing python list string
+        if answer.startswith('[') and answer.endswith(']'):
+            try:
+                parsed = ast.literal_eval(answer)
+                if isinstance(parsed, list):
+                    options = parsed
+            except:
+                # Fallback: remove brackets and split
+                options = answer.replace('[','').replace(']','').replace("'", "").replace('"', "").split(',')
+        else:
+            # Comma separated string or single letter
+            options = answer.split(',') if ',' in answer else list(answer) if len(answer) > 1 and answer.isupper() else [answer]
+            
+    # 2. Clean and Filter Options
+    valid_options = {'A', 'B', 'C', 'D'}
+    cleaned_options = []
+    
+    for opt in options:
+        opt_str = str(opt).strip().upper().replace("'", "").replace('"', "")
+        # Remove empty
+        if not opt_str:
+            continue
+            
+        # For standard MCQs, only allow A, B, C, D matches
+        # Use regex to check if it's strictly a letter choice
+        if re.match(r'^[A-Z]$', opt_str):
+            if opt_str in valid_options:
+                cleaned_options.append(opt_str)
+            else:
+                # Invalid option like 'E', 'F' - User hated this.
+                # However, if it's "Bonus", keep it? Assuming mainly standard.
+                # If strictly E, ignore it.
+                pass
+        else:
+            # Might be "All", "Bonus", or numeric fallback?
+            # If it's something like "BCD", split it?
+            # "BCD" -> B, C, D
+            if re.match(r'^[A-D]+$', opt_str):
+                for char in opt_str:
+                    if char in valid_options:
+                        cleaned_options.append(char)
+            else:
+                # Keep complex answers as is (e.g. "Bonus")
+                cleaned_options.append(opt_str)
+                
+    # Deduplicate and Sort
+    cleaned_options = sorted(list(set(cleaned_options)))
+    
+    return ", ".join(cleaned_options)
+
+
 class PDFEngine:
     """PDF generation engine using Jinja2 + pdflatex."""
     
@@ -212,7 +284,12 @@ class PDFEngine:
         for q in questions:
             sanitized_q = {}
             for key, value in q.items():
-                if isinstance(value, str):
+                if key == "answer":
+                    # Special formatting for answers
+                    sanitized_q[key] = format_answer(value, q.get("type", "mcq"))
+                    # Still sanitize for latex safety just in case
+                    sanitized_q[key] = sanitize_for_latex(sanitized_q[key])
+                elif isinstance(value, str):
                     sanitized_q[key] = sanitize_for_latex(value)
                 elif isinstance(value, list):
                     # Handle options list
