@@ -189,6 +189,9 @@ def check_rate_limit(user: User, db: Session) -> tuple[bool, int, float]:
     now = datetime.now(timezone.utc)
     start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     
+    # Force refresh session to ensure we see latest writes
+    db.expire_all()
+    
     # Count generations in the current month
     recent_generations = db.query(PDFGeneration).filter(
         PDFGeneration.user_id == user.id,
@@ -196,6 +199,7 @@ def check_rate_limit(user: User, db: Session) -> tuple[bool, int, float]:
     ).all()
     
     used_count = len(recent_generations)
+    print(f"[RateLimit] User: {user.id}, Limit: {user_total_limit}, Used: {used_count}, Start: {start_of_month}")
     remaining = max(0, user_total_limit - used_count)
     
     # Calculate reset time (1st of next month)
