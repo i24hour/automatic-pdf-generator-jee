@@ -25,12 +25,14 @@ import {
     Dna,
     Stethoscope,
     X,
-    Share2
+    Share2,
+    ChevronDown
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { logError } from "@/lib/logger";
 import PostModal from "@/components/PostModal";
 import UsernameModal from "@/components/UsernameModal";
+import { searchChapters, getChaptersForSubject } from "@/lib/ncert-chapters";
 
 // API base URL
 const API_BASE_URL =
@@ -134,6 +136,11 @@ export default function TestGenerator() {
     const [progressMessage, setProgressMessage] = useState<string>("Ready to generate...");
     const [showPostModal, setShowPostModal] = useState(false);
     const [showUsernameModal, setShowUsernameModal] = useState(false);
+
+    // NCERT Chapter Dropdown State
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [filteredChapters, setFilteredChapters] = useState<{ class: string; name: string; matchedTopic?: string }[]>([]);
+    const dropdownRef = useRef<HTMLDivElement>(null);
 
     // Prompt for username if missing
     useEffect(() => {
@@ -298,6 +305,14 @@ export default function TestGenerator() {
             }
         };
     }, [topic]);
+
+    // Update filtered chapters when topic or subject changes
+    useEffect(() => {
+        const chapters = topic.trim()
+            ? searchChapters(subject, topic.trim())
+            : getChaptersForSubject(subject);
+        setFilteredChapters(chapters);
+    }, [topic, subject]);
 
     const fetchRateLimit = async () => {
         try {
@@ -785,20 +800,105 @@ export default function TestGenerator() {
 
             {/* Main Card */}
             <div className="bg-white dark:bg-[#16181c] border border-gray-200 dark:border-[#2f3336] rounded-2xl p-4 md:p-6 shadow-lg">
-                {/* Topic Input - Moved to Top */}
-                <div className="mb-6">
-                    <label htmlFor="topic" className="block mb-3 font-medium text-gray-700 dark:text-gray-300">Topic</label>
-                    <input
-                        type="text"
-                        id="topic"
-                        value={topic}
-                        onChange={(e) => setTopic(e.target.value)}
-                        placeholder="e.g., Electrostatics, Organic Chemistry, Integration"
+                {/* Topic Input with NCERT Chapter Dropdown */}
+                <div className="mb-6 relative" ref={dropdownRef}>
+                    <label htmlFor="topic" className="block mb-3 font-medium text-gray-700 dark:text-gray-300">
+                        Topic <span className="text-xs text-gray-400 font-normal">(Select from NCERT or type custom)</span>
+                    </label>
+                    <div className="relative">
+                        <input
+                            type="text"
+                            id="topic"
+                            value={topic}
+                            onChange={(e) => {
+                                setTopic(e.target.value);
+                                setIsDropdownOpen(true);
+                            }}
+                            onFocus={() => {
+                                setIsDropdownOpen(true);
+                                // Initialize chapters list on focus
+                                const chapters = topic.trim()
+                                    ? searchChapters(subject, topic.trim())
+                                    : getChaptersForSubject(subject);
+                                setFilteredChapters(chapters);
+                            }}
+                            placeholder="Type to search NCERT chapters or enter custom topic..."
+                            className="w-full px-4 py-3 pr-10 bg-white dark:bg-black border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900"
+                            disabled={isLoading}
+                            autoComplete="off"
+                        />
+                        <button
+                            type="button"
+                            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                            disabled={isLoading}
+                        >
+                            <ChevronDown className={`w-5 h-5 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                        </button>
+                    </div>
 
-                        className="w-full px-4 py-3 bg-white dark:bg-black border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900"
-                        disabled={isLoading}
-                    />
+                    {/* Dropdown Menu */}
+                    {isDropdownOpen && filteredChapters.length > 0 && (
+                        <div className="absolute z-50 w-full mt-1 bg-white dark:bg-[#16181c] border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-64 overflow-y-auto">
+                            {/* Group by class */}
+                            {['Class 11', 'Class 12'].map((className) => {
+                                const classChapters = filteredChapters.filter(c => c.class === className);
+                                if (classChapters.length === 0) return null;
+
+                                return (
+                                    <div key={className}>
+                                        <div className="sticky top-0 px-3 py-2 bg-gray-100 dark:bg-gray-800 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                                            {className}
+                                        </div>
+                                        {classChapters.map((chapter, idx) => (
+                                            <button
+                                                key={`${className}-${chapter.name}-${idx}`}
+                                                type="button"
+                                                onClick={() => {
+                                                    setTopic(chapter.matchedTopic || chapter.name);
+                                                    setIsDropdownOpen(false);
+                                                }}
+                                                className="w-full px-4 py-2.5 text-left hover:bg-indigo-50 dark:hover:bg-indigo-900/20 text-gray-700 dark:text-gray-200 text-sm transition-colors flex items-center justify-between group"
+                                            >
+                                                <span className="truncate">
+                                                    {chapter.name}
+                                                    {chapter.matchedTopic && (
+                                                        <span className="text-indigo-500 dark:text-indigo-400 text-xs ml-2">
+                                                            → {chapter.matchedTopic}
+                                                        </span>
+                                                    )}
+                                                </span>
+                                                <span className="text-xs text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    Select
+                                                </span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+
+                    {/* No results message */}
+                    {isDropdownOpen && topic.trim() && filteredChapters.length === 0 && (
+                        <div className="absolute z-50 w-full mt-1 bg-white dark:bg-[#16181c] border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-4 text-center">
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                                No NCERT chapters match &quot;{topic}&quot;
+                            </p>
+                            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                                You can use this as a custom topic
+                            </p>
+                        </div>
+                    )}
                 </div>
+
+                {/* Click outside to close dropdown */}
+                {isDropdownOpen && (
+                    <div
+                        className="fixed inset-0 z-40"
+                        onClick={() => setIsDropdownOpen(false)}
+                    />
+                )}
 
                 {/* Subject Selection - Hide for GATE */}
                 {level !== "GATE" && (
