@@ -1811,24 +1811,24 @@ RULES:
             corrected_count = 0
             
             # Apply results
-            for i, result in enumerate(all_verification_results):
+            for i, verif_result in enumerate(all_verification_results):
                 if i >= len(numerical_indices): break # Safety check
                 
                 q_index = numerical_indices[i]
                 q = questions[q_index]
                 
-                if result.get("success"):
+                if verif_result.get("success"):
                     verified_count += 1
-                    if not result.get("matches"):
+                    if not verif_result.get("matches"):
                         # Answer mismatch - use verified answer
                         q["original_answer"] = q.get("answer")
-                        q["answer"] = result.get("verified_answer")
+                        q["answer"] = verif_result.get("verified_answer")
                         q["answer_corrected"] = True
-                        q["solution"] = result.get("solution")
+                        q["solution"] = verif_result.get("solution")
                         corrected_count += 1
                     else:
                         q["answer_verified"] = True
-                        q["solution"] = result.get("solution")
+                        q["solution"] = verif_result.get("solution")
             
             result["verification_stats"] = {
                 "total_numerical": numerical_count,
