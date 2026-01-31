@@ -882,7 +882,7 @@ export default function TestGenerator() {
                                 </div>
                                 <div>
                                     <h3 className="font-semibold text-gray-900 dark:text-white text-sm">
-                                        ⚡ Found {existingTestCount} existing {existingTestCount === 1 ? 'test' : 'tests'}!
+                                        Found {existingTestCount} existing {existingTestCount === 1 ? 'test' : 'tests'}!
                                     </h3>
                                     <p className="text-xs text-gray-600 dark:text-gray-400">
                                         Save time & credits by using an existing test.
