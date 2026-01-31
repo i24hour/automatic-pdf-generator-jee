@@ -87,7 +87,7 @@ class EmailService:
                 <p>Hi {name or 'there'},</p>
                 <p>Thanks for signing up! Please verify your email address by clicking the button below:</p>
                 <p style="text-align: center;">
-                    <a href="{verification_url}" class="btn" style="background-color: #4f46e5; color: #ffffff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 500; font-size: 16px; display: inline-block;">Verify Email</a>
+                    <a href="{verification_url}" class="btn" style="background-color: #4f46e5; color: #ffffff !important; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 500; font-size: 16px; display: inline-block;"><span style="color: #ffffff">Verify Email</span></a>
                 </p>
                 <p>Or copy this link to your browser:</p>
                 <p><a href="{verification_url}" class="link-text">{verification_url}</a></p>
@@ -134,7 +134,7 @@ class EmailService:
                 <p>Hi {name or 'there'},</p>
                 <p>We received a request to reset your password. Click the button below to create a new password:</p>
                 <p style="text-align: center;">
-                    <a href="{reset_url}" class="btn" style="background-color: #4f46e5; color: #ffffff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 500; font-size: 16px; display: inline-block;">Reset Password</a>
+                    <a href="{reset_url}" class="btn" style="background-color: #4f46e5; color: #ffffff !important; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 500; font-size: 16px; display: inline-block;"><span style="color: #ffffff">Reset Password</span></a>
                 </p>
                 <p>Or copy this link to your browser:</p>
                 <p><a href="{reset_url}" class="link-text">{reset_url}</a></p>
