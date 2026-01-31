@@ -442,6 +442,13 @@ export default function TestGenerator() {
             return;
         }
 
+        // Validate difficulty distribution sums to 100%
+        const totalPercent = easyPercent + mediumPercent + hardPercent;
+        if (totalPercent !== 100) {
+            setError(`Difficulty distribution should be equal to 100% (currently ${totalPercent}%)`);
+            return;
+        }
+
         setIsLoading(true);
         setError(null);
         setResult(null);
