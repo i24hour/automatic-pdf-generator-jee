@@ -103,7 +103,7 @@ export default function TestGenerator() {
     const [numNAT, setNumNAT] = useState(0);
     const [numGA, setNumGA] = useState(10); // Standard is 10, but user can change
 
-    // CBSE Pattern state (for Boards level)
+    // CBSE Pattern state (for CBSE Board level)
     const [cbseVeryShort, setCbseVeryShort] = useState(4);
     const [cbseShort, setCbseShort] = useState(4);
     const [cbseLong, setCbseLong] = useState(2);
@@ -176,6 +176,7 @@ export default function TestGenerator() {
     ];
 
     const allLevels = [
+        { name: "CBSE Board", icon: GraduationCap, color: "text-emerald-400", bgColor: "bg-emerald-500/20", borderColor: "border-emerald-500" },
         { name: "JEE Mains", icon: Target, color: "text-blue-400", bgColor: "bg-blue-500/20", borderColor: "border-blue-500" },
         { name: "JEE Advanced", icon: Award, color: "text-purple-400", bgColor: "bg-purple-500/20", borderColor: "border-purple-500" },
         { name: "Olympiad", icon: Trophy, color: "text-yellow-400", bgColor: "bg-yellow-500/20", borderColor: "border-yellow-500" },
@@ -191,16 +192,17 @@ export default function TestGenerator() {
     // Smart level filtering based on subject
     const getAvailableLevels = () => {
         if (subject === "Maths") {
-            // NEET doesn't have Maths
+            // NEET doesn't have Maths, but CBSE Board and JEE do
             return allLevels.filter(l => l.name !== "NEET");
         }
         if (subject === "Zoology" || subject === "Botany") {
-            // Zoology and Botany are only for NEET (Boards removed)
+            // Zoology and Botany are only for NEET (no CBSE Board for biology subjects)
             return allLevels.filter(l => l.name === "NEET");
         }
-        // Physics and Chemistry: all levels available
+        // Physics and Chemistry: all levels available including CBSE Board
         return allLevels;
     };
+
 
     const levels = getAvailableLevels();
 
@@ -208,6 +210,16 @@ export default function TestGenerator() {
     useEffect(() => {
         if (level === "NEET") {
             setNumMCQs(questionCount);
+            setNumNumericals(0);
+        } else if (level === "CBSE Board") {
+            // CBSE Board uses subjective questions - set defaults
+            setCbseVeryShort(4);
+            setCbseShort(4);
+            setCbseLong(2);
+            setCbseCaseBased(1);
+            setCbseNumericals(4);
+            // Set MCQ/Numerical to 0 since we use CBSE-specific counts
+            setNumMCQs(0);
             setNumNumericals(0);
         } else {
             // Recalculate based on current total
@@ -247,7 +259,7 @@ export default function TestGenerator() {
         const availableLevelNames = getAvailableLevels().map(l => l.name);
         if (!availableLevelNames.includes(level)) {
             // Switch to first available level
-            setLevel(availableLevelNames[0] || "Boards");
+            setLevel(availableLevelNames[0] || "CBSE Board");
         }
     }, [subject]);
 
@@ -434,9 +446,9 @@ export default function TestGenerator() {
             let requestNumericals = numNumericals;
             let requestTotal = questionCount;
 
-            if (level === "Boards") {
-                // For Boards: combine CBSE pattern
-                // Very Short + Short + Long + Case-Based = MCQ-style (text answers)
+            if (level === "CBSE Board") {
+                // For CBSE Board: combine CBSE pattern with subjective questions
+                // Very Short + Short + Long + Case-Based questions
                 // Numericals stay as numericals
                 requestMcqs = cbseVeryShort + cbseShort + cbseLong + cbseCaseBased;
                 requestNumericals = cbseNumericals;
@@ -473,11 +485,12 @@ export default function TestGenerator() {
                     num_msq: level === "GATE" || level === "JEE Advanced" ? (level === "JEE Advanced" ? jeeMulti : numMSQ) : undefined,
                     num_nat: level === "GATE" ? numNAT : undefined,
                     num_ga: level === "GATE" ? numGA : undefined,
-                    // Boards Params
-                    cbse_vsa: level === "Boards" ? cbseVeryShort : undefined,
-                    cbse_sa: level === "Boards" ? cbseShort : undefined,
-                    cbse_la: level === "Boards" ? cbseLong : undefined,
-                    cbse_case: level === "Boards" ? cbseCaseBased : undefined,
+                    // CBSE Board Params
+                    cbse_vsa: level === "CBSE Board" ? cbseVeryShort : undefined,
+                    cbse_sa: level === "CBSE Board" ? cbseShort : undefined,
+                    cbse_la: level === "CBSE Board" ? cbseLong : undefined,
+                    cbse_case: level === "CBSE Board" ? cbseCaseBased : undefined,
+                    cbse_numerical: level === "CBSE Board" ? cbseNumericals : undefined,
                 }),
             });
 
@@ -1128,10 +1141,10 @@ export default function TestGenerator() {
                 <div className="mb-4">
                     <div className="flex items-center justify-between mb-2">
                         <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                            {level === "Boards" ? "CBSE Pattern" : `${level} Pattern`}
+                            {level === "CBSE Board" ? "CBSE Board Pattern" : `${level} Pattern`}
                         </span>
                         <span className="text-xs text-gray-400">
-                            Total: {level === "Boards"
+                            Total: {level === "CBSE Board"
                                 ? cbseVeryShort + cbseShort + cbseLong + cbseCaseBased + cbseNumericals
                                 : level === "GATE"
                                     ? numGA + numMCQs + numMSQ + numNAT
@@ -1141,8 +1154,8 @@ export default function TestGenerator() {
                         </span>
                     </div>
 
-                    {/* Boards Pattern */}
-                    {level === "Boards" && (
+                    {/* CBSE Board Pattern */}
+                    {level === "CBSE Board" && (
                         <div className="space-y-3">
                             <div className="grid grid-cols-2 gap-3">
                                 <div className="relative">

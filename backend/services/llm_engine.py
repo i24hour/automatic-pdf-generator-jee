@@ -791,7 +791,7 @@ Example: {{"subject":"Chemistry","confidence":"high"}}
             topic: The specific topic
             mcq_count: Number of MCQ questions
             numerical_count: Number of numerical questions
-            level: Exam type (Boards, JEE Mains, JEE Advanced, Olympiad, NEET)
+            level: Exam type (CBSE Board, JEE Mains, JEE Advanced, Olympiad, NEET)
             difficulty: Difficulty within exam (Easy, Medium, Hard)
             
         Returns:
@@ -845,7 +845,7 @@ Example: {{"subject":"Chemistry","confidence":"high"}}
         
         # Detailed level-specific prompts with examples
         level_prompts = {
-            "Boards": """EXAM TYPE: CBSE Board Pattern
+            "CBSE Board": """EXAM TYPE: CBSE Board Pattern
 CHARACTERISTICS:
 - Follow EXACT CBSE Board exam pattern
 - Direct application of NCERT concepts
@@ -884,7 +884,7 @@ CBSE QUESTION TYPES (generate a mix of ALL types):
    - Generate as type "numerical" with marks: 3 or 5
 
 IMPORTANT: 
-- DO NOT generate only MCQs for Boards
+- DO NOT generate only MCQs for CBSE Board
 - Generate a balanced mix of VSA, SA, LA, and Numericals
 - Include at least 1-2 Case-based questions if total questions >= 10
 - Questions should be NCERT-aligned""",
@@ -1098,8 +1098,8 @@ IMPORTANT:
     ]
 }"""
         
-        # Special handling for Boards - generate CBSE pattern questions, not just MCQs
-        if level == "Boards":
+        # Special handling for CBSE Board - generate CBSE pattern questions, not just MCQs
+        if level == "CBSE Board":
             # Calculate CBSE question distribution based on totals
             total_cbse_theory = mcq_count  # VSA+SA+LA+Case from frontend
             total_numericals = numerical_count
@@ -1404,7 +1404,7 @@ Return ONLY valid JSON:
         
         # Level prompts (simplified for async)
         level_prompts = {
-            "Boards": "CBSE/State Board Level - Direct application, single-step problems.",
+            "CBSE Board": "CBSE/State Board Level - Direct application, single-step problems.",
             "JEE Mains": "JEE Main Level - Application-based, 2-3 step solutions. NUMERICAL answers must be INTEGERS 0-999.",
             "Mains": "JEE Main Level - Application-based, 2-3 step solutions. NUMERICAL answers must be INTEGERS 0-999.",
             "JEE Advanced": "JEE Advanced Level - Multi-concept, 4-5 step solutions, ~20% MCQs should be multi-correct.",
@@ -1415,8 +1415,8 @@ Return ONLY valid JSON:
         }
         level_prompt = level_prompts.get(level, level_prompts.get("JEE Mains"))
         
-        # Special handling for Boards - generate CBSE pattern questions
-        if level == "Boards":
+        # Special handling for CBSE Board - generate CBSE pattern questions
+        if level == "CBSE Board":
             total_cbse_theory = mcq_count
             total_numericals = numerical_count
             
@@ -1426,7 +1426,7 @@ Return ONLY valid JSON:
                 sa_count = kwargs.get('cbse_sa') or 0
                 la_count = kwargs.get('cbse_la') or 0
                 case_count = kwargs.get('cbse_case') or 0
-                print(f"[DEBUG] Using explicit Boards counts: VSA={vsa_count}, SA={sa_count}, LA={la_count}, Case={case_count}")
+                print(f"[DEBUG] Using explicit CBSE Board counts: VSA={vsa_count}, SA={sa_count}, LA={la_count}, Case={case_count}")
             elif total_cbse_theory > 0:
                 vsa_count = max(1, int(total_cbse_theory * 0.4))
                 sa_count = max(1, int(total_cbse_theory * 0.3))

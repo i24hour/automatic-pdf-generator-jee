@@ -87,7 +87,7 @@ export default function TrialPage() {
   ];
 
   const allLevels = [
-    { name: "Boards", icon: GraduationCap, color: "text-green-400", bgColor: "bg-green-500/20", borderColor: "border-green-500" },
+    { name: "CBSE Board", icon: GraduationCap, color: "text-emerald-400", bgColor: "bg-emerald-500/20", borderColor: "border-emerald-500" },
     { name: "JEE Mains", icon: Target, color: "text-blue-400", bgColor: "bg-blue-500/20", borderColor: "border-blue-500" },
     { name: "JEE Advanced", icon: Award, color: "text-purple-400", bgColor: "bg-purple-500/20", borderColor: "border-purple-500" },
     { name: "Olympiad", icon: Trophy, color: "text-yellow-400", bgColor: "bg-yellow-500/20", borderColor: "border-yellow-500" },
@@ -107,8 +107,8 @@ export default function TrialPage() {
       return allLevels.filter(l => l.name !== "NEET");
     }
     if (subject === "Zoology" || subject === "Botany") {
-      // Zoology and Botany are only for Boards and NEET
-      return allLevels.filter(l => l.name === "Boards" || l.name === "NEET");
+      // Zoology and Botany are only for NEET (no CBSE Board for biology subjects)
+      return allLevels.filter(l => l.name === "NEET");
     }
     // Physics and Chemistry: all levels available
     return allLevels;
@@ -159,7 +159,7 @@ export default function TrialPage() {
     const availableLevelNames = getAvailableLevels().map(l => l.name);
     if (!availableLevelNames.includes(level)) {
       // Switch to first available level
-      setLevel(availableLevelNames[0] || "Boards");
+      setLevel(availableLevelNames[0] || "CBSE Board");
     }
   }, [subject]);
 

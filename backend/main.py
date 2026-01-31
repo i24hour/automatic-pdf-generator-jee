@@ -84,7 +84,7 @@ class GenerateRequest(BaseModel):
     subject: str = Field(..., description="Subject: Physics, Chemistry, or Maths")
     topic: str = Field(..., description="Specific topic for the test")
     total_questions: int = Field(default=20, ge=1, le=50, description="Total number of questions")
-    level: str = Field(default="JEE Mains", description="Exam type: Boards, JEE Mains, JEE Advanced, Olympiad, NEET")
+    level: str = Field(default="JEE Mains", description="Exam type: CBSE Board, JEE Mains, JEE Advanced, Olympiad, NEET")
     difficulty: str = Field(default="Medium", description="Difficulty within exam: Easy, Medium, Hard")
     num_mcqs: Optional[int] = Field(default=None, description="Number of MCQs (optional)")
     num_numerical: Optional[int] = Field(default=None, description="Number of numerical questions (optional)")
@@ -94,11 +94,11 @@ class GenerateRequest(BaseModel):
     num_msq: Optional[int] = Field(default=None, description="Number of MSQs (GATE only)")
     num_nat: Optional[int] = Field(default=None, description="Number of NATs (GATE only)")
     num_ga: Optional[int] = Field(default=None, description="Number of General Aptitude questions (GATE only)")
-    # Boards Specific Fields
-    cbse_vsa: Optional[int] = Field(default=None, description="Number of Very Short Answer questions (Boards only)")
-    cbse_sa: Optional[int] = Field(default=None, description="Number of Short Answer questions (Boards only)")
-    cbse_la: Optional[int] = Field(default=None, description="Number of Long Answer questions (Boards only)")
-    cbse_case: Optional[int] = Field(default=None, description="Number of Case Based questions (Boards only)")
+    # CBSE Board Specific Fields
+    cbse_vsa: Optional[int] = Field(default=None, description="Number of Very Short Answer questions (CBSE Board only)")
+    cbse_sa: Optional[int] = Field(default=None, description="Number of Short Answer questions (CBSE Board only)")
+    cbse_la: Optional[int] = Field(default=None, description="Number of Long Answer questions (CBSE Board only)")
+    cbse_case: Optional[int] = Field(default=None, description="Number of Case Based questions (CBSE Board only)")
 
 
 class GenerateResponse(BaseModel):
