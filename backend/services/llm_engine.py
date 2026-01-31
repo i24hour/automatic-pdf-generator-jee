@@ -814,34 +814,19 @@ Example: {{"subject":"Chemistry","confidence":"high"}}
         """
         total_requested = mcq_count + numerical_count
         
-        # Difficulty modifiers for each toughness level
-        difficulty_prompts = {
-            "Easy": """TOUGHNESS: EASY
-- Questions from frequently asked / common patterns
-- Straightforward application of concepts
-- Calculations should be simple with nice numbers
-- Focus on fundamental understanding
-- These are the questions that most students should be able to solve
-- Typical time: 1-2 minutes per question""",
-            
-            "Medium": """TOUGHNESS: MEDIUM
-- Standard exam-level questions
-- May require 2-3 step problem solving
-- Some conceptual depth required
-- Mix of direct and application-based questions
-- These separate average students from good students
-- Typical time: 2-3 minutes per question""",
-            
-            "Hard": """TOUGHNESS: HARD
-- Challenging questions that require deep understanding
-- Multi-step problems with conceptual twists
-- Tricky calculations or non-obvious approaches
-- These are the questions that differentiate toppers
-- May combine multiple concepts
-- Typical time: 3-5 minutes per question"""
-        }
+        # Get difficulty percentages from kwargs (default: 20-50-30)
+        easy_percent = kwargs.get('easy_percent', 20)
+        medium_percent = kwargs.get('medium_percent', 50)
+        hard_percent = kwargs.get('hard_percent', 30)
         
-        difficulty_prompt = difficulty_prompts.get(difficulty, difficulty_prompts["Medium"])
+        # Build difficulty distribution prompt
+        difficulty_prompt = f"""DIFFICULTY DISTRIBUTION:
+Generate questions with the following difficulty mix:
+- {easy_percent}% EASY: Straightforward application, simple calculations, most students should solve
+- {medium_percent}% MEDIUM: Standard exam-level, 2-3 step problems, some conceptual depth
+- {hard_percent}% HARD: Challenging, multi-step with conceptual twists, differentiates toppers
+
+IMPORTANT: Mix difficulty levels throughout the paper, don't group all Easy questions together."""
         
         # Detailed level-specific prompts with examples
         level_prompts = {
@@ -1394,13 +1379,16 @@ Return ONLY valid JSON:
         """
         total_requested = mcq_count + numerical_count
         
-        # Difficulty modifiers
-        difficulty_prompts = {
-            "Easy": "TOUGHNESS: EASY - Questions from common patterns, straightforward application, simple calculations.",
-            "Medium": "TOUGHNESS: MEDIUM - Standard exam-level, 2-3 step problems, some conceptual depth.",
-            "Hard": "TOUGHNESS: HARD - Challenging questions, multi-step with conceptual twists, non-obvious approaches."
-        }
-        difficulty_prompt = difficulty_prompts.get(difficulty, difficulty_prompts["Medium"])
+        # Get difficulty percentages from kwargs (default: 20-50-30)
+        easy_percent = kwargs.get('easy_percent', 20)
+        medium_percent = kwargs.get('medium_percent', 50)
+        hard_percent = kwargs.get('hard_percent', 30)
+        
+        # Build difficulty distribution prompt
+        difficulty_prompt = f"""DIFFICULTY DISTRIBUTION:
+- {easy_percent}% EASY: Straightforward, simple calculations, common patterns
+- {medium_percent}% MEDIUM: Standard exam-level, 2-3 step problems
+- {hard_percent}% HARD: Challenging, multi-step with conceptual twists"""
         
         # Level prompts (simplified for async)
         level_prompts = {

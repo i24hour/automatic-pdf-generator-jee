@@ -85,7 +85,12 @@ class GenerateRequest(BaseModel):
     topic: str = Field(..., description="Specific topic for the test")
     total_questions: int = Field(default=20, ge=1, le=50, description="Total number of questions")
     level: str = Field(default="JEE Mains", description="Exam type: CBSE Board, JEE Mains, JEE Advanced, Olympiad, NEET")
-    difficulty: str = Field(default="Medium", description="Difficulty within exam: Easy, Medium, Hard")
+    # Difficulty distribution (percentages that should sum to 100)
+    easy_percent: int = Field(default=20, ge=0, le=100, description="Percentage of Easy questions")
+    medium_percent: int = Field(default=50, ge=0, le=100, description="Percentage of Medium questions")
+    hard_percent: int = Field(default=30, ge=0, le=100, description="Percentage of Hard questions")
+    # Legacy field for backwards compatibility
+    difficulty: str = Field(default="Medium", description="Legacy: Difficulty within exam: Easy, Medium, Hard")
     num_mcqs: Optional[int] = Field(default=None, description="Number of MCQs (optional)")
     num_numerical: Optional[int] = Field(default=None, description="Number of numerical questions (optional)")
     include_solutions: bool = Field(default=False, description="Include step-by-step solutions")
@@ -975,6 +980,10 @@ async def run_generation_job(
             numerical_count=numerical_count,
             level=request.level,
             difficulty=request.difficulty,
+            # Difficulty distribution percentages
+            easy_percent=request.easy_percent,
+            medium_percent=request.medium_percent,
+            hard_percent=request.hard_percent,
             include_solutions=request.include_solutions,
             # GATE Parameters
             gate_paper=request.gate_paper,

@@ -94,7 +94,10 @@ export default function TestGenerator() {
     const [topic, setTopic] = useState("");
     const [questionCount, setQuestionCount] = useState(20);
     const [level, setLevel] = useState("JEE Mains");
-    const [difficulty, setDifficulty] = useState("Medium");
+    // Difficulty percentage distribution
+    const [easyPercent, setEasyPercent] = useState(20);
+    const [mediumPercent, setMediumPercent] = useState(50);
+    const [hardPercent, setHardPercent] = useState(30);
     const [numMCQs, setNumMCQs] = useState(20);
     const [numNumericals, setNumNumericals] = useState(5);
     // GATE Pattern state
@@ -183,11 +186,7 @@ export default function TestGenerator() {
         { name: "NEET", icon: Stethoscope, color: "text-pink-400", bgColor: "bg-pink-500/20", borderColor: "border-pink-500" },
     ];
 
-    const difficulties = [
-        { name: "Easy", color: "text-green-600", bgColor: "bg-green-100", borderColor: "border-green-500" },
-        { name: "Medium", color: "text-green-600", bgColor: "bg-green-100", borderColor: "border-green-500" },
-        { name: "Hard", color: "text-green-600", bgColor: "bg-green-100", borderColor: "border-green-500" },
-    ];
+    // Difficulty levels (kept for reference, now using percentage inputs)
 
     // Smart level filtering based on subject
     const getAvailableLevels = () => {
@@ -430,7 +429,7 @@ export default function TestGenerator() {
                     logError({
                         error_type: "GENERATION_TIMEOUT",
                         error_details: `Generation timed out after 600s for topic: ${topic}`,
-                        metadata_info: JSON.stringify({ level, subject, difficulty })
+                        metadata_info: JSON.stringify({ level, subject, easyPercent, mediumPercent, hardPercent })
                     });
 
                     return prev;
@@ -476,7 +475,9 @@ export default function TestGenerator() {
                     topic: topic.trim(),
                     total_questions: requestTotal,
                     level,
-                    difficulty,
+                    easy_percent: easyPercent,
+                    medium_percent: mediumPercent,
+                    hard_percent: hardPercent,
                     num_mcqs: requestMcqs,
                     num_numerical: requestNumericals,
                     include_solutions: includeSolutions,
@@ -1078,26 +1079,69 @@ export default function TestGenerator() {
                     </div>
                 </div>
 
-                {/* Difficulty Selection */}
+                {/* Difficulty Percentage Distribution */}
                 <div className="mb-3 md:mb-4">
-                    <label className="block mb-2 font-medium text-gray-700 dark:text-gray-300 text-sm">Select Difficulty</label>
+                    <label className="block mb-2 font-medium text-gray-700 dark:text-gray-300 text-sm">
+                        Difficulty Distribution
+                        <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
+                            (Total: {easyPercent + mediumPercent + hardPercent}%)
+                        </span>
+                        {easyPercent + mediumPercent + hardPercent !== 100 && (
+                            <span className="ml-2 text-xs text-red-500">Must equal 100%</span>
+                        )}
+                    </label>
                     <div className="grid grid-cols-3 gap-2">
-                        {difficulties.map((diff) => {
-                            const isSelected = difficulty === diff.name;
-                            return (
-                                <button
-                                    key={diff.name}
-                                    onClick={() => setDifficulty(diff.name)}
-                                    disabled={isLoading}
-                                    className={`p-2 rounded-xl border transition-all duration-300 flex items-center justify-center ${isSelected
-                                        ? `${diff.borderColor} ${diff.bgColor} ${diff.color}`
-                                        : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 bg-white dark:bg-[#16181c]"
-                                        } ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
-                                >
-                                    <span className="text-xs font-medium">{diff.name}</span>
-                                </button>
-                            );
-                        })}
+                        <div className="relative">
+                            <label className="block text-xs text-green-600 dark:text-green-400 mb-1 font-medium">Easy %</label>
+                            <input
+                                type="number"
+                                min="0"
+                                max="100"
+                                value={easyPercent}
+                                onChange={(e) => {
+                                    const val = Math.min(100, Math.max(0, parseInt(e.target.value) || 0));
+                                    setEasyPercent(val);
+                                    // Auto-fill hard percentage
+                                    const remaining = 100 - val - mediumPercent;
+                                    if (remaining >= 0) setHardPercent(remaining);
+                                }}
+                                disabled={isLoading}
+                                className="w-full p-2 text-center rounded-xl border border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm font-medium"
+                            />
+                        </div>
+                        <div className="relative">
+                            <label className="block text-xs text-yellow-600 dark:text-yellow-400 mb-1 font-medium">Medium %</label>
+                            <input
+                                type="number"
+                                min="0"
+                                max="100"
+                                value={mediumPercent}
+                                onChange={(e) => {
+                                    const val = Math.min(100, Math.max(0, parseInt(e.target.value) || 0));
+                                    setMediumPercent(val);
+                                    // Auto-fill hard percentage
+                                    const remaining = 100 - easyPercent - val;
+                                    if (remaining >= 0) setHardPercent(remaining);
+                                }}
+                                disabled={isLoading}
+                                className="w-full p-2 text-center rounded-xl border border-yellow-300 dark:border-yellow-700 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-500 text-sm font-medium"
+                            />
+                        </div>
+                        <div className="relative">
+                            <label className="block text-xs text-red-600 dark:text-red-400 mb-1 font-medium">Hard %</label>
+                            <input
+                                type="number"
+                                min="0"
+                                max="100"
+                                value={hardPercent}
+                                onChange={(e) => {
+                                    const val = Math.min(100, Math.max(0, parseInt(e.target.value) || 0));
+                                    setHardPercent(val);
+                                }}
+                                disabled={isLoading}
+                                className="w-full p-2 text-center rounded-xl border border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 focus:outline-none focus:ring-2 focus:ring-red-500 text-sm font-medium"
+                            />
+                        </div>
                     </div>
                 </div>
 
@@ -1420,7 +1464,7 @@ export default function TestGenerator() {
                         ) : (
                             <>
                                 <Sparkles className="w-4 h-4 md:w-6 md:h-6" />
-                                <span>Generate {level} ({difficulty}) Test Paper</span>
+                                <span>Generate {level} Test Paper</span>
                             </>
                         )}
                 </button >
