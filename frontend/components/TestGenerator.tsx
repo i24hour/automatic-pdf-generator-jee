@@ -1617,7 +1617,11 @@ export default function TestGenerator() {
                                 <div>
                                     <p className="font-medium">{result.message}</p>
                                     <p className="text-sm text-green-600">
-                                        {result.total_mcq} MCQs + {result.total_numerical} Numerical Questions
+                                        {level === "CBSE Board" ? (
+                                            `${cbseVeryShort + cbseShort + cbseLong + cbseCaseBased} Theory + ${cbseNumericals} Numerical Questions`
+                                        ) : (
+                                            `${result.total_mcq} MCQs + ${result.total_numerical} Numerical Questions`
+                                        )}
                                     </p>
                                 </div>
                             </div>
