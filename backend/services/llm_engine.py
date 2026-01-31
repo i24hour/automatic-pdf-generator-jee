@@ -1587,12 +1587,34 @@ Generate COMPLETELY DIFFERENT questions with different wording, scenarios, and v
                 
                 # After all retries, supplement if still short
                 final_questions = data.get("questions", [])
-                actual_mcq = sum(1 for q in final_questions if q.get("type") in ["mcq", "mcq_multi"])
-                actual_num = sum(1 for q in final_questions if q.get("type") == "numerical")
                 
-                # FORCE EXACT COUNT: If we're short, generate more questions
-                missing_mcq = mcq_count - actual_mcq
-                missing_num = numerical_count - actual_num
+                # Special handling for CBSE Board - count all CBSE question types, not just MCQs
+                if level == "CBSE Board":
+                    # For CBSE Board, count all theory questions (VSA, SA, LA, case_based)
+                    actual_theory = sum(1 for q in final_questions if q.get("type") in ["short_answer", "long_answer", "case_based"])
+                    actual_num = sum(1 for q in final_questions if q.get("type") == "numerical")
+                    total_actual = actual_theory + actual_num
+                    total_expected = mcq_count + numerical_count
+                    
+                    # For CBSE Board, skip supplementing if we have enough questions total
+                    # The mcq_count parameter for CBSE represents total theory questions (VSA+SA+LA+case)
+                    if total_actual >= total_expected:
+                        missing_mcq = 0
+                        missing_num = 0
+                    else:
+                        # Only supplement if significantly short (more than 20% missing)
+                        missing_mcq = max(0, mcq_count - actual_theory)
+                        missing_num = max(0, numerical_count - actual_num)
+                        if missing_mcq + missing_num < (total_expected * 0.2):
+                            missing_mcq = 0
+                            missing_num = 0
+                else:
+                    actual_mcq = sum(1 for q in final_questions if q.get("type") in ["mcq", "mcq_multi"])
+                    actual_num = sum(1 for q in final_questions if q.get("type") == "numerical")
+                    
+                    # FORCE EXACT COUNT: If we're short, generate more questions
+                    missing_mcq = mcq_count - actual_mcq
+                    missing_num = numerical_count - actual_num
                 
                 if missing_mcq > 0 or missing_num > 0:
                     print(f"Supplementing async: need {missing_mcq} more MCQs and {missing_num} more numericals")
