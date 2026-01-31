@@ -735,10 +735,21 @@ Example: {{"subject":"Chemistry","confidence":"high"}}
         text = text.replace('→', ' → ')
         text = text.replace('->', ' -> ')
         
-        # ===== SOLUTION STEP SPACING =====
-        # Add line break before "Step N:" patterns (but not the first one)
-        # Use \par for paragraph break in LaTeX
-        text = re.sub(r'(?<!^)\s*(Step\s*\d+\s*:)', r'\n\n\\par\\vspace{0.3em}\n\1', text, flags=re.IGNORECASE)
+        # ===== SOLUTION STEP SPACING & BOLDING =====
+        
+        # 1. Fix fully bold steps: \textbf{Step 1: Text} -> \textbf{Step 1:} Text
+        # This handles case where LLM outputs **Step 1: Text**
+        text = re.sub(r'\\textbf\{\s*(Step\s*\d+\s*:)\s*([^}]+)\}', r'\\textbf{\1} \2', text, flags=re.IGNORECASE)
+        
+        # 2. Normalize: Remove \textbf wrapper from "Step N:" if it exists, so we can re-apply consistently
+        text = re.sub(r'\\textbf\{\s*(Step\s*\d+\s*:)\s*\}', r'\1', text, flags=re.IGNORECASE)
+        
+        # 3. Apply Spacing + Bold: Add line break and bold ONLY the label "Step N:"
+        # Matches: Step 1:, Step 2:, etc. (not at start of string)
+        text = re.sub(r'(?<!^)\s*(Step\s*\d+\s*:)', r'\n\n\\par\\vspace{0.3em}\n\\textbf{\1}', text, flags=re.IGNORECASE)
+        
+        # 4. Handle FIRST step (at start of string) - Just Bold, no vertical space
+        text = re.sub(r'^\s*(Step\s*\d+\s*:)', r'\\textbf{\1}', text, flags=re.IGNORECASE)
         
         # Clean up multiple spaces
         text = re.sub(r' +', ' ', text)
