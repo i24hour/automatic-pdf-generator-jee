@@ -1,10 +1,18 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, Suspense } from "react";
 import TestGenerator from "@/components/TestGenerator";
 import PostsFeed from "@/components/PostsFeed";
 import MobileNav from "@/components/layout/MobileNav";
 import DesktopSidebar from "@/components/layout/DesktopSidebar";
+
+function LoadingFeed() {
+  return (
+    <div className="flex items-center justify-center min-h-[200px]">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
+    </div>
+  );
+}
 
 export default function Home() {
   const [sidebarWidth, setSidebarWidth] = useState(400);
@@ -63,7 +71,9 @@ export default function Home() {
 
         {/* Center Column: Posts Feed */}
         <main className="flex-1 ml-[275px] border-r border-gray-200 dark:border-[#2f3336] min-h-screen">
-          <PostsFeed />
+          <Suspense fallback={<LoadingFeed />}>
+            <PostsFeed />
+          </Suspense>
         </main>
 
         {/* Resize Handle */}
@@ -87,3 +97,4 @@ export default function Home() {
     </div>
   );
 }
+
