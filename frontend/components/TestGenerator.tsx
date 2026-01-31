@@ -1182,7 +1182,7 @@ export default function TestGenerator() {
                             />
                         </div>
                         <div className="relative">
-                            <label className="block text-xs text-yellow-600 dark:text-yellow-400 mb-1 font-medium">Medium %</label>
+                            <label className="block text-xs text-green-600 dark:text-green-400 mb-1 font-medium">Medium %</label>
                             <input
                                 type="number"
                                 min="0"
@@ -1196,11 +1196,11 @@ export default function TestGenerator() {
                                     if (remaining >= 0) setHardPercent(remaining);
                                 }}
                                 disabled={isLoading}
-                                className="w-full p-2 text-center rounded-xl border border-yellow-300 dark:border-yellow-700 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-500 text-sm font-medium"
+                                className="w-full p-2 text-center rounded-xl border border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm font-medium"
                             />
                         </div>
                         <div className="relative">
-                            <label className="block text-xs text-red-600 dark:text-red-400 mb-1 font-medium">Hard %</label>
+                            <label className="block text-xs text-green-600 dark:text-green-400 mb-1 font-medium">Hard %</label>
                             <input
                                 type="number"
                                 min="0"
@@ -1209,9 +1209,11 @@ export default function TestGenerator() {
                                 onChange={(e) => {
                                     const val = Math.min(100, Math.max(0, parseInt(e.target.value) || 0));
                                     setHardPercent(val);
+                                    // Adjust easy/medium if needed? No, usually hard is the last one adjusted.
+                                    // Or simply set it.
                                 }}
                                 disabled={isLoading}
-                                className="w-full p-2 text-center rounded-xl border border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 focus:outline-none focus:ring-2 focus:ring-red-500 text-sm font-medium"
+                                className="w-full p-2 text-center rounded-xl border border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm font-medium"
                             />
                         </div>
                     </div>
