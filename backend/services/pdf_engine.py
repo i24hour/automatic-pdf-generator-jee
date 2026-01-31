@@ -62,6 +62,10 @@ def sanitize_for_latex(text: str) -> str:
     # First, ensure valid UTF-8
     text = text.encode('utf-8', errors='ignore').decode('utf-8')
     
+    # Strip common option prefixes (A), a), (a), 1. etc.) followed by space
+    # Matches: "A) ", "a) ", "(a) ", "1. ", "1) "
+    text = re.sub(r'^\s*(?:[A-Da-d][.)]|[0-9]+[.)]|\([A-Da-d0-9]+\))\s+', '', text)
+    
     # Use robust escaping for & and # (respecting math mode)
     text = escape_latex_outside_math(text)
     
