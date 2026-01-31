@@ -151,7 +151,11 @@ def sanitize_for_latex(text: str) -> str:
     text = re.sub(r' +', ' ', text)
 
     # Detect and convert Markdown Tables to LaTeX tables
-    if '|' in text and '\n|' in text and '---' in text:
+    # Helper to check if a line looks like a table row (has pipes and content)
+    def is_table_row(l):
+        return '|' in l and len(l.strip().split('|')) > 1
+
+    if '|' in text and '---' in text:
         try:
             lines = text.strip().split('\n')
             latex_table = []
@@ -163,16 +167,29 @@ def sanitize_for_latex(text: str) -> str:
             while i < len(lines):
                 line = lines[i].strip()
                 
-                # Check for table start (Header row)
-                if notin_table and line.startswith('|') and line.endswith('|') and i + 1 < len(lines):
+                # Check for table start (Header row followed by separator)
+                # Allow tables without outer pipes: "Header 1 | Header 2"
+                if not in_table and is_table_row(line) and i + 1 < len(lines):
                     next_line = lines[i+1].strip()
+                    # Separator must contain dashes and pipes
                     if '---' in next_line and '|' in next_line:
                         in_table = True
-                        # Parse header
-                        header = [c.strip() for c in line.strip('|').split('|')]
-                        # Parse alignments from next line
-                        align_parts = [c.strip() for c in next_line.strip('|').split('|')]
+                        
+                        # Clean and parse header
+                        # Remove outer pipes if present for splitting
+                        clean_line = line
+                        if clean_line.startswith('|'): clean_line = clean_line[1:]
+                        if clean_line.endswith('|'): clean_line = clean_line[:-1]
+                        header = [c.strip() for c in clean_line.split('|')]
+                        
+                        # Parse alignments
+                        clean_next = next_line
+                        if clean_next.startswith('|'): clean_next = clean_next[1:]
+                        if clean_next.endswith('|'): clean_next = clean_next[:-1]
+                        
+                        align_parts = [c.strip() for c in clean_next.split('|')]
                         alignments = []
+                        # Default to 'l' if alignment parts don't match header count
                         for part in align_parts:
                             if part.startswith(':') and part.endswith(':'):
                                 alignments.append('c')
@@ -182,7 +199,11 @@ def sanitize_for_latex(text: str) -> str:
                                 alignments.append('l')
                         
                         # Start LaTeX Table
-                        col_spec = "|" + "|".join(alignments) + "|"
+                        # Ensure alignment count matches header count
+                        while len(alignments) < len(header):
+                            alignments.append('l')
+                        
+                        col_spec = "|" + "|".join(alignments[:len(header)]) + "|"
                         latex_table.append(r'\begin{center}')
                         latex_table.append(r'\begin{tabular}{' + col_spec + r'}')
                         latex_table.append(r'\hline')
@@ -194,11 +215,21 @@ def sanitize_for_latex(text: str) -> str:
                         continue
                         
                 if in_table:
-                    if line.startswith('|') and line.endswith('|'):
+                    # Check if line is still part of table
+                    if is_table_row(line):
                         # Table row
-                        cells = [c.strip() for c in line.strip('|').split('|')]
-                        # Handle math chars inside cells carefully (already escaped, but check ampersands)
-                        # Re-escape & if it was unescaped by mistake, but it should be fine due to earlier escaping
+                        clean_line = line
+                        if clean_line.startswith('|'): clean_line = clean_line[1:]
+                        if clean_line.endswith('|'): clean_line = clean_line[:-1]
+                        
+                        cells = [c.strip() for c in clean_line.split('|')]
+                        
+                        # Handle colspan/rowspan mismatch by padding
+                        if len(cells) < len(header):
+                            cells.extend([''] * (len(header) - len(cells)))
+                        elif len(cells) > len(header):
+                            cells = cells[:len(header)]
+                            
                         latex_table.append(" & ".join(cells) + r' \\ \hline')
                     else:
                         # Table ended
@@ -207,7 +238,11 @@ def sanitize_for_latex(text: str) -> str:
                         latex_table.append(r'\end{center}')
                         latex_table.append(line)
                 else:
-                    latex_table.append(line)
+                    # Handle standalone '---' which might be horizontal rules
+                    if re.match(r'^\s*-{3,}\s*$', line):
+                         latex_table.append(r'\noindent\rule{\textwidth}{0.4pt}')
+                    else:
+                        latex_table.append(line)
                 
                 i += 1
             
@@ -217,7 +252,7 @@ def sanitize_for_latex(text: str) -> str:
                 
             return '\n'.join(latex_table)
         except Exception as e:
-            # If conversion fails, fallback to original text
+            # If conversion fails, fallback to original text (with basic cleaning)
             print(f"Table conversion error: {e}")
             return text
     
