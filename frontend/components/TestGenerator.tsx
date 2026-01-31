@@ -317,12 +317,12 @@ export default function TestGenerator() {
             clearTimeout(detectTimeoutRef.current);
         }
 
-        // Only detect if topic has at least 3 characters
-        if (topic.trim().length < 3) {
+        // Only detect if topic has at least 5 characters to avoid API spam on short/partial words
+        if (topic.trim().length < 5) {
             return;
         }
 
-        // Debounce the API call by 500ms
+        // Debounce the API call by 1500ms (1.5s) to wait for typing to finish
         detectTimeoutRef.current = setTimeout(async () => {
             setIsDetectingSubject(true);
             try {

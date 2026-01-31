@@ -441,6 +441,16 @@ class LLMEngine:
             topic_lower in ["full", "complete", "all"]):
             return {"subject": "PCMB", "confidence": "high", "is_multi": True}
         
+        # ============ PREFIX OPTIMIZATION (No LLM) ============
+        # Catch common prefixes to avoid LLM calls for partial typing
+        if topic_lower.startswith("phy"): return {"subject": "Physics", "confidence": "high"}
+        if topic_lower.startswith("chem"): return {"subject": "Chemistry", "confidence": "high"}
+        if topic_lower.startswith("math"): return {"subject": "Maths", "confidence": "high"}
+        if topic_lower.startswith("zoo"): return {"subject": "Zoology", "confidence": "high"}
+        if topic_lower.startswith("bot"): return {"subject": "Botany", "confidence": "high"}
+        if topic_lower.startswith("bio"): return {"subject": "Zoology", "confidence": "medium"} # Ambiguous but better than LLM
+        if len(topic.strip()) < 4: return {"subject": "Physics", "confidence": "low"} # Return default for short inputs
+        
         # ============ PHYSICS PATTERNS ============
         physics_keywords = [
             "electrostatics", "electrostatic", "magnetism", "magnetic", "optics", "optical",
@@ -1697,18 +1707,6 @@ Solve now:"""
                 # Allow 1% tolerance for floating point comparisons
                 tolerance = max(abs(orig_num) * 0.01, 0.01)
                 matches = abs(orig_num - verif_num) <= tolerance
-            except (ValueError, TypeError):
-                matches = original_answer.strip() == verified_answer.strip()
-            
-            return {
-                "success": True,
-                "original_answer": original_answer,
-                "verified_answer": verified_answer,
-                "matches": matches,
-                "solution": response_text
-            }
-            
-        except Exception as e:
             return {
                 "success": False,
                 "error": str(e),
@@ -1716,6 +1714,105 @@ Solve now:"""
                 "verified_answer": original_answer,
                 "matches": True  # Assume original is correct if verification fails
             }
+
+    async def verify_numerical_batch_async(self, questions: List[Dict[str, str]], subject: str) -> List[Dict[str, Any]]:
+        """
+        Verify a batch of numerical questions in a single LLM call.
+        Reduces API calls by 5x (verifying 5-10 questions at once).
+        """
+        import asyncio
+        import json
+        
+        if not questions:
+            return []
+            
+        # Prepare batch prompt
+        items_str = ""
+        for i, q in enumerate(questions):
+            items_str += f"""
+ITEM {i+1}:
+Question: {q['text']}
+Proposed Answer: {q['answer']}
+"""
+
+        prompt = f"""You are an expert {subject} teacher. Verify these {len(questions)} numerical questions.
+Solve each one step-by-step and check if the proposed answer is correct.
+
+{items_str}
+
+Return a single JSON object with a "verifications" array:
+{{
+  "verifications": [
+    {{
+      "item_id": 1,
+      "verified_answer": "5",
+      "matches": true,
+      "solution": "\\\\textbf{{Solution:}} ...step by step..."
+    }},
+    {{
+      "item_id": 2,
+      "verified_answer": "10.5", 
+      "matches": false,
+      "solution": "\\\\textbf{{Correction:}} ...calculation..."
+    }}
+  ]
+}}
+
+RULES:
+1. Verify strictly. Precision matters.
+2. If the proposed answer matches your calculation, set "matches": true.
+3. If valid range (e.g. 5.1 vs 5.12), treat as match.
+4. "verified_answer" should be the correct numerical value.
+5. "solution" should be a short LaTeX explanation.
+"""
+        
+        try:
+            response = await litellm.acompletion(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": "Batch Verification Agent. Return JSON."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.1
+            )
+            
+            response_text = response.choices[0].message.content
+            cleaned = self._clean_json_response(response_text)
+            data = json.loads(cleaned)
+            
+            results = []
+            verifs = data.get("verifications", [])
+            
+            # Map back to original order
+            # Create a map by item_id
+            verif_map = {v.get("item_id"): v for v in verifs}
+            
+            for i in range(len(questions)):
+                item_id = i + 1
+                verif = verif_map.get(item_id)
+                
+                if verif:
+                    results.append({
+                        "success": True,
+                        "original_answer": questions[i]['answer'],
+                        "verified_answer": str(verif.get("verified_answer")),
+                        "matches": verif.get("matches"),
+                        "solution": verif.get("solution")
+                    })
+                else:
+                    # Fallback if specific item missing
+                    results.append({
+                        "success": False,
+                        "error": "Item missing in batch response",
+                        "matches": True
+                    })
+            
+            return results
+            
+        except Exception as e:
+            print(f"Batch verification failed: {e}")
+            # Fallback: mark all as verified/matching to avoid breaking flow
+            return [{"success": False, "matches": True, "error": str(e)} for _ in questions]
 
     async def generate_questions_with_verification_async(
         self,
@@ -1740,44 +1837,59 @@ Solve now:"""
         
         questions = result.get("questions", [])
         
-        # Identify numerical questions to verify
-        verification_tasks = []
+        # Run verifications in BATCHES (Chunk size 5)
+        # Identify numerical questions
+        numerical_qs = []
         numerical_indices = []
         
         for i, q in enumerate(questions):
             if q.get("type") == "numerical":
                 numerical_indices.append(i)
-                verification_tasks.append(
-                    self.verify_numerical_answer_async(
-                        q.get("text", ""),
-                        q.get("answer", ""),
-                        subject
-                    )
-                )
+                numerical_qs.append({
+                    "text": q.get("text", ""),
+                    "answer": str(q.get("answer", ""))
+                })
         
-        # Run all verifications in parallel
-        if verification_tasks:
-            verification_results = await asyncio.gather(*verification_tasks)
+        if numerical_qs:
+            # Create chunks of 5
+            chunk_size = 5
+            batches = [numerical_qs[i:i + chunk_size] for i in range(0, len(numerical_qs), chunk_size)]
+            
+            # Create batch tasks
+            batch_tasks = []
+            for batch in batches:
+                batch_tasks.append(self.verify_numerical_batch_async(batch, subject))
+            
+            # Run batches in parallel
+            batch_results_list = await asyncio.gather(*batch_tasks)
+            
+            # Flatten results
+            all_verification_results = []
+            for res_list in batch_results_list:
+                all_verification_results.extend(res_list)
             
             verified_count = 0
             corrected_count = 0
             
-            for i, verification in enumerate(verification_results):
+            # Apply results
+            for i, result in enumerate(all_verification_results):
+                if i >= len(numerical_indices): break # Safety check
+                
                 q_index = numerical_indices[i]
                 q = questions[q_index]
                 
-                if verification.get("success"):
+                if result.get("success"):
                     verified_count += 1
-                    if not verification.get("matches"):
+                    if not result.get("matches"):
                         # Answer mismatch - use verified answer
                         q["original_answer"] = q.get("answer")
-                        q["answer"] = verification.get("verified_answer")
+                        q["answer"] = result.get("verified_answer")
                         q["answer_corrected"] = True
-                        q["solution"] = verification.get("solution")
+                        q["solution"] = result.get("solution")
                         corrected_count += 1
                     else:
                         q["answer_verified"] = True
-                        q["solution"] = verification.get("solution")
+                        q["solution"] = result.get("solution")
             
             result["verification_stats"] = {
                 "total_numerical": numerical_count,
@@ -1791,26 +1903,36 @@ Solve now:"""
                 "corrected": 0
             }
         
-        # If include_solutions is True, generate solutions for MCQs
         if include_solutions:
-            mcq_solution_tasks = []
+            # Batch MCQ solutions
+            mcq_qs = []
             mcq_indices = []
             
             for i, q in enumerate(questions):
                 if q.get("type") in ["mcq", "mcq_multi"] and not q.get("solution"):
                     mcq_indices.append(i)
-                    mcq_solution_tasks.append(
-                        self._generate_mcq_solution_async(
-                            q.get("text", ""),
-                            q.get("options", []),
-                            q.get("answer", ""),
-                            subject
-                        )
-                    )
+                    mcq_qs.append({
+                        "text": q.get("text", ""),
+                        "options": q.get("options", []),
+                        "answer": q.get("answer", "")
+                    })
             
-            if mcq_solution_tasks:
-                mcq_solutions = await asyncio.gather(*mcq_solution_tasks)
-                for i, solution in enumerate(mcq_solutions):
+            if mcq_qs:
+                chunk_size = 5
+                batches = [mcq_qs[i:i + chunk_size] for i in range(0, len(mcq_qs), chunk_size)]
+                
+                batch_tasks = []
+                for batch in batches:
+                    batch_tasks.append(self._generate_mcq_solution_batch_async(batch, subject))
+                
+                batch_results_list = await asyncio.gather(*batch_tasks)
+                
+                all_solutions = []
+                for res_list in batch_results_list:
+                    all_solutions.extend(res_list)
+                
+                for i, solution in enumerate(all_solutions):
+                    if i >= len(mcq_indices): break
                     q_index = mcq_indices[i]
                     questions[q_index]["solution"] = solution
             
@@ -1818,6 +1940,88 @@ Solve now:"""
         
         return result
     
+    async def _generate_mcq_solution_batch_async(self, items: List[Dict], subject: str) -> List[str]:
+        """
+        Generate detailed step-by-step solutions for a batch of MCQs.
+        Reduces API calls by 5x.
+        """
+        import asyncio
+        import json
+        
+        if not items:
+            return []
+            
+        # Prepare batch prompt
+        items_str = ""
+        for i, item in enumerate(items):
+            options_text = ""
+            if item.get("options"):
+                letters = ["A", "B", "C", "D"]
+                opts = item["options"]
+                for j, opt in enumerate(opts):
+                    if j < 4:
+                        options_text += f"({letters[j]}) {opt} "
+            
+            items_str += f"""
+ITEM {i+1}:
+Question: {item['text']}
+Options: {options_text}
+Correct Answer: {item['answer']}
+"""
+
+        prompt = f"""You are an expert {subject} teacher. Generate detailed step-by-step solutions for these {len(items)} questions.
+
+{items_str}
+
+Return a single JSON object with a "solutions" array containing the LaTeX formatted solution string for each item.
+{{
+  "solutions": [
+    {{
+      "item_id": 1,
+      "solution text": "\\\\textbf{{Step 1:}} ... \\\\textbf{{Final Answer:}} Option A"
+    }}
+  ]
+}}
+
+FORMATTING RULES for each solution string:
+1. Use \\\\textbf{{Step N:}} headers.
+2. Use $$ $$ for equations.
+3. Be clear and educational.
+4. End with \\\\textbf{{Final Answer:}} Option X.
+"""
+
+        try:
+            response = await litellm.acompletion(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": "Solution Generator Agent. Return JSON."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.3
+            )
+            
+            response_text = response.choices[0].message.content
+            cleaned = self._clean_json_response(response_text)
+            data = json.loads(cleaned)
+            
+            solutions_list = data.get("solutions", [])
+            sol_map = {s.get("item_id"): s.get("solution text") for s in solutions_list}
+            
+            results = []
+            for i in range(len(items)):
+                item_id = i + 1
+                sol = sol_map.get(item_id)
+                if sol:
+                    results.append(self._fix_spacing(sol))
+                else:
+                    results.append(f"Correct Answer: {items[i]['answer']}")
+            
+            return results
+            
+        except Exception as e:
+            print(f"Batch solution generation failed: {e}")
+            return [f"Correct Answer: {item['answer']}" for item in items]
+
     async def _generate_mcq_solution_async(
         self,
         question: str,
