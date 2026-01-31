@@ -1652,68 +1652,7 @@ Generate COMPLETELY DIFFERENT questions with different wording, scenarios, and v
             "questions": data.get("questions", []) if 'data' in locals() else []
         }
 
-    async def verify_numerical_answer_async(self, question_text: str, original_answer: str, subject: str) -> Dict[str, Any]:
-        """
-        Verify a numerical answer by asking LLM to solve the question step-by-step (ASYNC).
-        Returns the verified answer and whether it matches the original.
-        """
-        prompt = f"""Solve this {subject} numerical problem step-by-step.
 
-QUESTION: {question_text}
-
-FORMAT:
-\\\\textbf{{Step 1: Given}}
-[List given values]
-
-\\\\textbf{{Step 2: Formula}}
-$$[formula]$$
-
-\\\\textbf{{Step 3: Calculation}}
-$$[substitute and calculate]$$
-
-FINAL ANSWER: [numerical value]
-
-Use LaTeX: $F = ma$, $\\\\frac{{a}}{{b}}$
-Solve now:"""
-
-        try:
-            # Use acompletion for async call
-            response = await litellm.acompletion(
-                model=self.model,
-                messages=[
-                    {"role": "system", "content": f"You are a precise {subject} solver. Show step-by-step working and give exact numerical answer."},
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=0.2  # Low temperature for consistent answers
-            )
-            
-            response_text = response.choices[0].message.content
-            
-            # Extract the final answer
-            import re
-            # Look for "FINAL ANSWER: X" pattern
-            match = re.search(r'FINAL ANSWER[:\s]*([+-]?\d*\.?\d+)', response_text, re.IGNORECASE)
-            if match:
-                verified_answer = match.group(1)
-            else:
-                # Try to find any number at the end
-                numbers = re.findall(r'[+-]?\d*\.?\d+', response_text)
-                verified_answer = numbers[-1] if numbers else original_answer
-            
-            # Compare answers (with tolerance for floating point)
-            try:
-                orig_num = float(original_answer)
-                verif_num = float(verified_answer)
-                # Allow 1% tolerance for floating point comparisons
-                tolerance = max(abs(orig_num) * 0.01, 0.01)
-                matches = abs(orig_num - verif_num) <= tolerance
-            return {
-                "success": False,
-                "error": str(e),
-                "original_answer": original_answer,
-                "verified_answer": original_answer,
-                "matches": True  # Assume original is correct if verification fails
-            }
 
     async def verify_numerical_batch_async(self, questions: List[Dict[str, str]], subject: str) -> List[Dict[str, Any]]:
         """
