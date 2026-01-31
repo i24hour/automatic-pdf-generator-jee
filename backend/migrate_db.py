@@ -47,6 +47,16 @@ def run_migration():
             print("Success.")
         except Exception as e:
             print(f"Skipped (maybe exists): {e}")
+
+        print("Adding status/error to pdf_generations...")
+        try:
+            # Default to COMPLETED for existing records so they show up in history
+            conn.execute(text("ALTER TABLE pdf_generations ADD COLUMN status VARCHAR DEFAULT 'COMPLETED'"))
+            conn.execute(text("ALTER TABLE pdf_generations ADD COLUMN error_message TEXT"))
+            conn.execute(text("ALTER TABLE pdf_generations ADD COLUMN job_id VARCHAR"))
+            print("Success.")
+        except Exception as e:
+            print(f"Skipped (maybe exists): {e}")
             
         conn.commit()
 

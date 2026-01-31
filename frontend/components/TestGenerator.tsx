@@ -86,6 +86,17 @@ interface RateLimitInfo {
     used: number;
 }
 
+interface HistoryItem {
+    id: string;
+    subject: string;
+    topic: string;
+    level: string;
+    question_count: number;
+    pdf_filename: string | null;
+    status: string;
+    created_at: string;
+}
+
 export default function TestGenerator() {
     const { user, token, isLoading: authLoading, isAuthenticated, logout, authFetch, refreshUser } = useAuth();
     const router = useRouter();
@@ -148,6 +159,10 @@ export default function TestGenerator() {
 
     // Existing Tests Check
     const [existingTestCount, setExistingTestCount] = useState<number>(0);
+
+    // History (Last 3 PDFs)
+    const [history, setHistory] = useState<HistoryItem[]>([]);
+    const [historyLoading, setHistoryLoading] = useState(false);
     const checkTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     // Prompt for username if missing
@@ -274,8 +289,26 @@ export default function TestGenerator() {
     useEffect(() => {
         if (isAuthenticated) {
             fetchRateLimit();
+            fetchHistory();
         }
     }, [isAuthenticated]);
+
+    // Fetch history (Last 3 PDFs)
+    const fetchHistory = async () => {
+        if (!token) return;
+        setHistoryLoading(true);
+        try {
+            const response = await authFetch(`${API_BASE_URL}/api/history`);
+            if (response.ok) {
+                const data = await response.json();
+                setHistory(data.generations || []);
+            }
+        } catch (error) {
+            console.error('Error fetching history:', error);
+        } finally {
+            setHistoryLoading(false);
+        }
+    };
 
     // Auto-detect subject when topic changes (debounced)
     useEffect(() => {
@@ -1602,6 +1635,51 @@ export default function TestGenerator() {
                         </div>
                     )
                 }
+
+                {/* Recent Tests History */}
+                {history.length > 0 && (
+                    <div className="mt-8 p-5 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-700">
+                        <div className="flex items-center gap-2 mb-4">
+                            <Clock className="w-5 h-5 text-indigo-500" />
+                            <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200">Recent Tests</h3>
+                        </div>
+                        <div className="space-y-3">
+                            {history.map((item) => (
+                                <div
+                                    key={item.id}
+                                    className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700"
+                                >
+                                    <div className="flex-1 min-w-0">
+                                        <p className="font-medium text-gray-800 dark:text-gray-200 truncate">
+                                            {item.topic}
+                                        </p>
+                                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                                            {item.subject} • {item.level} • {item.question_count} Qs
+                                        </p>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        {item.status === 'COMPLETED' && item.pdf_filename ? (
+                                            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                                                <CheckCircle2 className="w-3 h-3 mr-1" />
+                                                Ready
+                                            </span>
+                                        ) : item.status === 'PENDING' || item.status === 'PROCESSING' ? (
+                                            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">
+                                                <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                                                In Progress
+                                            </span>
+                                        ) : (
+                                            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
+                                                <AlertCircle className="w-3 h-3 mr-1" />
+                                                Failed
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
 
                 {/* Footer */}
                 <div className="text-center mt-8 text-gray-500 dark:text-gray-400 text-sm pb-4">

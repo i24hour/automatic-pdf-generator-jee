@@ -106,6 +106,12 @@ class PDFGeneration(Base):
     level = Column(String, nullable=False)
     question_count = Column(Integer, nullable=False)
     pdf_filename = Column(String, nullable=True)
+    
+    # Background Task Fields
+    status = Column(String, default="COMPLETED")  # PENDING, PROCESSING, COMPLETED, FAILED
+    error_message = Column(Text, nullable=True)
+    job_id = Column(String, nullable=True)  # For tracking
+    
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     
     # Relationship

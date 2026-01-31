@@ -855,6 +855,66 @@ async def list_models():
     }
 
 
+class HistoryItem(BaseModel):
+    """Single history item response."""
+    id: str
+    subject: str
+    topic: str
+    level: str
+    difficulty: str
+    question_count: int
+    pdf_filename: Optional[str] = None
+    status: str
+    created_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+
+class HistoryResponse(BaseModel):
+    """History response with last 3 PDFs."""
+    generations: List[HistoryItem]
+    total: int
+
+
+@app.get("/api/history", response_model=HistoryResponse)
+async def get_generation_history(
+    current_user: User = Depends(get_current_user_required),
+    db: Session = Depends(get_db)
+):
+    """
+    Get the last 3 PDF generations for the current user.
+    Returns generation history with status (for background tasks).
+    """
+    from sqlalchemy import desc
+    
+    # Get last 3 generations for this user
+    generations = db.query(PDFGeneration).filter(
+        PDFGeneration.user_id == current_user.id
+    ).order_by(desc(PDFGeneration.created_at)).limit(3).all()
+    
+    total = db.query(PDFGeneration).filter(
+        PDFGeneration.user_id == current_user.id
+    ).count()
+    
+    items = [
+        HistoryItem(
+            id=gen.id,
+            subject=gen.subject,
+            topic=gen.topic,
+            level=gen.level,
+            difficulty="Medium",  # Not stored in PDFGeneration originally
+            question_count=gen.question_count,
+            pdf_filename=gen.pdf_filename,
+            status=gen.status or "COMPLETED",
+            created_at=gen.created_at
+        )
+        for gen in generations
+    ]
+    
+    return HistoryResponse(generations=items, total=total)
+
+
 # ============== SSE ENDPOINTS FOR RESILIENT GENERATION ==============
 
 class SSEStartResponse(BaseModel):
