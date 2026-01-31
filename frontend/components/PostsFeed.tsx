@@ -218,9 +218,9 @@ export default function PostsFeed() {
                     className="form-select"
                     value={filter.subject}
                     onChange={(e) => setFilter(f => ({ ...f, subject: e.target.value }))}
-                    style={{ flex: 1, padding: '10px 16px' }}
+                    style={{ flex: 1, padding: '10px 36px 10px 16px', minWidth: '110px' }}
                 >
-                    <option value="">All Subjects</option>
+                    <option value="">Subject</option>
                     <option value="Physics">Physics</option>
                     <option value="Chemistry">Chemistry</option>
                     <option value="Mathematics">Mathematics</option>
@@ -230,9 +230,9 @@ export default function PostsFeed() {
                     className="form-select"
                     value={filter.level}
                     onChange={(e) => setFilter(f => ({ ...f, level: e.target.value }))}
-                    style={{ flex: 1, padding: '10px 16px' }}
+                    style={{ flex: 1, padding: '10px 36px 10px 16px', minWidth: '100px' }}
                 >
-                    <option value="">All Levels</option>
+                    <option value="">Level</option>
                     <option value="JEE Mains">JEE Mains</option>
                     <option value="JEE Advanced">JEE Advanced</option>
                     <option value="NEET">NEET</option>
