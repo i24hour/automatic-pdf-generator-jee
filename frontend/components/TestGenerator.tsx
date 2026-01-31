@@ -142,6 +142,10 @@ export default function TestGenerator() {
     const [filteredChapters, setFilteredChapters] = useState<{ class: string; name: string; matchedTopic?: string }[]>([]);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
+    // Existing Tests Check
+    const [existingTestCount, setExistingTestCount] = useState<number>(0);
+    const checkTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
     // Prompt for username if missing
     useEffect(() => {
         if (user && !user.username && !authLoading) {
@@ -313,6 +317,37 @@ export default function TestGenerator() {
             : getChaptersForSubject(subject);
         setFilteredChapters(chapters);
     }, [topic, subject]);
+
+    // Check for existing tests when topic/subject/level changes
+    useEffect(() => {
+        if (checkTimeoutRef.current) clearTimeout(checkTimeoutRef.current);
+
+        if (topic.trim().length < 3) {
+            setExistingTestCount(0);
+            return;
+        }
+
+        checkTimeoutRef.current = setTimeout(async () => {
+            try {
+                const params = new URLSearchParams({
+                    subject,
+                    level,
+                    topic: topic.trim()
+                });
+                const response = await fetch(`${API_BASE_URL}/api/posts/check-existing?${params}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    setExistingTestCount(data.count);
+                }
+            } catch (err) {
+                console.error("Failed to check existing tests:", err);
+            }
+        }, 800); // 800ms debounce
+
+        return () => {
+            if (checkTimeoutRef.current) clearTimeout(checkTimeoutRef.current);
+        };
+    }, [topic, subject, level]);
 
     const fetchRateLimit = async () => {
         try {
@@ -836,6 +871,39 @@ export default function TestGenerator() {
                             <ChevronDown className={`w-5 h-5 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
                         </button>
                     </div>
+
+
+                    {/* Existing Tests Alert */}
+                    {existingTestCount > 0 && !isLoading && (
+                        <div className="mb-6 p-4 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-xl flex items-center justify-between animate-in fade-in slide-in-from-top-2 duration-300">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center shrink-0">
+                                    <Sparkles className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                                </div>
+                                <div>
+                                    <h3 className="font-semibold text-gray-900 dark:text-white text-sm">
+                                        ⚡ Found {existingTestCount} existing {existingTestCount === 1 ? 'test' : 'tests'}!
+                                    </h3>
+                                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                                        Save time & credits by using an existing test.
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => {
+                                    const params = new URLSearchParams();
+                                    params.set('q', topic);
+                                    params.set('subject', subject);
+                                    params.set('level', level);
+                                    // Navigate to feed with filters
+                                    router.push(`/feed?${params.toString()}`);
+                                }}
+                                className="px-4 py-2 bg-white dark:bg-black border border-amber-200 dark:border-amber-700 text-amber-700 dark:text-amber-400 text-sm font-medium rounded-lg hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors shrink-0 whitespace-nowrap"
+                            >
+                                View in Community →
+                            </button>
+                        </div>
+                    )}
 
                     {/* Dropdown Menu */}
                     {isDropdownOpen && filteredChapters.length > 0 && (

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '@/lib/auth-context';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://mentors-mantra-api-87253755436.us-central1.run.app';
@@ -35,15 +36,23 @@ interface FeedResponse {
 
 export default function PostsFeed() {
     const { token, user } = useAuth();
+    const searchParams = useSearchParams();
+
+    // Initial state from URL params
     const [posts, setPosts] = useState<Post[]>([]);
     const [loading, setLoading] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);
     const [hasMore, setHasMore] = useState(false);
     const [nextCursor, setNextCursor] = useState<string | null>(null);
-    const [filter, setFilter] = useState({ subject: '', level: '' });
+
+    const [filter, setFilter] = useState({
+        subject: searchParams.get('subject') || '',
+        level: searchParams.get('level') || ''
+    });
+
     const [error, setError] = useState('');
-    const [searchInput, setSearchInput] = useState('');
-    const [searchQuery, setSearchQuery] = useState('');
+    const [searchInput, setSearchInput] = useState(searchParams.get('q') || '');
+    const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
 
     const fetchPosts = useCallback(async (cursor?: string) => {
         try {
@@ -76,11 +85,28 @@ export default function PostsFeed() {
         }
     }, [token, filter]);
 
+    // Re-fetch when filter changes
     useEffect(() => {
         setLoading(true);
         setPosts([]);
         fetchPosts();
     }, [fetchPosts]);
+
+    // Handle URL param updates (e.g. navigation from generator)
+    useEffect(() => {
+        const subject = searchParams.get('subject');
+        const level = searchParams.get('level');
+        const q = searchParams.get('q');
+
+        if (subject || level || q) {
+            if (subject) setFilter(prev => ({ ...prev, subject }));
+            if (level) setFilter(prev => ({ ...prev, level }));
+            if (q) {
+                setSearchInput(q);
+                setSearchQuery(q);
+            }
+        }
+    }, [searchParams]);
 
     const applySearch = () => {
         setSearchQuery(searchInput.trim());
