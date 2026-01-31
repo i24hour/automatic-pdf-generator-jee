@@ -137,7 +137,7 @@ body {
 .form-input {
   width: 100%;
   padding: 14px 16px;
-  background: white;
+  background: var(--card-bg);
   border: 1px solid var(--border);
   border-radius: 10px;
   color: var(--foreground);
@@ -152,14 +152,14 @@ body {
 }
 
 .form-input::placeholder {
-  color: #9CA3AF;
+  color: var(--text-muted);
 }
 
 /* Form select */
 .form-select {
   width: 100%;
   padding: 14px 16px;
-  background: white;
+  background: var(--card-bg);
   border: 1px solid var(--border);
   border-radius: 10px;
   color: var(--foreground);
@@ -180,7 +180,7 @@ body {
 }
 
 .form-select option {
-  background: white;
+  background: var(--card-bg);
   color: var(--foreground);
 }
 

@@ -216,21 +216,17 @@ export default function PostsFeed() {
                         type="text"
                         placeholder="Search by topic, subject, caption, or username"
                         value={searchInput}
-                        onChange={(e) => setSearchInput(e.target.value)}
-                        onKeyDown={(e) => {
-                            if (e.key === 'Enter') applySearch();
+                        onChange={(e) => {
+                            setSearchInput(e.target.value);
+                            // Debounce search
+                            const timeoutId = setTimeout(() => {
+                                setSearchQuery(e.target.value.trim());
+                            }, 500);
+                            return () => clearTimeout(timeoutId);
                         }}
                         className="form-input"
                         style={{ flex: 1, padding: '10px 14px' }}
                     />
-                    <button
-                        type="button"
-                        onClick={applySearch}
-                        className="btn-secondary"
-                        style={{ padding: '10px 18px', whiteSpace: 'nowrap' }}
-                    >
-                        Search
-                    </button>
                 </div>
             </div>
 
