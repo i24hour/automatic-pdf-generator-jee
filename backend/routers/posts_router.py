@@ -402,6 +402,34 @@ async def get_my_posts(
     ]
 
 
+@router.get("/check-existing")
+async def check_existing_posts(
+    subject: str,
+    level: str,
+    topic: str,
+    db: Session = Depends(get_db)
+):
+    """
+    Check for existing public PDFs matching criteria.
+    Used to suggest existing tests before generation.
+    Returns the count of matching posts.
+    """
+    if not topic or len(topic) < 3:
+        return {"count": 0}
+
+    # Case insensitive search
+    search_term = f"%{topic}%"
+    
+    count = db.query(SharedPDF).filter(
+        SharedPDF.visibility == "public",
+        SharedPDF.subject == subject,
+        SharedPDF.level == level,
+        SharedPDF.topic.ilike(search_term)
+    ).count()
+    
+    return {"count": count}
+
+
 @router.get("/{post_id}", response_model=PostResponse)
 async def get_post(
     post_id: str,
@@ -598,30 +626,3 @@ async def get_my_badges(
     badges = db.query(UserBadge).filter(UserBadge.user_id == current_user.id).all()
     return [BadgeResponse(badge_type=b.badge_type, earned_at=b.earned_at) for b in badges]
 
-
-@router.get("/check-existing")
-async def check_existing_posts(
-    subject: str,
-    level: str,
-    topic: str,
-    db: Session = Depends(get_db)
-):
-    """
-    Check for existing public PDFs matching criteria.
-    Used to suggest existing tests before generation.
-    Returns the count of matching posts.
-    """
-    if not topic or len(topic) < 3:
-        return {"count": 0}
-
-    # Case insensitive search
-    search_term = f"%{topic}%"
-    
-    count = db.query(SharedPDF).filter(
-        SharedPDF.visibility == "public",
-        SharedPDF.subject == subject,
-        SharedPDF.level == level,
-        SharedPDF.topic.ilike(search_term)
-    ).count()
-    
-    return {"count": count}
