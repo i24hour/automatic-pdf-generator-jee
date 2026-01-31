@@ -896,7 +896,7 @@ export default function TestGenerator() {
                                     params.set('subject', subject);
                                     params.set('level', level);
                                     // Navigate to feed with filters
-                                    router.push(`/feed?${params.toString()}`);
+                                    router.push(`/posts?${params.toString()}`);
                                 }}
                                 className="px-4 py-2 bg-white dark:bg-black border border-amber-200 dark:border-amber-700 text-amber-700 dark:text-amber-400 text-sm font-medium rounded-lg hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors shrink-0 whitespace-nowrap"
                             >
