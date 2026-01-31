@@ -735,6 +735,14 @@ Example: {{"subject":"Chemistry","confidence":"high"}}
         text = text.replace('→', ' → ')
         text = text.replace('->', ' -> ')
         
+        # ===== SOLUTION STEP SPACING =====
+        # Add line break and spacing before "Step N:" patterns (but not the first one)
+        # Pattern matches: Step 1:, Step 2:, STEP 3:, etc.
+        text = re.sub(r'(?<!^)\s*(Step\s*\d+\s*:)', r'\n\n\\vspace{0.5em}\n\\textbf{\1}', text, flags=re.IGNORECASE)
+        
+        # Make the first "Step 1:" bold too if it exists at the start
+        text = re.sub(r'^(Step\s*1\s*:)', r'\\textbf{\1}', text, flags=re.IGNORECASE)
+        
         # Clean up multiple spaces
         text = re.sub(r' +', ' ', text)
         
