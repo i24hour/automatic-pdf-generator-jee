@@ -115,6 +115,10 @@ export default function TestGenerator() {
     const [jeeMulti, setJeeMulti] = useState(5);
     const [jeeInteger, setJeeInteger] = useState(5);
 
+    // Olympiad Pattern state (Issue #9 fix)
+    const [olympiadMCQs, setOlympiadMCQs] = useState(10);
+    const [olympiadSubjective, setOlympiadSubjective] = useState(5);
+
     const [includeSolutions, setIncludeSolutions] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [result, setResult] = useState<GenerateResponse | null>(null);
@@ -1365,8 +1369,15 @@ export default function TestGenerator() {
                                 <div className="relative">
                                     <input
                                         type="number"
-                                        defaultValue={10}
-                                        className="peer w-full px-3 pt-5 pb-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                                        value={olympiadMCQs}
+                                        onChange={(e) => {
+                                            const val = parseInt(e.target.value) || 0;
+                                            if (val >= 0 && val + olympiadSubjective <= 50) setOlympiadMCQs(val);
+                                        }}
+                                        min={0}
+                                        max={50 - olympiadSubjective}
+                                        disabled={isLoading}
+                                        className="peer w-full px-3 pt-5 pb-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-black text-gray-900 dark:text-white"
                                         placeholder=" "
                                     />
                                     <label className="absolute left-3 top-1 text-[10px] text-indigo-600 font-medium">
@@ -1376,7 +1387,14 @@ export default function TestGenerator() {
                                 <div className="relative">
                                     <input
                                         type="number"
-                                        defaultValue={5}
+                                        value={olympiadSubjective}
+                                        onChange={(e) => {
+                                            const val = parseInt(e.target.value) || 0;
+                                            if (val >= 0 && olympiadMCQs + val <= 50) setOlympiadSubjective(val);
+                                        }}
+                                        min={0}
+                                        max={50 - olympiadMCQs}
+                                        disabled={isLoading}
                                         className="peer w-full px-3 pt-5 pb-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-black text-gray-900 dark:text-white"
                                         placeholder=" "
                                     />

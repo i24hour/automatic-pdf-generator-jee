@@ -45,6 +45,10 @@ export default function PostsFeed() {
     const [hasMore, setHasMore] = useState(false);
     const [nextCursor, setNextCursor] = useState<string | null>(null);
 
+    // Loading states for individual post actions (Issue #8 fix)
+    const [likingPosts, setLikingPosts] = useState<Set<string>>(new Set());
+    const [downloadingPosts, setDownloadingPosts] = useState<Set<string>>(new Set());
+
     const [filter, setFilter] = useState({
         subject: searchParams.get('subject') || '',
         level: searchParams.get('level') || ''
@@ -139,6 +143,12 @@ export default function PostsFeed() {
             return;
         }
 
+        // Prevent double-clicking while loading
+        if (likingPosts.has(postId)) return;
+
+        // Add to loading set
+        setLikingPosts(prev => new Set(prev).add(postId));
+
         try {
             const method = isLiked ? 'DELETE' : 'POST';
             const res = await fetch(`${API_URL}/api/posts/${postId}/like`, {
@@ -156,19 +166,39 @@ export default function PostsFeed() {
             }
         } catch (err) {
             console.error('Like failed:', err);
+        } finally {
+            // Remove from loading set
+            setLikingPosts(prev => {
+                const next = new Set(prev);
+                next.delete(postId);
+                return next;
+            });
         }
     };
 
     const handleDownload = async (post: Post) => {
-        // Track download
-        try {
-            await fetch(`${API_URL}/api/posts/${post.id}/download`, { method: 'POST' });
-        } catch (err) {
-            console.error('Track download failed:', err);
-        }
+        // Prevent double-clicking while loading
+        if (downloadingPosts.has(post.id)) return;
 
-        // Open PDF in new tab
-        window.open(post.pdf_url, '_blank');
+        // Add to loading set
+        setDownloadingPosts(prev => new Set(prev).add(post.id));
+
+        try {
+            // Track download
+            await fetch(`${API_URL}/api/posts/${post.id}/download`, { method: 'POST' });
+
+            // Open PDF in new tab
+            window.open(post.pdf_url, '_blank');
+        } catch (err) {
+            console.error('Download failed:', err);
+        } finally {
+            // Remove from loading set
+            setDownloadingPosts(prev => {
+                const next = new Set(prev);
+                next.delete(post.id);
+                return next;
+            });
+        }
     };
 
     const formatTimeAgo = (dateStr: string) => {
@@ -383,50 +413,37 @@ export default function PostsFeed() {
                                 </div>
 
                                 {/* Actions */}
-                                <div style={{
-                                    display: 'flex',
-                                    gap: '24px',
-                                    marginTop: '16px',
-                                    paddingLeft: '4px'
-                                }}>
+                                <div className="flex gap-6 mt-4 pl-1">
                                     <button
                                         onClick={() => handleLike(post.id, post.is_liked)}
-                                        style={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '6px',
-                                            background: 'none',
-                                            border: 'none',
-                                            cursor: 'pointer',
-                                            color: post.is_liked ? '#ef4444' : 'var(--text-muted)',
-                                            fontSize: '0.9rem',
-                                            padding: '4px 8px',
-                                            borderRadius: '8px',
-                                            transition: 'all 0.2s'
-                                        }}
-                                        onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'}
-                                        onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+                                        disabled={likingPosts.has(post.id)}
+                                        aria-label={post.is_liked ? 'Unlike this post' : 'Like this post'}
+                                        className={`flex items-center gap-1.5 px-2 py-1 rounded-lg text-sm transition-all hover:bg-red-500/10 ${post.is_liked ? 'text-red-500' : 'text-gray-500 dark:text-gray-400'
+                                            } ${likingPosts.has(post.id) ? 'opacity-50 cursor-wait' : 'cursor-pointer'}`}
                                     >
-                                        <span style={{ fontSize: '1.1rem' }}>{post.is_liked ? '❤️' : '🤍'}</span>
+                                        {likingPosts.has(post.id) ? (
+                                            <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                                        ) : (
+                                            <span className="text-lg">{post.is_liked ? '❤️' : '🤍'}</span>
+                                        )}
                                         <span>{post.like_count}</span>
                                     </button>
-                                    <div style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '6px',
-                                        color: 'var(--text-muted)',
-                                        fontSize: '0.9rem'
-                                    }}>
-                                        <span>⬇️</span>
+                                    <div
+                                        className={`flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 ${downloadingPosts.has(post.id) ? 'opacity-50' : ''
+                                            }`}
+                                        aria-label="Download count"
+                                    >
+                                        {downloadingPosts.has(post.id) ? (
+                                            <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                                        ) : (
+                                            <span>⬇️</span>
+                                        )}
                                         <span>{post.download_count}</span>
                                     </div>
-                                    <div style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '6px',
-                                        color: 'var(--text-muted)',
-                                        fontSize: '0.9rem'
-                                    }}>
+                                    <div
+                                        className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400"
+                                        aria-label="View count"
+                                    >
                                         <span>👁️</span>
                                         <span>{post.view_count}</span>
                                     </div>
