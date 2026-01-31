@@ -1101,7 +1101,15 @@ async def run_generation_job(
         
         # Generate PDF
         llm_result["level"] = request.level
-        llm_result["difficulty"] = request.difficulty
+        # Compute difficulty label from distribution percentages
+        # Use the dominant difficulty (highest percentage) for the PDF header
+        difficulty_map = {
+            "Easy": request.easy_percent,
+            "Medium": request.medium_percent,
+            "Hard": request.hard_percent
+        }
+        computed_difficulty = max(difficulty_map, key=difficulty_map.get)
+        llm_result["difficulty"] = computed_difficulty
         llm_result["include_solutions"] = request.include_solutions
         
         pdf_path = pdf_engine.generate_pdf(llm_result, filename)
