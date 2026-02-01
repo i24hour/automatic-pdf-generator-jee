@@ -986,10 +986,82 @@ export default function TestGenerator() {
 
                     {/* Dropdown Menu - Multi-Select with Checkboxes */}
                     {isDropdownOpen && filteredChapters.length > 0 && (
-                        <div className="absolute z-50 w-full mt-1 bg-white dark:bg-[#16181c] border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-64 overflow-y-auto">
+                        <div className="absolute z-50 w-full mt-1 bg-white dark:bg-[#16181c] border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-80 overflow-y-auto">
+                            {/* Quick Select All Buttons */}
+                            <div className="sticky top-0 z-10 bg-white dark:bg-[#16181c] border-b border-gray-200 dark:border-gray-700 p-2">
+                                <div className="flex flex-wrap gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const class11Chapters = filteredChapters
+                                                .filter(c => c.class === 'Class 11')
+                                                .map(c => c.matchedTopic || c.name);
+                                            const allSelected = class11Chapters.every(c => selectedChapters.includes(c));
+                                            let newSelected: string[];
+                                            if (allSelected) {
+                                                newSelected = selectedChapters.filter(c => !class11Chapters.includes(c));
+                                            } else {
+                                                newSelected = [...new Set([...selectedChapters, ...class11Chapters])];
+                                            }
+                                            setSelectedChapters(newSelected);
+                                            setTopic(newSelected.join(', '));
+                                        }}
+                                        className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-all ${filteredChapters.filter(c => c.class === 'Class 11').length > 0 && filteredChapters.filter(c => c.class === 'Class 11').every(c => selectedChapters.includes(c.matchedTopic || c.name))
+                                                ? 'bg-indigo-600 text-white border-indigo-600'
+                                                : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20'
+                                            }`}
+                                    >
+                                        📚 All Class 11
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const class12Chapters = filteredChapters
+                                                .filter(c => c.class === 'Class 12')
+                                                .map(c => c.matchedTopic || c.name);
+                                            const allSelected = class12Chapters.every(c => selectedChapters.includes(c));
+                                            let newSelected: string[];
+                                            if (allSelected) {
+                                                newSelected = selectedChapters.filter(c => !class12Chapters.includes(c));
+                                            } else {
+                                                newSelected = [...new Set([...selectedChapters, ...class12Chapters])];
+                                            }
+                                            setSelectedChapters(newSelected);
+                                            setTopic(newSelected.join(', '));
+                                        }}
+                                        className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-all ${filteredChapters.filter(c => c.class === 'Class 12').length > 0 && filteredChapters.filter(c => c.class === 'Class 12').every(c => selectedChapters.includes(c.matchedTopic || c.name))
+                                                ? 'bg-indigo-600 text-white border-indigo-600'
+                                                : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20'
+                                            }`}
+                                    >
+                                        📚 All Class 12
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const allChapters = filteredChapters.map(c => c.matchedTopic || c.name);
+                                            const allSelected = allChapters.every(c => selectedChapters.includes(c));
+                                            let newSelected: string[];
+                                            if (allSelected) {
+                                                newSelected = [];
+                                            } else {
+                                                newSelected = [...new Set(allChapters)];
+                                            }
+                                            setSelectedChapters(newSelected);
+                                            setTopic(newSelected.join(', '));
+                                        }}
+                                        className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-all ${filteredChapters.length > 0 && filteredChapters.every(c => selectedChapters.includes(c.matchedTopic || c.name))
+                                                ? 'bg-purple-600 text-white border-purple-600'
+                                                : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-purple-50 dark:hover:bg-purple-900/20'
+                                            }`}
+                                    >
+                                        🎯 All 11 + 12
+                                    </button>
+                                </div>
+                            </div>
                             {/* Selected count header */}
                             {selectedChapters.length > 0 && (
-                                <div className="sticky top-0 px-3 py-2 bg-indigo-50 dark:bg-indigo-900/30 text-xs font-medium text-indigo-600 dark:text-indigo-400 flex justify-between items-center border-b border-indigo-200 dark:border-indigo-800">
+                                <div className="px-3 py-2 bg-indigo-50 dark:bg-indigo-900/30 text-xs font-medium text-indigo-600 dark:text-indigo-400 flex justify-between items-center border-b border-indigo-200 dark:border-indigo-800">
                                     <span>{selectedChapters.length} chapter(s) selected</span>
                                     <button
                                         onClick={() => {
