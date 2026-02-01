@@ -155,6 +155,7 @@ export default function TestGenerator() {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [filteredChapters, setFilteredChapters] = useState<{ class: string; name: string; matchedTopic?: string }[]>([]);
     const [selectedChapters, setSelectedChapters] = useState<string[]>([]);
+    const [searchQuery, setSearchQuery] = useState(''); // Separate search from topic
     const dropdownRef = useRef<HTMLDivElement>(null);
 
     // Existing Tests Check
@@ -355,13 +356,13 @@ export default function TestGenerator() {
         };
     }, [topic]);
 
-    // Update filtered chapters when topic or subject changes
+    // Update filtered chapters when searchQuery or subject changes (NOT topic)
     useEffect(() => {
-        const chapters = topic.trim()
-            ? searchChapters(subject, topic.trim())
+        const chapters = searchQuery.trim()
+            ? searchChapters(subject, searchQuery.trim())
             : getChaptersForSubject(subject);
         setFilteredChapters(chapters);
-    }, [topic, subject]);
+    }, [searchQuery, subject]);
 
     // Check for existing tests when topic/subject/level changes
     useEffect(() => {
@@ -895,24 +896,47 @@ export default function TestGenerator() {
                     <label htmlFor="topic" className="block mb-3 font-medium text-gray-700 dark:text-gray-300">
                         Topic <span className="text-xs text-gray-400 font-normal">(Select from NCERT or type custom)</span>
                     </label>
+
+                    {/* Selected chapters tags */}
+                    {selectedChapters.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mb-2">
+                            {selectedChapters.map((chapter, idx) => (
+                                <span key={idx} className="inline-flex items-center gap-1 px-2 py-1 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 text-xs rounded-full">
+                                    {chapter}
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const newSelected = selectedChapters.filter((_, i) => i !== idx);
+                                            setSelectedChapters(newSelected);
+                                            setTopic(newSelected.join(', '));
+                                        }}
+                                        className="hover:text-red-500 ml-1"
+                                    >
+                                        ×
+                                    </button>
+                                </span>
+                            ))}
+                        </div>
+                    )}
+
                     <div className="relative">
                         <input
                             type="text"
                             id="topic"
-                            value={topic}
+                            value={searchQuery}
                             onChange={(e) => {
-                                setTopic(e.target.value);
+                                setSearchQuery(e.target.value);
                                 setIsDropdownOpen(true);
                             }}
                             onFocus={() => {
                                 setIsDropdownOpen(true);
                                 // Initialize chapters list on focus
-                                const chapters = topic.trim()
-                                    ? searchChapters(subject, topic.trim())
+                                const chapters = searchQuery.trim()
+                                    ? searchChapters(subject, searchQuery.trim())
                                     : getChaptersForSubject(subject);
                                 setFilteredChapters(chapters);
                             }}
-                            placeholder="Type to search NCERT chapters or enter custom topic..."
+                            placeholder={selectedChapters.length > 0 ? "Search for more chapters..." : "Type to search NCERT chapters or enter custom topic..."}
                             className="w-full px-4 py-3 pr-10 bg-white dark:bg-black border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900"
                             disabled={isLoading}
                             autoComplete="off"
