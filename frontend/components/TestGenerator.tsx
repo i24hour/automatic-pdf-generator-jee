@@ -155,6 +155,7 @@ export default function TestGenerator() {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [filteredChapters, setFilteredChapters] = useState<{ class: string; name: string; matchedTopic?: string }[]>([]);
     const [selectedChapters, setSelectedChapters] = useState<string[]>([]);
+    const [searchQuery, setSearchQuery] = useState(''); // Separate search from topic
     const dropdownRef = useRef<HTMLDivElement>(null);
 
     // Existing Tests Check
@@ -355,13 +356,13 @@ export default function TestGenerator() {
         };
     }, [topic]);
 
-    // Update filtered chapters when topic or subject changes
+    // Update filtered chapters when searchQuery or subject changes (NOT topic)
     useEffect(() => {
-        const chapters = topic.trim()
-            ? searchChapters(subject, topic.trim())
+        const chapters = searchQuery.trim()
+            ? searchChapters(subject, searchQuery.trim())
             : getChaptersForSubject(subject);
         setFilteredChapters(chapters);
-    }, [topic, subject]);
+    }, [searchQuery, subject]);
 
     // Check for existing tests when topic/subject/level changes
     useEffect(() => {
@@ -706,7 +707,11 @@ export default function TestGenerator() {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = result.pdf_filename || 'test_paper.pdf';
+            let filename = result.pdf_filename || 'test_paper.pdf';
+            if (!filename.toLowerCase().endsWith('.pdf')) {
+                filename += '.pdf';
+            }
+            a.download = filename;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -895,24 +900,47 @@ export default function TestGenerator() {
                     <label htmlFor="topic" className="block mb-3 font-medium text-gray-700 dark:text-gray-300">
                         Topic <span className="text-xs text-gray-400 font-normal">(Select from NCERT or type custom)</span>
                     </label>
+
+                    {/* Selected chapters tags */}
+                    {selectedChapters.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mb-2">
+                            {selectedChapters.map((chapter, idx) => (
+                                <span key={idx} className="inline-flex items-center gap-1 px-2 py-1 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 text-xs rounded-full">
+                                    {chapter}
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const newSelected = selectedChapters.filter((_, i) => i !== idx);
+                                            setSelectedChapters(newSelected);
+                                            setTopic(newSelected.join(', '));
+                                        }}
+                                        className="hover:text-red-500 ml-1"
+                                    >
+                                        ×
+                                    </button>
+                                </span>
+                            ))}
+                        </div>
+                    )}
+
                     <div className="relative">
                         <input
                             type="text"
                             id="topic"
-                            value={topic}
+                            value={searchQuery}
                             onChange={(e) => {
-                                setTopic(e.target.value);
+                                setSearchQuery(e.target.value);
                                 setIsDropdownOpen(true);
                             }}
                             onFocus={() => {
                                 setIsDropdownOpen(true);
                                 // Initialize chapters list on focus
-                                const chapters = topic.trim()
-                                    ? searchChapters(subject, topic.trim())
+                                const chapters = searchQuery.trim()
+                                    ? searchChapters(subject, searchQuery.trim())
                                     : getChaptersForSubject(subject);
                                 setFilteredChapters(chapters);
                             }}
-                            placeholder="Type to search NCERT chapters or enter custom topic..."
+                            placeholder={selectedChapters.length > 0 ? "Search for more chapters..." : "Type to search NCERT chapters or enter custom topic..."}
                             className="w-full px-4 py-3 pr-10 bg-white dark:bg-black border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900"
                             disabled={isLoading}
                             autoComplete="off"
@@ -962,10 +990,82 @@ export default function TestGenerator() {
 
                     {/* Dropdown Menu - Multi-Select with Checkboxes */}
                     {isDropdownOpen && filteredChapters.length > 0 && (
-                        <div className="absolute z-50 w-full mt-1 bg-white dark:bg-[#16181c] border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-64 overflow-y-auto">
+                        <div className="absolute z-50 w-full mt-1 bg-white dark:bg-[#16181c] border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-80 overflow-y-auto">
+                            {/* Quick Select All Buttons */}
+                            <div className="sticky top-0 z-10 bg-white dark:bg-[#16181c] border-b border-gray-200 dark:border-gray-700 p-2">
+                                <div className="flex flex-wrap gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const class11Chapters = filteredChapters
+                                                .filter(c => c.class === 'Class 11')
+                                                .map(c => c.matchedTopic || c.name);
+                                            const allSelected = class11Chapters.every(c => selectedChapters.includes(c));
+                                            let newSelected: string[];
+                                            if (allSelected) {
+                                                newSelected = selectedChapters.filter(c => !class11Chapters.includes(c));
+                                            } else {
+                                                newSelected = [...new Set([...selectedChapters, ...class11Chapters])];
+                                            }
+                                            setSelectedChapters(newSelected);
+                                            setTopic(newSelected.join(', '));
+                                        }}
+                                        className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-all ${filteredChapters.filter(c => c.class === 'Class 11').length > 0 && filteredChapters.filter(c => c.class === 'Class 11').every(c => selectedChapters.includes(c.matchedTopic || c.name))
+                                            ? 'bg-indigo-600 text-white border-indigo-600'
+                                            : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20'
+                                            }`}
+                                    >
+                                        📚 All Class 11
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const class12Chapters = filteredChapters
+                                                .filter(c => c.class === 'Class 12')
+                                                .map(c => c.matchedTopic || c.name);
+                                            const allSelected = class12Chapters.every(c => selectedChapters.includes(c));
+                                            let newSelected: string[];
+                                            if (allSelected) {
+                                                newSelected = selectedChapters.filter(c => !class12Chapters.includes(c));
+                                            } else {
+                                                newSelected = [...new Set([...selectedChapters, ...class12Chapters])];
+                                            }
+                                            setSelectedChapters(newSelected);
+                                            setTopic(newSelected.join(', '));
+                                        }}
+                                        className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-all ${filteredChapters.filter(c => c.class === 'Class 12').length > 0 && filteredChapters.filter(c => c.class === 'Class 12').every(c => selectedChapters.includes(c.matchedTopic || c.name))
+                                            ? 'bg-indigo-600 text-white border-indigo-600'
+                                            : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20'
+                                            }`}
+                                    >
+                                        📚 All Class 12
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const allChapters = filteredChapters.map(c => c.matchedTopic || c.name);
+                                            const allSelected = allChapters.every(c => selectedChapters.includes(c));
+                                            let newSelected: string[];
+                                            if (allSelected) {
+                                                newSelected = [];
+                                            } else {
+                                                newSelected = [...new Set(allChapters)];
+                                            }
+                                            setSelectedChapters(newSelected);
+                                            setTopic(newSelected.join(', '));
+                                        }}
+                                        className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-all ${filteredChapters.length > 0 && filteredChapters.every(c => selectedChapters.includes(c.matchedTopic || c.name))
+                                            ? 'bg-purple-600 text-white border-purple-600'
+                                            : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-purple-50 dark:hover:bg-purple-900/20'
+                                            }`}
+                                    >
+                                        🎯 All 11 + 12
+                                    </button>
+                                </div>
+                            </div>
                             {/* Selected count header */}
                             {selectedChapters.length > 0 && (
-                                <div className="sticky top-0 px-3 py-2 bg-indigo-50 dark:bg-indigo-900/30 text-xs font-medium text-indigo-600 dark:text-indigo-400 flex justify-between items-center border-b border-indigo-200 dark:border-indigo-800">
+                                <div className="px-3 py-2 bg-indigo-50 dark:bg-indigo-900/30 text-xs font-medium text-indigo-600 dark:text-indigo-400 flex justify-between items-center border-b border-indigo-200 dark:border-indigo-800">
                                     <span>{selectedChapters.length} chapter(s) selected</span>
                                     <button
                                         onClick={() => {

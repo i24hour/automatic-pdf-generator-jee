@@ -11,7 +11,7 @@ python-multipart==0.0.6
 # Authentication
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
-bcrypt==4.0.1
+bcrypt==3.2.2
 
 # Database
 sqlalchemy==2.0.25
@@ -27,3 +27,6 @@ awscli==1.32.0
 
 # Google Cloud Storage
 google-cloud-storage==2.14.0
+
+# PDF Generation
+reportlab==4.0.9
