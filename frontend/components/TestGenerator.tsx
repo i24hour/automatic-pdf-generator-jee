@@ -34,7 +34,7 @@ import { useAuth } from "@/lib/auth-context";
 import { logError } from "@/lib/logger";
 import PostModal from "@/components/PostModal";
 import UsernameModal from "@/components/UsernameModal";
-import { searchChapters, getChaptersForSubject } from "@/lib/ncert-chapters";
+import { searchChapters, getChaptersForSubject, searchMultipleSubjects, getChaptersForMultipleSubjects } from "@/lib/ncert-chapters";
 
 // API base URL
 const API_BASE_URL =
@@ -103,7 +103,7 @@ export default function TestGenerator() {
     const { user, token, isLoading: authLoading, isAuthenticated, logout, authFetch, refreshUser } = useAuth();
     const router = useRouter();
 
-    const [subject, setSubject] = useState("Physics");
+    const [subject, setSubject] = useState<string[]>(["Physics"]);
     const [topic, setTopic] = useState("");
     const [questionCount, setQuestionCount] = useState(20);
     const [level, setLevel] = useState("JEE Mains");
@@ -210,15 +210,19 @@ export default function TestGenerator() {
 
     // Smart level filtering based on subject
     const getAvailableLevels = () => {
-        if (subject === "Maths") {
-            // NEET doesn't have Maths, but CBSE Board and JEE do
+        if (subject.includes("Maths") && !subject.includes("Zoology") && !subject.includes("Botany")) {
+            // Maths only (or with Physics/Chem) -> NO NEET
             return allLevels.filter(l => l.name !== "NEET");
         }
-        if (subject === "Zoology" || subject === "Botany") {
-            // Zoology and Botany are only for NEET (no CBSE Board for biology subjects)
+        if ((subject.includes("Zoology") || subject.includes("Botany")) && !subject.includes("Maths")) {
+            // Biology subjects -> NEET Only
             return allLevels.filter(l => l.name === "NEET");
         }
-        // Physics and Chemistry: all levels available including CBSE Board
+        // If Just Physics/Chemistry -> All options
+        // If Mixed (Maths + Bio) -> Show All (User responsibility? or Intersection?) 
+        // Let's return allLevels if mixed, or maybe restrict? 
+        // Simplest: If ANY Bio -> Show NEET. If ANY Maths -> Show JEE. 
+        // If both present, show both?
         return allLevels;
     };
 
@@ -340,8 +344,13 @@ export default function TestGenerator() {
                     const data = await response.json();
                     if (data.subject && data.confidence !== 'low') {
                         const mappedSubject = mapDetectedSubject(data.subject, topic.trim());
-                        // Auto-select the detected subject
-                        setSubject(mappedSubject);
+                        // Auto-select the detected subject (Append if not present)
+                        setSubject(prev => {
+                            if (!prev.includes(mappedSubject)) {
+                                return [...prev, mappedSubject];
+                            }
+                            return prev;
+                        });
                     }
                 }
             } catch (error) {
@@ -362,8 +371,8 @@ export default function TestGenerator() {
     // Update filtered chapters when searchQuery or subject changes (NOT topic)
     useEffect(() => {
         const chapters = searchQuery.trim()
-            ? searchChapters(subject, searchQuery.trim())
-            : getChaptersForSubject(subject);
+            ? searchMultipleSubjects(subject, searchQuery.trim())
+            : getChaptersForMultipleSubjects(subject);
         setFilteredChapters(chapters);
     }, [searchQuery, subject]);
 
@@ -379,7 +388,7 @@ export default function TestGenerator() {
         checkTimeoutRef.current = setTimeout(async () => {
             try {
                 const params = new URLSearchParams({
-                    subject,
+                    subject: subject.sort().join(', '),
                     level,
                     topic: topic.trim()
                 });
@@ -516,7 +525,7 @@ export default function TestGenerator() {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    subject: level === "GATE" ? gatePaper : subject, // Use GATE paper as subject
+                    subject: level === "GATE" ? gatePaper : subject.sort().join(', '), // Use GATE paper as subject or joined string
                     topic: topic.trim(),
                     total_questions: requestTotal,
                     level,
@@ -560,7 +569,7 @@ export default function TestGenerator() {
             logError({
                 error_type: "GENERATION_ERROR",
                 error_details: err instanceof Error ? err.message : "Unknown generation error",
-                metadata_info: JSON.stringify({ level, subject, topic })
+                metadata_info: JSON.stringify({ level, subject: subject.join(', '), topic })
             });
 
             if (err instanceof Error && err.message.includes("Rate limit")) {
@@ -945,8 +954,8 @@ export default function TestGenerator() {
                                     setIsDropdownOpen(true);
                                     // Initialize chapters list on focus
                                     const chapters = searchQuery.trim()
-                                        ? searchChapters(subject, searchQuery.trim())
-                                        : getChaptersForSubject(subject);
+                                        ? searchMultipleSubjects(subject, searchQuery.trim())
+                                        : getChaptersForMultipleSubjects(subject);
                                     setFilteredChapters(chapters);
                                 }
                             }}
@@ -1012,7 +1021,7 @@ export default function TestGenerator() {
                                 onClick={() => {
                                     const params = new URLSearchParams();
                                     params.set('q', topic);
-                                    params.set('subject', subject);
+                                    params.set('subject', subject.join(', '));
                                     params.set('level', level);
                                     // Navigate to feed with filters
                                     router.push(`/posts?${params.toString()}`);
@@ -1197,11 +1206,19 @@ export default function TestGenerator() {
                         <div className="grid grid-cols-3 gap-2">
                             {subjects.map((sub) => {
                                 const IconComponent = sub.icon;
-                                const isSelected = subject === sub.name;
+                                const isSelected = subject.includes(sub.name);
                                 return (
                                     <button
                                         key={sub.name}
-                                        onClick={() => setSubject(sub.name)}
+                                        onClick={() => {
+                                            if (isSelected) {
+                                                if (subject.length > 1) {
+                                                    setSubject(prev => prev.filter(s => s !== sub.name));
+                                                }
+                                            } else {
+                                                setSubject(prev => [...prev, sub.name]);
+                                            }
+                                        }}
                                         disabled={isLoading}
                                         className={`p-2 md:p-3 rounded-xl border transition-all duration-300 flex flex-col items-center gap-1 ${isSelected
                                             ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400"
@@ -1849,8 +1866,8 @@ export default function TestGenerator() {
                         isOpen={showPostModal}
                         onClose={() => setShowPostModal(false)}
                         sharedPdfId={result.shared_pdf_id}
-                        pdfFilename={result.pdf_filename || `${subject} - ${topic}`}
-                        subject={subject}
+                        pdfFilename={result.pdf_filename || `${subject.join(', ')} - ${topic}`}
+                        subject={subject.join(', ')}
                         topic={topic}
                         level={level}
                         token={token || ''}

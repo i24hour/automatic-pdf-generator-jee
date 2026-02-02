@@ -251,3 +251,34 @@ export function searchChapters(
 
     return results;
 }
+
+/**
+ * Get chapters for multiple subjects
+ */
+export function getChaptersForMultipleSubjects(subjects: string[]): { class: string; name: string }[] {
+    let allChapters: { class: string; name: string }[] = [];
+    for (const subject of subjects) {
+        allChapters = [...allChapters, ...getChaptersForSubject(subject)];
+    }
+    return allChapters;
+}
+
+/**
+ * Search across multiple subjects
+ */
+export function searchMultipleSubjects(
+    subjects: string[],
+    query: string
+): { class: string; name: string; matchedTopic?: string }[] {
+    const activeSubjects = subjects.length > 0 ? subjects : ["Physics"]; // Fallback
+    let allResults: { class: string; name: string; matchedTopic?: string }[] = [];
+
+    for (const subject of activeSubjects) {
+        const results = searchChapters(subject, query);
+        // Add subject info to results if needed, but for now just merging
+        // We might want to deduplicate but usually chapters are distinct per subject
+        allResults = [...allResults, ...results];
+    }
+
+    return allResults;
+}
