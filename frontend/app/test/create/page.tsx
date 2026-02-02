@@ -29,6 +29,8 @@ const INITIAL_SUBJECTS: Record<string, SubjectConfig> = {
     'Chemistry': { enabled: true, count: 10, difficulty: { ...DEFAULT_DIFFICULTY }, topics: '' },
     'Maths': { enabled: true, count: 10, difficulty: { ...DEFAULT_DIFFICULTY }, topics: '' },
     'Biology': { enabled: false, count: 10, difficulty: { ...DEFAULT_DIFFICULTY }, topics: '' },
+    'Botany': { enabled: false, count: 10, difficulty: { ...DEFAULT_DIFFICULTY }, topics: '' },
+    'Zoology': { enabled: false, count: 10, difficulty: { ...DEFAULT_DIFFICULTY }, topics: '' },
 };
 
 export default function CreateTestPage() {
@@ -46,13 +48,20 @@ export default function CreateTestPage() {
             const next = { ...prev };
             if (examType === 'NEET') {
                 next['Maths'].enabled = false;
-                next['Biology'].enabled = true;
+                next['Biology'].enabled = false;
+                next['Botany'].enabled = true;
+                next['Zoology'].enabled = true;
+
                 next['Physics'].count = 10;
                 next['Chemistry'].count = 10;
-                next['Biology'].count = 20;
+                next['Botany'].count = 10;
+                next['Zoology'].count = 10;
             } else {
                 next['Maths'].enabled = true;
                 next['Biology'].enabled = false;
+                next['Botany'].enabled = false;
+                next['Zoology'].enabled = false;
+
                 next['Physics'].count = 10;
                 next['Chemistry'].count = 10;
                 next['Maths'].count = 10;
@@ -188,8 +197,8 @@ export default function CreateTestPage() {
                                             type="button"
                                             onClick={() => setExamType(type)}
                                             className={`py-2 px-3 rounded-lg border font-medium text-sm transition-all ${examType === type
-                                                    ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
-                                                    : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-indigo-300'
+                                                ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
+                                                : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-indigo-300'
                                                 }`}
                                         >
                                             {type.replace('_', ' ')}
@@ -208,8 +217,8 @@ export default function CreateTestPage() {
                                             type="button"
                                             onClick={() => setDuration(mins)}
                                             className={`px-4 py-2 rounded-lg border font-medium text-sm transition-all ${duration === mins
-                                                    ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
-                                                    : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-indigo-300'
+                                                ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
+                                                : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-indigo-300'
                                                 }`}
                                         >
                                             {mins}m
@@ -233,9 +242,11 @@ export default function CreateTestPage() {
                                         <div className="md:w-1/4 space-y-4">
                                             <div className="flex items-center gap-2">
                                                 <div className={`p-2 rounded-lg ${subject === 'Physics' ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30' :
-                                                        subject === 'Chemistry' ? 'bg-purple-100 text-purple-600 dark:bg-purple-900/30' :
-                                                            subject === 'Biology' ? 'bg-green-100 text-green-600 dark:bg-green-900/30' :
-                                                                'bg-orange-100 text-orange-600 dark:bg-orange-900/30'
+                                                    subject === 'Chemistry' ? 'bg-purple-100 text-purple-600 dark:bg-purple-900/30' :
+                                                        subject === 'Biology' ? 'bg-green-100 text-green-600 dark:bg-green-900/30' :
+                                                            subject === 'Botany' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30' :
+                                                                subject === 'Zoology' ? 'bg-teal-100 text-teal-600 dark:bg-teal-900/30' :
+                                                                    'bg-orange-100 text-orange-600 dark:bg-orange-900/30'
                                                     }`}>
                                                     <BookOpen className="w-5 h-5" />
                                                 </div>
