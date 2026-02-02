@@ -282,3 +282,54 @@ export function searchMultipleSubjects(
 
     return allResults;
 }
+
+/**
+ * Detect subject from query locally
+ */
+export function detectSubjectFromQuery(query: string): string[] {
+    const normalizedQuery = query.toLowerCase().trim();
+    if (normalizedQuery.length < 3) return [];
+
+    const detectedSubjects: string[] = [];
+
+    // Check strict mappings first (optional, for common keywords)
+    const keywords: Record<string, string[]> = {
+        "Maths": ["math", "algebra", "geometry", "calculus", "integration", "derivative", "trigonometry"],
+        "Physics": ["physics", "force", "motion", "energy", "gravity", "optics", "magnetism"],
+        "Chemistry": ["chemistry", "reaction", "organic", "inorganic", "equilibrium", "acid", "base"],
+        "Zoology": ["zoology", "animal", "human", "reproduction", "digestion", "neural"],
+        "Botany": ["botany", "plant", "flower", "photosynthesis", "leaf", "stem"]
+    };
+
+    for (const [subj, words] of Object.entries(keywords)) {
+        if (words.some(w => normalizedQuery.includes(w))) {
+            detectedSubjects.push(subj);
+        }
+    }
+
+    // Iterate through all chapters
+    for (const [subject, subjectData] of Object.entries(ncertChapters)) {
+        let found = false;
+        // Check both classes
+        for (const chapterList of Object.values(subjectData)) {
+            for (const chapter of chapterList) {
+                if (chapter.name.toLowerCase().includes(normalizedQuery)) {
+                    detectedSubjects.push(subject);
+                    found = true;
+                    break;
+                }
+                if (chapter.topics) {
+                    if (chapter.topics.some((t: string) => t.toLowerCase().includes(normalizedQuery))) {
+                        detectedSubjects.push(subject);
+                        found = true;
+                        break;
+                    }
+                }
+            }
+            if (found) break;
+        }
+    }
+
+    // Deduplicate
+    return [...new Set(detectedSubjects)];
+}

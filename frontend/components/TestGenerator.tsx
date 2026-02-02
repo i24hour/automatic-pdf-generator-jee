@@ -34,35 +34,14 @@ import { useAuth } from "@/lib/auth-context";
 import { logError } from "@/lib/logger";
 import PostModal from "@/components/PostModal";
 import UsernameModal from "@/components/UsernameModal";
-import { searchChapters, getChaptersForSubject, searchMultipleSubjects, getChaptersForMultipleSubjects } from "@/lib/ncert-chapters";
+import { searchChapters, getChaptersForSubject, searchMultipleSubjects, getChaptersForMultipleSubjects, detectSubjectFromQuery } from "@/lib/ncert-chapters";
 
 // API base URL
 const API_BASE_URL =
     process.env.NEXT_PUBLIC_API_URL ||
     "https://mentors-mantra-api-87253755436.us-central1.run.app";
 
-const mapDetectedSubject = (detectedSubject: string, topicText: string) => {
-    if (!detectedSubject) return detectedSubject;
-    const normalized = detectedSubject.trim().toLowerCase();
-    if (normalized !== "biology") return detectedSubject;
 
-    const topic = topicText.toLowerCase();
-    const botanyKeywords = [
-        "plant",
-        "photosynthesis",
-        "chlorophyll",
-        "xylem",
-        "phloem",
-        "stomata",
-        "flower",
-        "seed",
-        "root",
-        "stem",
-        "leaf",
-    ];
-    const isBotany = botanyKeywords.some((keyword) => topic.includes(keyword));
-    return isBotany ? "Botany" : "Zoology";
-};
 
 interface GenerateResponse {
     success: boolean;
@@ -141,8 +120,7 @@ export default function TestGenerator() {
     const [promoCode, setPromoCode] = useState("");
     const [promoLoading, setPromoLoading] = useState(false);
     const [promoMessage, setPromoMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
-    const [isDetectingSubject, setIsDetectingSubject] = useState(false);
-    const detectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    // Removed isDetectingSubject state as we use local detection now
     const [elapsedTime, setElapsedTime] = useState(0);
     const [progressStep, setProgressStep] = useState(0);
     const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -318,54 +296,27 @@ export default function TestGenerator() {
         }
     };
 
-    // Auto-detect subject when topic changes (debounced)
+    // Auto-detect subject when topic changes (Local Detection)
     useEffect(() => {
-        // Clear any existing timeout
-        if (detectTimeoutRef.current) {
-            clearTimeout(detectTimeoutRef.current);
-        }
+        // Only detect if topic has at least 4 characters
+        if (topic.trim().length < 4) return;
 
-        // Only detect if topic has at least 5 characters to avoid API spam on short/partial words
-        if (topic.trim().length < 5) {
-            return;
-        }
-
-        // Debounce the API call by 1500ms (1.5s) to wait for typing to finish
-        detectTimeoutRef.current = setTimeout(async () => {
-            setIsDetectingSubject(true);
-            try {
-                const response = await fetch(`${API_BASE_URL}/api/detect-subject`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ topic: topic.trim() })
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data.subject && data.confidence !== 'low') {
-                        const mappedSubject = mapDetectedSubject(data.subject, topic.trim());
-                        // Auto-select the detected subject (Append if not present)
-                        setSubject(prev => {
-                            if (!prev.includes(mappedSubject)) {
-                                return [...prev, mappedSubject];
-                            }
-                            return prev;
-                        });
+        // Use local detection
+        const detected = detectSubjectFromQuery(topic);
+        if (detected.length > 0) {
+            setSubject(prev => {
+                // Merge new detected subjects
+                const newSubjects = [...prev];
+                let changed = false;
+                detected.forEach(s => {
+                    if (!newSubjects.includes(s)) {
+                        newSubjects.push(s);
+                        changed = true;
                     }
-                }
-            } catch (error) {
-                console.error('Error detecting subject:', error);
-            } finally {
-                setIsDetectingSubject(false);
-            }
-        }, 500);
-
-        // Cleanup on unmount
-        return () => {
-            if (detectTimeoutRef.current) {
-                clearTimeout(detectTimeoutRef.current);
-            }
-        };
+                });
+                return changed ? newSubjects : prev;
+            });
+        }
     }, [topic]);
 
     // Update filtered chapters when searchQuery or subject changes (NOT topic)
@@ -1676,8 +1627,8 @@ export default function TestGenerator() {
                 {/* Generate Button */}
                 < button
                     onClick={handleGenerate}
-                    disabled={isLoading || isDetectingSubject || !topic.trim() || (rateLimit?.remaining === 0)}
-                    className={`w-full py-2.5 md:py-4 rounded-lg md:rounded-xl text-white font-semibold text-[11px] md:text-lg shadow-lg transition-all duration-300 flex items-center justify-center gap-1.5 md:gap-2 mb-4 btn-primary ${isLoading || isDetectingSubject || !topic.trim() || (rateLimit?.remaining === 0)
+                    disabled={isLoading || !topic.trim() || (rateLimit?.remaining === 0)}
+                    className={`w-full py-2.5 md:py-4 rounded-lg md:rounded-xl text-white font-semibold text-[11px] md:text-lg shadow-lg transition-all duration-300 flex items-center justify-center gap-1.5 md:gap-2 mb-4 btn-primary ${isLoading || !topic.trim() || (rateLimit?.remaining === 0)
                         ? "bg-gray-400 cursor-not-allowed"
                         : "hover:shadow-xl transform hover:-translate-y-0.5"
                         }`}
