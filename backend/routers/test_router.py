@@ -10,10 +10,12 @@ from pydantic import BaseModel
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+import asyncio
 
 from database import get_db
 from auth import get_current_user_required
 from models import User, TestAttempt, QuestionResponse
+from services.llm_engine import llm_engine
 
 router = APIRouter(prefix="/test", tags=["Test Portal"])
 
@@ -196,51 +198,183 @@ async def create_test(
     db.add(test)
     db.flush()  # Get test ID
     
-    # TODO: Generate questions using existing LLM engine
-    # For now, create placeholder questions
-    q_index = 0
+    # 2. Generate Questions via LLM (Parallel Execution)
+    tasks = []
+    task_metadata = []
     
     for subject, config in request.subject_inputs.items():
         count = config.count
+        if count <= 0: continue
+        
         difficulty_dist = config.difficulty
         subject_topics = config.topics if config.topics else ["General"]
+        topic_str = ", ".join(subject_topics)
         
-        for i in range(count):
-            # Determine difficulty based on distribution
-            easy_pct = difficulty_dist.get("easy", 30)
-            medium_pct = difficulty_dist.get("medium", 50)
+        # Calculate exact counts
+        easy_count = int(count * difficulty_dist.get("easy", 0) / 100)
+        medium_count = int(count * difficulty_dist.get("medium", 0) / 100)
+        hard_count = count - easy_count - medium_count
+        
+        # Create tasks for each difficulty level
+        levels = [
+            ("Easy", easy_count), 
+            ("Medium", medium_count), 
+            ("Hard", hard_count)
+        ]
+        
+        for diff_name, diff_count in levels:
+            if diff_count > 0:
+                tasks.append(llm_engine.generate_with_fallback_async(
+                    subject=subject,
+                    topic=topic_str,
+                    mcq_count=diff_count,
+                    numerical_count=0,
+                    level=request.exam_type,
+                    difficulty=diff_name
+                ))
+                task_metadata.append({
+                    "subject": subject, 
+                    "difficulty": diff_name, 
+                    "topics": subject_topics,
+                    "count": diff_count
+                })
+
+    # Execute all generation tasks in parallel
+    print(f"Starting {len(tasks)} generation tasks...")
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+    
+    q_index = 0
+    questions_added = 0
+    
+    for i, result in enumerate(results):
+        meta = task_metadata[i]
+        
+        # Handle Task Failure
+        if isinstance(result, Exception):
+            print(f"Task failed for {meta['subject']} {meta['difficulty']}: {result}")
+            # Fallback for failed task: Create placeholders ONLY for this failed batch
+            for k in range(meta['count']):
+                fallback_q = QuestionResponse(
+                    test_attempt_id=test.id,
+                    question_index=q_index,
+                    subject=meta['subject'],
+                    topic=meta['topics'][0],
+                    difficulty=meta['difficulty'],
+                    question_type="mcq",
+                    question_text=f"[Error generating question] Please report this ID.\nSubject: {meta['subject']}\nTopic: {meta['topics']}",
+                    options_json=json.dumps({"A": "Error", "B": "Error", "C": "Error", "D": "Error"}),
+                    correct_answer="A",
+                    marks_correct=4,
+                    marks_wrong=-1,
+                    status="NOT_VISITED"
+                )
+                db.add(fallback_q)
+                q_index += 1
+                questions_added += 1
+            continue
+
+        if not result.get("success"):
+            print(f"Generation failed for {meta['subject']} {meta['difficulty']}: {result.get('error')}")
+            # Fallback logic same as above
+            for k in range(meta['count']):
+                fallback_q = QuestionResponse(
+                    test_attempt_id=test.id,
+                    question_index=q_index,
+                    subject=meta['subject'],
+                    topic=meta['topics'][0],
+                    difficulty=meta['difficulty'],
+                    question_type="mcq",
+                    question_text=f"[Generation Failed] We could not generate a valid question here.\nSubject: {meta['subject']}",
+                     options_json=json.dumps({"A": "Error", "B": "Error", "C": "Error", "D": "Error"}),
+                    correct_answer="A",
+                    marks_correct=4,
+                    marks_wrong=-1,
+                    status="NOT_VISITED"
+                )
+                db.add(fallback_q)
+                q_index += 1
+                questions_added += 1
+            continue
             
-            # Use relative index within subject
-            if i < count * easy_pct / 100:
-                difficulty = "Easy"
-            elif i < count * (easy_pct + medium_pct) / 100:
-                difficulty = "Medium"
+        # Process Successful Questions
+        generated_qs = result.get("questions", [])
+        
+        # If we got fewer than requested, fill with placeholders
+        # (Though engine handles supplementing, safe to double check)
+        
+        for q_data in generated_qs:
+            # Map options list to dict A,B,C,D
+            options_list = q_data.get("options", [])
+            options_dict = {}
+            labels = ["A", "B", "C", "D"]
+            for idx, opt_text in enumerate(options_list):
+                if idx < 4:
+                    options_dict[labels[idx]] = opt_text
+            
+            # Ensure we have 4 options
+            while len(options_dict) < 4:
+                btn = labels[len(options_dict)]
+                options_dict[btn] = "Option " + btn
+            
+            # Map answer (if it comes as full text, try to find key, otherwise default A)
+            correct_ans = q_data.get("answer", "A").strip()
+            # If answer is like "Option A" or just "A"
+            if len(correct_ans) == 1 and correct_ans.upper() in ["A", "B", "C", "D"]:
+                correct_ans = correct_ans.upper()
+            elif correct_ans.startswith("Option "):
+                correct_ans = correct_ans.replace("Option ", "")[0].upper()
             else:
-                difficulty = "Hard"
-            
-            topic = subject_topics[i % len(subject_topics)]
+                # If full text, try to match with options
+                found = False
+                for key, val in options_dict.items():
+                    if val == correct_ans:
+                        correct_ans = key
+                        found = True
+                        break
+                if not found:
+                    correct_ans = "A" # Fallback
             
             response = QuestionResponse(
                 test_attempt_id=test.id,
                 question_index=q_index,
-                subject=subject,
-                topic=topic,
-                difficulty=difficulty,
+                subject=meta['subject'],
+                topic=meta['topics'][0], # TODO: Can we get specific topic? Engine returns 'topic'
+                difficulty=meta['difficulty'],
                 question_type="mcq",
-                question_text=f"[AI Question will be generated here - {subject} Q{i+1}]\nTopic: {topic}\nDifficulty: {difficulty}",
-                options_json=json.dumps({
-                    "A": "Option A",
-                    "B": "Option B", 
-                    "C": "Option C",
-                    "D": "Option D"
-                }),
-                correct_answer="A",
+                question_text=q_data.get("text", "Question text missing"),
+                options_json=json.dumps(options_dict),
+                correct_answer=correct_ans,
                 marks_correct=4,
-                marks_wrong=-1 if request.exam_type != "NEET" else -1,
+                marks_wrong=-1 if request.exam_type != "NEET" else -1, # Marking scheme
                 status="NOT_VISITED"
             )
             db.add(response)
             q_index += 1
+            questions_added += 1
+            
+        # Fill remainder if partial success
+        remaining = meta['count'] - len(generated_qs)
+        if remaining > 0:
+            print(f"Warning: Missing {remaining} questions for {meta['subject']} {meta['difficulty']}. Filling with placeholders.")
+            for _ in range(remaining):
+                fallback_q = QuestionResponse(
+                    test_attempt_id=test.id,
+                    question_index=q_index,
+                    subject=meta['subject'],
+                    topic=meta['topics'][0],
+                    difficulty=meta['difficulty'],
+                    question_type="mcq",
+                    question_text=f"[Partial Generation Failure] We could not generate a valid question here. (Missing {remaining})\nSubject: {meta['subject']}",
+                    options_json=json.dumps({"A": "Error", "B": "Error", "C": "Error", "D": "Error"}),
+                    correct_answer="A",
+                    marks_correct=4,
+                    marks_wrong=-1,
+                    status="NOT_VISITED"
+                )
+                db.add(fallback_q)
+                q_index += 1
+                questions_added += 1
+
     
     db.commit()
     

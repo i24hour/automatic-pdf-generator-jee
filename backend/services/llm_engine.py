@@ -135,7 +135,9 @@ class LLMEngine:
         """Setup API keys for litellm based on the active model."""
         # litellm automatically picks up these environment variables
         # GEMINI_API_KEY, OPENAI_API_KEY, ANTHROPIC_API_KEY
-        pass
+        if not os.getenv("GEMINI_API_KEY") and os.getenv("GOOGLE_API_KEY"):
+            os.environ["GEMINI_API_KEY"] = os.getenv("GOOGLE_API_KEY")
+            print("DEBUG: Mapped GOOGLE_API_KEY to GEMINI_API_KEY")
     
     def generate_with_fallback(
         self,
