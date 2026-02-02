@@ -158,3 +158,27 @@ def init_db():
     except Exception as e:
         print(f"Migration warning (can be ignored if columns exist): {e}")
 
+    # Add username to users if it doesn't exist
+    try:
+        from sqlalchemy import text
+        with engine.connect() as conn:
+            try:
+                conn.execute(text("ALTER TABLE users ADD COLUMN username VARCHAR"))
+                conn.commit()
+            except Exception:
+                conn.rollback()
+    except Exception as e:
+        print(f"Migration warning (username): {e}")
+
+    # Add class_grade to users if it doesn't exist
+    try:
+        from sqlalchemy import text
+        with engine.connect() as conn:
+            try:
+                conn.execute(text("ALTER TABLE users ADD COLUMN class_grade VARCHAR"))
+                conn.commit()
+            except Exception:
+                conn.rollback()
+    except Exception as e:
+        print(f"Migration warning (class_grade): {e}")
+
