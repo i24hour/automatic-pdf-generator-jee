@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import { ChevronLeft, ChevronRight, Menu, X } from 'lucide-react';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -60,6 +61,7 @@ export default function TestInterfacePage() {
     } | null>(null);
     const [activeSection, setActiveSection] = useState<string | null>(null);
     const [questionStartTime, setQuestionStartTime] = useState(Date.now());
+    const [showPalette, setShowPalette] = useState(false); // Mobile palette toggle
 
     const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
 
@@ -206,6 +208,53 @@ export default function TestInterfacePage() {
         return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     };
 
+    // Keyboard Shortcuts
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (loading || showSubmitModal) return;
+
+            switch (e.key) {
+                case '1':
+                case 'a':
+                case 'A':
+                    if (question?.options && Object.keys(question.options).length >= 1) setSelectedAnswer('A');
+                    break;
+                case '2':
+                case 'b':
+                case 'B':
+                    if (question?.options && Object.keys(question.options).length >= 2) setSelectedAnswer('B');
+                    break;
+                case '3':
+                case 'c':
+                case 'C':
+                    if (question?.options && Object.keys(question.options).length >= 3) setSelectedAnswer('C');
+                    break;
+                case '4':
+                case 'd':
+                case 'D':
+                    if (question?.options && Object.keys(question.options).length >= 4) setSelectedAnswer('D');
+                    break;
+                case 'ArrowLeft':
+                    if (question && question.question_index > 0) handleAction('BACK');
+                    break;
+                case 'ArrowRight':
+                    if (question && question.question_index < (testState?.total_questions || 0) - 1) handleAction('NEXT');
+                    break;
+                case 's':
+                case 'S':
+                    if (question) handleAction('SAVE_NEXT');
+                    break;
+                case 'm':
+                case 'M':
+                    if (question) handleAction('MARK_NEXT');
+                    break;
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [question, testState, loading, showSubmitModal, selectedAnswer, handleAction]);
+
     // Get status color
     const getStatusColor = (status: string) => {
         switch (status) {
@@ -237,11 +286,23 @@ export default function TestInterfacePage() {
             <header className="bg-gradient-to-r from-orange-500 to-orange-600 text-white py-2 px-4 shrink-0">
                 <div className="flex justify-between items-center">
                     <div className="flex items-center gap-4">
-                        <span className="text-xl font-bold">🎯 INFINITEST</span>
-                        <span className="text-sm opacity-80">{testState.exam_type.replace('_', ' ')}</span>
+                        <button
+                            className="md:hidden p-1 hover:bg-white/10 rounded"
+                            onClick={() => setShowPalette(!showPalette)}
+                        >
+                            <Menu className="w-6 h-6" />
+                        </button>
+                        <span className="text-xl font-bold hidden md:inline">🎯 INFINITEST</span>
+                        <span className="text-xl font-bold md:hidden">🎯</span>
+                        <span className="text-sm opacity-80 truncate max-w-[120px] md:max-w-none">
+                            {testState.exam_type.replace('_', ' ')}
+                        </span>
                     </div>
                     <div className="flex items-center gap-4">
-                        <span className="text-sm">Remaining Time:</span>
+                        {actionLoading && (
+                            <span className="text-sm font-medium animate-pulse text-white/80">Saving...</span>
+                        )}
+                        <span className="text-sm hidden md:inline">Remaining Time:</span>
                         <span className={`font-mono font-bold text-lg px-3 py-1 rounded ${timeRemaining < 300 ? 'bg-red-700 animate-pulse' : 'bg-green-600'
                             }`}>
                             {formatTime(timeRemaining)}
@@ -251,14 +312,14 @@ export default function TestInterfacePage() {
             </header>
 
             {/* Section Tabs */}
-            <div className="bg-white dark:bg-[#16181c] border-b border-gray-200 dark:border-gray-700 px-4 py-2 flex gap-2 shrink-0">
+            <div className="bg-white dark:bg-[#16181c] border-b border-gray-200 dark:border-gray-700 px-4 py-2 flex gap-2 shrink-0 overflow-x-auto">
                 {testState.subjects.map(subject => (
                     <button
                         key={subject}
                         onClick={() => setActiveSection(subject)}
-                        className={`px-4 py-2 rounded-lg font-medium transition-colors ${activeSection === subject
-                                ? 'bg-indigo-600 text-white'
-                                : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                        className={`px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${activeSection === subject
+                            ? 'bg-indigo-600 text-white'
+                            : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
                             }`}
                     >
                         {subject}
@@ -267,7 +328,7 @@ export default function TestInterfacePage() {
             </div>
 
             {/* Main Content */}
-            <div className="flex-1 flex overflow-hidden">
+            <div className="flex-1 flex overflow-hidden relative">
                 {/* Question Area */}
                 <div className="flex-1 flex flex-col p-6 overflow-auto">
                     {/* Question Header */}
@@ -276,8 +337,8 @@ export default function TestInterfacePage() {
                             Question {question.question_index + 1}:
                         </h2>
                         <span className={`px-3 py-1 rounded text-sm font-medium ${question.difficulty === 'Easy' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' :
-                                question.difficulty === 'Medium' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' :
-                                    'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                            question.difficulty === 'Medium' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' :
+                                'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
                             }`}>
                             {question.difficulty}
                         </span>
@@ -297,14 +358,14 @@ export default function TestInterfacePage() {
                                         key={key}
                                         onClick={() => setSelectedAnswer(key)}
                                         className={`w-full p-4 text-left rounded-lg border-2 transition-all ${selectedAnswer === key
-                                                ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/30'
-                                                : 'border-gray-200 dark:border-gray-700 hover:border-indigo-300 dark:hover:border-indigo-600'
+                                            ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/30'
+                                            : 'border-gray-200 dark:border-gray-700 hover:border-indigo-300 dark:hover:border-indigo-600'
                                             }`}
                                     >
                                         <div className="flex items-center gap-3">
                                             <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${selectedAnswer === key
-                                                    ? 'bg-indigo-600 text-white'
-                                                    : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                                                ? 'bg-indigo-600 text-white'
+                                                : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
                                                 }`}>
                                                 {key}
                                             </span>
@@ -378,48 +439,74 @@ export default function TestInterfacePage() {
                     </div>
                 </div>
 
-                {/* Question Palette */}
-                <div className="w-72 bg-white dark:bg-[#16181c] border-l border-gray-200 dark:border-gray-700 p-4 overflow-auto shrink-0">
-                    <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Question Palette</h3>
-
-                    {/* Legend */}
-                    <div className="mb-4 space-y-2 text-xs">
-                        <div className="flex items-center gap-2">
-                            <div className="w-6 h-6 rounded bg-gray-300 dark:bg-gray-600"></div>
-                            <span className="text-gray-600 dark:text-gray-400">{testState.palette.filter(p => p.status === 'NOT_VISITED').length} Not Visited</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <div className="w-6 h-6 rounded bg-red-500"></div>
-                            <span className="text-gray-600 dark:text-gray-400">{testState.palette.filter(p => p.status === 'NOT_ANSWERED').length} Not Answered</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <div className="w-6 h-6 rounded bg-green-500"></div>
-                            <span className="text-gray-600 dark:text-gray-400">{testState.palette.filter(p => p.status === 'ANSWERED').length} Answered</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <div className="w-6 h-6 rounded bg-purple-500"></div>
-                            <span className="text-gray-600 dark:text-gray-400">{testState.palette.filter(p => p.status === 'MARKED_REVIEW').length} Marked Review</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <div className="w-6 h-6 rounded bg-purple-500 ring-2 ring-green-400"></div>
-                            <span className="text-gray-600 dark:text-gray-400">{testState.palette.filter(p => p.status === 'ANSWERED_MARKED').length} Answered+Marked</span>
-                        </div>
+                {/* Question Palette - Mobile Drawer & Desktop Sidebar */}
+                <div className={`
+                    fixed inset-y-0 right-0 w-80 bg-white dark:bg-[#16181c] border-l border-gray-200 dark:border-gray-700 
+                    transform transition-transform duration-300 ease-in-out z-40
+                    ${showPalette ? 'translate-x-0' : 'translate-x-full'}
+                    md:relative md:translate-x-0 md:w-72 md:shrink-0 md:flex md:flex-col
+                `}>
+                    <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+                        <h3 className="font-semibold text-gray-900 dark:text-white">Question Palette</h3>
+                        <button
+                            onClick={() => setShowPalette(false)}
+                            className="md:hidden p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
+                        >
+                            <X className="w-5 h-5 text-gray-500" />
+                        </button>
                     </div>
 
-                    {/* Palette Grid */}
-                    <div className="grid grid-cols-5 gap-2">
-                        {filteredPalette.map((item) => (
-                            <button
-                                key={item.index}
-                                onClick={() => handleAction('JUMP', item.index)}
-                                className={`w-10 h-10 rounded font-bold text-sm ${getStatusColor(item.status)} ${item.index === question.question_index ? 'ring-2 ring-yellow-400' : ''
-                                    } hover:opacity-80 transition-opacity`}
-                            >
-                                {item.index + 1}
-                            </button>
-                        ))}
+                    <div className="p-4 overflow-auto flex-1">
+                        {/* Legend */}
+                        <div className="mb-4 space-y-2 text-xs">
+                            <div className="flex items-center gap-2">
+                                <div className="w-6 h-6 rounded bg-gray-300 dark:bg-gray-600"></div>
+                                <span className="text-gray-600 dark:text-gray-400">{testState.palette.filter(p => p.status === 'NOT_VISITED').length} Not Visited</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <div className="w-6 h-6 rounded bg-red-500"></div>
+                                <span className="text-gray-600 dark:text-gray-400">{testState.palette.filter(p => p.status === 'NOT_ANSWERED').length} Not Answered</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <div className="w-6 h-6 rounded bg-green-500"></div>
+                                <span className="text-gray-600 dark:text-gray-400">{testState.palette.filter(p => p.status === 'ANSWERED').length} Answered</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <div className="w-6 h-6 rounded bg-purple-500"></div>
+                                <span className="text-gray-600 dark:text-gray-400">{testState.palette.filter(p => p.status === 'MARKED_REVIEW').length} Marked Review</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <div className="w-6 h-6 rounded bg-purple-500 ring-2 ring-green-400"></div>
+                                <span className="text-gray-600 dark:text-gray-400">{testState.palette.filter(p => p.status === 'ANSWERED_MARKED').length} Answered+Marked</span>
+                            </div>
+                        </div>
+
+                        {/* Palette Grid */}
+                        <div className="grid grid-cols-5 gap-2">
+                            {filteredPalette.map((item) => (
+                                <button
+                                    key={item.index}
+                                    onClick={() => {
+                                        handleAction('JUMP', item.index);
+                                        setShowPalette(false); // Close drawer on mobile selection
+                                    }}
+                                    className={`w-10 h-10 rounded font-bold text-sm ${getStatusColor(item.status)} ${item.index === question.question_index ? 'ring-2 ring-yellow-400' : ''
+                                        } hover:opacity-80 transition-opacity`}
+                                >
+                                    {item.index + 1}
+                                </button>
+                            ))}
+                        </div>
                     </div>
                 </div>
+
+                {/* Overlay for mobile drawer */}
+                {showPalette && (
+                    <div
+                        className="fixed inset-0 bg-black/50 z-30 md:hidden"
+                        onClick={() => setShowPalette(false)}
+                    />
+                )}
             </div>
 
             {/* Submit Modal */}
