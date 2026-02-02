@@ -10,6 +10,10 @@ import shutil
 import re
 from typing import Dict, Any, Optional
 import jinja2
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib import colors
 
 
 def escape_latex_outside_math(text: str) -> str:
@@ -488,10 +492,84 @@ class PDFEngine:
                 shutil.rmtree(temp_dir)
             except:
                 pass
-    
+
+    def generate_fallback_pdf(self, data: Dict[str, Any], filename: str = "test_paper") -> Optional[str]:
+        """
+        Generate a fallback PDF using ReportLab when pdflatex is not available.
+        """
+        try:
+            output_path = os.path.join(self.output_dir, f"{filename}.pdf")
+            doc = SimpleDocTemplate(output_path, pagesize=letter)
+            styles = getSampleStyleSheet()
+            story = []
+
+            # Create custom styles
+            title_style = ParagraphStyle(
+                'CustomTitle',
+                parent=styles['Heading1'],
+                alignment=1, # Center
+                spaceAfter=20
+            )
+            
+            question_style = ParagraphStyle(
+                'Question',
+                parent=styles['BodyText'],
+                spaceAfter=12,
+                fontSize=11,
+                leading=14
+            )
+
+            # Header
+            story.append(Paragraph(data.get("institute_name", "Test Paper"), title_style))
+            story.append(Spacer(1, 12))
+            
+            # Metadata
+            subject = data.get("subject", "Subject Not Specified")
+            topic = data.get("topic", "General")
+            story.append(Paragraph(f"<b>Subject:</b> {subject} | <b>Topic:</b> {topic}", styles['Normal']))
+            story.append(Spacer(1, 24))
+
+            # Questions
+            questions = data.get("questions", [])
+            for i, q in enumerate(questions, 1):
+                q_text = q.get("question", "")
+                # Clean up latex math markers for basic text display
+                q_text = q_text.replace('$', '').replace('\\', '')
+                
+                story.append(Paragraph(f"<b>Q{i}.</b> {q_text}", question_style))
+                
+                options = q.get("options", [])
+                if options:
+                    for opt in options:
+                        opt = str(opt).replace('$', '').replace('\\', '')
+                        story.append(Paragraph(f"&nbsp;&nbsp;&nbsp;&nbsp;o {opt}", styles['BodyText']))
+                
+                story.append(Spacer(1, 12))
+
+            # Solutions (if included)
+            if data.get("include_solutions", False):
+                story.append(Spacer(1, 24))
+                story.append(Paragraph("<b>Solutions</b>", styles['Heading2']))
+                for i, q in enumerate(questions, 1):
+                    ans = q.get("answer", "N/A")
+                    sol = q.get("solution", "")
+                    story.append(Paragraph(f"<b>Q{i}:</b> {ans}", styles['BodyText']))
+                    if sol:
+                        story.append(Paragraph(f"<i>Explanation:</i> {sol}", styles['Italic']))
+                    story.append(Spacer(1, 6))
+
+            doc.build(story)
+            print(f"Generated fallback PDF: {output_path}")
+            return output_path
+            
+        except Exception as e:
+            print(f"Fallback PDF generation failed: {e}")
+            return None
+
     def generate_pdf(self, data: Dict[str, Any], filename: str = "test_paper") -> Optional[str]:
         """
         Generate PDF from question data.
+        Tries pdflatex first, falls back to ReportLab.
         
         Args:
             data: Dictionary containing subject, topic, and questions
@@ -503,10 +581,15 @@ class PDFEngine:
         # Render template
         latex_content = self.render_template(data)
         
-        # Compile to PDF
+        # Compile to PDF using pdflatex
         pdf_path = self.compile_pdf(latex_content, filename)
         
-        return pdf_path
+        if pdf_path:
+            return pdf_path
+            
+        # If pdflatex failed or is missing, try fallback
+        print("Falling back to ReportLab generation...")
+        return self.generate_fallback_pdf(data, filename)
 
 
 # Singleton instance

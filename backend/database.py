@@ -61,6 +61,8 @@ def init_db():
         PasswordResetToken,
         TopicSubjectCache,
         SystemErrorLog,
+        TestAttempt,
+        QuestionResponse,
     )
     
     # Create all tables

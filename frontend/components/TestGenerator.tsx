@@ -707,7 +707,11 @@ export default function TestGenerator() {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = result.pdf_filename || 'test_paper.pdf';
+            let filename = result.pdf_filename || 'test_paper.pdf';
+            if (!filename.toLowerCase().endsWith('.pdf')) {
+                filename += '.pdf';
+            }
+            a.download = filename;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -1007,8 +1011,8 @@ export default function TestGenerator() {
                                             setTopic(newSelected.join(', '));
                                         }}
                                         className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-all ${filteredChapters.filter(c => c.class === 'Class 11').length > 0 && filteredChapters.filter(c => c.class === 'Class 11').every(c => selectedChapters.includes(c.matchedTopic || c.name))
-                                                ? 'bg-indigo-600 text-white border-indigo-600'
-                                                : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20'
+                                            ? 'bg-indigo-600 text-white border-indigo-600'
+                                            : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20'
                                             }`}
                                     >
                                         📚 All Class 11
@@ -1030,8 +1034,8 @@ export default function TestGenerator() {
                                             setTopic(newSelected.join(', '));
                                         }}
                                         className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-all ${filteredChapters.filter(c => c.class === 'Class 12').length > 0 && filteredChapters.filter(c => c.class === 'Class 12').every(c => selectedChapters.includes(c.matchedTopic || c.name))
-                                                ? 'bg-indigo-600 text-white border-indigo-600'
-                                                : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20'
+                                            ? 'bg-indigo-600 text-white border-indigo-600'
+                                            : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20'
                                             }`}
                                     >
                                         📚 All Class 12
@@ -1051,8 +1055,8 @@ export default function TestGenerator() {
                                             setTopic(newSelected.join(', '));
                                         }}
                                         className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-all ${filteredChapters.length > 0 && filteredChapters.every(c => selectedChapters.includes(c.matchedTopic || c.name))
-                                                ? 'bg-purple-600 text-white border-purple-600'
-                                                : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-purple-50 dark:hover:bg-purple-900/20'
+                                            ? 'bg-purple-600 text-white border-purple-600'
+                                            : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-purple-50 dark:hover:bg-purple-900/20'
                                             }`}
                                     >
                                         🎯 All 11 + 12

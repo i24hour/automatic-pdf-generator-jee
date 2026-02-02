@@ -40,3 +40,4 @@ backend/output/
 # Ignore generated tex files except templates
 backend/output/*.tex
 !backend/templates/
+.vercel

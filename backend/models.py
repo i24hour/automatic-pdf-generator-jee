@@ -362,3 +362,83 @@ class UserQuestionHistory(Base):
     
     def __repr__(self):
         return f"<UserQuestionHistory {self.topic} for {self.user_id}>"
+
+
+# ============================================
+# TEST PORTAL MODELS (NTA CBT-style)
+# ============================================
+
+class TestAttempt(Base):
+    """A user's test session - stores test configuration and results."""
+    __tablename__ = "test_attempts"
+    
+    id = Column(String, primary_key=True, default=generate_uuid)
+    user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    
+    # Test Configuration
+    exam_type = Column(String, nullable=False)  # JEE_MAINS, JEE_ADV, NEET, CUSTOM
+    total_questions = Column(Integer, nullable=False)
+    duration_minutes = Column(Integer, nullable=False)
+    topics_json = Column(Text, nullable=False)  # JSON array of topics
+    subject_distribution_json = Column(Text, nullable=True)  # {"Physics": 25, "Chemistry": 25, "Maths": 25}
+    difficulty_distribution_json = Column(Text, nullable=True)  # {"easy": 20, "medium": 50, "hard": 30}
+    
+    # State
+    status = Column(String, default="NOT_STARTED")  # NOT_STARTED, IN_PROGRESS, SUBMITTED, EXPIRED
+    current_question_index = Column(Integer, default=0)
+    started_at = Column(DateTime(timezone=True), nullable=True)
+    submitted_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Results (populated after submission)
+    total_score = Column(Integer, nullable=True)
+    max_score = Column(Integer, nullable=True)
+    correct_count = Column(Integer, nullable=True)
+    wrong_count = Column(Integer, nullable=True)
+    unattempted_count = Column(Integer, nullable=True)
+    
+    # Relationships
+    responses = relationship("QuestionResponse", back_populates="test_attempt", cascade="all, delete-orphan")
+    user = relationship("User")
+    
+    def __repr__(self):
+        return f"<TestAttempt {self.exam_type} for {self.user_id}>"
+
+
+class QuestionResponse(Base):
+    """Individual question in test with NTA 5-state response tracking."""
+    __tablename__ = "question_responses"
+    
+    id = Column(String, primary_key=True, default=generate_uuid)
+    test_attempt_id = Column(String, ForeignKey("test_attempts.id", ondelete="CASCADE"), nullable=False, index=True)
+    question_index = Column(Integer, nullable=False)  # 0-indexed position
+    
+    # Question Data (denormalized for performance)
+    subject = Column(String, nullable=False)
+    topic = Column(String, nullable=False)
+    difficulty = Column(String, nullable=False)  # Easy, Medium, Hard
+    question_type = Column(String, nullable=False)  # mcq, numerical
+    question_text = Column(Text, nullable=False)
+    options_json = Column(Text, nullable=True)  # JSON: {"A": "...", "B": "...", "C": "...", "D": "..."}
+    correct_answer = Column(String, nullable=False)
+    solution = Column(Text, nullable=True)
+    marks_correct = Column(Integer, default=4)
+    marks_wrong = Column(Integer, default=-1)  # Negative marking
+    
+    # User Response - NTA 5 States
+    # NOT_VISITED, NOT_ANSWERED, ANSWERED, MARKED_REVIEW, ANSWERED_MARKED
+    status = Column(String, default="NOT_VISITED")
+    user_answer = Column(String, nullable=True)  # NULL = unattempted
+    is_marked_for_review = Column(Boolean, default=False)
+    time_spent_seconds = Column(Integer, default=0)
+    last_visited_at = Column(DateTime(timezone=True), nullable=True)
+    
+    # Computed after submission
+    is_correct = Column(Boolean, nullable=True)
+    marks_obtained = Column(Integer, nullable=True)
+    
+    # Relationship
+    test_attempt = relationship("TestAttempt", back_populates="responses")
+    
+    def __repr__(self):
+        return f"<QuestionResponse Q{self.question_index} in {self.test_attempt_id}>"
