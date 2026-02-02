@@ -286,47 +286,53 @@ export function searchMultipleSubjects(
 /**
  * Detect subject from query locally
  */
+/**
+ * Detect subject from query locally
+ */
 export function detectSubjectFromQuery(query: string): string[] {
     const normalizedQuery = query.toLowerCase().trim();
     if (normalizedQuery.length < 3) return [];
 
     const detectedSubjects: string[] = [];
+    // Split by spaces to handle "Function Rotation" -> Maths + Physics
+    const tokens = normalizedQuery.split(/\s+/).filter(t => t.length > 2);
 
-    // Check strict mappings first (optional, for common keywords)
     const keywords: Record<string, string[]> = {
-        "Maths": ["math", "algebra", "geometry", "calculus", "integration", "derivative", "trigonometry"],
-        "Physics": ["physics", "force", "motion", "energy", "gravity", "optics", "magnetism"],
-        "Chemistry": ["chemistry", "reaction", "organic", "inorganic", "equilibrium", "acid", "base"],
-        "Zoology": ["zoology", "animal", "human", "reproduction", "digestion", "neural"],
+        "Maths": ["math", "algebra", "geometry", "calculus", "integration", "derivative", "trigonometry", "function", "quadratic", "matrices", "determinant"],
+        "Physics": ["physics", "force", "motion", "energy", "gravity", "optics", "magnetism", "rotation", "kinematics", "thermodynamics"],
+        "Chemistry": ["chemistry", "reaction", "organic", "inorganic", "equilibrium", "acid", "base", "atom", "molecule", "bond"],
+        "Zoology": ["zoology", "animal", "human", "reproduction", "digestion", "neural", "breathing"],
         "Botany": ["botany", "plant", "flower", "photosynthesis", "leaf", "stem"]
     };
 
-    for (const [subj, words] of Object.entries(keywords)) {
-        if (words.some(w => normalizedQuery.includes(w))) {
-            detectedSubjects.push(subj);
+    // 1. Check Keywords for each token
+    for (const token of tokens) {
+        for (const [subj, words] of Object.entries(keywords)) {
+            if (words.some(w => token.includes(w) || w.includes(token))) {
+                detectedSubjects.push(subj);
+            }
         }
     }
 
-    // Iterate through all chapters
-    for (const [subject, subjectData] of Object.entries(ncertChapters)) {
-        let found = false;
-        // Check both classes
-        for (const chapterList of Object.values(subjectData)) {
-            for (const chapter of chapterList) {
-                if (chapter.name.toLowerCase().includes(normalizedQuery)) {
-                    detectedSubjects.push(subject);
-                    found = true;
-                    break;
-                }
-                if (chapter.topics) {
-                    if (chapter.topics.some((t: string) => t.toLowerCase().includes(normalizedQuery))) {
+    // 2. Check Chapters for each token
+    // Optimize: If we already found subjects for all tokens, maybe stop? 
+    // But "Function" matches Maths. "Rotation" matches Physics.
+    // Let's iterate tokens against chapters
+    for (const token of tokens) {
+        for (const [subject, subjectData] of Object.entries(ncertChapters)) {
+            // Check both classes
+            for (const chapterList of Object.values(subjectData)) {
+                for (const chapter of chapterList) {
+                    if (chapter.name.toLowerCase().includes(token)) {
                         detectedSubjects.push(subject);
-                        found = true;
-                        break;
+                    }
+                    if (chapter.topics) {
+                        if (chapter.topics.some((t: string) => t.toLowerCase().includes(token))) {
+                            detectedSubjects.push(subject);
+                        }
                     }
                 }
             }
-            if (found) break;
         }
     }
 

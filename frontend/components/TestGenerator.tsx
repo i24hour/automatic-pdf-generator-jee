@@ -304,18 +304,8 @@ export default function TestGenerator() {
         // Use local detection
         const detected = detectSubjectFromQuery(topic);
         if (detected.length > 0) {
-            setSubject(prev => {
-                // Merge new detected subjects
-                const newSubjects = [...prev];
-                let changed = false;
-                detected.forEach(s => {
-                    if (!newSubjects.includes(s)) {
-                        newSubjects.push(s);
-                        changed = true;
-                    }
-                });
-                return changed ? newSubjects : prev;
-            });
+            // Replace subject with detected ones (don't merge, to avoid stale defaults like Physics)
+            setSubject(detected);
         }
     }, [topic]);
 
