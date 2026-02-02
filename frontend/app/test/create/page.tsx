@@ -148,7 +148,17 @@ export default function CreateTestPage() {
 
             if (!response.ok) {
                 const data = await response.json();
-                throw new Error(data.detail || 'Failed to create test');
+                let errMsg = 'Failed to create test';
+                if (data.detail) {
+                    if (typeof data.detail === 'string') {
+                        errMsg = data.detail;
+                    } else if (Array.isArray(data.detail)) {
+                        errMsg = data.detail.map((e: any) => e.msg).join(', ');
+                    } else if (typeof data.detail === 'object') {
+                        errMsg = JSON.stringify(data.detail);
+                    }
+                }
+                throw new Error(errMsg);
             }
 
             const data = await response.json();
