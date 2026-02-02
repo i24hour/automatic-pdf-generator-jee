@@ -5,7 +5,7 @@ Test Portal Router - NTA CBT-style test interface APIs.
 import json
 import os
 from datetime import datetime, timezone
-from typing import List, Optional
+from typing import List, Optional, Dict
 from pydantic import BaseModel
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -22,12 +22,17 @@ router = APIRouter(prefix="/test", tags=["Test Portal"])
 # REQUEST/RESPONSE MODELS
 # ============================================
 
+class SubjectInput(BaseModel):
+    """Configuration for a specific subject."""
+    count: int
+    difficulty: dict  # {"easy": 20, "medium": 50, "hard": 30}
+    topics: List[str]  # ["Topic 1", "Topic 2"]
+
+
 class CreateTestRequest(BaseModel):
     """Request to create a new test."""
     exam_type: str  # JEE_MAINS, JEE_ADV, NEET, CUSTOM
-    topics: List[str]  # List of topic names
-    subject_distribution: dict  # {"Physics": 10, "Chemistry": 10, "Maths": 10}
-    difficulty_distribution: dict  # {"easy": 20, "medium": 50, "hard": 30}
+    subject_inputs: Dict[str, SubjectInput]  # {"Physics": SubjectInput, ...}
     duration_minutes: int  # Test duration
 
 
@@ -155,23 +160,37 @@ async def create_test(
 ):
     """Create a new test with AI-generated questions."""
     
-    # Calculate total questions from subject distribution
-    total_questions = sum(request.subject_distribution.values())
+    # Calculate total questions
+    total_questions = sum(s.count for s in request.subject_inputs.values())
     
     if total_questions < 1:
         raise HTTPException(status_code=400, detail="At least 1 question required")
     if total_questions > 200:
         raise HTTPException(status_code=400, detail="Maximum 200 questions allowed")
     
+    # Extract simple subject distribution for JSON storage (using counts)
+    subject_counts = {subj: data.count for subj, data in request.subject_inputs.items()}
+    
+    # Extract difficulty distribution (storing full subject inputs for detailed reproduction if needed)
+    # We'll store the full request as difficulty_distribution_json to preserve all config
+    full_config = {
+        subj: data.dict() for subj, data in request.subject_inputs.items()
+    }
+    
+    # Extract all topics
+    all_topics = []
+    for data in request.subject_inputs.values():
+        all_topics.extend(data.topics)
+
     # Create test attempt
     test = TestAttempt(
         user_id=current_user.id,
         exam_type=request.exam_type,
         total_questions=total_questions,
         duration_minutes=request.duration_minutes,
-        topics_json=json.dumps(request.topics),
-        subject_distribution_json=json.dumps(request.subject_distribution),
-        difficulty_distribution_json=json.dumps(request.difficulty_distribution),
+        topics_json=json.dumps(all_topics),
+        subject_distribution_json=json.dumps(subject_counts),
+        difficulty_distribution_json=json.dumps(full_config),
         status="NOT_STARTED"
     )
     db.add(test)
@@ -179,15 +198,19 @@ async def create_test(
     
     # TODO: Generate questions using existing LLM engine
     # For now, create placeholder questions
-    questions = []
     q_index = 0
     
-    for subject, count in request.subject_distribution.items():
+    for subject, config in request.subject_inputs.items():
+        count = config.count
+        difficulty_dist = config.difficulty
+        subject_topics = config.topics if config.topics else ["General"]
+        
         for i in range(count):
             # Determine difficulty based on distribution
-            easy_pct = request.difficulty_distribution.get("easy", 30)
-            medium_pct = request.difficulty_distribution.get("medium", 50)
+            easy_pct = difficulty_dist.get("easy", 30)
+            medium_pct = difficulty_dist.get("medium", 50)
             
+            # Use relative index within subject
             if i < count * easy_pct / 100:
                 difficulty = "Easy"
             elif i < count * (easy_pct + medium_pct) / 100:
@@ -195,7 +218,7 @@ async def create_test(
             else:
                 difficulty = "Hard"
             
-            topic = request.topics[i % len(request.topics)] if request.topics else "General"
+            topic = subject_topics[i % len(subject_topics)]
             
             response = QuestionResponse(
                 test_attempt_id=test.id,
@@ -204,7 +227,7 @@ async def create_test(
                 topic=topic,
                 difficulty=difficulty,
                 question_type="mcq",
-                question_text=f"[AI Question will be generated here - {subject} Q{i+1}]",
+                question_text=f"[AI Question will be generated here - {subject} Q{i+1}]\nTopic: {topic}\nDifficulty: {difficulty}",
                 options_json=json.dumps({
                     "A": "Option A",
                     "B": "Option B", 
