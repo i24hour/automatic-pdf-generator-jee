@@ -34,7 +34,7 @@ import { useAuth } from "@/lib/auth-context";
 import { logError } from "@/lib/logger";
 import PostModal from "@/components/PostModal";
 import UsernameModal from "@/components/UsernameModal";
-import { searchChapters, getChaptersForSubject, searchMultipleSubjects, getChaptersForMultipleSubjects, detectSubjectFromQuery } from "@/lib/ncert-chapters";
+import { searchChapters, getChaptersForSubject, searchMultipleSubjects, getChaptersForMultipleSubjects } from "@/lib/ncert-chapters";
 
 // API base URL
 const API_BASE_URL =
@@ -120,7 +120,8 @@ export default function TestGenerator() {
     const [promoCode, setPromoCode] = useState("");
     const [promoLoading, setPromoLoading] = useState(false);
     const [promoMessage, setPromoMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
-    // Removed isDetectingSubject state as we use local detection now
+    const [isDetectingSubject, setIsDetectingSubject] = useState(false);
+    const detectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const [elapsedTime, setElapsedTime] = useState(0);
     const [progressStep, setProgressStep] = useState(0);
     const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -297,16 +298,39 @@ export default function TestGenerator() {
     };
 
     // Auto-detect subject when topic changes (Local Detection)
+    // Auto-detect subject when topic changes (Database Cache Only)
     useEffect(() => {
+        if (detectTimeoutRef.current) clearTimeout(detectTimeoutRef.current);
+
         // Only detect if topic has at least 4 characters
         if (topic.trim().length < 4) return;
 
-        // Use local detection
-        const detected = detectSubjectFromQuery(topic);
-        if (detected.length > 0) {
-            // Replace subject with detected ones (don't merge, to avoid stale defaults like Physics)
-            setSubject(detected);
-        }
+        detectTimeoutRef.current = setTimeout(async () => {
+            setIsDetectingSubject(true);
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/detect-subject`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ topic: topic.trim() })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    // Only process if cached/found. If not found (null), do nothing (User selects).
+                    if (data.subject) {
+                        setSubject([data.subject]); // Replace with found subject
+                    }
+                }
+            } catch (error) {
+                console.error("Error detecting subject:", error);
+            } finally {
+                setIsDetectingSubject(false);
+            }
+        }, 800);
+
+        return () => {
+            if (detectTimeoutRef.current) clearTimeout(detectTimeoutRef.current);
+        };
     }, [topic]);
 
     // Update filtered chapters when searchQuery or subject changes (NOT topic)
@@ -391,6 +415,21 @@ export default function TestGenerator() {
     };
 
     const handleGenerate = async () => {
+        const remaining = rateLimit?.remaining ?? 0;
+        if (remaining <= 0) {
+            alert("Limit reached! Please wait for reset.");
+            return;
+        }
+
+        // Store Topic-Subject Mapping (Crowdsourcing Cache)
+        if (topic.trim() && subject.length === 1) {
+            fetch(`${API_BASE_URL}/api/store-subject`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ topic: topic.trim(), subject: subject[0] })
+            }).catch(e => console.error("Failed to store subject mapping", e));
+        }
+
         if (!topic.trim()) {
             setError("Please enter a topic");
             return;

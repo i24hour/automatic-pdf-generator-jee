@@ -262,11 +262,11 @@ async def health_check():
 @app.post("/api/detect-subject", response_model=DetectSubjectResponse)
 async def detect_subject(request: DetectSubjectRequest, db: Session = Depends(get_db)):
     """
-    Auto-detect the subject for a given topic using LLM.
-    This helps users by automatically selecting the most likely subject.
+    Check the cache for a subject. If not found, return None/Low confidence.
+    NO LLM/Gemini fallback as per specific user request (Database-Only).
     """
     if not request.topic or len(request.topic.strip()) < 2:
-        return DetectSubjectResponse(subject="Physics", confidence="low", cached=False)
+        return DetectSubjectResponse(subject=None, confidence="low", cached=False)
 
     normalized_topic = request.topic.strip().lower()
 
@@ -278,28 +278,49 @@ async def detect_subject(request: DetectSubjectRequest, db: Session = Depends(ge
             cached=True
         )
 
-    result = llm_engine.detect_subject(request.topic)
-    subject = result.get("subject", "Physics")
-    confidence = result.get("confidence", "low")
-
-    try:
-        cache_row = TopicSubjectCache(
-            topic=request.topic.strip(),
-            normalized_topic=normalized_topic,
-            subject=subject,
-            confidence=confidence,
-        )
-        db.add(cache_row)
-        db.commit()
-    except Exception as e:
-        db.rollback()
-        print(f"TopicSubjectCache insert failed: {e}")
-
+    # NO LLM FALLBACK
     return DetectSubjectResponse(
-        subject=subject,
-        confidence=confidence,
+        subject=None,
+        confidence="none",
         cached=False
     )
+
+class StoreSubjectRequest(BaseModel):
+    topic: str
+    subject: str
+
+@app.post("/api/store-subject")
+async def store_subject_mapping(request: StoreSubjectRequest, db: Session = Depends(get_db)):
+    """
+    Manually store/update a topic-subject mapping in the cache.
+    Used when user manually selects a subject for a topic.
+    """
+    if not request.topic or not request.subject:
+        return {"success": False, "error": "Invalid data"}
+
+    normalized_topic = request.topic.strip().lower()
+
+    try:
+        # Check if exists
+        existing = db.query(TopicSubjectCache).filter(TopicSubjectCache.normalized_topic == normalized_topic).first()
+        if existing:
+            existing.subject = request.subject # Update it? User knows best.
+            existing.confidence = "manual"
+        else:
+            new_entry = TopicSubjectCache(
+                topic=request.topic.strip(),
+                normalized_topic=normalized_topic,
+                subject=request.subject,
+                confidence="manual"
+            )
+            db.add(new_entry)
+        
+        db.commit()
+        return {"success": True}
+    except Exception as e:
+        db.rollback()
+        print(f"Store subject failed: {e}")
+        return {"success": False}
 
 
 @app.get("/api/rate-limit", response_model=RateLimitInfo)
