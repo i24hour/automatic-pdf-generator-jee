@@ -210,10 +210,10 @@ async def create_test(
         subject_topics = config.topics if config.topics else ["General"]
         topic_str = ", ".join(subject_topics)
         
-        # Calculate exact counts
-        easy_count = int(count * difficulty_dist.get("easy", 0) / 100)
-        medium_count = int(count * difficulty_dist.get("medium", 0) / 100)
-        hard_count = count - easy_count - medium_count
+        # Use exact counts from input
+        easy_count = int(difficulty_dist.get("easy", 0))
+        medium_count = int(difficulty_dist.get("medium", 0))
+        hard_count = int(difficulty_dist.get("hard", 0))
         
         # Create tasks for each difficulty level
         levels = [

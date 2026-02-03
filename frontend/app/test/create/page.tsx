@@ -22,7 +22,7 @@ interface SubjectConfig {
 
 type ExamType = 'JEE_MAINS' | 'JEE_ADV' | 'NEET' | 'CUSTOM';
 
-const DEFAULT_DIFFICULTY: DifficultyDist = { easy: 20, medium: 50, hard: 30 };
+const DEFAULT_DIFFICULTY: DifficultyDist = { easy: 3, medium: 4, hard: 3 };
 
 const INITIAL_SUBJECTS: Record<string, SubjectConfig> = {
     'Physics': { enabled: true, count: 10, difficulty: { ...DEFAULT_DIFFICULTY }, topics: '' },
@@ -80,18 +80,17 @@ export default function CreateTestPage() {
     const handleDifficultyChange = (subject: string, type: keyof DifficultyDist, value: number) => {
         setSubjects(prev => {
             const currentDist = { ...prev[subject].difficulty };
-            currentDist[type] = value;
+            currentDist[type] = Math.max(0, value);
 
-            // Auto-balance if Easy changes
-            if (type === 'easy') {
-                const remaining = 100 - value;
-                currentDist.medium = Math.round(remaining * 0.6);
-                currentDist.hard = 100 - value - currentDist.medium;
-            }
+            const newTotal = currentDist.easy + currentDist.medium + currentDist.hard;
 
             return {
                 ...prev,
-                [subject]: { ...prev[subject], difficulty: currentDist }
+                [subject]: {
+                    ...prev[subject],
+                    difficulty: currentDist,
+                    count: newTotal
+                }
             };
         });
     };
@@ -118,9 +117,9 @@ export default function CreateTestPage() {
             if (!config.enabled || config.count <= 0) continue;
 
             // Validate difficulty sum
-            const diffSum = config.difficulty.easy + config.difficulty.medium + config.difficulty.hard;
-            if (diffSum !== 100) {
-                setError(`${subj}: Difficulty percentages must sum to 100%`);
+            // Validate total count
+            if (config.count < 1) {
+                setError(`${subj}: Must have at least 1 question`);
                 setLoading(false);
                 return;
             }
@@ -266,26 +265,9 @@ export default function CreateTestPage() {
                                             <div>
                                                 <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Questions</label>
                                                 <div className="flex items-center mt-1">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleSubjectChange(subject, 'count', Math.max(0, config.count - 5))}
-                                                        className="p-2 rounded-l-lg border border-r-0 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800"
-                                                    >
-                                                        <Minus className="w-4 h-4" />
-                                                    </button>
-                                                    <input
-                                                        type="number"
-                                                        value={config.count}
-                                                        onChange={(e) => handleSubjectChange(subject, 'count', Number(e.target.value))}
-                                                        className="w-16 text-center py-2 border-y border-gray-300 dark:border-gray-600 bg-transparent font-mono font-bold"
-                                                    />
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleSubjectChange(subject, 'count', Math.min(50, config.count + 5))}
-                                                        className="p-2 rounded-r-lg border border-l-0 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800"
-                                                    >
-                                                        <Plus className="w-4 h-4" />
-                                                    </button>
+                                                    <span className="text-2xl font-bold font-mono text-gray-900 dark:text-white">
+                                                        {config.count}
+                                                    </span>
                                                 </div>
                                             </div>
                                         </div>
@@ -309,49 +291,39 @@ export default function CreateTestPage() {
 
                                             {/* Difficulty Sliders */}
                                             <div className="space-y-3">
-                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Difficulty Distribution</label>
+                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Difficulty Distribution (Questions)</label>
 
-                                                <div className="space-y-2">
-                                                    <div className="flex items-center gap-2 text-sm">
-                                                        <span className="w-16 text-green-600 dark:text-green-400 font-medium">Easy</span>
+                                                <div className="grid grid-cols-3 gap-3">
+                                                    <div>
+                                                        <label className="block text-xs text-green-600 dark:text-green-400 font-medium mb-1">Easy</label>
                                                         <input
-                                                            type="range" min="0" max="100" step="10"
+                                                            type="number" min="0" step="1"
                                                             value={config.difficulty.easy}
                                                             onChange={(e) => handleDifficultyChange(subject, 'easy', Number(e.target.value))}
-                                                            className="flex-1 accent-green-500 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                                                            className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-[#0a0b0d]"
                                                         />
-                                                        <span className="w-10 text-right font-mono">{config.difficulty.easy}%</span>
                                                     </div>
 
-                                                    <div className="flex items-center gap-2 text-sm">
-                                                        <span className="w-16 text-yellow-600 dark:text-yellow-400 font-medium">Medium</span>
+                                                    <div>
+                                                        <label className="block text-xs text-yellow-600 dark:text-yellow-400 font-medium mb-1">Medium</label>
                                                         <input
-                                                            type="range" min="0" max="100" step="10"
+                                                            type="number" min="0" step="1"
                                                             value={config.difficulty.medium}
                                                             onChange={(e) => handleDifficultyChange(subject, 'medium', Number(e.target.value))}
-                                                            className="flex-1 accent-yellow-500 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                                                            className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-[#0a0b0d]"
                                                         />
-                                                        <span className="w-10 text-right font-mono">{config.difficulty.medium}%</span>
                                                     </div>
 
-                                                    <div className="flex items-center gap-2 text-sm">
-                                                        <span className="w-16 text-red-600 dark:text-red-400 font-medium">Hard</span>
+                                                    <div>
+                                                        <label className="block text-xs text-red-600 dark:text-red-400 font-medium mb-1">Hard</label>
                                                         <input
-                                                            type="range" min="0" max="100" step="10"
+                                                            type="number" min="0" step="1"
                                                             value={config.difficulty.hard}
                                                             onChange={(e) => handleDifficultyChange(subject, 'hard', Number(e.target.value))}
-                                                            className="flex-1 accent-red-500 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                                                            className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-[#0a0b0d]"
                                                         />
-                                                        <span className="w-10 text-right font-mono">{config.difficulty.hard}%</span>
                                                     </div>
                                                 </div>
-
-                                                {config.difficulty.easy + config.difficulty.medium + config.difficulty.hard !== 100 && (
-                                                    <div className="flex items-center gap-1 text-xs text-red-500 mt-1">
-                                                        <AlertCircle className="w-3 h-3" />
-                                                        Sum must be 100% (Currently {config.difficulty.easy + config.difficulty.medium + config.difficulty.hard}%)
-                                                    </div>
-                                                )}
                                             </div>
                                         </div>
                                     </div>
