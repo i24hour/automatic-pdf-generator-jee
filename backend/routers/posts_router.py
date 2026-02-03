@@ -607,6 +607,45 @@ async def delete_post(
     return {"message": "Post deleted", "id": post_id}
 
 
+@router.patch("/{post_id}/visibility")
+async def update_post_visibility(
+    post_id: str,
+    request: UpdateVisibilityRequest,
+    current_user: User = Depends(get_current_user_required),
+    db: Session = Depends(get_db)
+):
+    """Change post visibility (private/unlisted to public only)."""
+    post = db.query(SharedPDF).filter(SharedPDF.id == post_id).first()
+    
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    
+    # Check ownership
+    if post.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to update this post")
+    
+    # Prevent downgrading public posts
+    if post.visibility == "public" and request.visibility != "public":
+        raise HTTPException(status_code=400, detail="Public posts cannot be changed to private or unlisted")
+    
+    old_visibility = post.visibility
+    post.visibility = request.visibility
+    
+    # If making public, increment total_posts and award badges
+    if request.visibility == "public" and old_visibility != "public":
+        current_user.total_posts += 1
+        check_and_award_badges(current_user, db)
+    
+    db.commit()
+    db.refresh(post)
+    
+    return {
+        "message": f"Post visibility changed to {request.visibility}",
+        "id": post_id,
+        "visibility": post.visibility
+    }
+
+
 @router.get("/leaderboard/{category}", response_model=LeaderboardResponse)
 async def get_leaderboard(
     category: str,  # most_likes, most_posts

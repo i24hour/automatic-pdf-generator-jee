@@ -504,6 +504,7 @@ export default function PostsFeed() {
                                             }}
                                             disabled={deletingId === post.id}
                                             style={{
+                                                marginLeft: 'auto',
                                                 background: '#fee2e2',
                                                 border: '1px solid #ef4444',
                                                 borderRadius: '8px',

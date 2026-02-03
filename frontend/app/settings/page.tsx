@@ -22,7 +22,9 @@ import {
     Check,
     ChevronRight,
     Download,
-    ArrowLeft
+    ArrowLeft,
+    Trash2,
+    Eye
 } from "lucide-react";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -68,6 +70,8 @@ export default function SettingsPage() {
     const [unlistedPDFs, setUnlistedPDFs] = useState<PDF[]>([]);
     const [loadingPDFs, setLoadingPDFs] = useState(false);
     const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
+    const [deletingId, setDeletingId] = useState<string | null>(null);
+    const [updatingId, setUpdatingId] = useState<string | null>(null);
 
     useEffect(() => {
         if (user) {
@@ -200,6 +204,71 @@ export default function SettingsPage() {
         setTimeout(() => setCopiedSlug(null), 2000);
     };
 
+    const handleDeletePDF = async (pdfId: string) => {
+        if (!confirm("Are you sure you want to delete this PDF?")) return;
+        setDeletingId(pdfId);
+        try {
+            const freshToken = localStorage.getItem('auth_token') || token;
+            const res = await fetch(`${API_URL}/api/posts/${pdfId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${freshToken}` }
+            });
+            if (res.ok) {
+                // Remove from appropriate list
+                if (activeSection === 'private') setPrivatePDFs(prev => prev.filter(p => p.id !== pdfId));
+                else if (activeSection === 'public') setPublicPDFs(prev => prev.filter(p => p.id !== pdfId));
+                else if (activeSection === 'unlisted') setUnlistedPDFs(prev => prev.filter(p => p.id !== pdfId));
+            } else {
+                alert('Failed to delete PDF');
+            }
+        } catch (error) {
+            console.error('Delete error:', error);
+            alert('Error deleting PDF');
+        } finally {
+            setDeletingId(null);
+        }
+    };
+
+    const handleMakePublic = async (pdfId: string) => {
+        if (!confirm("Make this PDF public? Once public, it cannot be changed back.")) return;
+        setUpdatingId(pdfId);
+        try {
+            const freshToken = localStorage.getItem('auth_token') || token;
+            const res = await fetch(`${API_URL}/api/posts/${pdfId}/visibility`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${freshToken}`
+                },
+                body: JSON.stringify({ visibility: 'public' })
+            });
+            if (res.ok) {
+                // Move from current list to public
+                const movedPDF = activeSection === 'private'
+                    ? privatePDFs.find(p => p.id === pdfId)
+                    : unlistedPDFs.find(p => p.id === pdfId);
+
+                if (movedPDF) {
+                    if (activeSection === 'private') {
+                        setPrivatePDFs(prev => prev.filter(p => p.id !== pdfId));
+                    } else {
+                        setUnlistedPDFs(prev => prev.filter(p => p.id !== pdfId));
+                    }
+                    setPublicPDFs(prev => [{ ...movedPDF, visibility: 'public' }, ...prev]);
+                }
+                alert('PDF is now public and visible in the community feed!');
+            } else {
+                const err = await res.json();
+                alert(err.detail || 'Failed to make public');
+            }
+        } catch (error) {
+            console.error('Update error:', error);
+            alert('Error updating visibility');
+        } finally {
+            setUpdatingId(null);
+        }
+    };
+
     if (!user) {
         return (
             <div className="flex items-center justify-center min-h-[50vh]">
@@ -217,7 +286,7 @@ export default function SettingsPage() {
         { id: "unlisted", label: "Unlisted PDFs", icon: LinkIcon },
     ];
 
-    const renderPDFList = (pdfs: PDF[], showLink: boolean = false) => {
+    const renderPDFList = (pdfs: PDF[], showLink: boolean = false, canMakePublic: boolean = false) => {
         if (loadingPDFs) {
             return (
                 <div className="flex items-center justify-center py-8">
@@ -254,7 +323,7 @@ export default function SettingsPage() {
                                     <span>📥 {pdf.download_count}</span>
                                 </div>
                             </div>
-                            <div className="flex gap-2">
+                            <div className="flex gap-2 flex-wrap">
                                 {/* Download Button */}
                                 <button
                                     onClick={() => window.open(pdf.pdf_url, '_blank')}
@@ -285,6 +354,28 @@ export default function SettingsPage() {
                                         )}
                                     </button>
                                 )}
+                                {/* Make Public Button (for private/unlisted) */}
+                                {canMakePublic && (
+                                    <button
+                                        onClick={() => handleMakePublic(pdf.id)}
+                                        disabled={updatingId === pdf.id}
+                                        className="flex items-center gap-1 px-3 py-1.5 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg text-sm hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors disabled:opacity-50"
+                                        title="Make Public"
+                                    >
+                                        <Eye className="w-4 h-4" />
+                                        {updatingId === pdf.id ? "..." : "Public"}
+                                    </button>
+                                )}
+                                {/* Delete Button */}
+                                <button
+                                    onClick={() => handleDeletePDF(pdf.id)}
+                                    disabled={deletingId === pdf.id}
+                                    className="flex items-center gap-1 px-3 py-1.5 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg text-sm hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors disabled:opacity-50"
+                                    title="Delete PDF"
+                                >
+                                    <Trash2 className="w-4 h-4" />
+                                    {deletingId === pdf.id ? "..." : ""}
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -494,7 +585,7 @@ export default function SettingsPage() {
                         <p className="text-sm text-gray-500 dark:text-gray-400">
                             PDFs only visible to you
                         </p>
-                        {renderPDFList(privatePDFs)}
+                        {renderPDFList(privatePDFs, false, true)}
                     </div>
                 )}
 
@@ -516,7 +607,7 @@ export default function SettingsPage() {
                         <p className="text-sm text-gray-500 dark:text-gray-400">
                             PDFs accessible only via direct link
                         </p>
-                        {renderPDFList(unlistedPDFs, true)}
+                        {renderPDFList(unlistedPDFs, true, true)}
                     </div>
                 )}
             </div>
