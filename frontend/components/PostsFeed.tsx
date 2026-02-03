@@ -44,6 +44,8 @@ export default function PostsFeed() {
     const [loadingMore, setLoadingMore] = useState(false);
     const [hasMore, setHasMore] = useState(false);
     const [nextCursor, setNextCursor] = useState<string | null>(null);
+    const [viewMode, setViewMode] = useState<'feed' | 'my'>('feed');
+    const [deletingId, setDeletingId] = useState<string | null>(null);
 
     const [filter, setFilter] = useState({
         subject: searchParams.get('subject') || '',
@@ -65,25 +67,40 @@ export default function PostsFeed() {
             const headers: Record<string, string> = {};
             if (token) headers['Authorization'] = `Bearer ${token}`;
 
-            const res = await fetch(`${API_URL}/api/posts?${params}`, { headers });
+            let url = `${API_URL}/api/posts`;
+            if (viewMode === 'my') {
+                url = `${API_URL}/api/posts/my`;
+                // My posts endpoint might return list directly, not paginated struct?
+                // Checking backend: /api/posts/my returns List[PostResponse] directly.
+                // So we need to handle that.
+            }
+
+            const res = await fetch(`${url}${viewMode === 'feed' ? `?${params}` : ''}`, { headers });
             if (!res.ok) throw new Error('Failed to fetch posts');
 
-            const data: FeedResponse = await res.json();
+            const data = await res.json();
 
-            if (cursor) {
-                setPosts(prev => [...prev, ...data.posts]);
+            if (viewMode === 'my') {
+                // Backend returns array for /my
+                setPosts(data);
+                setHasMore(false);
             } else {
-                setPosts(data.posts);
+                // Feed returns { posts, has_more }
+                if (cursor) {
+                    setPosts(prev => [...prev, ...data.posts]);
+                } else {
+                    setPosts(data.posts);
+                }
+                setHasMore(data.has_more);
+                setNextCursor(data.next_cursor);
             }
-            setHasMore(data.has_more);
-            setNextCursor(data.next_cursor);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to load posts');
         } finally {
             setLoading(false);
             setLoadingMore(false);
         }
-    }, [token, filter]);
+    }, [token, filter, viewMode]);
 
     // Re-fetch when filter changes
     useEffect(() => {
@@ -159,6 +176,29 @@ export default function PostsFeed() {
         }
     };
 
+    const handleDelete = async (postId: string) => {
+        if (!confirm("Are you sure you want to delete this post?")) return;
+        setDeletingId(postId);
+        try {
+            const res = await fetch(`${API_URL}/api/posts/${postId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            if (res.ok) {
+                setPosts(prev => prev.filter(p => p.id !== postId));
+            } else {
+                alert("Failed to delete post");
+            }
+        } catch (error) {
+            console.error(error);
+            alert("Error deleting post");
+        } finally {
+            setDeletingId(null);
+        }
+    };
+
     const handleDownload = async (post: Post) => {
         // Track download
         try {
@@ -205,6 +245,30 @@ export default function PostsFeed() {
                     </h1>
                 </div>
             </header>
+
+            {/* View Tabs */}
+            {user && (
+                <div className="flex p-1 bg-gray-100 dark:bg-gray-800 rounded-xl mx-4 mt-4">
+                    <button
+                        onClick={() => { setViewMode('feed'); setPosts([]); setLoading(true); }}
+                        className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${viewMode === 'feed'
+                            ? 'bg-white dark:bg-gray-700 shadow-sm text-indigo-600'
+                            : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                            }`}
+                    >
+                        Community Feed
+                    </button>
+                    <button
+                        onClick={() => { setViewMode('my'); setPosts([]); setLoading(true); }}
+                        className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${viewMode === 'my'
+                            ? 'bg-white dark:bg-gray-700 shadow-sm text-indigo-600'
+                            : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                            }`}
+                    >
+                        My Posts
+                    </button>
+                </div>
+            )}
 
             {/* Filters */}
             <div style={{
@@ -430,6 +494,28 @@ export default function PostsFeed() {
                                         <span>👁️</span>
                                         <span>{post.view_count}</span>
                                     </div>
+
+                                    {/* Delete Button (Owner Only) */}
+                                    {user && user.id === post.user_id && (
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation(); // Prevent card click
+                                                handleDelete(post.id);
+                                            }}
+                                            disabled={deletingId === post.id}
+                                            style={{
+                                                marginLeft: 'auto',
+                                                background: 'none',
+                                                border: 'none',
+                                                cursor: 'pointer',
+                                                color: '#ef4444',
+                                                fontSize: '0.9rem',
+                                                opacity: deletingId === post.id ? 0.5 : 1
+                                            }}
+                                        >
+                                            {deletingId === post.id ? '...' : '🗑️ Delete'}
+                                        </button>
+                                    )}
                                 </div>
                             </article>
                         ))}

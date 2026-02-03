@@ -574,6 +574,39 @@ async def track_download(
     return {"message": "Download tracked"}
 
 
+@router.delete("/{post_id}")
+async def delete_post(
+    post_id: str,
+    current_user: User = Depends(get_current_user_required),
+    db: Session = Depends(get_db)
+):
+    """Delete a post (Public, Private, or Unlisted)."""
+    post = db.query(SharedPDF).filter(SharedPDF.id == post_id).first()
+    
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    
+    # Check ownership
+    if post.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to delete this post")
+    
+    # Decrement stats if public
+    if post.visibility == "public":
+        user = db.query(User).filter(User.id == current_user.id).first()
+        if user:
+            user.total_posts = max(0, user.total_posts - 1)
+            # Remove badges? Maybe too complex. Keep badges.
+    
+    # Delete likes explicitly? (Cascading usually handles, but let's be safe)
+    db.query(PDFLike).filter(PDFLike.shared_pdf_id == post_id).delete()
+    
+    # Delete post
+    db.delete(post)
+    db.commit()
+    
+    return {"message": "Post deleted", "id": post_id}
+
+
 @router.get("/leaderboard/{category}", response_model=LeaderboardResponse)
 async def get_leaderboard(
     category: str,  # most_likes, most_posts
