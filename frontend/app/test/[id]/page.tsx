@@ -320,9 +320,15 @@ export default function TestInterfacePage() {
                         onClick={() => {
                             setActiveSection(subject);
                             // Find first question of this subject to jump to
-                            const firstQ = testState.palette.find(p => p.subject === subject);
-                            if (firstQ && firstQ.index !== question.question_index) {
-                                handleAction('JUMP', firstQ.index);
+                            const subjectClean = subject.trim();
+                            const firstQ = testState.palette.find(p => p.subject.trim() === subjectClean);
+
+                            if (firstQ) {
+                                if (firstQ.index !== question.question_index) {
+                                    handleAction('JUMP', firstQ.index);
+                                }
+                            } else {
+                                console.warn(`No questions found for subject: ${subject}`);
                             }
                         }}
                         className={`px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${activeSection === subject
