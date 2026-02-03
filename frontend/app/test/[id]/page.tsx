@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { ChevronLeft, ChevronRight, Menu, X } from 'lucide-react';
+import MathText from '@/components/MathText';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -346,9 +347,9 @@ export default function TestInterfacePage() {
 
                     {/* Question Text */}
                     <div className="bg-white dark:bg-[#16181c] rounded-xl border border-gray-200 dark:border-gray-700 p-6 mb-6 flex-1">
-                        <p className="text-gray-900 dark:text-white text-lg mb-6 whitespace-pre-wrap">
-                            {question.question_text}
-                        </p>
+                        <div className="text-lg mb-6">
+                            <MathText content={question.question_text} />
+                        </div>
 
                         {/* Options */}
                         {question.options && (
@@ -363,13 +364,15 @@ export default function TestInterfacePage() {
                                             }`}
                                     >
                                         <div className="flex items-center gap-3">
-                                            <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${selectedAnswer === key
+                                            <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold shrink-0 ${selectedAnswer === key
                                                 ? 'bg-indigo-600 text-white'
                                                 : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
                                                 }`}>
                                                 {key}
                                             </span>
-                                            <span className="text-gray-900 dark:text-white">{value}</span>
+                                            <div className="text-gray-900 dark:text-white flex-1">
+                                                <MathText content={value} />
+                                            </div>
                                         </div>
                                     </button>
                                 ))}
