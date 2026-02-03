@@ -39,12 +39,21 @@ export default function PostModal({
         setLoading(true);
         setError('');
 
+        // Always get FRESH token from localStorage (in case it was refreshed)
+        const freshToken = localStorage.getItem('auth_token') || token;
+
+        if (!freshToken) {
+            setError('Please login again to share your PDF');
+            setLoading(false);
+            return;
+        }
+
         try {
             const res = await fetch(`${API_URL}/api/posts`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    'Authorization': `Bearer ${freshToken}`
                 },
                 body: JSON.stringify({
                     pdf_id: sharedPdfId,
