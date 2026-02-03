@@ -504,16 +504,20 @@ export default function PostsFeed() {
                                             }}
                                             disabled={deletingId === post.id}
                                             style={{
-                                                marginLeft: 'auto',
-                                                background: 'none',
-                                                border: 'none',
+                                                background: '#fee2e2',
+                                                border: '1px solid #ef4444',
+                                                borderRadius: '8px',
+                                                padding: '4px 8px',
                                                 cursor: 'pointer',
-                                                color: '#ef4444',
-                                                fontSize: '0.9rem',
-                                                opacity: deletingId === post.id ? 0.5 : 1
+                                                color: '#b91c1c',
+                                                fontSize: '0.8rem',
+                                                fontWeight: 600,
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '4px'
                                             }}
                                         >
-                                            {deletingId === post.id ? '...' : '🗑️ Delete'}
+                                            {deletingId === post.id ? 'Deleting...' : '🗑️ Delete'}
                                         </button>
                                     )}
                                 </div>
