@@ -1,6 +1,6 @@
 "use client";
 
-import { InstituteAuthProvider } from "@/lib/institute-auth-context";
+import { InstituteAuthProvider } from "@/contexts/institute-auth-context";
 
 export default function InstituteLayout({
     children,

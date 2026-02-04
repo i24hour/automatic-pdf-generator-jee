@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Trophy, Award, Star, Crown, Medal, Loader2, User } from "lucide-react";
-import { useAuth } from "@/lib/auth-context";
+import { useAuth } from "@/contexts/auth-context";
 
 // API base URL
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";

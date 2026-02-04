@@ -17,7 +17,7 @@ import {
     Award,
     Building2,
 } from "lucide-react";
-import { useInstituteAuth } from "@/lib/institute-auth-context";
+import { useInstituteAuth } from "@/contexts/institute-auth-context";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 

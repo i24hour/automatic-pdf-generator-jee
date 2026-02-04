@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useAuth } from "@/lib/auth-context";
+import { useAuth } from "@/contexts/auth-context";
 import { User, Mail, Phone, GraduationCap, AtSign, Save, Loader2 } from "lucide-react";
 
 export default function Profile() {

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { Suspense } from "react";
-import PostsFeed from "@/components/PostsFeed";
+import PostsFeed from "@/components/features/posts/PostsFeed";
 import MobileNav from "@/components/layout/MobileNav";
 import DesktopSidebar from "@/components/layout/DesktopSidebar";
 

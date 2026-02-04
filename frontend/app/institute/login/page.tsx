@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, AlertCircle, Building2 } from "lucide-react";
-import { useInstituteAuth } from "@/lib/institute-auth-context";
+import { useInstituteAuth } from "@/contexts/institute-auth-context";
 
 export default function InstituteLoginPage() {
     const router = useRouter();

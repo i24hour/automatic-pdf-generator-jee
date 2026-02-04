@@ -26,7 +26,7 @@ import {
   Stethoscope,
   X,
 } from "lucide-react";
-import { useAuth } from "@/lib/auth-context";
+import { useAuth } from "@/contexts/auth-context";
 
 // API base URL
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -467,8 +467,8 @@ export default function TrialPage() {
 
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-indigo-600 mb-6">
-            <BookOpen className="w-10 h-10 text-white" />
+          <div className="w-20 h-20 rounded-2xl overflow-hidden inline-block mb-6">
+            <img src="/logo.png" alt="INFINITEST Logo" className="w-full h-full object-contain" />
           </div>
           <h1 className="text-4xl md:text-5xl font-bold mb-4 text-gray-900">
             INFINITEST

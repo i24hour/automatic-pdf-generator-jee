@@ -30,10 +30,10 @@ import {
     Keyboard,
     List
 } from "lucide-react";
-import { useAuth } from "@/lib/auth-context";
+import { useAuth } from "@/contexts/auth-context";
 import { logError } from "@/lib/logger";
-import PostModal from "@/components/PostModal";
-import UsernameModal from "@/components/UsernameModal";
+import PostModal from "@/components/features/posts/PostModal";
+import UsernameModal from "@/components/features/auth/UsernameModal";
 import { searchChapters, getChaptersForSubject, searchMultipleSubjects, getChaptersForMultipleSubjects } from "@/lib/ncert-chapters";
 
 // API base URL

@@ -1,8 +1,8 @@
 "use client";
 
 import { GoogleOAuthProvider } from "@react-oauth/google";
-import { ThemeProvider } from "@/lib/theme-context";
-import { AuthProvider } from "@/lib/auth-context";
+import { ThemeProvider } from "@/contexts/theme-context";
+import { AuthProvider } from "@/contexts/auth-context";
 
 const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
 

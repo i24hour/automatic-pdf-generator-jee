@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useCallback, Suspense } from "react";
-import TestGenerator from "@/components/TestGenerator";
-import PostsFeed from "@/components/PostsFeed";
+import TestGenerator from "@/components/features/test-generator/TestGenerator";
+import PostsFeed from "@/components/features/posts/PostsFeed";
 import MobileNav from "@/components/layout/MobileNav";
 import DesktopSidebar from "@/components/layout/DesktopSidebar";
 

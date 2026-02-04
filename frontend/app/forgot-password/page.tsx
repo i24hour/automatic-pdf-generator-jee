@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Loader2, AlertCircle, CheckCircle2, BookOpen, ArrowLeft } from "lucide-react";
-import { FloatingInput } from "@/components/FloatingInput";
+import { Loader2, AlertCircle, CheckCircle2, ArrowLeft, ArrowRight } from "lucide-react";
+import { FloatingInput } from "@/components/ui/FloatingInput";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -39,27 +39,60 @@ export default function ForgotPasswordPage() {
     };
 
     return (
-        <main className="min-h-screen flex items-center justify-center py-12 px-4 bg-white">
-            <div className="w-full max-w-md">
-                {/* Card */}
-                <div className="bg-white border border-gray-200 rounded-2xl p-10 shadow-lg">
+        <main className="min-h-screen flex flex-col lg:flex-row">
+            {/* Left Panel - Branding */}
+            <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-gray-900 via-gray-800 to-black relative overflow-hidden">
+                {/* Decorative infinity curves */}
+                <div className="absolute inset-0 opacity-5">
+                    <svg className="w-full h-full" viewBox="0 0 800 800" fill="none">
+                        <path
+                            d="M200 400C200 300 300 200 400 300C500 400 600 300 600 400C600 500 500 600 400 500C300 400 200 500 200 400Z"
+                            stroke="white"
+                            strokeWidth="2"
+                            fill="none"
+                        />
+                    </svg>
+                </div>
+
+                {/* Content */}
+                <div className="relative z-10 flex flex-col justify-center items-center w-full px-12">
                     {/* Logo */}
-                    <div className="flex justify-center mb-6">
-                        <div className="w-14 h-14 rounded-xl bg-indigo-600 flex items-center justify-center">
-                            <BookOpen className="w-7 h-7 text-white" />
-                        </div>
+                    <div className="w-32 h-32 mb-8">
+                        <img
+                            src="/logo.png"
+                            alt="INFINITEST"
+                            className="w-full h-full object-contain invert"
+                        />
                     </div>
 
+                    <h1 className="text-4xl font-black tracking-tight text-white mb-4 text-center">
+                        Account Recovery
+                    </h1>
+
+                    <p className="text-gray-400 text-lg text-center max-w-sm">
+                        Don't worry, we'll help you get back to your preparation in no time.
+                    </p>
+                </div>
+
+                {/* Bottom gradient */}
+                <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black to-transparent" />
+            </div>
+
+            {/* Right Panel - Form */}
+            <div className="flex-1 lg:w-1/2 flex items-center justify-center py-12 px-6 bg-white">
+                <div className="w-full max-w-md">
                     {success ? (
                         <div className="text-center">
-                            <CheckCircle2 className="w-14 h-14 mx-auto mb-4 text-green-500" />
-                            <h1 className="text-2xl font-semibold text-gray-900 mb-2">Check Your Email</h1>
-                            <p className="text-gray-500 text-sm mb-6">
-                                If an account exists with this email, you will receive a password reset link.
+                            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                                <CheckCircle2 className="w-8 h-8 text-green-600" />
+                            </div>
+                            <h1 className="text-2xl font-bold text-gray-900 mb-2">Check Your Email</h1>
+                            <p className="text-gray-500 mb-8">
+                                If an account exists with this email, you will receive a password reset link shortly.
                             </p>
                             <Link
                                 href="/login"
-                                className="inline-flex items-center gap-2 text-indigo-600 hover:text-indigo-700 text-sm"
+                                className="inline-flex items-center gap-2 text-gray-900 hover:text-gray-700 font-medium"
                             >
                                 <ArrowLeft className="w-4 h-4" />
                                 Back to Sign in
@@ -67,14 +100,16 @@ export default function ForgotPasswordPage() {
                         </div>
                     ) : (
                         <>
-                            <h1 className="text-2xl font-semibold text-gray-900 text-center mb-2">Forgot Password?</h1>
-                            <p className="text-gray-500 text-center mb-8 text-sm">Enter your email to receive a reset link</p>
+                            <div className="mb-8 text-center">
+                                <h1 className="text-3xl font-bold text-gray-900 mb-2">Forgot Password?</h1>
+                                <p className="text-gray-500">Enter your email and we'll send you a reset link</p>
+                            </div>
 
-                            <form onSubmit={handleSubmit} className="space-y-5">
+                            <form onSubmit={handleSubmit} className="space-y-6">
                                 {/* Email */}
                                 <FloatingInput
                                     type="email"
-                                    label="Email"
+                                    label="Email address"
                                     value={email}
                                     onChange={setEmail}
                                     required
@@ -83,9 +118,9 @@ export default function ForgotPasswordPage() {
 
                                 {/* Error */}
                                 {error && (
-                                    <div className="flex items-center gap-2 text-red-600 text-sm bg-red-50 border border-red-200 rounded-lg px-4 py-3">
-                                        <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                                        <span>{error}</span>
+                                    <div className="flex items-center gap-3 text-red-700 text-sm bg-red-50 border border-red-200 rounded-xl px-4 py-3.5">
+                                        <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                                        <span className="font-medium">{error}</span>
                                     </div>
                                 )}
 
@@ -93,25 +128,31 @@ export default function ForgotPasswordPage() {
                                 <button
                                     type="submit"
                                     disabled={isLoading}
-                                    className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                    className="w-full py-4 bg-gray-900 hover:bg-gray-800 text-white font-semibold rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 group shadow-lg shadow-gray-900/20"
                                 >
                                     {isLoading ? (
                                         <>
                                             <Loader2 className="w-5 h-5 animate-spin" />
-                                            Sending...
+                                            Sending Link...
                                         </>
                                     ) : (
-                                        "Send Reset Link"
+                                        <>
+                                            Send Reset Link
+                                            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                                        </>
                                     )}
                                 </button>
                             </form>
 
-                            <p className="text-center text-gray-500 mt-6 text-sm">
-                                Remember your password?{" "}
-                                <Link href="/login" className="text-indigo-600 hover:text-indigo-700 font-medium">
-                                    Sign in
+                            <div className="mt-8 text-center">
+                                <Link
+                                    href="/login"
+                                    className="flex items-center justify-center gap-2 text-gray-500 hover:text-gray-900 transition-colors"
+                                >
+                                    <ArrowLeft className="w-4 h-4" />
+                                    Back to Sign in
                                 </Link>
-                            </p>
+                            </div>
                         </>
                     )}
                 </div>

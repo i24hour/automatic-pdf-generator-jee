@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { ChevronLeft, ChevronRight, Menu, X } from 'lucide-react';
-import MathText from '@/components/MathText';
+import MathText from '@/components/ui/MathText';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 

@@ -1,8 +1,8 @@
 "use client";
 
 import React from "react";
-import Profile from "@/components/Profile";
-import TestGenerator from "@/components/TestGenerator";
+import Profile from "@/components/features/profile/Profile";
+import TestGenerator from "@/components/features/test-generator/TestGenerator";
 import MobileNav from "@/components/layout/MobileNav";
 import DesktopSidebar from "@/components/layout/DesktopSidebar";
 

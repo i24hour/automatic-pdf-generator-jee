@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import TestGenerator from "@/components/TestGenerator";
+import TestGenerator from "@/components/features/test-generator/TestGenerator";
 
 export default function GeneratorPage() {
     return (

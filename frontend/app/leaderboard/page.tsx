@@ -1,10 +1,10 @@
 "use client";
 
 import React from "react";
-import Leaderboard from "@/components/Leaderboard"; // Assuming we'll create/have this
+import Leaderboard from "@/components/features/leaderboard/Leaderboard";
 import MobileNav from "@/components/layout/MobileNav";
 import DesktopSidebar from "@/components/layout/DesktopSidebar";
-import PostsFeed from "@/components/PostsFeed"; // Optional: if we want feed in center on desktop for leaderboard page? 
+import PostsFeed from "@/components/features/posts/PostsFeed";
 // Actually, for Leaderboard page on desktop, usually the center column becomes the Leaderboard.
 // Let's check if we have a Leaderboard component. I recall creating app/leaderboard/page.tsx but not a reusable component yet.
 // I should extract Leaderboard logic to a component first. 
