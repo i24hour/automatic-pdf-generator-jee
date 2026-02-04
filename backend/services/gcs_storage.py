@@ -29,6 +29,33 @@ class GCSStorage:
         # Structure: pdfs/user_id/timestamp_uuid_filename
         return f"pdfs/{user_id}/{timestamp}_{unique_id}_{filename}"
 
+    def upload_generic_file(self, file_obj, filename: str, content_type: str, folder: str = "uploads") -> Optional[str]:
+        """Upload any file object to GCS."""
+        if not self.client:
+            print("✗ GCS client not initialized")
+            return None
+
+        try:
+            # Generate key
+            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            unique_id = uuid.uuid4().hex[:8]
+            object_key = f"{folder}/{timestamp}_{unique_id}_{filename}"
+
+            bucket = self.client.bucket(self.bucket_name)
+            blob = bucket.blob(object_key)
+            
+            # Upload file object
+            print(f"Uploading generic file to GCS: gs://{self.bucket_name}/{object_key}")
+            file_obj.seek(0) # Ensure start of file
+            blob.upload_from_file(file_obj, content_type=content_type)
+            
+            public_url = f"https://storage.googleapis.com/{self.bucket_name}/{object_key}"
+            return public_url
+            
+        except Exception as e:
+            print(f"✗ GCS upload failed: {e}")
+            raise e
+
     def upload_pdf(self, file_path: str, object_key: str) -> Optional[str]:
         """Upload a PDF file to GCS and return the public URL."""
         if not self.client:
@@ -43,13 +70,7 @@ class GCSStorage:
             print(f"Uploading to GCS: gs://{self.bucket_name}/{object_key}")
             blob.upload_from_filename(file_path, content_type='application/pdf')
             
-            # Make public (optional, depending on bucket settings)
-            # For now, we assume bucket is public or we use signed URLs
-            # But for "Post" feature, we usually want a permanent public URL
-            # Best practice: Bucket Policy allows public read for all objects
-            
             # Return public URL
-            # Format: https://storage.googleapis.com/BUCKET_NAME/OBJECT_KEY
             public_url = f"https://storage.googleapis.com/{self.bucket_name}/{object_key}"
             
             print(f"✓ GCS upload successful: {public_url}")

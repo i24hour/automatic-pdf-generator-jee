@@ -442,3 +442,30 @@ class QuestionResponse(Base):
     
     def __repr__(self):
         return f"<QuestionResponse Q{self.question_index} in {self.test_attempt_id}>"
+
+class SupportTicket(Base):
+    """Support ticket raised by user."""
+    __tablename__ = "support_tickets"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    # Use CASCADE to delete tickets if user is deleted.
+    user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
+    
+    category = Column(String, nullable=False) # Bug, Feature, Content, Other
+    description = Column(Text, nullable=False)
+    
+    # Media Links
+    attachment_url = Column(String, nullable=True) # Screenshot
+    audio_url = Column(String, nullable=True)      # Voice Note
+    
+    # Status
+    status = Column(String, default="OPEN") # OPEN, IN_PROGRESS, RESOLVED
+    admin_response = Column(Text, nullable=True)
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now(), nullable=True)
+    
+    user = relationship("User", back_populates="tickets")
+
+# Update User relationship
+User.tickets = relationship("SupportTicket", back_populates="user")
