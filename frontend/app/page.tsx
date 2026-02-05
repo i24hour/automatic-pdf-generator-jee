@@ -86,7 +86,7 @@ export default function Home() {
         {/* Right Sidebar: Test Generator */}
         <aside
           style={{ width: sidebarWidth }}
-          className="p-4 h-screen sticky top-0 overflow-y-auto bg-white dark:bg-black hidden lg:block"
+          className="p-4 h-screen sticky top-0 overflow-y-auto overscroll-contain bg-white dark:bg-black hidden lg:block"
         >
           <div className="mb-4">
             <h2 className="text-xl font-bold text-gray-900 dark:text-white px-2">Generate Test</h2>
