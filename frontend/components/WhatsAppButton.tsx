@@ -5,9 +5,8 @@ import { usePathname } from 'next/navigation';
 
 export default function WhatsAppButton() {
     const pathname = usePathname();
-    const isAuthPage = pathname === '/login' || pathname === '/register';
-
-    if (isAuthPage) return null;
+    // Show only on Home page ('/')
+    if (pathname !== '/') return null;
 
     return (
         <a
