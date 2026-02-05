@@ -1,8 +1,14 @@
 'use client';
 
 import React from 'react';
+import { usePathname } from 'next/navigation';
 
 export default function WhatsAppButton() {
+    const pathname = usePathname();
+    const isAuthPage = pathname === '/login' || pathname === '/register';
+
+    if (isAuthPage) return null;
+
     return (
         <a
             href="https://chat.whatsapp.com/LxKPhvKWQboHbB1tvSGBkt"
