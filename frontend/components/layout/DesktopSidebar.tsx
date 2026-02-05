@@ -4,7 +4,7 @@ import { useState } from "react";
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Home, LayoutGrid, Trophy, User, Infinity as InfinityIcon, LogOut, MoreHorizontal, Sun, Moon, Settings, BookOpen } from "lucide-react";
+import { Home, LayoutGrid, Trophy, User, Infinity as InfinityIcon, LogOut, MoreHorizontal, Sun, Moon, Settings, BookOpen, LifeBuoy } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { useTheme } from "@/lib/theme-context";
 
@@ -95,6 +95,17 @@ export default function DesktopSidebar() {
                 >
                     <User className={`w-7 h-7 ${isActive("/profile") ? "stroke-[2.5px]" : ""}`} />
                     <span>Profile</span>
+                </Link>
+
+                <Link
+                    href="/support"
+                    className={`flex items-center gap-4 px-4 py-3 rounded-full text-xl transition-colors ${isActive("/support")
+                        ? "font-bold text-gray-900 dark:text-white"
+                        : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#181818]"
+                        }`}
+                >
+                    <LifeBuoy className={`w-7 h-7 ${isActive("/support") ? "stroke-[2.5px]" : ""}`} />
+                    <span>Support</span>
                 </Link>
 
                 <Link

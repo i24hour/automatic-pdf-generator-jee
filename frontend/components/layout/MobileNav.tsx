@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, LayoutGrid, Trophy, Settings, Feather, BookOpen } from "lucide-react";
+import { Home, LayoutGrid, Trophy, Settings, Feather, BookOpen, LifeBuoy } from "lucide-react";
 
 export default function MobileNav() {
     const pathname = usePathname();
@@ -61,6 +61,15 @@ export default function MobileNav() {
                 >
                     <Trophy className="w-6 h-6" />
                     <span className="text-[10px] font-medium">Rank</span>
+                </Link>
+
+                <Link
+                    href="/support"
+                    className={`flex flex-col items-center gap-1 p-2 ${isActive("/support") ? "text-indigo-600 dark:text-indigo-400" : "text-gray-500 dark:text-gray-400"
+                        }`}
+                >
+                    <LifeBuoy className="w-6 h-6" />
+                    <span className="text-[10px] font-medium">Support</span>
                 </Link>
 
                 <Link
