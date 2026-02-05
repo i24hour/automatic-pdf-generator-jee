@@ -23,7 +23,7 @@ export default function WhatsAppButton() {
                 height: '60px',
                 backgroundColor: '#25D366',
                 borderRadius: '50%',
-                display: 'flex',
+                // Display handled by Tailwind classes below
                 alignItems: 'center',
                 justifyContent: 'center',
                 boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
@@ -32,7 +32,7 @@ export default function WhatsAppButton() {
                 transition: 'all 0.3s ease',
                 textDecoration: 'none'
             }}
-            className="hover:scale-110 hover:shadow-xl"
+            className="hidden md:flex hover:scale-110 hover:shadow-xl"
         >
             <svg
                 viewBox="0 0 24 24"
