@@ -1,17 +1,7 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import React, { useState, useCallback, Suspense } from "react";
-import TestGenerator from "@/components/TestGenerator";
-import PostsFeed from "@/components/PostsFeed";
-import MobileNav from "@/components/layout/MobileNav";
-import DesktopSidebar from "@/components/layout/DesktopSidebar";
-
-function LoadingFeed() {
-  return (
-    <div className="flex items-center justify-center min-h-[200px]">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
-    </div>
-  );
+export default function Home() {
+  redirect("/community");
 }
 
 export default function Home() {
