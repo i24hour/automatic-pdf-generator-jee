@@ -327,33 +327,73 @@ def start_community_test(
         raise HTTPException(status_code=404, detail="Test not found")
         
     # 2. Create Test Attempt
-    # Determine subject distribution for attempt record
-    # 3. Populate Questions from Master
-    questions = json.loads(test.questions_data)
-    
-    # Calculate real subject distribution from questions
-    subject_counts = {}
-    for q in questions:
-        subj = q.get("subject", test.subject) or "General"
-        subject_counts[subj] = subject_counts.get(subj, 0) + 1
+    try:
+        # 3. Populate Questions from Master
+        if not test.questions_data:
+             raise ValueError("Test has no questions data")
+             
+        questions = json.loads(test.questions_data)
+        
+        # Calculate real subject distribution from questions
+        subject_counts = {}
+        for q in questions:
+            subj = q.get("subject", test.subject) or "General"
+            subject_counts[subj] = subject_counts.get(subj, 0) + 1
 
-    attempt = TestAttempt(
-        user_id=current_user.id,
-        test_id=test.id, # Link to master test
-        exam_type=test.exam_type,
-        total_questions=test.total_questions,
-        duration_minutes=test.duration_minutes,
-        topics_json=test.topics_json,
-        subject_distribution_json=json.dumps(subject_counts),
-        status="NOT_STARTED"
-    )
-    db.add(attempt)
-    db.flush() # Get ID
-    
-    # 3. Populate Questions from Master
-    questions = json.loads(test.questions_data)
-    
-    for idx, q_data in enumerate(questions):
+        attempt = TestAttempt(
+            user_id=current_user.id,
+            test_id=test.id, # Link to master test
+            exam_type=test.exam_type,
+            total_questions=test.total_questions,
+            duration_minutes=test.duration_minutes,
+            topics_json=test.topics_json,
+            subject_distribution_json=json.dumps(subject_counts),
+            status="NOT_STARTED"
+        )
+        db.add(attempt)
+        db.flush() # Get ID
+        
+        for idx, q_data in enumerate(questions):
+            # Extract options
+            options_dict = {}
+            if "options" in q_data and isinstance(q_data["options"], list):
+                labels = ["A", "B", "C", "D"]
+                for i, opt in enumerate(q_data["options"][:4]):
+                    options_dict[labels[i]] = opt
+            elif "options" in q_data and isinstance(q_data["options"], dict):
+                options_dict = q_data["options"]
+                
+            # Extract correct answer
+            correct_ans = q_data.get("answer", "A")
+            
+            # Determine specific mark if available, else default to 4/-1
+            marks = q_data.get("marks", 4)
+            
+            response = QuestionResponse(
+                test_attempt_id=attempt.id,
+                question_index=idx,
+                subject=q_data.get("subject", test.subject) or "General", # Fallback for missing subject
+                topic=q_data.get("topic", test.title),
+                difficulty=q_data.get("difficulty", test.difficulty),
+                question_type=q_data.get("type", "mcq"),
+                question_text=q_data.get("question_text", q_data.get("text", "Question text missing")),
+                options_json=json.dumps(options_dict),
+                correct_answer=correct_ans,
+                marks_correct=marks,
+                marks_wrong=-1,
+                status="NOT_VISITED",
+                diagram_json=json.dumps(q_data.get("diagram_spec")) if q_data.get("diagram_spec") else None
+            )
+            db.add(response)
+            
+        # Increment attempt count on master test
+        test.attempt_count += 1
+        db.commit()
+        
+    except Exception as e:
+        db.rollback()
+        print(f"Error starting test {test_id}: {e}")
+        raise HTTPException(status_code=400, detail=f"Cannot start this test (Data Corrupted). Please create a new test. Error: {str(e)}")
         # Extract options
         options_dict = {}
         if "options" in q_data and isinstance(q_data["options"], list):

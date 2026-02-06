@@ -47,8 +47,9 @@ export default function TestDetailedPage() {
         try {
             const { redirect_url } = await api.startTest(testId as string);
             router.push(redirect_url);
-        } catch (error) {
+        } catch (error: any) {
             console.error("Failed to start test", error);
+            alert(`Failed to start test: ${error.message || "An unknown error occurred."}`);
             setStarting(false);
         }
     };
