@@ -18,14 +18,19 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-white dark:bg-black">
       {/* Mobile Layout (Standard Stack) */}
-      <div className="md:hidden pb-20">
+      <div className="md:hidden pb-20 p-4">
         <main className="min-h-screen">
-          {/* Feed Section */}
-          <div className="space-y-4">
-            <Suspense fallback={<LoadingFeed />}>
-              <PostsFeed />
-            </Suspense>
+          {/* Mobile Header for Generator */}
+          <div className="mb-6">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <span>⚡ Quick Generator</span>
+            </h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Create a custom test instantly
+            </p>
           </div>
+
+          <TestGenerator />
         </main>
         <MobileNav />
       </div>
