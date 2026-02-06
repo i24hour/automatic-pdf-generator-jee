@@ -1240,7 +1240,8 @@ REQUIREMENTS:
 - Use LaTeX for math. Use $$...$$ for ALL equations to center them.
 - PROVIDE DETAILED SOLUTIONS in "solution" field for every question.
 - Use \\textbf{{Step 1:}} format.
-- Ensure 1 line gap between steps.
+- Ensure 1 line gap between steps (Use \\n\\n).
+- START EACH STEP ON A NEW LINE.
 - Center ALL equations.
 
 Return ONLY valid JSON:
@@ -1287,7 +1288,8 @@ REQUIREMENTS:
 - Each question must have exactly one correct answer for MCQs
 - PROVIDE DETAILED SOLUTIONS in "solution" field for every question.
 - Use \\textbf{{Step 1:}} format.
-- Ensure 1 line gap between steps.
+- Ensure 1 line gap between steps (Use \\n\\n).
+- START EACH STEP ON A NEW LINE.
 - Center ALL equations.
 
 Return ONLY valid JSON:
@@ -1311,7 +1313,8 @@ STRICT REQUIREMENTS:
 7. PROVIDE DETAILED SOLUTIONS in "solution" field for every question. This is CRITICAL.
 8. Solution Formatting:
    - Use "\\textbf{{Step 1:}}" for steps.
-   - Leave a ONE LINE GAP between steps.
+   - Leave a ONE LINE GAP between steps (Use \\n\\n).
+   - ENSURE EACH STEP STARTS ON A NEW LINE.
    - Write equations on SEPARATE LINES using $$...$$ (display math).
    - Center align all equations.
    - Do not clump text and math together.
@@ -1525,7 +1528,8 @@ Use LaTeX: $F = ma$, $\\\\frac{{a}}{{b}}$
 REQUIREMENTS FOR SOLUTIONS:
 - Provide DETAILED STEP-BY-STEP SOLUTIONS for every question in the "solution" field.
 - Use \\textbf{{Step 1:}} format.
-- Ensure 1 line gap between steps.
+- INSERT DOUBLE NEWLINE (\\n\\n) BETWEEN STEPS.
+- Ensure each step starts on a new line.
 - Center ALL equations using $$...$$ display math.
 
 Return ONLY JSON:
@@ -1614,8 +1618,8 @@ FORMATTING REQUIREMENTS (CRITICAL):
 
 Return ONLY valid JSON:
 {{"questions": [
-  {{"type": "mcq", "text": "A body of mass $m$ is dropped from height $h$. What is the velocity?", "options": ["$\\\\sqrt{{2gh}}$", "$\\\\sqrt{{gh}}$", "$2gh$", "$gh$"], "answer": "A", "solution": "\\textbf{{Step 1:}} Using equation of motion $v^2 - u^2 = 2as$: $$ v^2 - 0 = 2gh $$ \\vspace{{1em}} \\textbf{{Step 2:}} Solving for v: $$ v = \\sqrt{{2gh}} $$"}},
-  {{"type": "numerical", "text": "If $F = 10$ N and $m = 2$ kg, find acceleration in m/s$^2$.", "answer": "5", "solution": "\\textbf{{Step 1:}} Newton's Second Law states: $$ F = ma $$ \\vspace{{1em}} \\textbf{{Step 2:}} Substitute values: $$ 10 = 2a $$ \\vspace{{1em}} \\textbf{{Step 3:}} Solve for a: $$ a = 5 \\, m/s^2 $$"}}
+  {{"type": "mcq", "text": "A body of mass $m$ is dropped from height $h$. What is the velocity?", "options": ["$\\\\sqrt{{2gh}}$", "$\\\\sqrt{{gh}}$", "$2gh$", "$gh$"], "answer": "A", "solution": "\\textbf{{Step 1:}} Using equation of motion $v^2 - u^2 = 2as$: $$ v^2 - 0 = 2gh $$ \\n\\n\\textbf{{Step 2:}} Solving for v: $$ v = \\sqrt{{2gh}} $$"}},
+  {{"type": "numerical", "text": "If $F = 10$ N and $m = 2$ kg, find acceleration in m/s$^2$.", "answer": "5", "solution": "\\textbf{{Step 1:}} Newton's Second Law states: $$ F = ma $$ \\n\\n\\textbf{{Step 2:}} Substitute values: $$ 10 = 2a $$ \\n\\n\\textbf{{Step 3:}} Solve for a: $$ a = 5 \\, m/s^2 $$"}}
 ]}}
 """
         # Fresh Questions: Add anti-repetition instruction if past questions provided
