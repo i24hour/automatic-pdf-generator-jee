@@ -847,14 +847,32 @@ Example: {{"subject":"Chemistry","confidence":"high"}}
         medium_percent = kwargs.get('medium_percent', 50)
         hard_percent = kwargs.get('hard_percent', 30)
         
-        # Build difficulty distribution prompt
-        difficulty_prompt = f"""DIFFICULTY DISTRIBUTION:
-Generate questions with the following difficulty mix:
-- {easy_percent}% EASY: Straightforward application, simple calculations, most students should solve
-- {medium_percent}% MEDIUM: Standard exam-level, 2-3 step problems, some conceptual depth
-- {hard_percent}% HARD: Challenging, multi-step with conceptual twists, differentiates toppers
+        # Calculate exact counts for each difficulty level
+        easy_count = max(1, round(total_requested * easy_percent / 100)) if easy_percent > 0 else 0
+        hard_count = max(1, round(total_requested * hard_percent / 100)) if hard_percent > 0 else 0
+        medium_count = total_requested - easy_count - hard_count
+        # Ensure medium_count is at least 0
+        if medium_count < 0:
+            medium_count = 0
+            # Redistribute
+            if easy_count > hard_count:
+                easy_count = total_requested - hard_count
+            else:
+                hard_count = total_requested - easy_count
+        
+        # Build difficulty distribution prompt with EXACT COUNTS
+        difficulty_prompt = f"""DIFFICULTY DISTRIBUTION (STRICT REQUIREMENT):
+You MUST generate EXACTLY the following number of questions at each difficulty level:
+- {easy_count} EASY questions: Straightforward application, simple calculations, most students should solve
+- {medium_count} MEDIUM questions: Standard exam-level, 2-3 step problems, some conceptual depth  
+- {hard_count} HARD questions: Challenging, multi-step with conceptual twists, differentiates toppers
 
-IMPORTANT: Mix difficulty levels throughout the paper, don't group all Easy questions together."""
+TOTAL: {easy_count} + {medium_count} + {hard_count} = {total_requested} questions
+
+IMPORTANT: 
+- This distribution is MANDATORY, not a suggestion.
+- Mix difficulty levels throughout the paper, don't group all Easy questions together.
+- If you generate fewer HARD questions than required, the paper will be rejected."""
         
         # Detailed level-specific prompts with examples
         level_prompts = {
@@ -1468,11 +1486,24 @@ Return ONLY valid JSON:
         medium_percent = kwargs.get('medium_percent', 50)
         hard_percent = kwargs.get('hard_percent', 30)
         
-        # Build difficulty distribution prompt
-        difficulty_prompt = f"""DIFFICULTY DISTRIBUTION:
-- {easy_percent}% EASY: Straightforward, simple calculations, common patterns
-- {medium_percent}% MEDIUM: Standard exam-level, 2-3 step problems
-- {hard_percent}% HARD: Challenging, multi-step with conceptual twists"""
+        # Calculate exact counts for each difficulty level
+        easy_count = max(1, round(total_requested * easy_percent / 100)) if easy_percent > 0 else 0
+        hard_count = max(1, round(total_requested * hard_percent / 100)) if hard_percent > 0 else 0
+        medium_count = total_requested - easy_count - hard_count
+        if medium_count < 0:
+            medium_count = 0
+            if easy_count > hard_count:
+                easy_count = total_requested - hard_count
+            else:
+                hard_count = total_requested - easy_count
+        
+        # Build difficulty distribution prompt with EXACT COUNTS
+        difficulty_prompt = f"""DIFFICULTY DISTRIBUTION (STRICT):
+Generate EXACTLY:
+- {easy_count} EASY questions: Straightforward, simple calculations
+- {medium_count} MEDIUM questions: Standard exam-level, 2-3 step problems
+- {hard_count} HARD questions: Challenging, multi-step with conceptual twists
+TOTAL: {total_requested} questions. This is MANDATORY."""
         
         # Level prompts (simplified for async)
         level_prompts = {
