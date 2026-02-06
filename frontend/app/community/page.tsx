@@ -70,7 +70,7 @@ export default function CommunityPage() {
 }
 
 // Extracted for reuse in mobile/desktop
-interface DiscoveryContentProps {
+export interface DiscoveryContentProps {
     tests: TestSummary[];
     loading: boolean;
     filters: {
@@ -87,7 +87,7 @@ interface DiscoveryContentProps {
     };
 }
 
-function DiscoveryContent({ tests, loading, filters, setFilters }: DiscoveryContentProps) {
+export function DiscoveryContent({ tests, loading, filters, setFilters }: DiscoveryContentProps) {
     const subjects = ["Physics", "Chemistry", "Maths", "Biology"];
     const exams = ["JEE Mains", "JEE Advanced", "NEET", "CBSE Board", "GATE"];
 
