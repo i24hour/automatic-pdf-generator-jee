@@ -14,7 +14,7 @@ import asyncio
 
 from database import get_db
 from auth import get_current_user_required
-from models import User, TestAttempt, QuestionResponse
+from models import User, TestAttempt, QuestionResponse, TestLeaderboard
 from services.llm_engine import llm_engine
 
 router = APIRouter(prefix="/test", tags=["Test Portal"])
@@ -709,6 +709,54 @@ async def submit_test(
     test.unattempted_count = unattempted_count
     
     db.commit()
+    
+    # --- Leaderboard Update Logic ---
+    if test.test_id:
+        try:
+            # Check existing entry
+            existing_entry = db.query(TestLeaderboard).filter(
+                TestLeaderboard.test_id == test.test_id,
+                TestLeaderboard.user_id == current_user.id
+            ).first()
+            
+            # Calculate accuracy
+            total_attempted = correct_count + wrong_count
+            accuracy = (correct_count / total_attempted * 100) if total_attempted > 0 else 0
+            time_taken = int((test.submitted_at - test.started_at).total_seconds()) if test.started_at else 0
+            
+            should_update = False
+            
+            if not existing_entry:
+                should_update = True
+                existing_entry = TestLeaderboard(
+                    test_id=test.test_id,
+                    user_id=current_user.id,
+                    score=total_score,
+                    time_taken_seconds=time_taken,
+                    accuracy=accuracy,
+                    submitted_at=datetime.now(timezone.utc)
+                )
+                db.add(existing_entry)
+            else:
+                # Update if score is better, or score equal but time is less
+                if total_score > existing_entry.score:
+                    should_update = True
+                elif total_score == existing_entry.score and time_taken < existing_entry.time_taken_seconds:
+                    should_update = True
+                
+                if should_update:
+                    existing_entry.score = total_score
+                    existing_entry.time_taken_seconds = time_taken
+                    existing_entry.accuracy = accuracy
+                    existing_entry.submitted_at = datetime.now(timezone.utc)
+            
+            if should_update:
+                db.commit()
+                
+        except Exception as e:
+            print(f"Failed to update leaderboard: {e}")
+            # Don't fail the submission even if leaderboard update fails
+    # --------------------------------
     
     return SubmitResponse(
         test_id=test.id,

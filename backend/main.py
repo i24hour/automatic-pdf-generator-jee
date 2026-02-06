@@ -72,8 +72,11 @@ app.include_router(auth_router)
 app.include_router(institute_router)
 app.include_router(posts_router)
 app.include_router(pdf_router)
+app.include_router(pdf_router)
 app.include_router(test_router)
 app.include_router(support_router)
+from routers.community_router import router as community_router
+app.include_router(community_router)
 
 
 # Initialize database on startup

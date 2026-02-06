@@ -44,7 +44,9 @@ class User(Base):
     promo_usages = relationship("PromoCodeUsage", back_populates="user")
     shared_pdfs = relationship("SharedPDF", back_populates="user")
     pdf_likes = relationship("PDFLike", back_populates="user")
+    pdf_likes = relationship("PDFLike", back_populates="user")
     badges = relationship("UserBadge", back_populates="user")
+    created_tests = relationship("Test", back_populates="creator")
     
     def __repr__(self):
         return f"<User {self.email}>"
@@ -368,12 +370,80 @@ class UserQuestionHistory(Base):
 # TEST PORTAL MODELS (NTA CBT-style)
 # ============================================
 
+class Test(Base):
+    """
+    A persistent, sharable test created by a user/AI.
+    Acts as the 'Master' copy of the test.
+    """
+    __tablename__ = "tests"
+    
+    id = Column(String, primary_key=True, default=generate_uuid)
+    title = Column(String, nullable=False) # e.g., "Physics - Rotational Motion"
+    creator_id = Column(String, ForeignKey("users.id"), nullable=False)
+    
+    # Metadata
+    subject = Column(String, nullable=False)
+    topics_json = Column(Text, nullable=False) # JSON array of topics
+    exam_type = Column(String, nullable=False) # JEE_MAINS, NEET
+    difficulty = Column(String, nullable=False) # Easy, Medium, Hard
+    
+    # Stats
+    total_questions = Column(Integer, nullable=False)
+    total_marks = Column(Integer, nullable=False)
+    duration_minutes = Column(Integer, nullable=False)
+    attempt_count = Column(Integer, default=0)
+    
+    # Content
+    questions_data = Column(Text, nullable=False) # Full JSON of questions [{}, {}]
+    
+    is_public = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    creator = relationship("User", back_populates="created_tests")
+    leaderboard_entries = relationship("TestLeaderboard", back_populates="test", cascade="all, delete-orphan")
+    attempts = relationship("TestAttempt", back_populates="test")
+    
+    def __repr__(self):
+        return f"<Test {self.title} ({self.id})>"
+
+
+class TestLeaderboard(Base):
+    """
+    Stores average/best performance of a user on a specific Test.
+    Used for efficient leaderboard queries.
+    """
+    __tablename__ = "test_leaderboard"
+    __table_args__ = (
+        UniqueConstraint("test_id", "user_id", name="uq_test_leaderboard_user"),
+    )
+    
+    id = Column(String, primary_key=True, default=generate_uuid)
+    test_id = Column(String, ForeignKey("tests.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    
+    # Best Performance Stats
+    score = Column(Integer, nullable=False)
+    time_taken_seconds = Column(Integer, nullable=False)
+    accuracy = Column(Integer, nullable=False) # stored as percentage (0-100) or float
+    
+    submitted_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    test = relationship("Test", back_populates="leaderboard_entries")
+    user = relationship("User")
+    
+    def __repr__(self):
+        return f"<Leaderboard Test={self.test_id} User={self.user_id} Score={self.score}>"
+
+
 class TestAttempt(Base):
     """A user's test session - stores test configuration and results."""
     __tablename__ = "test_attempts"
     
     id = Column(String, primary_key=True, default=generate_uuid)
     user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    test_id = Column(String, ForeignKey("tests.id"), nullable=True, index=True) # Optional link to master test
     
     # Test Configuration
     exam_type = Column(String, nullable=False)  # JEE_MAINS, JEE_ADV, NEET, CUSTOM
@@ -400,6 +470,7 @@ class TestAttempt(Base):
     # Relationships
     responses = relationship("QuestionResponse", back_populates="test_attempt", cascade="all, delete-orphan")
     user = relationship("User")
+    test = relationship("Test", back_populates="attempts")
     
     def __repr__(self):
         return f"<TestAttempt {self.exam_type} for {self.user_id}>"

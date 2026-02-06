@@ -72,7 +72,19 @@ export default function DesktopSidebar() {
                         }`}
                 >
                     <LayoutGrid className={`w-7 h-7 ${isActive("/posts") ? "stroke-[2.5px]" : ""}`} />
+                    <LayoutGrid className={`w-7 h-7 ${isActive("/posts") ? "stroke-[2.5px]" : ""}`} />
                     <span>Explore</span>
+                </Link>
+
+                <Link
+                    href="/community"
+                    className={`flex items-center gap-4 px-4 py-3 rounded-full text-xl transition-colors ${isActive("/community")
+                        ? "font-bold text-gray-900 dark:text-white"
+                        : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#181818]"
+                        }`}
+                >
+                    <Trophy className={`w-7 h-7 ${isActive("/community") ? "stroke-[2.5px]" : ""}`} />
+                    <span>Community</span>
                 </Link>
 
                 <Link

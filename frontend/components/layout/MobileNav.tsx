@@ -55,12 +55,12 @@ export default function MobileNav() {
                 </Link>
 
                 <Link
-                    href="/leaderboard"
-                    className={`flex flex-col items-center gap-1 p-2 ${isActive("/leaderboard") ? "text-indigo-600 dark:text-indigo-400" : "text-gray-500 dark:text-gray-400"
+                    href="/community"
+                    className={`flex flex-col items-center gap-1 p-2 ${isActive("/community") ? "text-indigo-600 dark:text-indigo-400" : "text-gray-500 dark:text-gray-400"
                         }`}
                 >
                     <Trophy className="w-6 h-6" />
-                    <span className="text-[10px] font-medium">Rank</span>
+                    <span className="text-[10px] font-medium">Community</span>
                 </Link>
 
                 <Link
