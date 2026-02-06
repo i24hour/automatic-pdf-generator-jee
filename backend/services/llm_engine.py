@@ -1027,14 +1027,14 @@ IMPORTANT:
 SOLUTION REQUIREMENTS:
 - Provide a "solution" field for EVERY question.
 - Solution must be detailed and step-by-step.
-- Use \\textbf{Step 1:} format for steps.
+- Use \\textbf{{Step 1:}} format for steps.
 - **CRITICAL**: Put a full empty line (gap) between each step.
 - **CRITICAL**: Write EVERY mathematical equation on a SEPARATE LINE using display math ($$ ... $$) so it is centered.
 - Do NOT write equations inline with text.
-- Example: "The force is given by: $$ F = ma $$""""
-            json_example = """{{
+- Example: "The force is given by: $$ F = ma $$" """
+            json_example = """{
     "questions": [
-        {{
+        {
             "type": "mcq_multi",
             "text": "Which of the following are correct for an isothermal process?",
             "options": ["$\\Delta U = 0$", "$PV = constant$", "$\\Delta T = 0$", "$Q = 0$"],
@@ -1104,25 +1104,43 @@ SOLUTION REQUIREMENTS:
         }
     ]
 }"""
-        else:
-            mcq_instruction = "FOR MCQs: All MCQs should be single-correct (type: \"mcq\", answer: \"A\", \"B\", \"C\", or \"D\")"
+        if level == "JEE Advanced":
+            # JEE Advanced specific instructions with diagrams
+            mcq_instruction = """FOR MCQs: Mix of Single Correct and Multi-Correct (match exam pattern).
+DIAGRAM HANDLING (STRICT):
+1. Decide if diagram is required (Ray optics, Circuits, Graph-based, Geometry).
+2. If REQUIRED: Set diagram_required=true and generate structured diagram_spec.
+3. If NOT REQUIRED: Set diagram_required=false and diagram_spec=null.
+4. Supported Types: ray_optics, electric_circuit, motion_graph, free_body_diagram, geometry_figure.
+
+QUESTION OUTPUT FORMAT (STRICT):
+For EACH question, return a JSON object in this format:
+{
+  "question_text": "...",
+  "options": ["A", "B", "C", "D"],
+  "correct_answer": "A",
+  "solution": "...",
+  "difficulty": "medium",
+  "diagram_required": true/false,
+  "diagram_spec": { "diagram_type": "...", "elements": [...] } (or null)
+}"""
+
             json_example = """{
     "questions": [
         {
             "type": "mcq",
-            "text": "Question with $math$ notation",
-            "options": ["Option A", "Option B", "Option C", "Option D"],
+            "question_text": "Object is placed at 2f...",
+            "options": ["Real, Inverted", "Virtual, Erect", "Real, Erect", "Virtual, Inverted"],
             "answer": "A",
-            "solution": "\\textbf{Step 1:} Analyze the problem: $$ F = ma $$ \\vspace{1em} \\textbf{Step 2:} Substitute values: $$ 10 = 2a $$ \\vspace{1em} \\textbf{Step 3:} Solve: $$ a = 5 $$",
-            "diagram_tikz": null
-        },
-        {
-            "type": "numerical", 
-            "text": "Numerical question with $math$",
-            "options": [],
-            "answer": "numerical_value",
-            "solution": "\\textbf{Step 1:} Given values: $$ x = 10, y = 5 $$ \\vspace{1em} \\textbf{Step 2:} Calculate: $$ z = x + y $$ \\vspace{1em} \\textbf{Step 3:} Result: $$ z = 15 $$",
-            "diagram_tikz": null
+            "solution": "...",
+            "diagram_required": true,
+            "diagram_spec": {
+                "diagram_type": "ray_optics",
+                "elements": [
+                    {"shape": "line", "label": "principal axis", "properties": {"y": 0}},
+                    {"shape": "convex_lens", "label": "L", "properties": {"x": 0, "f": 10}}
+                ]
+            }
         }
     ]
 }"""
@@ -1215,7 +1233,7 @@ REQUIREMENTS:
 - Use LaTeX for math: $...$, $$...$$
 - Use LaTeX for math. Use $$...$$ for ALL equations to center them.
 - PROVIDE DETAILED SOLUTIONS in "solution" field for every question.
-- Use \\textbf{Step 1:} format.
+- Use \\textbf{{Step 1:}} format.
 - Ensure 1 line gap between steps.
 - Center ALL equations.
 
@@ -1262,7 +1280,7 @@ REQUIREMENTS:
 - Use LaTeX for math. Use $$...$$ for ALL equations to center them.
 - Each question must have exactly one correct answer for MCQs
 - PROVIDE DETAILED SOLUTIONS in "solution" field for every question.
-- Use \\textbf{Step 1:} format.
+- Use \\textbf{{Step 1:}} format.
 - Ensure 1 line gap between steps.
 - Center ALL equations.
 
@@ -1286,7 +1304,7 @@ STRICT REQUIREMENTS:
 {numerical_answer_instruction}
 7. PROVIDE DETAILED SOLUTIONS in "solution" field for every question. This is CRITICAL.
 8. Solution Formatting:
-   - Use "\\textbf{Step 1:}" for steps.
+   - Use "\\textbf{{Step 1:}}" for steps.
    - Leave a ONE LINE GAP between steps.
    - Write equations on SEPARATE LINES using $$...$$ (display math).
    - Center align all equations.
@@ -1449,14 +1467,14 @@ Return ONLY valid JSON:
         
         # Level prompts (simplified for async)
         level_prompts = {
-            "CBSE Board": "CBSE/State Board Level - Direct application, single-step problems.",
-            "JEE Mains": "JEE Main Level - Application-based, 2-3 step solutions. NUMERICAL answers must be INTEGERS 0-999.",
-            "Mains": "JEE Main Level - Application-based, 2-3 step solutions. NUMERICAL answers must be INTEGERS 0-999.",
-            "JEE Advanced": "JEE Advanced Level - Multi-concept, 4-5 step solutions, ~20% MCQs should be multi-correct.",
-            "Advanced": "JEE Advanced Level - Multi-concept, 4-5 step solutions, ~20% MCQs should be multi-correct.",
-            "Olympiad": "Olympiad Level - Research-level problem-solving, creative approaches.",
-            "NEET": "NEET Level - Biology/Medical focus, emphasis on conceptual understanding and factual recall.",
-            "GATE": "GATE Level - High conceptual depth, mix of MCQ (Negative), MSQ (No Negative), NAT (No Negative), and GA."
+            "CBSE Board": "CBSE/State Board Level - Direct application. Use [DIAGRAM: description] for questions needing figures.",
+            "JEE Mains": "JEE Main Level - Application-based. Use [DIAGRAM: description] for Optics/Mechanics/Circuits.",
+            "Mains": "JEE Main Level - Application-based. Use [DIAGRAM: description] for Optics/Mechanics/Circuits.",
+            "JEE Advanced": "JEE Advanced Level - Multi-concept. Use [DIAGRAM: description] where relevant.",
+            "Advanced": "JEE Advanced Level - Multi-concept. Use [DIAGRAM: description] where relevant.",
+            "Olympiad": "Olympiad Level - Research-level. Use [DIAGRAM: description] for geometry/physics setups.",
+            "NEET": "NEET Level - Biology/Medical focus. Use [DIAGRAM: description] for Biology/Anatomy questions.",
+            "GATE": "GATE Level - High conceptual depth. Use [DIAGRAM: description] for circuits/structures."
         }
         level_prompt = level_prompts.get(level, level_prompts.get("JEE Mains"))
         
@@ -1584,8 +1602,8 @@ FORMATTING REQUIREMENTS (CRITICAL):
 
 Return ONLY valid JSON:
 {{"questions": [
-  {{"type": "mcq", "text": "A body of mass $m$ is dropped from height $h$. What is the velocity?", "options": ["$\\\\sqrt{{2gh}}$", "$\\\\sqrt{{gh}}$", "$2gh$", "$gh$"], "answer": "A", "solution": "\\textbf{Step 1:} Using equation of motion $v^2 - u^2 = 2as$: $$ v^2 - 0 = 2gh $$ \\vspace{1em} \\textbf{Step 2:} Solving for v: $$ v = \\sqrt{2gh} $$"}},
-  {{"type": "numerical", "text": "If $F = 10$ N and $m = 2$ kg, find acceleration in m/s$^2$.", "answer": "5", "solution": "\\textbf{Step 1:} Newton's Second Law states: $$ F = ma $$ \\vspace{1em} \\textbf{Step 2:} Substitute values: $$ 10 = 2a $$ \\vspace{1em} \\textbf{Step 3:} Solve for a: $$ a = 5 \\, m/s^2 $$"}}
+  {{"type": "mcq", "text": "A body of mass $m$ is dropped from height $h$. What is the velocity?", "options": ["$\\\\sqrt{{2gh}}$", "$\\\\sqrt{{gh}}$", "$2gh$", "$gh$"], "answer": "A", "solution": "\\textbf{{Step 1:}} Using equation of motion $v^2 - u^2 = 2as$: $$ v^2 - 0 = 2gh $$ \\vspace{{1em}} \\textbf{{Step 2:}} Solving for v: $$ v = \\sqrt{{2gh}} $$"}},
+  {{"type": "numerical", "text": "If $F = 10$ N and $m = 2$ kg, find acceleration in m/s$^2$.", "answer": "5", "solution": "\\textbf{{Step 1:}} Newton's Second Law states: $$ F = ma $$ \\vspace{{1em}} \\textbf{{Step 2:}} Substitute values: $$ 10 = 2a $$ \\vspace{{1em}} \\textbf{{Step 3:}} Solve for a: $$ a = 5 \\, m/s^2 $$"}}
 ]}}
 """
         # Fresh Questions: Add anti-repetition instruction if past questions provided

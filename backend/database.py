@@ -154,6 +154,13 @@ def init_db():
                 conn.commit()
             except Exception:
                 conn.rollback()
+
+            # Add diagram_json to question_responses if it doesn't exist
+            try:
+                conn.execute(text("ALTER TABLE question_responses ADD COLUMN diagram_json TEXT"))
+                conn.commit()
+            except Exception:
+                conn.rollback()
                 
     except Exception as e:
         print(f"Migration warning (can be ignored if columns exist): {e}")

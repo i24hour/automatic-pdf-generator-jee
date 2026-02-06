@@ -291,12 +291,13 @@ def start_community_test(
             topic=test.title, # Or q_data.get("topic")
             difficulty=test.difficulty,
             question_type=q_data.get("type", "mcq"),
-            question_text=q_data.get("text", "Question text missing"),
+            question_text=q_data.get("question_text", q_data.get("text", "Question text missing")),
             options_json=json.dumps(options_dict),
             correct_answer=correct_ans,
             marks_correct=marks,
             marks_wrong=-1, # TODO: Configurable?
-            status="NOT_VISITED"
+            status="NOT_VISITED",
+            diagram_json=json.dumps(q_data.get("diagram_spec")) if q_data.get("diagram_spec") else None
         )
         db.add(response)
         

@@ -495,6 +495,7 @@ class QuestionResponse(Base):
     solution = Column(Text, nullable=True)
     marks_correct = Column(Integer, default=4)
     marks_wrong = Column(Integer, default=-1)  # Negative marking
+    diagram_json = Column(Text, nullable=True)  # JSON: { "diagram_type": "ray_optics", "elements": [...] }
     
     # User Response - NTA 5 States
     # NOT_VISITED, NOT_ANSWERED, ANSWERED, MARKED_REVIEW, ANSWERED_MARKED

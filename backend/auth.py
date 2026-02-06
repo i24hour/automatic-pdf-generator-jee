@@ -199,3 +199,7 @@ async def get_verified_user_required(
             detail="Email not verified. Please verify your email first."
         )
     return current_user
+
+
+# Alias for clarity used in community_router
+get_current_user_optional = get_current_user

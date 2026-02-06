@@ -55,6 +55,7 @@ class QuestionData(BaseModel):
     difficulty: str
     question_type: str
     question_text: str
+    diagram_json: Optional[str] = None
     options: Optional[dict] = None
     status: str
     user_answer: Optional[str] = None
@@ -266,7 +267,8 @@ async def create_test(
                     correct_answer="A",
                     marks_correct=4,
                     marks_wrong=-1,
-                    status="NOT_VISITED"
+                    status="NOT_VISITED",
+                    diagram_json=None
                 )
                 db.add(fallback_q)
                 q_index += 1
@@ -341,12 +343,13 @@ async def create_test(
                 topic=meta['topics'][0], # TODO: Can we get specific topic? Engine returns 'topic'
                 difficulty=meta['difficulty'],
                 question_type="mcq",
-                question_text=q_data.get("text", "Question text missing"),
+                question_text=q_data.get("question_text", q_data.get("text", "Question text missing")),
                 options_json=json.dumps(options_dict),
                 correct_answer=correct_ans,
                 marks_correct=4,
                 marks_wrong=-1 if request.exam_type != "NEET" else -1, # Marking scheme
-                status="NOT_VISITED"
+                status="NOT_VISITED",
+                diagram_json=json.dumps(q_data.get("diagram_spec")) if q_data.get("diagram_spec") else None
             )
             db.add(response)
             q_index += 1
