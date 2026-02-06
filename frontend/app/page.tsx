@@ -20,8 +20,18 @@ export default function Home() {
       {/* Mobile Layout (Standard Stack) */}
       <div className="md:hidden pb-20">
         <main className="min-h-screen">
+          {/* Mobile Header */}
+          <header className="sticky top-0 z-40 bg-white/80 dark:bg-black/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 px-4 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-xl font-bold bg-gradient-to-r from-indigo-500 to-purple-600 bg-clip-text text-transparent">
+                INFINITEST
+              </span>
+            </div>
+            {/* Can add user profile or notifs here later */}
+          </header>
+
           {/* Feed Section */}
-          <div className="space-y-4">
+          <div className="space-y-4 pt-2 px-2">
             <Suspense fallback={<LoadingFeed />}>
               <PostsFeed />
             </Suspense>
