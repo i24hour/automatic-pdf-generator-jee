@@ -563,7 +563,9 @@ class PDFEngine:
             return output_path
             
         except Exception as e:
+            import traceback
             print(f"Fallback PDF generation failed: {e}")
+            traceback.print_exc()
             return None
 
     def generate_pdf(self, data: Dict[str, Any], filename: str = "test_paper") -> Optional[str]:
@@ -579,7 +581,15 @@ class PDFEngine:
             Path to the generated PDF file, or None if generation failed
         """
         # Render template
-        latex_content = self.render_template(data)
+        try:
+            latex_content = self.render_template(data)
+        except Exception as e:
+            print(f"CRITICAL: Template rendering failed: {e}")
+            import traceback
+            traceback.print_exc()
+            # Try fallback directly with raw data
+            print("Attempting fallback PDF generation due to template error...")
+            return self.generate_fallback_pdf(data, filename)
         
         # Compile to PDF using pdflatex
         pdf_path = self.compile_pdf(latex_content, filename)
