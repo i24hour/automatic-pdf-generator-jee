@@ -32,6 +32,7 @@ import {
     BookOpen
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
+import { useGeneration } from "@/lib/generation-context";
 import { logError } from "@/lib/logger";
 import PostModal from "@/components/PostModal";
 import UsernameModal from "@/components/UsernameModal";
@@ -111,10 +112,23 @@ export default function TestGenerator() {
     const [jeeMulti, setJeeMulti] = useState(5);
     const [jeeInteger, setJeeInteger] = useState(5);
 
-    const [includeSolutions, setIncludeSolutions] = useState(true);
-    const [isLoading, setIsLoading] = useState(false);
-    const [result, setResult] = useState<GenerateResponse | null>(null);
-    const [error, setError] = useState<string | null>(null);
+    const [includeSolutions, setIncludeSolutions] = useState(false);
+
+    // Global Generation State
+    const {
+        isGenerating: isLoading,
+        progressStep,
+        progressMessage,
+        result,
+        error: genError,
+        elapsedTime,
+        startGeneration,
+        cancelGeneration: cancelGen,
+        downloadPDF
+    } = useGeneration();
+
+    // Local Validation State
+    const [validationError, setValidationError] = useState<string | null>(null);
     const [rateLimit, setRateLimit] = useState<RateLimitInfo | null>(null);
     const [resendLoading, setResendLoading] = useState(false);
     const [resendMessage, setResendMessage] = useState<string | null>(null);
@@ -123,13 +137,9 @@ export default function TestGenerator() {
     const [promoMessage, setPromoMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
     const [isDetectingSubject, setIsDetectingSubject] = useState(false);
     const detectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-    const [elapsedTime, setElapsedTime] = useState(0);
-    const [progressStep, setProgressStep] = useState(0);
-    const timerRef = useRef<NodeJS.Timeout | null>(null);
-    const abortControllerRef = useRef<AbortController | null>(null);
-    const eventSourceRef = useRef<EventSource | null>(null);
-    const [jobId, setJobId] = useState<string | null>(null);
-    const [progressMessage, setProgressMessage] = useState<string>("Ready to generate...");
+
+    // Note: Removed local elapsedTime, progressStep, timerRef, eventSourceRef, jobId, progressMessage
+
     const [showPostModal, setShowPostModal] = useState(false);
     const [showUsernameModal, setShowUsernameModal] = useState(false);
 
@@ -432,287 +442,71 @@ export default function TestGenerator() {
         }
 
         if (!topic.trim()) {
-            setError("Please enter a topic");
+            setValidationError("Please enter a topic");
             return;
         }
 
         // Validate difficulty distribution sums to 100%
         const totalPercent = easyPercent + mediumPercent + hardPercent;
         if (totalPercent !== 100) {
-            setError(`Difficulty distribution should be equal to 100% (currently ${totalPercent}%)`);
+            setValidationError(`Difficulty distribution should be equal to 100% (currently ${totalPercent}%)`);
             return;
         }
 
-        setIsLoading(true);
-        setError(null);
-        setResult(null);
-        setElapsedTime(0);
-        setProgressStep(0);
-        setProgressMessage("Starting generation...");
-        setJobId(null);
+        setValidationError(null);
 
-        // Start timer
-        // Start timer with 10-minute timeout check
-        timerRef.current = setInterval(() => {
-            setElapsedTime(prev => {
-                if (prev >= 600) { // 600 seconds = 10 minutes
-                    if (timerRef.current) clearInterval(timerRef.current);
-                    cleanupGeneration();
-                    setError("Generation timed out (limit: 10 mins). Please try again.");
+        // Calculate question counts based on level
+        let requestMcqs = numMCQs;
+        let requestNumericals = numNumericals;
+        let requestTotal = questionCount;
 
-                    // Log timeout error
-                    logError({
-                        error_type: "GENERATION_TIMEOUT",
-                        error_details: `Generation timed out after 600s for topic: ${topic}`,
-                        metadata_info: JSON.stringify({ level, subject, easyPercent, mediumPercent, hardPercent })
-                    });
-
-                    return prev;
-                }
-                return prev + 1;
-            });
-        }, 1000);
-
-        try {
-            // Calculate question counts based on level
-
-            let requestMcqs = numMCQs;
-            let requestNumericals = numNumericals;
-            let requestTotal = questionCount;
-
-            if (level === "CBSE Board") {
-                // For CBSE Board: combine CBSE pattern with subjective questions
-                // Very Short + Short + Long + Case-Based questions
-                // Numericals stay as numericals
-                requestMcqs = cbseVeryShort + cbseShort + cbseLong + cbseCaseBased;
-                requestNumericals = cbseNumericals;
-                requestTotal = requestMcqs + requestNumericals;
-            } else if (level === "GATE") {
-                // For GATE: combine all types
-                requestMcqs = numMCQs; // Single correct MCQs
-                requestNumericals = numNAT; // NATs are numericals
-                requestTotal = numGA + numMCQs + numMSQ + numNAT;
-            } else if (level === "JEE Advanced") {
-                // For JEE Advanced: combine Single + Multi as MCQs, Integer as Numerical
-                requestMcqs = jeeSingle + jeeMulti;
-                requestNumericals = jeeInteger;
-                requestTotal = requestMcqs + requestNumericals;
-            }
-
-            // Step 1: Start the job
-            const startResponse = await authFetch(`${API_BASE_URL}/api/generate-sse/start`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    subject: level === "GATE" ? gatePaper : subject.sort().join(', '), // Use GATE paper as subject or joined string
-                    topic: topic.trim(),
-                    total_questions: requestTotal,
-                    level,
-                    easy_percent: easyPercent,
-                    medium_percent: mediumPercent,
-                    hard_percent: hardPercent,
-                    num_mcqs: requestMcqs,
-                    num_numerical: requestNumericals,
-                    include_solutions: includeSolutions,
-                    // GATE Params
-                    gate_paper: level === "GATE" ? gatePaper : undefined,
-                    num_msq: level === "GATE" || level === "JEE Advanced" ? (level === "JEE Advanced" ? jeeMulti : numMSQ) : undefined,
-                    num_nat: level === "GATE" ? numNAT : undefined,
-                    num_ga: level === "GATE" ? numGA : undefined,
-                    // CBSE Board Params
-                    cbse_vsa: level === "CBSE Board" ? cbseVeryShort : undefined,
-                    cbse_sa: level === "CBSE Board" ? cbseShort : undefined,
-                    cbse_la: level === "CBSE Board" ? cbseLong : undefined,
-                    cbse_case: level === "CBSE Board" ? cbseCaseBased : undefined,
-                    cbse_numerical: level === "CBSE Board" ? cbseNumericals : undefined,
-                }),
-            });
-
-            if (!startResponse.ok) {
-                const errorData = await startResponse.json();
-                throw new Error(errorData.detail || "Failed to start generation");
-            }
-
-            const startData = await startResponse.json();
-            const newJobId = startData.job_id;
-            setJobId(newJobId);
-            setProgressMessage("Connecting to progress stream...");
-
-            // Step 2: Connect to SSE stream
-            await connectToSSEStream(newJobId);
-
-        } catch (err: unknown) {
-            console.error("Generation error:", err);
-
-            // Log generation error
-            logError({
-                error_type: "GENERATION_ERROR",
-                error_details: err instanceof Error ? err.message : "Unknown generation error",
-                metadata_info: JSON.stringify({ level, subject: subject.join(', '), topic })
-            });
-
-            if (err instanceof Error && err.message.includes("Rate limit")) {
-                setError(err.message);
-            } else {
-                setError("Failed to generate test paper. Please try again.");
-            }
-            cleanupGeneration();
+        if (level === "CBSE Board") {
+            requestMcqs = cbseVeryShort + cbseShort + cbseLong + cbseCaseBased;
+            requestNumericals = cbseNumericals;
+            requestTotal = requestMcqs + requestNumericals;
+        } else if (level === "GATE") {
+            requestMcqs = numMCQs; // Single correct MCQs
+            requestNumericals = numNAT; // NATs are numericals
+            requestTotal = numGA + numMCQs + numMSQ + numNAT;
+        } else if (level === "JEE Advanced") {
+            requestMcqs = jeeSingle + jeeMulti;
+            requestNumericals = jeeInteger;
+            requestTotal = requestMcqs + requestNumericals;
         }
-    };
 
-    const connectToSSEStream = (streamJobId: string): Promise<void> => {
-        return new Promise((resolve, reject) => {
-            // Close any existing connection
-            if (eventSourceRef.current) {
-                eventSourceRef.current.close();
-            }
-
-            // SSE URL with token as query param (EventSource doesn't support headers)
-            // Use localStorage to ensure we have the FRESH refreshed token
-            const freshToken = localStorage.getItem("auth_token") || token;
-            const sseUrl = `${API_BASE_URL}/api/generate-sse/${streamJobId}/stream?token=${encodeURIComponent(freshToken || '')}`;
-
-            const eventSource = new EventSource(sseUrl);
-            eventSourceRef.current = eventSource;
-
-            eventSource.onmessage = (event) => {
-                try {
-                    const data = JSON.parse(event.data);
-                    console.log("SSE update:", data);
-
-                    // Update progress
-                    setProgressStep(data.progress || 0);
-                    setProgressMessage(data.message || "Working...");
-
-                    // Map status to progress step for visual
-                    const statusToStep: Record<string, number> = {
-                        "pending": 0,
-                        "analyzing": 1,
-                        "generating_mcqs": 2,
-                        "generating_numericals": 3,
-                        "verifying": 4,
-                        "compiling_pdf": 5,
-                        "uploading": 5,
-                        "done": 6,
-                        "failed": 0,
-                    };
-                    if (data.status in statusToStep) {
-                        setProgressStep(statusToStep[data.status]);
-                    }
-
-                    // Check if done
-                    if (data.status === "done" && data.result) {
-                        setResult(data.result as GenerateResponse);
-                        if (data.result.rate_limit_remaining !== undefined) {
-                            setRateLimit((prev) => prev ? {
-                                ...prev,
-                                remaining: data.result.rate_limit_remaining,
-                                used: prev.limit - data.result.rate_limit_remaining,
-                            } : null);
-                        }
-                        cleanupGeneration();
-                        resolve();
-                    } else if (data.status === "failed") {
-                        setError(data.error || "Generation failed");
-                        cleanupGeneration();
-                        reject(new Error(data.error || "Generation failed"));
-                    }
-                } catch (e) {
-                    console.error("Error parsing SSE data:", e);
-                }
-            };
-
-            eventSource.onerror = async (error) => {
-                console.error("SSE connection error:", error);
-                eventSource.close();
-
-                // Try to reconnect
-                setProgressMessage("Connection interrupted, reconnecting...");
-
-                try {
-                    // Wait a bit before reconnecting
-                    await new Promise(r => setTimeout(r, 2000));
-
-                    // Poll the status endpoint
-                    const statusResponse = await authFetch(`${API_BASE_URL}/api/generate-sse/${streamJobId}/status`);
-
-                    if (statusResponse.ok) {
-                        const statusData = await statusResponse.json();
-
-                        if (statusData.status === "done" && statusData.result) {
-                            setResult(statusData.result as GenerateResponse);
-                            cleanupGeneration();
-                            resolve();
-                            return;
-                        } else if (statusData.status === "failed") {
-                            setError(statusData.error || "Generation failed");
-                            cleanupGeneration();
-                            reject(new Error(statusData.error));
-                            return;
-                        }
-
-                        // Job still in progress, reconnect to stream
-                        setProgressMessage("Reconnecting to stream...");
-                        await connectToSSEStream(streamJobId);
-                        resolve();
-                    } else {
-                        throw new Error("Failed to get job status");
-                    }
-                } catch (reconnectError) {
-                    console.error("Reconnection failed:", reconnectError);
-                    setError("Connection lost. Please try again.");
-                    cleanupGeneration();
-                    reject(reconnectError);
-                }
-            };
+        // Trigger generation via Context
+        await startGeneration({
+            subject: level === "GATE" ? gatePaper : subject.sort().join(', '),
+            topic: topic.trim(),
+            total_questions: requestTotal,
+            level,
+            easy_percent: easyPercent,
+            medium_percent: mediumPercent,
+            hard_percent: hardPercent,
+            num_mcqs: requestMcqs,
+            num_numerical: requestNumericals,
+            include_solutions: includeSolutions,
+            // GATE Params
+            gate_paper: level === "GATE" ? gatePaper : undefined,
+            num_msq: level === "GATE" || level === "JEE Advanced" ? (level === "JEE Advanced" ? jeeMulti : numMSQ) : undefined,
+            num_nat: level === "GATE" ? numNAT : undefined,
+            num_ga: level === "GATE" ? numGA : undefined,
+            // CBSE Board Params
+            cbse_vsa: level === "CBSE Board" ? cbseVeryShort : undefined,
+            cbse_sa: level === "CBSE Board" ? cbseShort : undefined,
+            cbse_la: level === "CBSE Board" ? cbseLong : undefined,
+            cbse_case: level === "CBSE Board" ? cbseCaseBased : undefined,
+            cbse_numerical: level === "CBSE Board" ? cbseNumericals : undefined,
         });
     };
 
-    const cleanupGeneration = () => {
-        setIsLoading(false);
-        if (timerRef.current) {
-            clearInterval(timerRef.current);
-            timerRef.current = null;
-        }
-        if (eventSourceRef.current) {
-            eventSourceRef.current.close();
-            eventSourceRef.current = null;
-        }
-    };
-
     const handleCancelGeneration = () => {
-        cleanupGeneration();
-        setError("Generation cancelled.");
+        cancelGen();
     };
 
 
     const handleDownload = () => {
-        if (result?.pdf_base64) {
-            // Decode base64 and trigger download
-            const binary = atob(result.pdf_base64);
-            const bytes = new Uint8Array(binary.length);
-            for (let i = 0; i < binary.length; i++) {
-                bytes[i] = binary.charCodeAt(i);
-            }
-            const blob = new Blob([bytes], { type: 'application/pdf' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            let filename = result.pdf_filename || 'test_paper.pdf';
-            if (!filename.toLowerCase().endsWith('.pdf')) {
-                filename += '.pdf';
-            }
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        } else if (result?.pdf_filename) {
-            // Fallback to API endpoint (for backwards compatibility)
-            window.open(`${API_BASE_URL}/api/download/${result.pdf_filename}`, "_blank");
-        }
+        downloadPDF(result || undefined);
     };
 
     const handleLogout = () => {
@@ -1756,10 +1550,10 @@ export default function TestGenerator() {
 
                 {/* Error Message */}
                 {
-                    error && (
+                    (genError || validationError) && (
                         <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3 text-red-700 animate-in fade-in slide-in-from-top-2">
                             <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                            <p>{error}</p>
+                            <p>{genError || validationError}</p>
                         </div>
                     )
                 }
