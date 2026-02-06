@@ -162,7 +162,13 @@ function CreateForm() {
             router.push(`/community/test/${result.id}`);
         } catch (err: any) {
             console.error(err);
-            setError(err.message || "Failed to generate test. Please try again.");
+            if (err.detail && Array.isArray(err.detail)) {
+                setError(err.detail.map((e: any) => e.msg).join(', '));
+            } else if (err.detail && typeof err.detail === 'string') {
+                setError(err.detail);
+            } else {
+                setError(err.message || "Failed to generate test. Please try again.");
+            }
         } finally {
             setLoading(false);
         }
@@ -327,8 +333,8 @@ function CreateForm() {
                                 </>
                             ) : (
                                 <>
-                                    <Sparkles className="w-5 h-5" />
-                                    Publish Test
+                                    <CheckCircle2 className="w-5 h-5" />
+                                    Create Test
                                 </>
                             )}
                         </button>
