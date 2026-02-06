@@ -21,14 +21,7 @@ export default function Home() {
       <div className="md:hidden pb-20 p-4">
         <main className="min-h-screen">
           {/* Mobile Header for Generator */}
-          <div className="mb-6">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-              <span>⚡ Quick Generator</span>
-            </h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Create a custom test instantly
-            </p>
-          </div>
+
 
           <TestGenerator />
         </main>
@@ -49,14 +42,7 @@ export default function Home() {
 
         {/* Right: Infinitest Generator */}
         <aside className="w-[400px] xl:w-[450px] p-6 h-screen sticky top-0 overflow-y-auto bg-gray-50 dark:bg-[#16181c] hidden lg:block scrollbar-hide">
-          <div className="mb-6">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-              <span>⚡ Quick Generator</span>
-            </h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Create a custom test instantly
-            </p>
-          </div>
+
           <TestGenerator />
         </aside>
       </div>
