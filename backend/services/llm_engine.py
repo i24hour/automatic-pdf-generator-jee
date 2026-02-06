@@ -1073,7 +1073,7 @@ SOLUTION REQUIREMENTS:
             "text": "Single correct question with $math$ notation",
             "options": ["Option A", "Option B", "Option C", "Option D"],
             "answer": "A",
-            "solution": "Detailed explanation here with steps.",
+            "solution": "\\\\textbf{Step 1:} Analyze each option systematically.\\n\\n\\\\textbf{Step 2:} Apply the relevant formula: $$ F = ma $$\\n\\n\\\\textbf{Step 3:} Option A satisfies all conditions as the acceleration is directly proportional to applied force. Hence, correct answer is A.",
             "diagram_tikz": null
         }},
         {{
@@ -1194,17 +1194,17 @@ For EACH question, return a JSON object in this format:
             
             boards_json_example = """{
     "questions": [
-        {"type": "short_answer", "marks": 1, "text": "Define electric flux.", "answer": "Electric flux is...", "solution": "Definition..."},
-        {"type": "short_answer", "marks": 2, "text": "State the principle of superposition.", "answer": "When two waves...", "solution": "Full explanation..."},
-        {"type": "short_answer", "marks": 3, "text": "Derive E = -dV/dr.", "answer": "Work done = qE.dr...", "solution": "Step-by-step derivation..."},
-        {"type": "long_answer", "marks": 5, "text": "State and prove Gauss's law.", "answer": "Gauss's law states...", "solution": "Proof with steps..."},
-        {"type": "case_based", "marks": 4, "passage": "Electromagnetic induction...", "sub_questions": [
-            {"text": "Who discovered it?", "options": ["Newton", "Faraday", "Maxwell", "Ampere"], "answer": "B"},
-            {"text": "What is required?", "options": ["Static field", "Changing flux", "Electric field", "Gravity"], "answer": "B"},
-            {"text": "Which device uses it?", "options": ["Capacitor", "Resistor", "Transformer", "Diode"], "answer": "C"},
-            {"text": "In which year?", "options": ["1820", "1831", "1840", "1850"], "answer": "B"}
-        ], "answer": "B, B, C, B", "solution": "Reasoning for each sub-question..."},
-        {"type": "numerical", "marks": 3, "text": "A wire of resistance $10\\\\Omega$...", "answer": "2.5", "solution": "Calculation..."}
+        {"type": "short_answer", "marks": 1, "text": "Define electric flux.", "answer": "Electric flux is the measure of electric field lines passing through a surface.", "solution": "Electric flux ($\\\\Phi_E$) is defined as the total number of electric field lines passing through a given surface. Mathematically: $$ \\\\Phi_E = \\\\vec{E} \\\\cdot \\\\vec{A} = EA\\\\cos\\\\theta $$ where $E$ is the electric field, $A$ is the area, and $\\\\theta$ is the angle between field and normal."},
+        {"type": "short_answer", "marks": 2, "text": "State the principle of superposition.", "answer": "When two waves meet, the resultant displacement is the vector sum of individual displacements.", "solution": "\\\\textbf{Step 1:} Principle of superposition states that when two or more waves overlap, the resultant displacement at any point is the algebraic sum of the individual displacements.\\n\\n\\\\textbf{Step 2:} Mathematically, if $y_1$ and $y_2$ are two waves: $$ y = y_1 + y_2 $$ This principle applies to all types of waves - sound, light, water waves."},
+        {"type": "short_answer", "marks": 3, "text": "Derive E = -dV/dr.", "answer": "The electric field is the negative gradient of potential.", "solution": "\\\\textbf{Step 1:} Work done in moving charge $q$ from $r$ to $r+dr$: $$ dW = -qE \\\\cdot dr $$\\n\\n\\\\textbf{Step 2:} This work equals change in potential energy: $$ dW = q \\\\cdot dV $$\\n\\n\\\\textbf{Step 3:} Equating: $$ q \\\\cdot dV = -qE \\\\cdot dr $$\\n\\n\\\\textbf{Step 4:} Simplifying: $$ E = -\\\\frac{dV}{dr} $$ This shows electric field points from high to low potential."},
+        {"type": "long_answer", "marks": 5, "text": "State and prove Gauss's law.", "answer": "Gauss's law states that total electric flux through a closed surface equals enclosed charge divided by permittivity.", "solution": "\\\\textbf{Statement:} The total electric flux through any closed surface is equal to $\\\\frac{1}{\\\\epsilon_0}$ times the total charge enclosed.\\n\\n$$\\\\oint \\\\vec{E} \\\\cdot d\\\\vec{A} = \\\\frac{Q_{enc}}{\\\\epsilon_0}$$\\n\\n\\\\textbf{Step 1:} Consider a point charge $q$ at center of a sphere of radius $r$.\\n\\n\\\\textbf{Step 2:} Electric field at surface: $$ E = \\\\frac{1}{4\\\\pi\\\\epsilon_0} \\\\frac{q}{r^2} $$\\n\\n\\\\textbf{Step 3:} Total flux: $$ \\\\Phi = E \\\\times 4\\\\pi r^2 = \\\\frac{q}{4\\\\pi\\\\epsilon_0 r^2} \\\\times 4\\\\pi r^2 $$\\n\\n\\\\textbf{Step 4:} Simplifying: $$ \\\\Phi = \\\\frac{q}{\\\\epsilon_0} $$ Hence proved."},
+        {"type": "case_based", "marks": 4, "passage": "Electromagnetic induction is the phenomenon of generation of electric current due to changing magnetic flux.", "sub_questions": [
+            {"text": "Who discovered electromagnetic induction?", "options": ["Newton", "Faraday", "Maxwell", "Ampere"], "answer": "B"},
+            {"text": "What is required for electromagnetic induction?", "options": ["Static field", "Changing flux", "Electric field", "Gravity"], "answer": "B"},
+            {"text": "Which device uses electromagnetic induction?", "options": ["Capacitor", "Resistor", "Transformer", "Diode"], "answer": "C"},
+            {"text": "When was it discovered?", "options": ["1820", "1831", "1840", "1850"], "answer": "B"}
+        ], "answer": "B, B, C, B", "solution": "\\\\textbf{Q1:} Michael Faraday discovered electromagnetic induction in 1831.\\n\\n\\\\textbf{Q2:} Changing magnetic flux is essential; static fields don't induce EMF.\\n\\n\\\\textbf{Q3:} Transformers work on mutual induction principle.\\n\\n\\\\textbf{Q4:} Faraday discovered it in 1831 through his famous ring experiment."},
+        {"type": "numerical", "marks": 3, "text": "A wire of resistance $10\\\\Omega$ is bent into a circle. Find equivalent resistance across diameter.", "answer": "2.5", "solution": "\\\\textbf{Step 1:} When wire is bent into circle, total resistance = $10\\\\Omega$.\\n\\n\\\\textbf{Step 2:} Across diameter, circle divides into two equal halves.\\n\\n\\\\textbf{Step 3:} Each half has resistance: $$ R_{half} = \\\\frac{10}{2} = 5\\\\Omega $$\\n\\n\\\\textbf{Step 4:} Two $5\\\\Omega$ resistors in parallel: $$ R_{eq} = \\\\frac{5 \\\\times 5}{5 + 5} = \\\\frac{25}{10} = 2.5\\\\Omega $$"}
     ]
 }"""
             
