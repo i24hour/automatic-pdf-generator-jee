@@ -43,12 +43,20 @@ export default function TestDetailedPage() {
     };
 
     const handleStartTest = async () => {
+        if (!user) {
+            alert("Please login to attempt the test.");
+            // Optional: Redirect to login with callback
+            // router.push(`/login?callbackUrl=${window.location.pathname}`);
+            return;
+        }
+
         setStarting(true);
         try {
             const { redirect_url } = await api.startTest(testId as string);
             router.push(redirect_url);
-        } catch (error) {
+        } catch (error: any) {
             console.error("Failed to start test", error);
+            alert(error.message || "Failed to start test. Please try again.");
             setStarting(false);
         }
     };
