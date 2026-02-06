@@ -1056,8 +1056,8 @@ SOLUTION REQUIREMENTS:
             "type": "numerical", 
             "text": "Numerical question with $math$",
             "options": [],
-            "answer": "3.14",
-            "solution": "Calculation showing how 3.14 is derived.",
+            "answer": "3",
+            "solution": "\\textbf{Step 1:} Identify given values: $$ x = 10, y = 5 $$ \\vspace{1em} \\textbf{Step 2:} Apply formula: $$ z = x + y $$ \\vspace{1em} \\textbf{Step 3:} Calculate result: $$ z = 15 $$",
             "diagram_tikz": null
         }}
     ]
@@ -1113,7 +1113,7 @@ SOLUTION REQUIREMENTS:
             "text": "Question with $math$ notation",
             "options": ["Option A", "Option B", "Option C", "Option D"],
             "answer": "A",
-            "solution": "\\textbf{Step 1:} Explanation step 1... \\vspace{0.5em} \\textbf{Step 2:} Conclusion.",
+            "solution": "\\textbf{Step 1:} Analyze the problem: $$ F = ma $$ \\vspace{1em} \\textbf{Step 2:} Substitute values: $$ 10 = 2a $$ \\vspace{1em} \\textbf{Step 3:} Solve: $$ a = 5 $$",
             "diagram_tikz": null
         },
         {
@@ -1121,7 +1121,7 @@ SOLUTION REQUIREMENTS:
             "text": "Numerical question with $math$",
             "options": [],
             "answer": "numerical_value",
-            "solution": "Detailed calculation...",
+            "solution": "\\textbf{Step 1:} Given values: $$ x = 10, y = 5 $$ \\vspace{1em} \\textbf{Step 2:} Calculate: $$ z = x + y $$ \\vspace{1em} \\textbf{Step 3:} Result: $$ z = 15 $$",
             "diagram_tikz": null
         }
     ]
