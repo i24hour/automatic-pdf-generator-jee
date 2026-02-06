@@ -1,55 +1,30 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { Suspense } from "react";
 import DesktopSidebar from "@/components/layout/DesktopSidebar";
 import MobileNav from "@/components/layout/MobileNav";
 import TestGenerator from "@/components/TestGenerator";
-import { DiscoveryContent } from "./community/page";
-import { useCommunityApi, TestSummary } from "@/lib/community-api";
-import { useAuth } from "@/lib/auth-context";
+import PostsFeed from "@/components/PostsFeed"; // Importing the Feed component
+
+function LoadingFeed() {
+  return (
+    <div className="flex items-center justify-center min-h-[200px]">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
+    </div>
+  );
+}
 
 export default function Home() {
-  const { user } = useAuth();
-  const api = useCommunityApi();
-  const [tests, setTests] = useState<TestSummary[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  // Filters
-  const [search, setSearch] = useState("");
-  const [subject, setSubject] = useState("");
-  const [examType, setExamType] = useState("");
-  const [sortBy, setSortBy] = useState("newest");
-
-  useEffect(() => {
-    loadTests();
-  }, [search, subject, examType, sortBy]);
-
-  const loadTests = async () => {
-    setLoading(true);
-    try {
-      const data = await api.searchTests(search, subject, examType, sortBy);
-      setTests(data);
-    } catch (error) {
-      console.error("Failed to load tests", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-white dark:bg-black">
       {/* Mobile Layout (Standard Stack) */}
       <div className="md:hidden pb-20">
-        <main className="p-4 space-y-8">
-          <DiscoveryContent
-            tests={tests}
-            loading={loading}
-            filters={{ search, subject, examType, sortBy }}
-            setFilters={{ setSearch, setSubject, setExamType, setSortBy }}
-          />
-          <div className="border-t pt-8">
-            <h2 className="text-xl font-bold mb-4">Create Test</h2>
-            <TestGenerator />
+        <main className="min-h-screen">
+          {/* Feed Section */}
+          <div className="space-y-4">
+            <Suspense fallback={<LoadingFeed />}>
+              <PostsFeed />
+            </Suspense>
           </div>
         </main>
         <MobileNav />
@@ -61,13 +36,10 @@ export default function Home() {
         <DesktopSidebar />
 
         {/* Middle: Community Feed */}
-        <main className="flex-1 ml-[275px] min-h-screen p-8 border-r border-gray-200 dark:border-[#2f3336]">
-          <DiscoveryContent
-            tests={tests}
-            loading={loading}
-            filters={{ search, subject, examType, sortBy }}
-            setFilters={{ setSearch, setSubject, setExamType, setSortBy }}
-          />
+        <main className="flex-1 ml-[275px] min-h-screen border-r border-gray-200 dark:border-[#2f3336]">
+          <Suspense fallback={<LoadingFeed />}>
+            <PostsFeed />
+          </Suspense>
         </main>
 
         {/* Right: Infinitest Generator */}
