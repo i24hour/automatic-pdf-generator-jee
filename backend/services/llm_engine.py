@@ -976,7 +976,13 @@ IMPORTANT FORMATTING RULES FOR NEET:
 - DO NOT use tables, columns, or "Match the following" format - these don't render well
 - For matching questions, convert to regular MCQ format with options like "A-2, B-3, C-1, D-4"
 - Keep questions simple and text-based
+- Keep questions simple and text-based
 - Use simple lists if needed, not complex formatting
+
+REQUIREMENTS FOR SOLUTIONS:
+- Provide brief explanation for the correct answer in "solution" field.
+- For Biology: Explain why option is correct.
+- For Physics/Chem: Show calculation steps using \\textbf{{Step 1:}} format and $$...$$ for equations.
 
 EXAMPLE NEET-LEVEL QUESTIONS:
 - "Which of the following is NOT a function of liver?"
@@ -1516,6 +1522,12 @@ GENERATE EXACTLY:
 
 Use LaTeX: $F = ma$, $\\\\frac{{a}}{{b}}$
 
+REQUIREMENTS FOR SOLUTIONS:
+- Provide DETAILED STEP-BY-STEP SOLUTIONS for every question in the "solution" field.
+- Use \\textbf{{Step 1:}} format.
+- Ensure 1 line gap between steps.
+- Center ALL equations using $$...$$ display math.
+
 Return ONLY JSON:
 {{"questions": [
   {{"type": "short_answer", "marks": 2, "text": "Define electric flux.", "answer": "Electric flux is..."}},
@@ -1907,39 +1919,9 @@ RULES:
                 "corrected": 0
             }
         
-        if include_solutions:
-            # Batch MCQ solutions
-            mcq_qs = []
-            mcq_indices = []
-            
-            for i, q in enumerate(questions):
-                if q.get("type") in ["mcq", "mcq_multi"] and not q.get("solution"):
-                    mcq_indices.append(i)
-                    mcq_qs.append({
-                        "text": q.get("text", ""),
-                        "options": q.get("options", []),
-                        "answer": q.get("answer", "")
-                    })
-            
-            if mcq_qs:
-                chunk_size = 5
-                batches = [mcq_qs[i:i + chunk_size] for i in range(0, len(mcq_qs), chunk_size)]
-                
-                batch_tasks = []
-                for batch in batches:
-                    batch_tasks.append(self._generate_mcq_solution_batch_async(batch, subject))
-                
-                batch_results_list = await asyncio.gather(*batch_tasks)
-                
-                all_solutions = []
-                for res_list in batch_results_list:
-                    all_solutions.extend(res_list)
-                
-                for i, solution in enumerate(all_solutions):
-                    if i >= len(mcq_indices): break
-                    q_index = mcq_indices[i]
-                    questions[q_index]["solution"] = solution
-            
+            # Corrected logic: We NO LONGER generate solutions in a separate pass.
+            # The initial generation prompt already includes instructions for detailed solutions.
+            # This saves ~40% of API calls.
             result["include_solutions"] = True
         
         return result
