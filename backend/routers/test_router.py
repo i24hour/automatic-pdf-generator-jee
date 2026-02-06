@@ -275,8 +275,9 @@ async def create_test(
                 questions_added += 1
             continue
 
-        if not result.get("success"):
-            print(f"Generation failed for {meta['subject']} {meta['difficulty']}: {result.get('error')}")
+        if not result or not result.get("success"):
+            error_msg = result.get('error') if result else "Unknown error"
+            print(f"Generation failed for {meta['subject']} {meta['difficulty']}: {error_msg}")
             # Fallback logic same as above
             for k in range(meta['count']):
                 fallback_q = QuestionResponse(
