@@ -328,12 +328,14 @@ def start_community_test(
         
     # 2. Create Test Attempt
     # Determine subject distribution for attempt record
-    try:
-        # Try to infer from questions data or mock it
-        # Since we stored questions_jsons, let's just say "Copied from Master"
-        subject_counts = {test.subject: test.total_questions} 
-    except:
-        subject_counts = {}
+    # 3. Populate Questions from Master
+    questions = json.loads(test.questions_data)
+    
+    # Calculate real subject distribution from questions
+    subject_counts = {}
+    for q in questions:
+        subj = q.get("subject", test.subject) or "General"
+        subject_counts[subj] = subject_counts.get(subj, 0) + 1
 
     attempt = TestAttempt(
         user_id=current_user.id,

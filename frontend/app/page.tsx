@@ -20,20 +20,8 @@ export default function Home() {
       {/* Mobile Layout (Standard Stack) */}
       <div className="md:hidden pb-20">
         <main className="min-h-screen">
-          {/* Mobile Header with Generator */}
-          <div className="bg-gray-50 dark:bg-black/50 p-4 border-b border-gray-200 dark:border-gray-800">
-            <div className="mb-4">
-              <h1 className="text-xl font-bold bg-gradient-to-r from-indigo-500 to-purple-600 bg-clip-text text-transparent">
-                Infinite Test Generator
-              </h1>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Create your custom test instantly</p>
-            </div>
-            <TestGenerator />
-          </div>
-
           {/* Feed Section */}
-          <div className="space-y-4 pt-2 px-2">
-            <h2 className="px-2 text-lg font-bold text-gray-900 dark:text-white">Community Feed</h2>
+          <div className="space-y-4">
             <Suspense fallback={<LoadingFeed />}>
               <PostsFeed />
             </Suspense>
