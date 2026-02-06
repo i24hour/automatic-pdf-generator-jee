@@ -430,6 +430,7 @@ async def generate_test(
         # Generate PDF
         llm_result["level"] = request.level  # Pass level to PDF template
         llm_result["difficulty"] = request.difficulty  # Pass difficulty to PDF template
+        llm_result["include_solutions"] = request.include_solutions # Pass solutions flag
         pdf_path = pdf_engine.generate_pdf(llm_result, filename)
         
         if not pdf_path:

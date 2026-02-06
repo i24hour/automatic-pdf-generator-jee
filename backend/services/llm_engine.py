@@ -1022,14 +1022,26 @@ IMPORTANT:
             mcq_instruction = f"""FOR MCQs:
 - Generate {multi_correct_count} MULTI-CORRECT MCQs FIRST (type: "mcq_multi", answer like "AB", "ACD", "BC")
 - Then generate {single_correct_count} SINGLE-CORRECT MCQs (type: "mcq", answer like "A", "B", "C", "D")
-- Multi-correct questions should have 2-3 correct options out of 4"""
+- Multi-correct questions should have 2-3 correct options out of 4
+
+SOLUTION REQUIREMENTS:
+- Provide a "solution" field for EVERY question.
+- Solution must be detailed and step-by-step.
+- Use \\textbf{Step 1:} format for steps.
+- **CRITICAL**: Put a full empty line (gap) between each step.
+- **CRITICAL**: Write EVERY mathematical equation on a SEPARATE LINE using display math ($$ ... $$) so it is centered.
+- Do NOT write equations inline with text.
+- Example: "The force is given by: $$ F = ma $$""""
             json_example = """{{
     "questions": [
         {{
             "type": "mcq_multi",
             "text": "Which of the following are correct for an isothermal process?",
-            "options": ["$\\\\Delta U = 0$", "$PV = constant$", "$\\\\Delta T = 0$", "$Q = 0$"],
+            "options": ["$\\Delta U = 0$", "$PV = constant$", "$\\Delta T = 0$", "$Q = 0$"],
             "answer": "ABC",
+            "answer": "ABC",
+            "solution": "\\textbf{Step 1:} For an isothermal process, temperature is constant ($T = constant$), so change in temperature is zero. $$ \\Delta T = 0 $$ \\vspace{1em} \\textbf{Step 2:} Internal energy depends only on temperature for an ideal gas. $$ \\Delta U = 0 $$ \\vspace{1em} \\textbf{Step 3:} From ideal gas equation $PV = nRT$, since $T$ is constant: $$ PV = constant $$ (Boyle's Law).",
+            "diagram_tikz": null
             "diagram_tikz": null
         }},
         {{
@@ -1037,6 +1049,7 @@ IMPORTANT:
             "text": "Single correct question with $math$ notation",
             "options": ["Option A", "Option B", "Option C", "Option D"],
             "answer": "A",
+            "solution": "Detailed explanation here with steps.",
             "diagram_tikz": null
         }},
         {{
@@ -1044,6 +1057,7 @@ IMPORTANT:
             "text": "Numerical question with $math$",
             "options": [],
             "answer": "3.14",
+            "solution": "Calculation showing how 3.14 is derived.",
             "diagram_tikz": null
         }}
     ]
@@ -1099,6 +1113,7 @@ IMPORTANT:
             "text": "Question with $math$ notation",
             "options": ["Option A", "Option B", "Option C", "Option D"],
             "answer": "A",
+            "solution": "\\textbf{Step 1:} Explanation step 1... \\vspace{0.5em} \\textbf{Step 2:} Conclusion.",
             "diagram_tikz": null
         },
         {
@@ -1106,6 +1121,7 @@ IMPORTANT:
             "text": "Numerical question with $math$",
             "options": [],
             "answer": "numerical_value",
+            "solution": "Detailed calculation...",
             "diagram_tikz": null
         }
     ]
@@ -1136,17 +1152,17 @@ IMPORTANT:
             
             boards_json_example = """{
     "questions": [
-        {"type": "short_answer", "marks": 1, "text": "Define electric flux.", "answer": "Electric flux is..."},
-        {"type": "short_answer", "marks": 2, "text": "State the principle of superposition.", "answer": "When two waves..."},
-        {"type": "short_answer", "marks": 3, "text": "Derive E = -dV/dr.", "answer": "Work done = qE.dr..."},
-        {"type": "long_answer", "marks": 5, "text": "State and prove Gauss's law.", "answer": "Gauss's law states..."},
+        {"type": "short_answer", "marks": 1, "text": "Define electric flux.", "answer": "Electric flux is...", "solution": "Definition..."},
+        {"type": "short_answer", "marks": 2, "text": "State the principle of superposition.", "answer": "When two waves...", "solution": "Full explanation..."},
+        {"type": "short_answer", "marks": 3, "text": "Derive E = -dV/dr.", "answer": "Work done = qE.dr...", "solution": "Step-by-step derivation..."},
+        {"type": "long_answer", "marks": 5, "text": "State and prove Gauss's law.", "answer": "Gauss's law states...", "solution": "Proof with steps..."},
         {"type": "case_based", "marks": 4, "passage": "Electromagnetic induction...", "sub_questions": [
             {"text": "Who discovered it?", "options": ["Newton", "Faraday", "Maxwell", "Ampere"], "answer": "B"},
             {"text": "What is required?", "options": ["Static field", "Changing flux", "Electric field", "Gravity"], "answer": "B"},
             {"text": "Which device uses it?", "options": ["Capacitor", "Resistor", "Transformer", "Diode"], "answer": "C"},
             {"text": "In which year?", "options": ["1820", "1831", "1840", "1850"], "answer": "B"}
-        ], "answer": "B, B, C, B"},
-        {"type": "numerical", "marks": 3, "text": "A wire of resistance $10\\\\Omega$...", "answer": "2.5"}
+        ], "answer": "B, B, C, B", "solution": "Reasoning for each sub-question..."},
+        {"type": "numerical", "marks": 3, "text": "A wire of resistance $10\\\\Omega$...", "answer": "2.5", "solution": "Calculation..."}
     ]
 }"""
             
@@ -1197,7 +1213,11 @@ REQUIREMENTS:
 - For multi-correct: "answer" field should be comma separated like "A, C"
 - For integer type: "answer" field should be a number string like "5"
 - Use LaTeX for math: $...$, $$...$$
-- NO explanations, just question, options, and answer
+- Use LaTeX for math. Use $$...$$ for ALL equations to center them.
+- PROVIDE DETAILED SOLUTIONS in "solution" field for every question.
+- Use \\textbf{Step 1:} format.
+- Ensure 1 line gap between steps.
+- Center ALL equations.
 
 Return ONLY valid JSON:
 {json_example}"""
@@ -1239,9 +1259,12 @@ TOTAL: {total_q} Questions
 REQUIREMENTS:
 - All questions should be MCQ format with 4 options (A, B, C, D)
 - Questions should match GATE {gate_paper} difficulty and syllabus
-- Use LaTeX for math: $...$, $\\frac{{a}}{{b}}$
+- Use LaTeX for math. Use $$...$$ for ALL equations to center them.
 - Each question must have exactly one correct answer for MCQs
-- NO explanations, just question, options, and answer
+- PROVIDE DETAILED SOLUTIONS in "solution" field for every question.
+- Use \\textbf{Step 1:} format.
+- Ensure 1 line gap between steps.
+- Center ALL equations.
 
 Return ONLY valid JSON:
 {json_example}"""
@@ -1261,7 +1284,13 @@ STRICT REQUIREMENTS:
 4. Each question should be solvable only by students who have mastered that level
 5. {mcq_instruction}
 {numerical_answer_instruction}
-7. NO explanations or solutions
+7. PROVIDE DETAILED SOLUTIONS in "solution" field for every question. This is CRITICAL.
+8. Solution Formatting:
+   - Use "\\textbf{Step 1:}" for steps.
+   - Leave a ONE LINE GAP between steps.
+   - Write equations on SEPARATE LINES using $$...$$ (display math).
+   - Center align all equations.
+   - Do not clump text and math together.
 
 FORMATTING REQUIREMENTS (VERY IMPORTANT):
 - Use proper spacing between words and sentences
@@ -1555,8 +1584,8 @@ FORMATTING REQUIREMENTS (CRITICAL):
 
 Return ONLY valid JSON:
 {{"questions": [
-  {{"type": "mcq", "text": "A body of mass $m$ is dropped from height $h$. What is the velocity?", "options": ["$\\\\sqrt{{2gh}}$", "$\\\\sqrt{{gh}}$", "$2gh$", "$gh$"], "answer": "A"}},
-  {{"type": "numerical", "text": "If $F = 10$ N and $m = 2$ kg, find acceleration in m/s$^2$.", "answer": "5"}}
+  {{"type": "mcq", "text": "A body of mass $m$ is dropped from height $h$. What is the velocity?", "options": ["$\\\\sqrt{{2gh}}$", "$\\\\sqrt{{gh}}$", "$2gh$", "$gh$"], "answer": "A", "solution": "\\textbf{Step 1:} Using equation of motion $v^2 - u^2 = 2as$: $$ v^2 - 0 = 2gh $$ \\vspace{1em} \\textbf{Step 2:} Solving for v: $$ v = \\sqrt{2gh} $$"}},
+  {{"type": "numerical", "text": "If $F = 10$ N and $m = 2$ kg, find acceleration in m/s$^2$.", "answer": "5", "solution": "\\textbf{Step 1:} Newton's Second Law states: $$ F = ma $$ \\vspace{1em} \\textbf{Step 2:} Substitute values: $$ 10 = 2a $$ \\vspace{1em} \\textbf{Step 3:} Solve for a: $$ a = 5 \\, m/s^2 $$"}}
 ]}}
 """
         # Fresh Questions: Add anti-repetition instruction if past questions provided

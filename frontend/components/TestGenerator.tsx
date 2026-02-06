@@ -28,7 +28,8 @@ import {
     Share2,
     ChevronDown,
     Keyboard,
-    List
+    List,
+    BookOpen
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { logError } from "@/lib/logger";
@@ -110,7 +111,7 @@ export default function TestGenerator() {
     const [jeeMulti, setJeeMulti] = useState(5);
     const [jeeInteger, setJeeInteger] = useState(5);
 
-    const [includeSolutions, setIncludeSolutions] = useState(false);
+    const [includeSolutions, setIncludeSolutions] = useState(true);
     const [isLoading, setIsLoading] = useState(false);
     const [result, setResult] = useState<GenerateResponse | null>(null);
     const [error, setError] = useState<string | null>(null);
@@ -1652,6 +1653,26 @@ export default function TestGenerator() {
                         )
                     }
                 </div >
+
+                {/* Solutions Toggle */}
+                <div className="mb-6 flex items-center gap-3 bg-indigo-50 dark:bg-indigo-900/10 p-3 rounded-xl border border-indigo-100 dark:border-indigo-900/30">
+                    <div className="relative flex items-center">
+                        <input
+                            type="checkbox"
+                            checked={includeSolutions}
+                            onChange={(e) => setIncludeSolutions(e.target.checked)}
+                            className="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500 border-gray-300 dark:border-gray-600"
+                            id="includeSolutions"
+                        />
+                    </div>
+                    <label htmlFor="includeSolutions" className="cursor-pointer flex-1">
+                        <div className="font-medium text-gray-900 dark:text-gray-100 text-sm">Include Detailed Solutions</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                            Generates step-by-step explanations for each question
+                        </div>
+                    </label>
+                    <BookOpen className="w-5 h-5 text-indigo-500" />
+                </div>
 
                 {/* Generate Button */}
                 < button
