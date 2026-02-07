@@ -113,15 +113,30 @@ async def generate_video(
         "created_at": datetime.utcnow()
     }
     
-    # Start background processing
-    background_tasks.add_task(
-        process_video_generation,
-        job_id,
-        request,
-        current_user.id
-    )
+    # Push job to SQS
+    from services.aws_services import get_aws_services
+    aws = get_aws_services()
     
-    return {"job_id": job_id, "status": "pending"}
+    job_data = {
+        "job_id": job_id,
+        "prompt": request.prompt,
+        "topic": request.topic,
+        "language": request.language,
+        "tts_provider": request.tts_provider,
+        "max_duration": request.max_duration,
+        "user_id": current_user.id
+    }
+    
+    success = await aws.send_job_to_queue(job_data)
+    
+    if success:
+        video_jobs[job_id]["status"] = "queued"
+        video_jobs[job_id]["current_step"] = "Queued for processing..."
+    else:
+        video_jobs[job_id]["status"] = "failed"
+        video_jobs[job_id]["error"] = "Failed to queue job"
+    
+    return {"job_id": job_id, "status": video_jobs[job_id]["status"]}
 
 
 @router.get("/status/{job_id}")

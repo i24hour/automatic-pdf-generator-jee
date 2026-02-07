@@ -2,7 +2,7 @@ fastapi==0.109.0
 uvicorn[standard]==0.27.0
 litellm>=1.60.0
 google-generativeai==0.8.0
-python-dotenv==1.0.0
+
 jinja2==3.1.2
 pydantic==2.5.3
 email-validator==2.1.0
@@ -34,3 +34,5 @@ reportlab==4.0.9
 # Video Generator (vector1 branch)
 edge-tts>=6.1.0
 httpx>=0.25.0
+manim>=0.18.0
+manim-voiceover>=0.3.0
