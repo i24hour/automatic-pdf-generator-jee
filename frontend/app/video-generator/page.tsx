@@ -103,7 +103,7 @@ export default function VideoGeneratorPage() {
             // Simulated progress for now
             const steps = [
                 { progress: 10, step: "Analyzing your request..." },
-                { progress: 25, step: "Generating Manim code..." },
+                { progress: 25, step: "Generating animation code..." },
                 { progress: 50, step: "Rendering animations..." },
                 { progress: 75, step: "Generating voice-over..." },
                 { progress: 90, step: "Combining video and audio..." },
@@ -453,7 +453,7 @@ function VideoGeneratorContent({
                 />
                 <FeatureCard
                     icon={<Video className="w-6 h-6" />}
-                    title="Manim Animations"
+                    title="Math Animations"
                     description="Professional-quality mathematical animations"
                 />
                 <FeatureCard
