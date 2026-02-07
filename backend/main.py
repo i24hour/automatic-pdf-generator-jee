@@ -71,12 +71,9 @@ app.include_router(institute_router)
 app.include_router(posts_router)
 app.include_router(pdf_router)
 
-# Video Generator (vector1 branch feature)
-try:
-    from routers.video_router import router as video_router
-    app.include_router(video_router)
-except ImportError:
-    pass  # edge-tts not installed
+# Video Generator
+from routers.video_router import router as video_router
+app.include_router(video_router)
 
 
 # Initialize database on startup
