@@ -98,30 +98,82 @@ export default function VideoGeneratorPage() {
         setGenerationProgress(0);
         setCurrentStep("Initializing...");
 
-        try {
-            // TODO: Implement actual API call
-            // Simulated progress for now
-            const steps = [
-                { progress: 10, step: "Analyzing your request..." },
-                { progress: 25, step: "Generating animation code..." },
-                { progress: 50, step: "Rendering animations..." },
-                { progress: 75, step: "Generating voice-over..." },
-                { progress: 90, step: "Combining video and audio..." },
-                { progress: 100, step: "Complete!" }
-            ];
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://mentors-mantra-api-87253755436.us-central1.run.app";
+        const token = localStorage.getItem("token");
 
-            for (const { progress, step } of steps) {
-                await new Promise(resolve => setTimeout(resolve, 1500));
-                setGenerationProgress(progress);
-                setCurrentStep(step);
+        try {
+            // 1. Start video generation
+            const generateRes = await fetch(`${API_URL}/api/video/generate`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    prompt: prompt.trim(),
+                    topic: selectedTopic,
+                    language: selectedLanguage,
+                    tts_provider: "edge",
+                    max_duration: 60
+                })
+            });
+
+            if (!generateRes.ok) {
+                const err = await generateRes.json();
+                throw new Error(err.detail || "Failed to start video generation");
             }
 
-            // Navigate to result page
-            // router.push(`/video-generator/result/${jobId}`);
+            const { job_id, status } = await generateRes.json();
+            setJobId(job_id);
+            setCurrentStep("Job queued, starting processing...");
+            setGenerationProgress(5);
+
+            // 2. Poll for status updates
+            let completed = false;
+            let pollCount = 0;
+            const maxPolls = 120; // 10 minutes max (5s interval)
+
+            while (!completed && pollCount < maxPolls) {
+                await new Promise(resolve => setTimeout(resolve, 5000)); // 5 second intervals
+                pollCount++;
+
+                const statusRes = await fetch(`${API_URL}/api/video/status/${job_id}`, {
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+
+                if (!statusRes.ok) {
+                    throw new Error("Failed to get job status");
+                }
+
+                const jobStatus = await statusRes.json();
+                setGenerationProgress(jobStatus.progress);
+                setCurrentStep(jobStatus.current_step);
+
+                if (jobStatus.status === "completed") {
+                    completed = true;
+                    // Show video or navigate to result
+                    if (jobStatus.video_url) {
+                        // Open video in new tab for now
+                        window.open(jobStatus.video_url, "_blank");
+                        setCurrentStep("Video ready! Opening...");
+                    }
+                } else if (jobStatus.status === "failed") {
+                    throw new Error(jobStatus.error || "Video generation failed");
+                }
+            }
+
+            if (!completed) {
+                throw new Error("Video generation timed out. Please try again.");
+            }
+
         } catch (error) {
             console.error("Generation failed:", error);
+            setCurrentStep(error instanceof Error ? error.message : "Generation failed");
+            // Keep showing error for 3 seconds
+            await new Promise(resolve => setTimeout(resolve, 3000));
         } finally {
             setIsGenerating(false);
+            setGenerationProgress(0);
         }
     };
 
