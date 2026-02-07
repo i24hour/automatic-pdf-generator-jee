@@ -16,24 +16,7 @@ from database import get_db
 from models import User
 from routers.auth_router import get_current_user
 
-# Lazy imports - these are loaded only when video generation is requested
-# to avoid slowing down app startup (manim, scipy, etc. are heavy)
-_manim_generator = None
-_tts_engine = None
 
-def get_manim_generator():
-    global _manim_generator
-    if _manim_generator is None:
-        from services.manim_generator import ManimGenerator
-        _manim_generator = ManimGenerator()
-    return _manim_generator
-
-def get_tts_engine():
-    global _tts_engine
-    if _tts_engine is None:
-        from services.tts_engine import TTSEngine
-        _tts_engine = TTSEngine()
-    return _tts_engine
 
 
 router = APIRouter(prefix="/api/video", tags=["Video Generation"])

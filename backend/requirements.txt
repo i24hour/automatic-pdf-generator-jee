@@ -31,8 +31,5 @@ google-cloud-storage==2.14.0
 # PDF Generation
 reportlab==4.0.9
 
-# Video Generator (vector1 branch)
-edge-tts>=6.1.0
-httpx>=0.25.0
-manim>=0.18.0
-manim-voiceover>=0.3.0
+# Video Generator deps are on EC2 worker only (see docker/Dockerfile.manim)
+# API just sends jobs to SQS
