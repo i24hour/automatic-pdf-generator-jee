@@ -14,7 +14,7 @@ import json
 
 from database import get_db
 from models import User
-from routers.auth_router import get_current_user
+from routers.auth_router import get_current_user_info as get_current_user
 
 
 
