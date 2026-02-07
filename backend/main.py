@@ -8,7 +8,7 @@ import uuid
 import base64
 import json
 from datetime import datetime, timedelta, timezone
-from typing import Optional, Dict, List
+from typing import Optional, Dict
 from fastapi import FastAPI, HTTPException, Depends, status, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse
@@ -25,8 +25,6 @@ from routers.auth_router import router as auth_router
 from routers.institute_router import router as institute_router
 from routers.posts_router import router as posts_router
 from routers.pdf_router import router as pdf_router
-from routers.test_router import router as test_router
-from routers.support_router import router as support_router
 from services.email_service import email_service
 # from services.r2_storage import r2_storage  # Deprecated
 from services.gcs_storage import gcs_storage
@@ -72,11 +70,6 @@ app.include_router(auth_router)
 app.include_router(institute_router)
 app.include_router(posts_router)
 app.include_router(pdf_router)
-app.include_router(pdf_router)
-app.include_router(test_router)
-app.include_router(support_router)
-from routers.community_router import router as community_router
-app.include_router(community_router)
 
 
 # Initialize database on startup
@@ -91,13 +84,8 @@ class GenerateRequest(BaseModel):
     subject: str = Field(..., description="Subject: Physics, Chemistry, or Maths")
     topic: str = Field(..., description="Specific topic for the test")
     total_questions: int = Field(default=20, ge=1, le=50, description="Total number of questions")
-    level: str = Field(default="JEE Mains", description="Exam type: CBSE Board, JEE Mains, JEE Advanced, Olympiad, NEET")
-    # Difficulty distribution (percentages that should sum to 100)
-    easy_percent: int = Field(default=20, ge=0, le=100, description="Percentage of Easy questions")
-    medium_percent: int = Field(default=50, ge=0, le=100, description="Percentage of Medium questions")
-    hard_percent: int = Field(default=30, ge=0, le=100, description="Percentage of Hard questions")
-    # Legacy field for backwards compatibility
-    difficulty: str = Field(default="Medium", description="Legacy: Difficulty within exam: Easy, Medium, Hard")
+    level: str = Field(default="JEE Mains", description="Exam type: Boards, JEE Mains, JEE Advanced, Olympiad, NEET")
+    difficulty: str = Field(default="Medium", description="Difficulty within exam: Easy, Medium, Hard")
     num_mcqs: Optional[int] = Field(default=None, description="Number of MCQs (optional)")
     num_numerical: Optional[int] = Field(default=None, description="Number of numerical questions (optional)")
     include_solutions: bool = Field(default=False, description="Include step-by-step solutions")
@@ -106,11 +94,11 @@ class GenerateRequest(BaseModel):
     num_msq: Optional[int] = Field(default=None, description="Number of MSQs (GATE only)")
     num_nat: Optional[int] = Field(default=None, description="Number of NATs (GATE only)")
     num_ga: Optional[int] = Field(default=None, description="Number of General Aptitude questions (GATE only)")
-    # CBSE Board Specific Fields
-    cbse_vsa: Optional[int] = Field(default=None, description="Number of Very Short Answer questions (CBSE Board only)")
-    cbse_sa: Optional[int] = Field(default=None, description="Number of Short Answer questions (CBSE Board only)")
-    cbse_la: Optional[int] = Field(default=None, description="Number of Long Answer questions (CBSE Board only)")
-    cbse_case: Optional[int] = Field(default=None, description="Number of Case Based questions (CBSE Board only)")
+    # Boards Specific Fields
+    cbse_vsa: Optional[int] = Field(default=None, description="Number of Very Short Answer questions (Boards only)")
+    cbse_sa: Optional[int] = Field(default=None, description="Number of Short Answer questions (Boards only)")
+    cbse_la: Optional[int] = Field(default=None, description="Number of Long Answer questions (Boards only)")
+    cbse_case: Optional[int] = Field(default=None, description="Number of Case Based questions (Boards only)")
 
 
 class GenerateResponse(BaseModel):
@@ -267,11 +255,11 @@ async def health_check():
 @app.post("/api/detect-subject", response_model=DetectSubjectResponse)
 async def detect_subject(request: DetectSubjectRequest, db: Session = Depends(get_db)):
     """
-    Check the cache for a subject. If not found, return None/Low confidence.
-    NO LLM/Gemini fallback as per specific user request (Database-Only).
+    Auto-detect the subject for a given topic using LLM.
+    This helps users by automatically selecting the most likely subject.
     """
     if not request.topic or len(request.topic.strip()) < 2:
-        return DetectSubjectResponse(subject=None, confidence="low", cached=False)
+        return DetectSubjectResponse(subject="Physics", confidence="low", cached=False)
 
     normalized_topic = request.topic.strip().lower()
 
@@ -283,49 +271,28 @@ async def detect_subject(request: DetectSubjectRequest, db: Session = Depends(ge
             cached=True
         )
 
-    # NO LLM FALLBACK
-    return DetectSubjectResponse(
-        subject=None,
-        confidence="none",
-        cached=False
-    )
-
-class StoreSubjectRequest(BaseModel):
-    topic: str
-    subject: str
-
-@app.post("/api/store-subject")
-async def store_subject_mapping(request: StoreSubjectRequest, db: Session = Depends(get_db)):
-    """
-    Manually store/update a topic-subject mapping in the cache.
-    Used when user manually selects a subject for a topic.
-    """
-    if not request.topic or not request.subject:
-        return {"success": False, "error": "Invalid data"}
-
-    normalized_topic = request.topic.strip().lower()
+    result = llm_engine.detect_subject(request.topic)
+    subject = result.get("subject", "Physics")
+    confidence = result.get("confidence", "low")
 
     try:
-        # Check if exists
-        existing = db.query(TopicSubjectCache).filter(TopicSubjectCache.normalized_topic == normalized_topic).first()
-        if existing:
-            existing.subject = request.subject # Update it? User knows best.
-            existing.confidence = "manual"
-        else:
-            new_entry = TopicSubjectCache(
-                topic=request.topic.strip(),
-                normalized_topic=normalized_topic,
-                subject=request.subject,
-                confidence="manual"
-            )
-            db.add(new_entry)
-        
+        cache_row = TopicSubjectCache(
+            topic=request.topic.strip(),
+            normalized_topic=normalized_topic,
+            subject=subject,
+            confidence=confidence,
+        )
+        db.add(cache_row)
         db.commit()
-        return {"success": True}
     except Exception as e:
         db.rollback()
-        print(f"Store subject failed: {e}")
-        return {"success": False}
+        print(f"TopicSubjectCache insert failed: {e}")
+
+    return DetectSubjectResponse(
+        subject=subject,
+        confidence=confidence,
+        cached=False
+    )
 
 
 @app.get("/api/rate-limit", response_model=RateLimitInfo)
@@ -433,7 +400,6 @@ async def generate_test(
         # Generate PDF
         llm_result["level"] = request.level  # Pass level to PDF template
         llm_result["difficulty"] = request.difficulty  # Pass difficulty to PDF template
-        llm_result["include_solutions"] = request.include_solutions # Pass solutions flag
         pdf_path = pdf_engine.generate_pdf(llm_result, filename)
         
         if not pdf_path:
@@ -884,66 +850,6 @@ async def list_models():
     }
 
 
-class HistoryItem(BaseModel):
-    """Single history item response."""
-    id: str
-    subject: str
-    topic: str
-    level: str
-    difficulty: str
-    question_count: int
-    pdf_filename: Optional[str] = None
-    status: str
-    created_at: datetime
-    
-    class Config:
-        from_attributes = True
-
-
-class HistoryResponse(BaseModel):
-    """History response with last 3 PDFs."""
-    generations: List[HistoryItem]
-    total: int
-
-
-@app.get("/api/history", response_model=HistoryResponse)
-async def get_generation_history(
-    current_user: User = Depends(get_current_user_required),
-    db: Session = Depends(get_db)
-):
-    """
-    Get the last 3 PDF generations for the current user.
-    Returns generation history with status (for background tasks).
-    """
-    from sqlalchemy import desc
-    
-    # Get last 3 generations for this user
-    generations = db.query(PDFGeneration).filter(
-        PDFGeneration.user_id == current_user.id
-    ).order_by(desc(PDFGeneration.created_at)).limit(3).all()
-    
-    total = db.query(PDFGeneration).filter(
-        PDFGeneration.user_id == current_user.id
-    ).count()
-    
-    items = [
-        HistoryItem(
-            id=gen.id,
-            subject=gen.subject,
-            topic=gen.topic,
-            level=gen.level,
-            difficulty="Medium",  # Not stored in PDFGeneration originally
-            question_count=gen.question_count,
-            pdf_filename=gen.pdf_filename,
-            status=gen.status or "COMPLETED",
-            created_at=gen.created_at
-        )
-        for gen in generations
-    ]
-    
-    return HistoryResponse(generations=items, total=total)
-
-
 # ============== SSE ENDPOINTS FOR RESILIENT GENERATION ==============
 
 class SSEStartResponse(BaseModel):
@@ -1069,10 +975,6 @@ async def run_generation_job(
             numerical_count=numerical_count,
             level=request.level,
             difficulty=request.difficulty,
-            # Difficulty distribution percentages
-            easy_percent=request.easy_percent,
-            medium_percent=request.medium_percent,
-            hard_percent=request.hard_percent,
             include_solutions=request.include_solutions,
             # GATE Parameters
             gate_paper=request.gate_paper,
@@ -1130,15 +1032,7 @@ async def run_generation_job(
         
         # Generate PDF
         llm_result["level"] = request.level
-        # Compute difficulty label from distribution percentages
-        # Use the dominant difficulty (highest percentage) for the PDF header
-        difficulty_map = {
-            "Easy": request.easy_percent,
-            "Medium": request.medium_percent,
-            "Hard": request.hard_percent
-        }
-        computed_difficulty = max(difficulty_map, key=difficulty_map.get)
-        llm_result["difficulty"] = computed_difficulty
+        llm_result["difficulty"] = request.difficulty
         llm_result["include_solutions"] = request.include_solutions
         
         pdf_path = pdf_engine.generate_pdf(llm_result, filename)
