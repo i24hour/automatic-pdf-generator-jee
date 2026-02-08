@@ -32,37 +32,24 @@ class MathAnimation(Scene):
 '''
     
     # System prompt for Manim code generation
-    SYSTEM_PROMPT = """You are an expert Manim animator. Generate production-ready Manim Community Edition code for mathematical animations.
+    SYSTEM_PROMPT = """You are an expert Manim animator. Generate CONCISE Manim code.
 
-RULES:
-1. Use ONLY Manim Community Edition syntax (not ManimGL)
-2. Generate a single Scene class called 'MathAnimation'
-3. Include proper timing with self.wait() calls
-4. Use varied animations: Write, FadeIn, FadeOut, Transform, Create, etc.
-5. Use LaTeX for mathematical equations: MathTex("...")
-6. Add visual elements: axes, graphs, shapes, arrows
-7. Keep animations between 30-120 seconds total
-8. Use colors from Manim's color palette: BLUE, RED, GREEN, YELLOW, WHITE, etc.
-9. Add proper spacing and positioning with .next_to(), .to_edge(), .move_to()
-10. INDENT code properly - all code should be inside construct() method
+CRITICAL RULES:
+1. scene_code = ONLY the body of construct() method (NO class, NO def construct)
+2. Keep code SHORT - maximum 40-50 lines
+3. Use basic Manim elements: Text, MathTex, Create, Write, FadeIn, FadeOut
+4. Simple animations only - avoid complex geometry
 
-OUTPUT FORMAT (STRICT):
-Return ONLY a JSON object with these fields:
+OUTPUT: Return JSON with these fields ONLY:
 {
-    "scene_code": "        # Code lines here (indented with 8 spaces)",
-    "narration_script": [
-        {"timestamp": 0, "duration": 5, "text": "Narration for first part..."},
-        {"timestamp": 5, "duration": 5, "text": "Narration for second part..."}
-    ],
-    "estimated_duration_seconds": 60,
+    "scene_code": "        title = Text('Example')\\n        self.play(Write(title))",
+    "narration_script": [{"timestamp": 0, "duration": 5, "text": "Narration"}],
+    "estimated_duration_seconds": 30,
     "title": "Animation Title"
 }
 
-IMPORTANT:
-- scene_code should NOT include class definition or construct method - just the body
-- Each line in scene_code must be indented with 8 spaces (for proper Python formatting)
-- narration_script should sync with animations
-- Keep narration conversational and educational"""
+WARNING: scene_code must NOT contain 'class' or 'def construct' - ONLY the method body!
+Keep total response under 2000 characters."""
 
     def __init__(self, model: str = None):
         self.model = model or self.DEFAULT_MODEL
@@ -111,7 +98,7 @@ Generate the animation code and synchronized narration script."""
                     {"role": "user", "content": user_prompt}
                 ],
                 temperature=0.7,
-                max_tokens=4096,
+                max_tokens=16384,
                 response_format={"type": "json_object"}
             )
             
@@ -142,7 +129,15 @@ Generate the animation code and synchronized narration script."""
                     }
             
             # Build complete Manim code
-            full_code = self.CODE_TEMPLATE.format(scene_code=result["scene_code"])
+            scene_code = result["scene_code"]
+            
+            # Check if LLM returned full class definition instead of just method body
+            if "class " in scene_code and "def construct" in scene_code:
+                # LLM returned complete code, use it directly
+                full_code = scene_code
+            else:
+                # LLM returned just method body, wrap in template
+                full_code = self.CODE_TEMPLATE.format(scene_code=scene_code)
             
             return {
                 "success": True,
@@ -219,9 +214,14 @@ Generate the animation code and synchronized narration script."""
             f.write(code)
         
         try:
+            # Extract class name from code (dynamically handles LLM-generated class names)
+            import re
+            class_match = re.search(r'class\s+(\w+)\s*\([^)]*Scene[^)]*\)', code)
+            scene_class = class_match.group(1) if class_match else "MathAnimation"
+            
             # Run manim command
             process = await asyncio.create_subprocess_exec(
-                "manim", code_path, "MathAnimation",
+                "manim", code_path, scene_class,
                 flag, "-o", "output.mp4",
                 "--media_dir", output_dir,
                 stdout=asyncio.subprocess.PIPE,
