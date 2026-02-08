@@ -7,9 +7,10 @@ env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
 print(f"Loading env from: {env_path}")
 load_dotenv(env_path)
 
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///backend/app.db")
+
+DATABASE_URL = os.getenv("DATABASE_URL")
 if not DATABASE_URL:
-    print("DATABASE_URL not found")
+    print("DATABASE_URL not found in environment")
     exit(1)
 
 # Fix for postgres URL if needed (sqlalchemy requires postgresql://)

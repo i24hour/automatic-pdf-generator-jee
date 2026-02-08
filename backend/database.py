@@ -8,30 +8,27 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import os
 
-# Database URL - SQLite for local development, PostgreSQL for production
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./app.db")
 
-# Heroku uses postgres:// but SQLAlchemy 1.4+ requires postgresql://
+# Database URL - AWS RDS PostgreSQL
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+if not DATABASE_URL:
+    raise ValueError("DATABASE_URL environment variable is not set")
+
+# Handle Heroku/Render postgres:// format if needed
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
-# Create engine
-# For SQLite, we need connect_args to allow multi-threading
-if DATABASE_URL.startswith("sqlite"):
-    engine = create_engine(
-        DATABASE_URL,
-        connect_args={"check_same_thread": False}
-    )
-else:
-    # PostgreSQL for production
-    engine = create_engine(
-        DATABASE_URL, 
-        pool_pre_ping=True,
-        pool_size=20,  # Increased to 20 as requested
-        max_overflow=30,  # Increased overflow to 30 as requested
-        pool_recycle=300,  # Recycle connections every 5 min
-        connect_args={"sslmode": "require"}
-    )
+# Create engine for PostgreSQL
+engine = create_engine(
+    DATABASE_URL, 
+    pool_pre_ping=True,
+    pool_size=20,
+    max_overflow=30,
+    pool_recycle=300,
+    connect_args={"sslmode": "require"}
+)
+
 
 # Session factory
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
