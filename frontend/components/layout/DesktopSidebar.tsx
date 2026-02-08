@@ -86,7 +86,7 @@ export default function DesktopSidebar() {
                     <span>Leaderboard</span>
                 </Link>
 
-                <Link
+                {/* <Link
                     href="/video-generator"
                     className={`flex items-center gap-4 px-4 py-3 rounded-full text-xl transition-colors ${isActive("/video-generator")
                         ? "font-bold text-gray-900 dark:text-white"
@@ -95,7 +95,7 @@ export default function DesktopSidebar() {
                 >
                     <Video className={`w-7 h-7 ${isActive("/video-generator") ? "stroke-[2.5px]" : ""}`} />
                     <span>Video Generator</span>
-                </Link>
+                </Link> */}
 
                 <Link
                     href="/profile"
