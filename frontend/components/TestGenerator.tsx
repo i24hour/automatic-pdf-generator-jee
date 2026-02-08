@@ -167,6 +167,8 @@ export default function TestGenerator() {
                 setShowUsernameModal(true);
             }, 1000);
             return () => clearTimeout(timer);
+        } else if (user?.username) {
+            setShowUsernameModal(false);
         }
     }, [user, authLoading]);
 

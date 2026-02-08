@@ -146,6 +146,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setToken(storedToken);
             setUser(JSON.parse(storedUser));
             setRefreshTokenValue(storedRefreshToken);
+
+            // Fetch fresh user data in background to sync new fields (like username)
+            // Define async function inside effect to be safe
+            const refreshUserInternal = async () => {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/auth/me`, {
+                        headers: {
+                            Authorization: `Bearer ${storedToken}`,
+                        },
+                    });
+
+                    if (response.ok) {
+                        const userData = await response.json();
+                        setUser(userData);
+                        localStorage.setItem("auth_user", JSON.stringify(userData));
+                    }
+                } catch (error) {
+                    console.error("Failed to refresh user:", error);
+                }
+            };
+            refreshUserInternal();
         }
         setIsLoading(false);
     }, []);
