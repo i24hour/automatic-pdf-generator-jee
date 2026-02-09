@@ -15,6 +15,8 @@ import json
 from database import get_db
 from models import User
 from auth import get_current_user_required as get_current_user
+from services.tts_engine import get_tts_engine
+from services.manim_generator import get_manim_generator
 
 
 
