@@ -42,7 +42,7 @@ RATE_LIMIT_HOURS = int(os.getenv("RATE_LIMIT_HOURS", "24"))
 app = FastAPI(
     title="Mentors Mantra Test Generator",
     description="Generate professionally formatted PDF test papers using AI",
-    version="2.0.0"
+    version="2.1.0"
 )
 
 # Configure CORS
@@ -240,7 +240,7 @@ async def root():
     return {
         "status": "healthy",
         "service": "Mentors Mantra Test Generator",
-        "version": "2.0.0"
+        "version": "2.1.0"
     }
 
 
