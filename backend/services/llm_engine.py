@@ -1328,14 +1328,17 @@ STRICT REQUIREMENTS:
 4. Each question should be solvable only by students who have mastered that level
 5. {mcq_instruction}
 {numerical_answer_instruction}
-7. PROVIDE DETAILED SOLUTIONS in "solution" field for every question. This is CRITICAL.
+7. PROVIDE DETAILED STEP-BY-STEP SOLUTIONS in "solution" field for EVERY question. This is CRITICAL.
+   - A solution that just says "The correct option is X" is UNACCEPTABLE and will be REJECTED.
+   - MINIMUM 3 steps per solution showing actual reasoning, formulas, and calculations.
 8. Solution Formatting:
-   - Use "\\textbf{{Step 1:}}" for steps.
-   - Leave a ONE LINE GAP between steps (Use \\n\\n).
+   - Use "\\\\textbf{{Step 1:}}" for steps.
+   - Leave a ONE LINE GAP between steps (Use \\\\n\\\\n).
    - ENSURE EACH STEP STARTS ON A NEW LINE.
    - Write equations on SEPARATE LINES using $$...$$ (display math).
    - Center align all equations.
    - Do not clump text and math together.
+   - End with \\\\textbf{{Final Answer:}} Option X or the numerical value.
 
 FORMATTING REQUIREMENTS (VERY IMPORTANT):
 - Use proper spacing between words and sentences
@@ -1638,6 +1641,16 @@ TOPIC: {topic}
 EXAM LEVEL: {level_prompt}
 {difficulty_prompt}
 
+SOLUTION REQUIREMENTS (ABSOLUTELY CRITICAL - DO NOT SKIP):
+- You MUST provide a "solution" field for EVERY SINGLE question (MCQs AND Numericals).
+- Solutions MUST be DETAILED STEP-BY-STEP, NOT just "The correct option is X".
+- A solution that only says "The correct option is X" is UNACCEPTABLE and will be REJECTED.
+- Use \\textbf{{Step 1:}} format for each step.
+- Leave a ONE LINE GAP between steps (Use \\n\\n).
+- Write equations on SEPARATE LINES using $$ ... $$ (display math) so they are centered.
+- End with \\textbf{{Final Answer:}} Option X or the numerical value.
+- MINIMUM 3 steps per solution. Show the actual reasoning, formulas, and calculations.
+
 FORMATTING REQUIREMENTS (CRITICAL):
 - Use proper spacing between ALL words and sentences
 - Use LaTeX math mode for ALL mathematical expressions: $...$
@@ -1649,8 +1662,8 @@ FORMATTING REQUIREMENTS (CRITICAL):
 
 Return ONLY valid JSON:
 {{"questions": [
-  {{"type": "mcq", "text": "A body of mass $m$ is dropped from height $h$. What is the velocity?", "options": ["$\\\\sqrt{{2gh}}$", "$\\\\sqrt{{gh}}$", "$2gh$", "$gh$"], "answer": "A", "solution": "\\textbf{{Step 1:}} Using equation of motion $v^2 - u^2 = 2as$: $$ v^2 - 0 = 2gh $$ \\n\\n\\textbf{{Step 2:}} Solving for v: $$ v = \\sqrt{{2gh}} $$"}},
-  {{"type": "numerical", "text": "If $F = 10$ N and $m = 2$ kg, find acceleration in m/s$^2$.", "answer": "5", "solution": "\\textbf{{Step 1:}} Newton's Second Law states: $$ F = ma $$ \\n\\n\\textbf{{Step 2:}} Substitute values: $$ 10 = 2a $$ \\n\\n\\textbf{{Step 3:}} Solve for a: $$ a = 5 \\, m/s^2 $$"}}
+  {{"type": "mcq", "text": "A body of mass $m$ is dropped from height $h$. What is the velocity just before hitting the ground?", "options": ["$\\\\sqrt{{2gh}}$", "$\\\\sqrt{{gh}}$", "$2gh$", "$gh$"], "answer": "A", "solution": "\\textbf{{Step 1:}} Identify the concept — this is a free-fall problem. Initial velocity $u = 0$.\\n\\n\\textbf{{Step 2:}} Using the kinematic equation: $$ v^2 = u^2 + 2as $$ Substituting $u = 0$, $a = g$, $s = h$: $$ v^2 = 0 + 2gh = 2gh $$\\n\\n\\textbf{{Step 3:}} Taking square root: $$ v = \\\\sqrt{{2gh}} $$\\n\\n\\textbf{{Final Answer:}} Option A"}},
+  {{"type": "numerical", "text": "If $F = 10$ N and $m = 2$ kg, find acceleration in m/s$^2$.", "answer": "5", "solution": "\\textbf{{Step 1:}} Newton's Second Law states: $$ F = ma $$\\n\\n\\textbf{{Step 2:}} Substitute given values $F = 10$ N and $m = 2$ kg: $$ 10 = 2 \\\\times a $$\\n\\n\\textbf{{Step 3:}} Solving for acceleration: $$ a = \\\\frac{{10}}{{2}} = 5 \\\\, m/s^2 $$\\n\\n\\textbf{{Final Answer:}} $a = 5$ m/s$^2$"}}
 ]}}
 """
         # Fresh Questions: Add anti-repetition instruction if past questions provided
@@ -1954,10 +1967,39 @@ RULES:
                 "corrected": 0
             }
         
-            # Corrected logic: We NO LONGER generate solutions in a separate pass.
-            # The initial generation prompt already includes instructions for detailed solutions.
-            # This saves ~40% of API calls.
-            result["include_solutions"] = True
+        # Always flag solutions as included — the initial prompt generates them inline.
+        result["include_solutions"] = True
+        
+        # MCQ Solution Fallback: Generate solutions for MCQs that are missing them
+        mcqs_missing_solutions = []
+        mcqs_missing_indices = []
+        for i, q in enumerate(questions):
+            if q.get("type") in ["mcq", "mcq_multi"]:
+                sol = q.get("solution", "")
+                # Check for empty or placeholder solutions
+                if not sol or len(sol.strip()) < 50 or "correct option is" in sol.lower() or "correct answer is" in sol.lower():
+                    mcqs_missing_indices.append(i)
+                    mcqs_missing_solutions.append({
+                        "text": q.get("text", ""),
+                        "options": q.get("options", []),
+                        "answer": q.get("answer", "")
+                    })
+        
+        if mcqs_missing_solutions:
+            print(f"[Solution Fallback] {len(mcqs_missing_solutions)} MCQs missing detailed solutions. Generating...")
+            try:
+                # Use batch solution generation for efficiency
+                chunk_size = 5
+                for batch_start in range(0, len(mcqs_missing_solutions), chunk_size):
+                    batch = mcqs_missing_solutions[batch_start:batch_start + chunk_size]
+                    batch_indices = mcqs_missing_indices[batch_start:batch_start + chunk_size]
+                    solutions = await self._generate_mcq_solution_batch_async(batch, subject)
+                    for j, sol in enumerate(solutions):
+                        if j < len(batch_indices):
+                            questions[batch_indices[j]]["solution"] = sol
+                print(f"[Solution Fallback] Generated {len(mcqs_missing_solutions)} solutions successfully.")
+            except Exception as e:
+                print(f"[Solution Fallback] Failed: {e}")
         
         return result
     
