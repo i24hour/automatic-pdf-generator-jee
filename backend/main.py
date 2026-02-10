@@ -26,6 +26,7 @@ from routers.auth_router import router as auth_router
 from routers.institute_router import router as institute_router
 from routers.posts_router import router as posts_router
 from routers.pdf_router import router as pdf_router
+from routers.test_router import router as test_router
 from services.email_service import email_service
 # from services.r2_storage import r2_storage  # Deprecated
 from services.gcs_storage import gcs_storage
@@ -71,6 +72,7 @@ app.include_router(auth_router)
 app.include_router(institute_router)
 app.include_router(posts_router)
 app.include_router(pdf_router)
+app.include_router(test_router)
 
 # Video Generator
 from routers.video_router import router as video_router
