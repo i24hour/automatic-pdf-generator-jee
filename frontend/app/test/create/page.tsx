@@ -333,25 +333,27 @@ export default function CreateTestPage() {
                     </div>
 
                     {/* Bottom Action Bar */}
-                    <div className="fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-[#16181c]/90 backdrop-blur-md border-t border-gray-200 dark:border-gray-800 p-4 z-40">
-                        <div className="max-w-5xl mx-auto flex justify-between items-center">
-                            <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-8">
-                                <div>
-                                    <span className="text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wider">Total Questions</span>
-                                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{totalQuestions}</p>
+                    <div className="fixed bottom-16 md:bottom-0 left-0 right-0 bg-white/95 dark:bg-[#16181c]/95 backdrop-blur-md border-t border-gray-200 dark:border-gray-800 px-4 py-3 z-40">
+                        <div className="max-w-5xl mx-auto space-y-3 md:space-y-0 md:flex md:justify-between md:items-center">
+                            {/* Stats row - always horizontal */}
+                            <div className="flex items-center justify-between md:justify-start gap-4 md:gap-8">
+                                <div className="text-center md:text-left">
+                                    <span className="text-gray-500 dark:text-gray-400 text-[10px] md:text-xs uppercase tracking-wider">Questions</span>
+                                    <p className="text-lg md:text-2xl font-bold text-gray-900 dark:text-white">{totalQuestions}</p>
                                 </div>
-                                <div>
-                                    <span className="text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wider">Total Marks</span>
-                                    <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{totalQuestions * 4}</p>
+                                <div className="text-center md:text-left">
+                                    <span className="text-gray-500 dark:text-gray-400 text-[10px] md:text-xs uppercase tracking-wider">Marks</span>
+                                    <p className="text-lg md:text-2xl font-bold text-indigo-600 dark:text-indigo-400">{totalQuestions * 4}</p>
                                 </div>
-                                <div>
-                                    <span className="text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wider">Duration</span>
-                                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{duration}m</p>
+                                <div className="text-center md:text-left">
+                                    <span className="text-gray-500 dark:text-gray-400 text-[10px] md:text-xs uppercase tracking-wider">Duration</span>
+                                    <p className="text-lg md:text-2xl font-bold text-gray-900 dark:text-white">{duration}m</p>
                                 </div>
                             </div>
+                            {/* Create button */}
                             <div className="w-full md:w-auto">
                                 {error && (
-                                    <p className="text-red-500 text-sm mb-2 text-right">{error}</p>
+                                    <p className="text-red-500 text-sm mb-2 text-center md:text-right">{error}</p>
                                 )}
                                 <button
                                     type="submit"
@@ -368,8 +370,8 @@ export default function CreateTestPage() {
                             </div>
                         </div>
                     </div>
-                    {/* Spacer for fixed bottom bar */}
-                    <div className="h-24"></div>
+                    {/* Spacer for fixed bottom bar + mobile nav */}
+                    <div className="h-40 md:h-24"></div>
                 </form>
             </main>
         </div>
