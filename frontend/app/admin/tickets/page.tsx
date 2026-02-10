@@ -35,7 +35,7 @@ export default function AdminTicketsPage() {
     const fetchTickets = async () => {
         try {
             const token = localStorage.getItem('auth_token');
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/support/admin/all`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://mentors-mantra-api-87253755436.us-central1.run.app'}/support/admin/all`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (res.ok) {
@@ -58,7 +58,7 @@ export default function AdminTicketsPage() {
         setUpdating(true);
         try {
             const token = localStorage.getItem('auth_token');
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/support/${ticketId}/status`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://mentors-mantra-api-87253755436.us-central1.run.app'}/support/${ticketId}/status`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',

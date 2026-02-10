@@ -1,6 +1,6 @@
 import { useAuth } from "@/lib/auth-context";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://mentors-mantra-api-87253755436.us-central1.run.app";
 
 export interface TestSummary {
     id: string;

@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import { FileText, Download, Heart, Eye, Loader2, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://mentors-mantra-api-87253755436.us-central1.run.app';
 
 interface PDFInfo {
     id: string;

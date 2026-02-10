@@ -38,7 +38,7 @@ export default function Profile() {
         setMessage(null);
 
         try {
-            const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+            const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://mentors-mantra-api-87253755436.us-central1.run.app';
             const res = await fetch(`${API_URL}/auth/profile`, {
                 method: "PUT",
                 headers: {

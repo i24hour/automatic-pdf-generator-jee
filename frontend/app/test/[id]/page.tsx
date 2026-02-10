@@ -5,7 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { ChevronLeft, ChevronRight, Menu, X } from 'lucide-react';
 import MathText from '@/components/MathText';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://mentors-mantra-api-87253755436.us-central1.run.app';
 
 interface PaletteItem {
     index: number;

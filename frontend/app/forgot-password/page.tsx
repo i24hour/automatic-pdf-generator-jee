@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Loader2, AlertCircle, CheckCircle2, BookOpen, ArrowLeft } from "lucide-react";
 import { FloatingInput } from "@/components/FloatingInput";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://mentors-mantra-api-87253755436.us-central1.run.app";
 
 export default function ForgotPasswordPage() {
     const [email, setEmail] = useState("");
