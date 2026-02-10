@@ -1027,6 +1027,9 @@ async def run_generation_job(
         actual_total = mcq_count + numerical_count
         safe_topic = request.topic.replace("&", "and").replace("/", "-").replace("\\", "-")
         safe_topic = safe_topic.replace(" ", "_")
+        if len(safe_topic) > 50:
+            safe_topic = safe_topic[:50] + "_" + str(uuid.uuid4())[:6]
+        
         safe_level = request.level.replace(" ", "_")
         safe_difficulty = request.difficulty
         solutions_suffix = "_with_solutions" if request.include_solutions else ""

@@ -961,9 +961,17 @@ export default function TestGenerator() {
                             <p className="text-sm text-gray-500 dark:text-gray-400">
                                 No NCERT chapters match &quot;{topic}&quot;
                             </p>
-                            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                                You can use this as a custom topic
-                            </p>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setIsCustomMode(true);
+                                    setTopic(searchQuery); // Use current search as topic
+                                    setIsDropdownOpen(false);
+                                }}
+                                className="mt-2 text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 bg-indigo-50 dark:bg-indigo-900/30 px-3 py-1.5 rounded-full transition-colors"
+                            >
+                                Use &quot;{searchQuery}&quot; as Custom Topic
+                            </button>
                         </div>
                     )}
                 </div>
