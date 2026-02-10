@@ -309,22 +309,26 @@ function CreateForm() {
                         </div>
                     )}
 
-                    <div className="flex items-center justify-between pt-6 border-t border-gray-100 dark:border-gray-800">
-                        <div className="flex gap-8">
-                            <div>
-                                <span className="text-gray-500 text-xs uppercase tracking-wider">Total Qs</span>
-                                <p className="text-2xl font-bold">{totalQuestions}</p>
+                    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between pt-6 border-t border-gray-100 dark:border-gray-800">
+                        <div className="flex items-center justify-center md:justify-start gap-8">
+                            <div className="text-center md:text-left">
+                                <span className="text-gray-500 text-[10px] md:text-xs uppercase tracking-wider">Questions</span>
+                                <p className="text-xl md:text-2xl font-bold">{totalQuestions}</p>
                             </div>
-                            <div>
-                                <span className="text-gray-500 text-xs uppercase tracking-wider">Marks</span>
-                                <p className="text-2xl font-bold text-indigo-600">{totalQuestions * 4}</p>
+                            <div className="text-center md:text-left">
+                                <span className="text-gray-500 text-[10px] md:text-xs uppercase tracking-wider">Marks</span>
+                                <p className="text-xl md:text-2xl font-bold text-indigo-600">{totalQuestions * 4}</p>
+                            </div>
+                            <div className="text-center md:text-left">
+                                <span className="text-gray-500 text-[10px] md:text-xs uppercase tracking-wider">Duration</span>
+                                <p className="text-xl md:text-2xl font-bold">{duration}m</p>
                             </div>
                         </div>
 
                         <button
                             type="submit"
                             disabled={loading || totalQuestions < 1}
-                            className="px-8 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-xl hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2"
+                            className="w-full md:w-auto px-8 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-xl hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
                         >
                             {loading ? (
                                 <>
