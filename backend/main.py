@@ -300,6 +300,72 @@ async def detect_subject(request: DetectSubjectRequest, db: Session = Depends(ge
     )
 
 
+@app.get("/api/history")
+async def get_history(
+    current_user: User = Depends(get_current_user_required),
+    db: Session = Depends(get_db)
+):
+    """Get the user's recent PDF generation history."""
+    try:
+        generations = db.query(PDFGeneration).filter(
+            PDFGeneration.user_id == current_user.id
+        ).order_by(PDFGeneration.created_at.desc()).limit(10).all()
+
+        return {
+            "generations": [
+                {
+                    "id": g.id,
+                    "subject": g.subject,
+                    "topic": g.topic,
+                    "level": g.level,
+                    "question_count": g.question_count,
+                    "pdf_filename": g.pdf_filename,
+                    "status": g.status,
+                    "created_at": g.created_at.isoformat() if g.created_at else None,
+                }
+                for g in generations
+            ]
+        }
+    except Exception as e:
+        print(f"Error fetching history: {e}")
+        return {"generations": []}
+
+
+class StoreSubjectRequest(BaseModel):
+    topic: str
+    subject: str
+
+
+@app.post("/api/store-subject")
+async def store_subject(request: StoreSubjectRequest, db: Session = Depends(get_db)):
+    """Store a topic-subject mapping from user crowdsourcing."""
+    if not request.topic.strip() or not request.subject.strip():
+        return {"success": False, "message": "Topic and subject are required"}
+
+    normalized_topic = request.topic.strip().lower()
+
+    try:
+        existing = db.query(TopicSubjectCache).filter(
+            TopicSubjectCache.normalized_topic == normalized_topic
+        ).first()
+
+        if not existing:
+            cache_row = TopicSubjectCache(
+                topic=request.topic.strip(),
+                normalized_topic=normalized_topic,
+                subject=request.subject.strip(),
+                confidence="high",
+            )
+            db.add(cache_row)
+            db.commit()
+
+        return {"success": True, "message": "Subject mapping stored"}
+    except Exception as e:
+        db.rollback()
+        print(f"Error storing subject mapping: {e}")
+        return {"success": False, "message": str(e)}
+
+
 @app.get("/api/rate-limit", response_model=RateLimitInfo)
 async def get_rate_limit(
     current_user: User = Depends(get_current_user_required),
