@@ -19,6 +19,7 @@ print("DEBUG: Loading llm_engine module...")
 
 # Fallback models for reliability - if primary fails, try these in order
 FALLBACK_MODELS = [
+    "gemini/gemini-1.5-flash",
     "gemini/gemini-1.5-pro",
     "gemini/gemini-1.5-flash-8b",
     "gemini/gemini-2.0-flash",
@@ -126,7 +127,7 @@ class LLMEngine:
     """LLM-agnostic engine for generating test questions."""
     
     def __init__(self):
-        self.primary_model = os.getenv("ACTIVE_MODEL", "gemini/gemini-1.5-flash")
+        self.primary_model = os.getenv("ACTIVE_MODEL", "gemini/gemini-2.5-flash")
         self.model = self.primary_model
         self.fallback_models = FALLBACK_MODELS
         self._setup_api_keys()
