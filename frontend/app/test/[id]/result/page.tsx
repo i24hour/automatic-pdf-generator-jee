@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
+import MathText from '@/components/MathText';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://mentors-mantra-api-87253755436.us-central1.run.app';
 
@@ -183,8 +184,8 @@ export default function TestResultPage() {
                                         <td className="py-3 text-center text-gray-500">{data.unattempted}</td>
                                         <td className="py-3 text-center">
                                             <span className={`px-2 py-1 rounded text-sm font-medium ${data.accuracy >= 70 ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' :
-                                                    data.accuracy >= 40 ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' :
-                                                        'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                                                data.accuracy >= 40 ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' :
+                                                    'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
                                                 }`}>
                                                 {data.accuracy}%
                                             </span>
@@ -222,8 +223,8 @@ export default function TestResultPage() {
                                         key={type}
                                         onClick={() => setFilterType(type)}
                                         className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${filterType === type
-                                                ? 'bg-indigo-600 text-white'
-                                                : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                                            ? 'bg-indigo-600 text-white'
+                                            : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300'
                                             }`}
                                     >
                                         {type.charAt(0).toUpperCase() + type.slice(1)} ({
@@ -243,8 +244,8 @@ export default function TestResultPage() {
                                         <div className="flex justify-between items-start mb-3">
                                             <div className="flex items-center gap-3">
                                                 <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-white ${q.is_correct === true ? 'bg-green-500' :
-                                                        q.is_correct === false ? 'bg-red-500' :
-                                                            'bg-gray-400'
+                                                    q.is_correct === false ? 'bg-red-500' :
+                                                        'bg-gray-400'
                                                     }`}>
                                                     {q.index + 1}
                                                 </span>
@@ -253,14 +254,16 @@ export default function TestResultPage() {
                                                 </span>
                                             </div>
                                             <span className={`px-2 py-1 rounded text-sm font-medium ${q.marks_obtained !== null && q.marks_obtained > 0 ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' :
-                                                    q.marks_obtained !== null && q.marks_obtained < 0 ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' :
-                                                        'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                                                q.marks_obtained !== null && q.marks_obtained < 0 ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' :
+                                                    'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
                                                 }`}>
                                                 {q.marks_obtained !== null ? (q.marks_obtained > 0 ? '+' : '') + q.marks_obtained : '0'} marks
                                             </span>
                                         </div>
 
-                                        <p className="text-gray-900 dark:text-white mb-4 whitespace-pre-wrap">{q.question_text}</p>
+                                        <div className="text-gray-900 dark:text-white mb-4">
+                                            <MathText content={q.question_text} />
+                                        </div>
 
                                         {q.options && (
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-4">
@@ -268,19 +271,21 @@ export default function TestResultPage() {
                                                     <div
                                                         key={key}
                                                         className={`p-3 rounded-lg border ${key === q.correct_answer
-                                                                ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
-                                                                : key === q.user_answer && q.is_correct === false
-                                                                    ? 'border-red-500 bg-red-50 dark:bg-red-900/20'
-                                                                    : 'border-gray-200 dark:border-gray-700'
+                                                            ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
+                                                            : key === q.user_answer && q.is_correct === false
+                                                                ? 'border-red-500 bg-red-50 dark:bg-red-900/20'
+                                                                : 'border-gray-200 dark:border-gray-700'
                                                             }`}
                                                     >
                                                         <span className={`font-bold mr-2 ${key === q.correct_answer ? 'text-green-600' :
-                                                                key === q.user_answer && q.is_correct === false ? 'text-red-600' :
-                                                                    'text-gray-600 dark:text-gray-400'
+                                                            key === q.user_answer && q.is_correct === false ? 'text-red-600' :
+                                                                'text-gray-600 dark:text-gray-400'
                                                             }`}>
                                                             {key})
                                                         </span>
-                                                        <span className="text-gray-700 dark:text-gray-300">{value}</span>
+                                                        <div className="text-gray-700 dark:text-gray-300">
+                                                            <MathText content={value} />
+                                                        </div>
                                                         {key === q.correct_answer && <span className="ml-2 text-green-600">✓</span>}
                                                         {key === q.user_answer && q.is_correct === false && <span className="ml-2 text-red-600">✗</span>}
                                                     </div>
