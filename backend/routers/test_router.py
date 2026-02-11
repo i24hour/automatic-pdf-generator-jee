@@ -72,6 +72,13 @@ class ActionRequest(BaseModel):
     jump_to_index: Optional[int] = None  # For palette clicks
 
 
+class PaletteItem(BaseModel):
+    """Question palette item."""
+    index: int
+    status: str
+    subject: str
+
+
 class ActionResponse(BaseModel):
     """Response after action — includes full state + next question to avoid extra API calls."""
     next_question_index: int
@@ -94,11 +101,7 @@ class ExamSummary(BaseModel):
     not_visited: int
 
 
-class PaletteItem(BaseModel):
-    """Question palette item."""
-    index: int
-    status: str
-    subject: str
+
 
 
 class TestStateResponse(BaseModel):
