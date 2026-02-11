@@ -173,13 +173,15 @@ export default function TestInterfacePage() {
                     setTimeRemaining(data.time_remaining_seconds);
                 }
 
-                // Update question from combined response (no extra API call)
+                // Update question from combined response
                 if (data.next_question) {
                     setQuestion(data.next_question);
                     setSelectedAnswer(data.next_question.user_answer);
                     setTimeRemaining(data.next_question.time_remaining_seconds);
                     setQuestionStartTime(Date.now());
                     setActiveSection(data.next_question.subject);
+                } else {
+                    console.error('Missing next_question in response - Backend update required');
                 }
             }
         } catch (error) {
