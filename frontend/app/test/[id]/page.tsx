@@ -160,8 +160,30 @@ export default function TestInterfacePage() {
 
             if (response.ok) {
                 const data = await response.json();
-                await fetchTestState();
-                await fetchQuestion(data.next_question_index);
+
+                // Update test state from combined response (no extra API call)
+                if (data.palette && data.subjects) {
+                    setTestState(prev => prev ? {
+                        ...prev,
+                        palette: data.palette,
+                        subjects: data.subjects,
+                        time_remaining_seconds: data.time_remaining_seconds,
+                        current_question_index: data.next_question_index,
+                    } : prev);
+                    setTimeRemaining(data.time_remaining_seconds);
+                }
+
+                // Update question from combined response (no extra API call)
+                if (data.next_question) {
+                    setQuestion(data.next_question);
+                    setSelectedAnswer(data.next_question.user_answer);
+                    setTimeRemaining(data.next_question.time_remaining_seconds);
+                    setQuestionStartTime(Date.now());
+                    setActiveSection(data.next_question.subject);
+                } else {
+                    // Fallback for older backend that doesn't return next_question
+                    await fetchQuestion(data.next_question_index);
+                }
             }
         } catch (error) {
             console.error('Action failed:', error);

@@ -73,9 +73,15 @@ class ActionRequest(BaseModel):
 
 
 class ActionResponse(BaseModel):
-    """Response after action."""
+    """Response after action — includes full state + next question to avoid extra API calls."""
     next_question_index: int
     new_status: str
+    # Embedded test state (replaces separate GET /state call)
+    palette: List[PaletteItem] = []
+    subjects: List[str] = []
+    time_remaining_seconds: int = 0
+    # Embedded next question (replaces separate GET /question call)
+    next_question: Optional[QuestionData] = None
 
 
 class ExamSummary(BaseModel):
@@ -593,20 +599,63 @@ async def handle_action(
     test.current_question_index = next_index
     
     # Mark next question as visited
+    next_q_response = None
     if next_index != request.question_index:
-        next_response = db.query(QuestionResponse).filter(
+        next_q_response = db.query(QuestionResponse).filter(
             QuestionResponse.test_attempt_id == test_id,
             QuestionResponse.question_index == next_index
         ).first()
-        if next_response and next_response.status == "NOT_VISITED":
-            next_response.status = "NOT_ANSWERED"
-            next_response.last_visited_at = datetime.now(timezone.utc)
+        if next_q_response and next_q_response.status == "NOT_VISITED":
+            next_q_response.status = "NOT_ANSWERED"
+            next_q_response.last_visited_at = datetime.now(timezone.utc)
+    else:
+        next_q_response = response  # Same question (e.g. CLEAR action)
     
     db.commit()
     
+    # --- Build combined response (palette + next question) ---
+    # 1. Palette (same logic as GET /state)
+    all_responses = db.query(QuestionResponse).filter(
+        QuestionResponse.test_attempt_id == test_id
+    ).order_by(QuestionResponse.question_index).all()
+    
+    palette = [
+        PaletteItem(
+            index=r.question_index,
+            status=get_question_status(r),
+            subject=r.subject
+        )
+        for r in all_responses
+    ]
+    subjects = list(dict.fromkeys([r.subject for r in all_responses]))
+    time_remaining = calculate_time_remaining(test)
+    
+    # 2. Next question data
+    next_question_data = None
+    if next_q_response:
+        options = json.loads(next_q_response.options_json) if next_q_response.options_json else None
+        next_question_data = QuestionData(
+            question_index=next_q_response.question_index,
+            total_questions=test.total_questions,
+            subject=next_q_response.subject,
+            topic=next_q_response.topic,
+            difficulty=next_q_response.difficulty,
+            question_type=next_q_response.question_type,
+            question_text=next_q_response.question_text,
+            options=options,
+            status=get_question_status(next_q_response),
+            user_answer=next_q_response.user_answer,
+            is_marked_for_review=next_q_response.is_marked_for_review,
+            time_remaining_seconds=time_remaining
+        )
+    
     return ActionResponse(
         next_question_index=next_index,
-        new_status=get_question_status(response)
+        new_status=get_question_status(response),
+        palette=palette,
+        subjects=subjects,
+        time_remaining_seconds=time_remaining,
+        next_question=next_question_data
     )
 
 
