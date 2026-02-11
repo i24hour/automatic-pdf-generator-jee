@@ -180,9 +180,6 @@ export default function TestInterfacePage() {
                     setTimeRemaining(data.next_question.time_remaining_seconds);
                     setQuestionStartTime(Date.now());
                     setActiveSection(data.next_question.subject);
-                } else {
-                    // Fallback for older backend that doesn't return next_question
-                    await fetchQuestion(data.next_question_index);
                 }
             }
         } catch (error) {
