@@ -189,7 +189,11 @@
 \BLOCK{ if q.solution }
 \VAR{q.solution}
 \BLOCK{ else }
-The correct option is \textbf{\VAR{q.answer}}.
+    \BLOCK{ if q.type == 'mcq' or q.type == 'mcq_multi' }
+    The correct option is \textbf{\VAR{q.answer}}.
+    \BLOCK{ else }
+    \textit{Solution not provided.}
+    \BLOCK{ endif }
 \BLOCK{ endif }
 }
 

@@ -1569,15 +1569,15 @@ REQUIREMENTS FOR SOLUTIONS:
 
 Return ONLY JSON:
 {{"questions": [
-  {{"type": "short_answer", "marks": 2, "text": "Define electric flux.", "answer": "Electric flux is..."}},
-  {{"type": "long_answer", "marks": 5, "text": "State and prove Gauss's law.", "answer": "Gauss's law states..."}},
+  {{"type": "short_answer", "marks": 2, "text": "Define electric flux.", "answer": "Electric flux is...", "solution": "\\textbf{Step 1:} Electric flux is defined as... \\n\\n\\textbf{Step 2:} It is a scalar quantity..."}},
+  {{"type": "long_answer", "marks": 5, "text": "State and prove Gauss's law.", "answer": "Gauss's law states...", "solution": "\\textbf{Step 1:} Statement: The total electric flux... \\n\\n\\textbf{Proof:} Consider a sphere..."}},
   {{"type": "case_based", "marks": 4, "passage": "EM induction paragraph...", "sub_questions": [
     {{"text": "Q1?", "options": ["A", "B", "C", "D"], "answer": "B"}},
     {{"text": "Q2?", "options": ["A", "B", "C", "D"], "answer": "C"}},
     {{"text": "Q3?", "options": ["A", "B", "C", "D"], "answer": "A"}},
     {{"text": "Q4?", "options": ["A", "B", "C", "D"], "answer": "D"}}
-  ], "answer": "B, C, A, D"}},
-  {{"type": "numerical", "marks": 3, "text": "Find resistance...", "answer": "5"}}
+  ], "answer": "B, C, A, D", "solution": "1) Explanation for Q1... \\n\\n2) Explanation for Q2..."}},
+  {{"type": "numerical", "marks": 3, "text": "Find resistance...", "answer": "5", "solution": "\\textbf{Step 1:} Given V=10V, I=2A... \\n\\n\\textbf{Step 2:} By Ohm's law, R = V/I = 5 Ohms"}}
 ]}}
 """
         elif level == "GATE":
