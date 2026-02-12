@@ -71,7 +71,7 @@
     % JINJA LOOP START
     \BLOCK{ for q in questions }
 
-        \item \VAR{q.text}
+        \item\relax \VAR{q.text}
         
         % Check if diagram exists
         \BLOCK{ if q.diagram_tikz }
