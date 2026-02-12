@@ -84,7 +84,14 @@ app.include_router(community_router)
 # Initialize database on startup
 @app.on_event("startup")
 async def startup_event():
-    init_db()  # Run migrations for new columns
+    print("DEBUG: Startup event started")
+    try:
+        print("DEBUG: Initializing database...")
+        init_db()  # Run migrations for new columns
+        print("DEBUG: Database initialized successfully")
+    except Exception as e:
+        print(f"DEBUG: Database initialization failed: {e}")
+    print("DEBUG: Startup event completed")
 
 
 # Request/Response Models
