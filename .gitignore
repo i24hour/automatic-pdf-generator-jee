@@ -41,3 +41,4 @@ backend/output/
 backend/output/*.tex
 !backend/templates/
 .vercel
+backend/.env
