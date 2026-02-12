@@ -1,4 +1,5 @@
-FROM python:3.12-slim
+# Use custom base image with pre-installed LaTeX
+FROM gcr.io/mentors-mantra-gen/mentors-mantra-base:latest
 
 # Set working directory
 WORKDIR /app
@@ -6,15 +7,7 @@ WORKDIR /app
 # Ensure logs are flushed immediately
 ENV PYTHONUNBUFFERED=1
 
-# Install system dependencies for LaTeX
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    texlive-latex-base \
-    texlive-fonts-recommended \
-    texlive-fonts-extra \
-    texlive-latex-extra \
-    texlive-science \
-    lmodern \
-    && rm -rf /var/lib/apt/lists/*
+# (System dependencies are already installed in base image)
 
 # Copy requirements first for better caching
 COPY requirements.txt .
