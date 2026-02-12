@@ -25,8 +25,7 @@ engine = create_engine(
     pool_pre_ping=True,
     pool_size=20,
     max_overflow=30,
-    pool_recycle=300,
-    connect_args={"sslmode": "require"}
+    pool_recycle=300
 )
 
 
