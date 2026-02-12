@@ -76,9 +76,9 @@ app.include_router(pdf_router)
 app.include_router(test_router)
 app.include_router(community_router)
 
-# Video Generator
-from routers.video_router import router as video_router
-app.include_router(video_router)
+# Video Generator (Disabled for stability)
+# from routers.video_router import router as video_router
+# app.include_router(video_router)
 
 
 # Initialize database on startup
