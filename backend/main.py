@@ -87,8 +87,8 @@ async def startup_event():
     print("DEBUG: Startup event started", flush=True)
     try:
         print("DEBUG: Initializing database...", flush=True)
-        init_db()  # Run migrations for new columns
-        print("DEBUG: Database initialized successfully", flush=True)
+        # init_db()  # Run migrations for new columns
+        print("DEBUG: Database initialized successfully (SKIPPED)", flush=True)
     except Exception as e:
         print(f"DEBUG: Database initialization failed: {e}", flush=True)
     print("DEBUG: Startup event completed", flush=True)
