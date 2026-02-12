@@ -3,6 +3,9 @@ FROM python:3.12-slim
 # Set working directory
 WORKDIR /app
 
+# Ensure logs are flushed immediately
+ENV PYTHONUNBUFFERED=1
+
 # Install system dependencies for LaTeX
 RUN apt-get update && apt-get install -y --no-install-recommends \
     texlive-latex-base \
