@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { ChevronLeft, ChevronRight, Menu, X } from 'lucide-react';
 import MathText from '@/components/MathText';
+import DiagramRenderer from '@/components/test/DiagramRenderer';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://mentors-mantra-api-87253755436.us-central1.run.app';
 
@@ -386,22 +387,10 @@ export default function TestInterfacePage() {
                             <MathText content={question.question_text} />
                         </div>
 
-                        {/* Debug: Diagram Display */}
+                        {/* Diagram Display */}
                         {question.diagram_json && (
-                            <div className="mb-6 p-4 border border-blue-200 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800 rounded-lg">
-                                <h4 className="text-sm font-bold text-blue-700 dark:text-blue-300 mb-2 flex items-center gap-2">
-                                    <span>📊 Diagram Data Detected</span>
-                                </h4>
-                                <pre className="text-xs bg-white dark:bg-black p-2 rounded border border-gray-200 dark:border-gray-700 overflow-auto max-h-40">
-                                    {(() => {
-                                        try {
-                                            const parsed = JSON.parse(question.diagram_json);
-                                            return JSON.stringify(parsed, null, 2);
-                                        } catch (e) {
-                                            return question.diagram_json;
-                                        }
-                                    })()}
-                                </pre>
+                            <div className="mb-6">
+                                <DiagramRenderer diagramJson={question.diagram_json} />
                             </div>
                         )}
 

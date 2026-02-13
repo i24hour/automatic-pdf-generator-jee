@@ -14,4 +14,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     texlive-latex-extra \
     texlive-science \
     lmodern \
+    pdf2svg \
+    texlive-binaries \
     && rm -rf /var/lib/apt/lists/*
