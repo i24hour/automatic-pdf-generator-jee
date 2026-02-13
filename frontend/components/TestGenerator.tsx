@@ -1659,48 +1659,35 @@ export default function TestGenerator() {
                                         ) : (
                                             `${result.total_mcq} MCQs + ${result.total_numerical} Numerical Questions`
                                         )}
+                                        ```
                                     </p>
                                 </div>
                             </div>
 
 
-                            <div className="flex flex-col gap-3">
-                                <div className="flex gap-3">
-                                    <button onClick={handleDownload} className="flex-1 py-3.5 border-2 border-indigo-600 text-indigo-600 font-medium rounded-lg hover:bg-indigo-50 transition-colors flex items-center justify-center gap-2">
-                                        <Download className="w-5 h-5" />
-                                        Download PDF
-                                    </button>
-
-                                    {!result.shared_pdf_id ? (
-                                        <button
-                                            onClick={() => handleSaveToLibrary('private')}
-                                            disabled={isSaving}
-                                            className="flex-1 py-3.5 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-70"
-                                        >
-                                            {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <BookOpen className="w-5 h-5" />}
-                                            {isSaving ? "Saving..." : "Save to Private"}
-                                        </button>
-                                    ) : (
-                                        <div className="flex-1 flex items-center justify-center gap-2 py-3.5 bg-green-50 text-green-700 font-medium rounded-lg border border-green-200">
-                                            <CheckCircle2 className="w-5 h-5" />
-                                            Saved to Private
-                                        </div>
-                                    )}
-                                </div>
+                            <div className="flex gap-3 mt-6">
+                                <button
+                                    onClick={handleDownload}
+                                    className="flex-1 py-3 bg-white dark:bg-black border border-indigo-600 text-indigo-600 font-medium rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/10 transition-colors flex items-center justify-center gap-2"
+                                >
+                                    <Download className="w-5 h-5" />
+                                    Download PDF
+                                </button>
 
                                 <button
                                     onClick={handlePostClick}
                                     disabled={isPostingLoading}
-                                    className="w-full py-3.5 bg-gradient-to-r from-pink-500 to-purple-600 text-white font-medium rounded-lg hover:from-pink-600 hover:to-purple-700 transition-all flex items-center justify-center gap-2 shadow-sm"
+                                    className="flex-1 py-3 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2 shadow-sm disabled:opacity-70"
                                 >
                                     {isPostingLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Share2 className="w-5 h-5" />}
-                                    Post to Community
+                                    Post
                                 </button>
-
-                                {saveError && (
-                                    <p className="text-sm text-red-600 text-center">{saveError}</p>
-                                )}
                             </div>
+
+                            {/* Hidden error message for save failure if any */}
+                            {saveError && (
+                                <p className="text-sm text-red-600 text-center mt-2">{saveError}</p>
+                            )}
                         </div>
                     )
                 }
