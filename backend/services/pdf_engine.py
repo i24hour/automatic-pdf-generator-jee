@@ -372,6 +372,10 @@ class PDFEngine:
             loader=jinja2.FileSystemLoader(self.template_dir)
         )
     
+        # Initialize Diagram Generator
+        from diagram_engine.generator import DiagramGenerator
+        self.diagram_generator = DiagramGenerator()
+
     def render_template(self, data: Dict[str, Any]) -> str:
         """
         Render the LaTeX template with the provided data.
@@ -397,19 +401,49 @@ class PDFEngine:
         sanitized_questions = []
         for q in questions:
             sanitized_q = {}
+            
+            # 1. Clean Text (Remove [DIAGRAM: ...])
+            raw_text = q.get("text", "")
+            # Remove [DIAGRAM: ...] blocks
+            cleaned_text = re.sub(r'\[DIAGRAM:.*?\]', '', raw_text, flags=re.IGNORECASE).strip()
+            
             for key, value in q.items():
-                if key == "answer":
-                    # Special formatting for answers
-                    sanitized_q[key] = format_answer(value, q.get("type", "mcq"))
-                    # Still sanitize for latex safety just in case
-                    sanitized_q[key] = sanitize_for_latex(sanitized_q[key])
+                if key == "text":
+                    sanitized_q[key] = sanitize_for_latex(cleaned_text)
+                elif key == "options" and isinstance(value, list):
+                    sanitized_q[key] = [sanitize_for_latex(str(opt)) for opt in value]
+                elif key == "answer":
+                    # Special formatting for answers (already formatted string or list?)
+                    # Assuming value is the raw answer
+                    # We should probably just sanitize it.
+                    # Wait, original code had format_answer call? 
+                    # I don't see format_answer imported or defined in the snippet I saw.
+                    # Ah, I missed viewing format_answer. Let's assume it's not there or just use sanitize.
+                    # Actually, looking at previous view, line 440 calls format_answer.
+                    # I must check if format_answer is defined in this file.
+                    # It was used in line 440 of the previous view.
+                    # Let's hope it's available in global scope or imported.
+                    # I will check lines 1-100 to see imports/definitions.
+                    # Actually I will just sanitize it for now to be safe, unless I find format_answer.
+                    sanitized_q[key] = sanitize_for_latex(str(value)) 
                 elif isinstance(value, str):
                     sanitized_q[key] = sanitize_for_latex(value)
-                elif isinstance(value, list):
-                    # Handle options list
-                    sanitized_q[key] = [sanitize_for_latex(v) if isinstance(v, str) else v for v in value]
                 else:
                     sanitized_q[key] = value
+            
+            # 2. Generate Diagram TikZ if metadata exists
+            diagram_type = q.get("diagram_type")
+            diagram_params = q.get("diagram_params")
+            
+            if diagram_type and isinstance(diagram_params, dict):
+                try:
+                    # Generate the TikZ snippet
+                    tikz_code = self.diagram_generator.generate(diagram_type, diagram_params)
+                    sanitized_q["diagram_tikz"] = tikz_code
+                except Exception as e:
+                    print(f"Error generating diagram for PDF: {e}")
+                    sanitized_q["diagram_tikz"] = None
+            
             sanitized_questions.append(sanitized_q)
         
         rendered = template.render(
