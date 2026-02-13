@@ -1313,55 +1313,58 @@ REQUIREMENTS:
 Return ONLY valid JSON:
 {json_example}"""
         else:
+            # General Logic (Exam Specific)
+            num_msq = kwargs.get("num_msq", 0) or 0
+            # Ensure num_mcq_single is not negative
+            num_mcq_single = max(0, mcq_count - num_msq)
+            
+            # Construct breakdown string
+            req_list = []
+            if num_mcq_single > 0:
+                req_list.append(f"- {num_mcq_single} Single Correct MCQs (Type: 'mcq')")
+            if num_msq > 0:
+                req_list.append(f"- {num_msq} Multiple Correct MCQs (Type: 'mcq_multi', one or more correct options)")
+            if numerical_count > 0:
+                req_list.append(f"- {numerical_count} Numerical Type Questions (Type: 'numerical')")
+            
+            req_str = "\n".join(req_list)
+            
             prompt = f"""You are an expert exam setter with 20+ years of experience setting {level} level examination papers for top coaching institutes like FIITJEE, Allen, and Resonance.
 
-TASK: Generate exactly {mcq_count} MCQs and {numerical_count} Numerical questions on "{topic}" for {subject}.
+TASK: Generate fully detailed questions on "{topic}" for {subject}.
 
 {level_prompt}
 
 {difficulty_prompt}
 
+STRICT BREAKDOWN:
+{req_str}
+
 STRICT REQUIREMENTS:
-1. Generate EXACTLY {mcq_count} MCQs and {numerical_count} Numerical questions - NO MORE, NO LESS
-2. Each question MUST be UNIQUE - no duplicate or similar questions allowed
-3. Questions MUST match the specified difficulty level EXACTLY - not easier, not harder
-4. Each question should be solvable only by students who have mastered that level
-5. {mcq_instruction}
-{numerical_answer_instruction}
-7. PROVIDE DETAILED STEP-BY-STEP SOLUTIONS in "solution" field for EVERY question. This is CRITICAL.
-   - A solution that just says "The correct option is X" is UNACCEPTABLE and will be REJECTED.
-   - MINIMUM 3 steps per solution showing actual reasoning, formulas, and calculations.
-8. Solution Formatting:
+1. Generate EXACTLY the count of questions requested above.
+2. Each question MUST be UNIQUE.
+3. Questions MUST match the specified difficulty level EXACTLY.
+4. {mcq_instruction}
+5. For Multiple Correct MCQs (mcq_multi):
+   - There can be 1, 2, 3, or 4 correct options.
+   - The 'answer' field should be a comma-separated string of correct options (e.g., "A, C" or "A, B, D").
+   - Ensure these are challenging.
+6. {numerical_answer_instruction}
+7. PROVIDE DETAILED STEP-BY-STEP SOLUTIONS in "solution" field for EVERY question.
    - Use "\\\\textbf{{Step 1:}}" for steps.
    - Leave a ONE LINE GAP between steps (Use \\\\n\\\\n).
-   - ENSURE EACH STEP STARTS ON A NEW LINE.
    - Write equations on SEPARATE LINES using $$...$$ (display math).
    - Center align all equations.
-   - Do not clump text and math together.
-   - End with \\\\textbf{{Final Answer:}} Option X or the numerical value.
+   - End with "\\\\textbf{{Final Answer:}} Option X" or value.
 
-FORMATTING REQUIREMENTS (VERY IMPORTANT):
-- Use proper spacing between words and sentences
-- Write complete, grammatically correct sentences
+FORMATTING REQUIREMENTS:
 - Use LaTeX math mode for ALL mathematical expressions: $...$
-  Examples: $F = ma$, $\\frac{{a}}{{b}}$, $\\sqrt{{x}}$, $\\int_0^1 f(x) dx$
-- FOR CHEMICAL REACTIONS OR LONG EQUATIONS:
-  - MUST use double dollar signs $$...$$ for block display
-  - Example: $$2H_2 + O_2 \\rightarrow 2H_2O$$
-  - This ensures proper centered alignment and spacing on new lines
-- For subscripts use: $W_0$, $v_1$, $x_2$ (NOT W₀, v₁, x₂)
-- For superscripts use: $x^2$, $10^3$ (NOT x², 10³)
-- For Greek letters use: $\\alpha$, $\\beta$, $\\theta$, $\\omega$ (NOT α, β, θ, ω)
-- For special symbols: $\\times$ (multiplication), $\\div$ (division), $\\pm$ (plus-minus)
-- Separate distinct concepts with proper punctuation and spacing
-- DO NOT concatenate words or run sentences together
+- FOR CHEMICAL REACTIONS OR LONG EQUATIONS use $$...$$
+- Proper subscripts/superscripts ($x_2$, $x^2$).
 
-QUALITY CHECK: Before finalizing, verify:
-- Total questions = {total_requested} (exactly {mcq_count} MCQs + {numerical_count} Numerical)
-- No duplicate questions
-- Each question truly represents {level} difficulty
-- All mathematical expressions are in $...$ LaTeX format
-- Proper spacing between all words
+QUALITY CHECK:
+- Total questions = {total_requested}
+- Check if you generated correct number of Single vs Multi correct MCQs.
 
 Return ONLY valid JSON:
 {json_example}"""
