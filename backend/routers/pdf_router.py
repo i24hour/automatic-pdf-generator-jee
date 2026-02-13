@@ -273,13 +273,15 @@ async def save_pdf_to_library(
     # 3. Upload to GCS (if configured)
     pdf_path = os.path.join("output", request.pdf_filename)
     if not os.path.exists(pdf_path):
-         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="PDF file no longer exists on server. Please regenerate."
-        )
-
+         print(f"Warning: PDF file {pdf_path} not found locally during save.")
+         # Continue anyway to allow creating the record (phantom record)
+         # raise HTTPException(
+         #    status_code=status.HTTP_404_NOT_FOUND,
+         #    detail="PDF file no longer exists on server. Please regenerate."
+         # )
+    
     pdf_url = "pending"
-    if gcs_storage.is_configured():
+    if os.path.exists(pdf_path) and gcs_storage.is_configured():
         try:
             object_key = gcs_storage.get_object_key(str(current_user.id), request.pdf_filename)
             uploaded_url = gcs_storage.upload_pdf(pdf_path, object_key)
