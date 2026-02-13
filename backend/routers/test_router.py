@@ -359,7 +359,10 @@ async def create_test(
                 marks_correct=4,
                 marks_wrong=-1 if request.exam_type != "NEET" else -1, # Marking scheme
                 status="NOT_VISITED",
-                diagram_json=json.dumps(q_data.get("diagram_spec")) if q_data.get("diagram_spec") else None
+                diagram_json=json.dumps({
+                    "type": q_data.get("diagram_type"),
+                    "params": q_data.get("diagram_params")
+                }) if q_data.get("diagram_type") else None
             )
             db.add(response)
             q_index += 1
@@ -530,7 +533,8 @@ async def get_question(
         status=get_question_status(response),
         user_answer=response.user_answer,
         is_marked_for_review=response.is_marked_for_review,
-        time_remaining_seconds=calculate_time_remaining(test)
+        time_remaining_seconds=calculate_time_remaining(test),
+        diagram_json=response.diagram_json
     )
 
 

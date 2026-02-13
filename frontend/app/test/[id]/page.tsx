@@ -26,6 +26,7 @@ interface QuestionData {
     user_answer: string | null;
     is_marked_for_review: boolean;
     time_remaining_seconds: number;
+    diagram_json?: string;
 }
 
 interface TestState {
@@ -384,6 +385,25 @@ export default function TestInterfacePage() {
                         <div className="text-lg mb-6">
                             <MathText content={question.question_text} />
                         </div>
+
+                        {/* Debug: Diagram Display */}
+                        {question.diagram_json && (
+                            <div className="mb-6 p-4 border border-blue-200 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800 rounded-lg">
+                                <h4 className="text-sm font-bold text-blue-700 dark:text-blue-300 mb-2 flex items-center gap-2">
+                                    <span>📊 Diagram Data Detected</span>
+                                </h4>
+                                <pre className="text-xs bg-white dark:bg-black p-2 rounded border border-gray-200 dark:border-gray-700 overflow-auto max-h-40">
+                                    {(() => {
+                                        try {
+                                            const parsed = JSON.parse(question.diagram_json);
+                                            return JSON.stringify(parsed, null, 2);
+                                        } catch (e) {
+                                            return question.diagram_json;
+                                        }
+                                    })()}
+                                </pre>
+                            </div>
+                        )}
 
                         {/* Options */}
                         {question.options && (

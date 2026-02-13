@@ -1,0 +1,17 @@
+FROM python:3.12-slim
+
+# Set working directory
+WORKDIR /app
+
+# Ensure logs are flushed immediately
+ENV PYTHONUNBUFFERED=1
+
+# Install system dependencies for LaTeX (Heavy layer - ~500MB)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    texlive-latex-base \
+    texlive-fonts-recommended \
+    texlive-fonts-extra \
+    texlive-latex-extra \
+    texlive-science \
+    lmodern \
+    && rm -rf /var/lib/apt/lists/*

@@ -771,7 +771,9 @@ Example: {{"subject":"Chemistry","confidence":"high"}}
                 "type": q.get("type", "mcq"),
                 "text": text,
                 "answer": q.get("answer", ""),
-                "diagram_tikz": q.get("diagram_tikz"),
+                # "diagram_tikz": q.get("diagram_tikz"), # OLD
+                "diagram_type": q.get("diagram_type"),   # NEW
+                "diagram_params": q.get("diagram_params") # NEW
             }
             
             if q.get("options"):
@@ -1134,9 +1136,9 @@ SOLUTION REQUIREMENTS:
             mcq_instruction = """FOR MCQs: Mix of Single Correct and Multi-Correct (match exam pattern).
 DIAGRAM HANDLING (STRICT):
 1. Decide if diagram is required (Ray optics, Circuits, Graph-based, Geometry).
-2. If REQUIRED: Set diagram_required=true and generate structured diagram_spec.
-3. If NOT REQUIRED: Set diagram_required=false and diagram_spec=null.
-4. Supported Types: ray_optics, electric_circuit, motion_graph, free_body_diagram, geometry_figure.
+2. If REQUIRED: Set diagram_type to one of ["free_body", "projectile_motion", "inclined_plane", "basic_circuit"].
+3. If NOT REQUIRED: Set diagram_type to null.
+4. If diagram_type is set, providing matching diagram_params object.
 
 QUESTION OUTPUT FORMAT (STRICT):
 For EACH question, return a JSON object in this format:
@@ -1146,25 +1148,22 @@ For EACH question, return a JSON object in this format:
   "correct_answer": "A",
   "solution": "...",
   "difficulty": "medium",
-  "diagram_required": true/false,
-  "diagram_spec": { "diagram_type": "...", "elements": [...] } (or null)
+  "diagram_type": "free_body",
+  "diagram_params": { "mass": 5, "angle": 30 } (or null)
 }"""
 
             json_example = """{
     "questions": [
         {
             "type": "mcq",
-            "question_text": "Object is placed at 2f...",
-            "options": ["Real, Inverted", "Virtual, Erect", "Real, Erect", "Virtual, Inverted"],
+            "question_text": "A block of mass 5kg slides down an incline of 30 degrees...",
+            "options": ["2 m/s^2", "4 m/s^2", "5 m/s^2", "9.8 m/s^2"],
             "answer": "A",
             "solution": "...",
-            "diagram_required": true,
-            "diagram_spec": {
-                "diagram_type": "ray_optics",
-                "elements": [
-                    {"shape": "line", "label": "principal axis", "properties": {"y": 0}},
-                    {"shape": "convex_lens", "label": "L", "properties": {"x": 0, "f": 10}}
-                ]
+            "diagram_type": "free_body",
+            "diagram_params": {
+                "mass": 5,
+                "angle": 30
             }
         }
     ]

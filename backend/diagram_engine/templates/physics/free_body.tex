@@ -1,0 +1,45 @@
+\begin{tikzpicture}[>=latex, scale=1.5]
+    % Parameters
+    \def\angle{\VAR{p.angle}}
+    \def\mass{\VAR{p.mass}}
+    
+    % Draw Incline
+    \draw[thick] (0,0) coordinate (O) -- (\angle:4) coordinate (Top) -- (4,0) coordinate (Bottom) -- cycle;
+    \draw (0.5,0) arc (0:\angle:0.5);
+    \node at (20:0.8) {$\theta$};
+
+    % Define Block Position
+    \coordinate (BlockCenter) at (\angle:2);
+    
+    % Draw Block (Rotated rectangle)
+    \begin{scope}[rotate=\angle, transform shape]
+        \draw[fill=gray!20, thick] (1.5, 0) rectangle (2.5, 0.8);
+        \coordinate (CM) at (2, 0.4); % Center of Mass
+    \end{scope}
+    
+    % Reset rotation for forces, but usually easier to rotate vectors
+    % Let's draw forces from CM
+    
+    % 1. Weight (mg) - Always straight down
+    \draw[->, thick, red] (BlockCenter) ++(0, 0.4*sin \angle) -- ++(0, -1.5) node[right] {$mg$};
+    
+    \BLOCK{ if p.show_components }
+        % Components of mg
+        \draw[dashed, red!70, ->] (BlockCenter) ++(0, 0.4*sin \angle) -- ++(-90+\angle:-1.2) node[below] {$mg \cos\theta$};
+        \draw[dashed, red!70, ->] (BlockCenter) ++(0, 0.4*sin \angle) -- ++(180+\angle:0.8) node[left] {$mg \sin\theta$};
+    \BLOCK{ endif }
+
+    % 2. Normal Force (N) - Perpendicular to surface
+    \draw[->, thick, blue] (BlockCenter) ++(0, 0.4*sin \angle) -- ++(90+\angle:1.2) node[above] {$N$};
+
+    % 3. Friction (if present)
+    \BLOCK{ if p.friction_coefficient }
+        \draw[->, thick, orange] (BlockCenter) ++(0, 0.4*sin \angle) -- ++(180+\angle:1.0) node[above left] {$f_k$};
+    \BLOCK{ endif }
+
+    % 4. Applied Force (if present)
+    \BLOCK{ if p.force_applied }
+        \draw[->, thick, green!50!black] (BlockCenter) ++(0, 0.4*sin \angle) -- ++(\angle:1.2) node[above right] {$F$};
+    \BLOCK{ endif }
+
+\end{tikzpicture}
