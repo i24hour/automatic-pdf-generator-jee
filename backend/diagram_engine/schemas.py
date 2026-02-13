@@ -22,5 +22,10 @@ class ProjectileParams(DiagramParams):
     angle: float = Field(..., description="Launch angle")
     height: float = Field(default=0, description="Initial height")
 
+class ReactionSchemeParams(DiagramParams):
+    """Parameters for a chemical reaction scheme."""
+    description: str = Field(..., description="Text description of the reaction or steps")
+    steps: Optional[List[str]] = Field(default=None, description="List of reaction steps")
+
 # --- Registry Map (to be imported by registry.py) ---
 # We will populate this as we add more schemas.

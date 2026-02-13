@@ -404,8 +404,8 @@ class PDFEngine:
             
             # 1. Clean Text (Remove [DIAGRAM: ...])
             raw_text = q.get("text", "")
-            # Remove [DIAGRAM: ...] blocks
-            cleaned_text = re.sub(r'\[DIAGRAM:.*?\]', '', raw_text, flags=re.IGNORECASE).strip()
+            # Remove [DIAGRAM: ...] blocks (handle newlines with DOTALL)
+            cleaned_text = re.sub(r'\[DIAGRAM:.*?\]', '', raw_text, flags=re.IGNORECASE | re.DOTALL).strip()
             
             for key, value in q.items():
                 if key == "text":

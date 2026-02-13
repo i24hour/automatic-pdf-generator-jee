@@ -1,4 +1,4 @@
-from .schemas import FreeBodyParams, ProjectileParams
+from .schemas import FreeBodyParams, ProjectileParams, ReactionSchemeParams
 
 class DiagramRegistry:
     """
@@ -16,6 +16,11 @@ class DiagramRegistry:
             "schema": ProjectileParams,
             "template": "physics/projectile.tex",
             "subject": "physics"
+        },
+        "reaction_scheme": {
+            "schema": ReactionSchemeParams,
+            "template": "chemistry/reaction_scheme.tex",
+            "subject": "chemistry"
         }
         # Add more here as we implement them
     }
