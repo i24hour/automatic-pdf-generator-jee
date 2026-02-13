@@ -34,6 +34,7 @@ interface GenerationContextType {
     cancelGeneration: () => void;
     clearResult: () => void;
     downloadPDF: (res?: GenerateResponse) => void;
+    updateResult: (updates: Partial<GenerateResponse>) => void;
 }
 
 const GenerationContext = createContext<GenerationContextType | undefined>(undefined);
@@ -245,6 +246,10 @@ export function GenerationProvider({ children }: { children: ReactNode }) {
         }
     };
 
+    const updateResult = (updates: Partial<GenerateResponse>) => {
+        setResult(prev => prev ? { ...prev, ...updates } : null);
+    };
+
     return (
         <GenerationContext.Provider value={{
             isGenerating,
@@ -257,7 +262,8 @@ export function GenerationProvider({ children }: { children: ReactNode }) {
             startGeneration,
             cancelGeneration,
             clearResult,
-            downloadPDF
+            downloadPDF,
+            updateResult
         }}>
             {children}
         </GenerationContext.Provider>

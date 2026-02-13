@@ -1152,57 +1152,9 @@ async def run_generation_job(
         _, new_remaining, new_reset_hours, _ = check_rate_limit(user, db)
         print(f"[SSE Job {job_id}] TRACE: Before R2 section, rate_limit={new_remaining}")
         
-        # Create SharedPDF record FIRST (so Post button shows), then attempt GCS upload in background
+        # SharedPDF creation is now MANUAL via /api/pdf/save endpoint
+        # This prevents auto-filling the private library (limit 10)
         shared_pdf_id = None
-        try:
-            from database import SessionLocal
-            db_session = SessionLocal()
-            try:
-                # Create SharedPDF with pending URL immediately
-                shared_pdf = SharedPDF(
-                    user_id=user.id,
-                    pdf_url="pending",  # Will be updated after GCS upload
-                    pdf_filename=os.path.basename(pdf_path),
-                    subject=request.subject,
-                    topic=request.topic,
-                    level=request.level,
-                    difficulty=request.difficulty,
-                    question_count=mcq_count + numerical_count,
-                    has_solutions=request.include_solutions,
-                    visibility="private"
-                )
-                db_session.add(shared_pdf)
-                db_session.commit()
-                shared_pdf_id = shared_pdf.id
-                print(f"✓ SharedPDF created: {shared_pdf_id}")
-            finally:
-                db_session.close()
-        except Exception as e:
-            print(f"✗ Failed to create SharedPDF: {e}")
-        
-        # Attempt GCS upload in background (non-blocking) to update pdf_url later
-        if gcs_storage.is_configured() and shared_pdf_id:
-            job_store.update_job(job_id, JobStatus.UPLOADING, 90, "Uploading to cloud storage...")
-            try:
-                object_key = gcs_storage.get_object_key(str(user.id), os.path.basename(pdf_path))
-                print(f"[SSE Job {job_id}] Attempting GCS upload: {object_key}")
-                pdf_url = gcs_storage.upload_pdf(pdf_path, object_key)
-                
-                if pdf_url:
-                    # Update SharedPDF with actual GCS URL
-                    db_session = SessionLocal()
-                    try:
-                        shared = db_session.query(SharedPDF).filter(SharedPDF.id == shared_pdf_id).first()
-                        if shared:
-                            shared.pdf_url = pdf_url
-                            db_session.commit()
-                            print(f"✓ GCS upload complete: {pdf_url}")
-                    finally:
-                        db_session.close()
-                else:
-                    print(f"[SSE Job {job_id}] GCS upload returned None")
-            except Exception as e:
-                print(f"✗ GCS upload failed: {e}")
         
         # Update: Done
         job_store.update_job(

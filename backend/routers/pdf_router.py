@@ -203,3 +203,97 @@ async def update_pdf_visibility(
         "slug": pdf.slug if visibility == "unlisted" else None,
         "link": f"https://infinitest.tech/pdf/{pdf.slug}" if pdf.slug else None
     }
+
+
+class SavePDFRequest(BaseModel):
+    pdf_filename: str
+    subject: str
+    topic: str
+    level: str
+    difficulty: str
+    question_count: int
+    has_solutions: bool
+
+
+@router.post("/save")
+async def save_pdf_to_library(
+    request: SavePDFRequest,
+    current_user: User = Depends(get_current_user_required),
+    db: Session = Depends(get_db)
+):
+    """
+    Manually save a generated PDF to the user's private library.
+    ENFORCES LIMIT: Max 10 Private PDFs.
+    """
+    # 1. Check Limit (Max 10 Private PDFs)
+    private_count = db.query(SharedPDF).filter(
+        SharedPDF.user_id == current_user.id,
+        SharedPDF.visibility == "private"
+    ).count()
+
+    # Allow deleting old ones? No, user must delete manually.
+    if private_count >= 10:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Library limit reached (10/10). Please delete an old PDF to save this one."
+        )
+
+    # 2. Check if already saved (deduplicate by filename)
+    existing = db.query(SharedPDF).filter(
+        SharedPDF.user_id == current_user.id,
+        SharedPDF.pdf_filename == request.pdf_filename
+    ).first()
+    
+    if existing:
+        return {
+            "success": True,
+            "message": "PDF already in library",
+            "pdf_id": existing.id
+        }
+
+    # 3. Upload to GCS (if configured)
+    # We need to find the file locally first.
+    # Assumes 'output' directory in backend root.
+    pdf_path = os.path.join("output", request.pdf_filename)
+    if not os.path.exists(pdf_path):
+         raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="PDF file no longer exists on server. Please regenerate."
+        )
+
+    pdf_url = "pending"
+    if gcs_storage.is_configured():
+        try:
+            object_key = gcs_storage.get_object_key(str(current_user.id), request.pdf_filename)
+            uploaded_url = gcs_storage.upload_pdf(pdf_path, object_key)
+            if uploaded_url:
+                pdf_url = uploaded_url
+        except Exception as e:
+            print(f"Failed to upload to GCS during save: {e}")
+            # We continue, saving with 'pending' url or fall back to local serving logic if supported?
+            # SharedPDF usually implies cloud link. But let's save anyway.
+
+    # 4. Create Record
+    new_pdf = SharedPDF(
+        user_id=current_user.id,
+        pdf_url=pdf_url,
+        pdf_filename=request.pdf_filename,
+        subject=request.subject,
+        topic=request.topic,
+        level=request.level,
+        difficulty=request.difficulty,
+        question_count=request.question_count,
+        has_solutions=request.has_solutions,
+        visibility="private"
+    )
+    
+    db.add(new_pdf)
+    db.commit()
+    db.refresh(new_pdf)
+    
+    return {
+        "success": True,
+        "message": "Saved to library successfully",
+        "pdf_id": new_pdf.id,
+        "private_count": private_count + 1
+    }

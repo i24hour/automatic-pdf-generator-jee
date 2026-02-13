@@ -100,6 +100,25 @@ export default function TestGenerator() {
     const [numNAT, setNumNAT] = useState(0);
     const [numGA, setNumGA] = useState(10); // Standard is 10, but user can change
 
+    // Generation State
+    const {
+        startGeneration,
+        cancelGeneration: cancelGen,
+        isGenerating: isLoading,
+        progressStep,
+        progressMessage,
+        result,
+        error: genError,
+        elapsedTime,
+        clearResult,
+        downloadPDF,
+        updateResult
+    } = useGeneration();
+
+    const handleCancelGeneration = () => {
+        cancelGen();
+    };
+
     // CBSE Pattern state (for CBSE Board level)
     const [cbseVeryShort, setCbseVeryShort] = useState(4);
     const [cbseShort, setCbseShort] = useState(4);
@@ -113,19 +132,6 @@ export default function TestGenerator() {
     const [jeeInteger, setJeeInteger] = useState(5);
 
     const [includeSolutions, setIncludeSolutions] = useState(false);
-
-    // Global Generation State
-    const {
-        isGenerating: isLoading,
-        progressStep,
-        progressMessage,
-        result,
-        error: genError,
-        elapsedTime,
-        startGeneration,
-        cancelGeneration: cancelGen,
-        downloadPDF
-    } = useGeneration();
 
     // Local Validation State
     const [validationError, setValidationError] = useState<string | null>(null);
@@ -502,14 +508,55 @@ export default function TestGenerator() {
         });
     };
 
-    const handleCancelGeneration = () => {
-        cancelGen();
-    };
-
 
     const handleDownload = () => {
         downloadPDF(result || undefined);
     };
+
+    const [isSaving, setIsSaving] = useState(false);
+    const [saveError, setSaveError] = useState<string | null>(null);
+
+    const handleSaveToLibrary = async () => {
+        if (!result || !result.pdf_filename) return;
+
+        setIsSaving(true);
+        setSaveError(null);
+
+        try {
+            const response = await authFetch(`${API_BASE_URL}/api/pdf/save`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    pdf_filename: result.pdf_filename,
+                    subject: subject.sort().join(', '),
+                    topic: topic,
+                    level: level,
+                    difficulty: "Medium", // Or passed from state
+                    question_count: result.total_mcq + result.total_numerical,
+                    has_solutions: includeSolutions
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                // Update result to include shared_pdf_id so UI updates
+                if (data.pdf_id) {
+                    // Update context result to show "Post" button and "Saved" status
+                    updateResult({ shared_pdf_id: data.pdf_id });
+
+                    // Refresh history to show the new saved status
+                    fetchHistory();
+                }
+            } else {
+                const errorData = await response.json();
+                setSaveError(errorData.detail || "Failed to save PDF");
+            }
+        } catch (err) {
+            setSaveError("An error occurred while saving.");
+        } finally {
+            setIsSaving(false);
+        }
+    }
 
     const handleLogout = () => {
         logout();
@@ -1587,20 +1634,39 @@ export default function TestGenerator() {
                             </div>
 
 
-                            <div className="flex gap-3">
-                                <button onClick={handleDownload} className="flex-1 py-3.5 border-2 border-indigo-600 text-indigo-600 font-medium rounded-lg hover:bg-indigo-50 transition-colors flex items-center justify-center gap-2">
-                                    <Download className="w-5 h-5" />
-                                    Download PDF
-                                </button>
-
-                                {result.shared_pdf_id && (
-                                    <button
-                                        onClick={() => setShowPostModal(true)}
-                                        className="flex-1 py-3.5 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2"
-                                    >
-                                        <Share2 className="w-5 h-5" />
-                                        Post
+                            <div className="flex flex-col gap-3">
+                                <div className="flex gap-3">
+                                    <button onClick={handleDownload} className="flex-1 py-3.5 border-2 border-indigo-600 text-indigo-600 font-medium rounded-lg hover:bg-indigo-50 transition-colors flex items-center justify-center gap-2">
+                                        <Download className="w-5 h-5" />
+                                        Download PDF
                                     </button>
+
+                                    {!result.shared_pdf_id ? (
+                                        <button
+                                            onClick={handleSaveToLibrary}
+                                            disabled={isSaving}
+                                            className="flex-1 py-3.5 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-70"
+                                        >
+                                            {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <BookOpen className="w-5 h-5" />}
+                                            {isSaving ? "Saving..." : "Save to Private"}
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={() => setShowPostModal(true)}
+                                            className="flex-1 py-3.5 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
+                                        >
+                                            <Share2 className="w-5 h-5" />
+                                            Post to Community
+                                        </button>
+                                    )}
+                                </div>
+                                {saveError && (
+                                    <p className="text-sm text-red-600 text-center">{saveError}</p>
+                                )}
+                                {result.shared_pdf_id && (
+                                    <p className="text-xs text-green-600 text-center flex items-center justify-center gap-1">
+                                        <CheckCircle2 className="w-3 h-3" /> Saved to Private Library
+                                    </p>
                                 )}
                             </div>
                         </div>
@@ -1625,8 +1691,8 @@ export default function TestGenerator() {
                                         }
                                     }}
                                     className={`flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 transition-all ${item.status === 'COMPLETED'
-                                            ? 'cursor-pointer hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-800'
-                                            : ''
+                                        ? 'cursor-pointer hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-800'
+                                        : ''
                                         }`}
                                 >
                                     <div className="flex-1 min-w-0">
