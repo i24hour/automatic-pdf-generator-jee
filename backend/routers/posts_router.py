@@ -178,14 +178,14 @@ def check_post_badges(post: SharedPDF, db: Session):
 
 def enforce_visibility_limits(user: User, db: Session):
     """Enforce private (5) and unlisted (10) limits by deleting oldest."""
-    # Private limit: keep last 5
+    # Private limit: keep last 10
     private_posts = db.query(SharedPDF).filter(
         SharedPDF.user_id == user.id,
         SharedPDF.visibility == "private"
     ).order_by(desc(SharedPDF.created_at)).all()
     
-    if len(private_posts) > 5:
-        for post in private_posts[5:]:
+    if len(private_posts) > 10:
+        for post in private_posts[10:]:
             db.delete(post)
     
     # Unlisted limit: keep last 10

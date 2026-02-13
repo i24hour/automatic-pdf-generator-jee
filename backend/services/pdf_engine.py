@@ -407,6 +407,15 @@ class PDFEngine:
             # Remove [DIAGRAM: ...] blocks (handle newlines with DOTALL)
             cleaned_text = re.sub(r'\[DIAGRAM:.*?\]', '', raw_text, flags=re.IGNORECASE | re.DOTALL).strip()
             
+            # Fallback: If stripping resulted in empty text, use the original text (cleaned of markers only)
+            # This handles cases where the entire question was wrapped in [DIAGRAM: ...]
+            if not cleaned_text and raw_text.strip():
+                # Try to extract content inside [DIAGRAM: ...] or just use raw text without the markers
+                # Simple approach: Remove the [DIAGRAM: and ] markers but keep content
+                cleaned_text = re.sub(r'\[DIAGRAM:(.*?)\]', r'\1', raw_text, flags=re.IGNORECASE | re.DOTALL).strip()
+                if not cleaned_text: # processing failed or was empty inside
+                     cleaned_text = raw_text
+            
             for key, value in q.items():
                 if key == "text":
                     sanitized_q[key] = sanitize_for_latex(cleaned_text)

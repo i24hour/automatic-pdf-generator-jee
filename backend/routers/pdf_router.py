@@ -213,6 +213,7 @@ class SavePDFRequest(BaseModel):
     difficulty: str
     question_count: int
     has_solutions: bool
+    visibility: str = "private"  # Default to private, but can be "unlisted" to bypass private limit
 
 
 @router.post("/save")
@@ -222,21 +223,23 @@ async def save_pdf_to_library(
     db: Session = Depends(get_db)
 ):
     """
-    Manually save a generated PDF to the user's private library.
-    ENFORCES LIMIT: Max 10 Private PDFs.
+    Manually save a generated PDF.
+    - If visibility="private": Enforces 10-PDF limit (raises 400).
+    - If visibility="unlisted": Creates record without limit check (for posting).
     """
-    # 1. Check Limit (Max 10 Private PDFs)
-    private_count = db.query(SharedPDF).filter(
-        SharedPDF.user_id == current_user.id,
-        SharedPDF.visibility == "private"
-    ).count()
+    # 1. Check Limit (Only for Private)
+    private_count = 0
+    if request.visibility == "private":
+        private_count = db.query(SharedPDF).filter(
+            SharedPDF.user_id == current_user.id,
+            SharedPDF.visibility == "private"
+        ).count()
 
-    # Allow deleting old ones? No, user must delete manually.
-    if private_count >= 10:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Library limit reached (10/10). Please delete an old PDF to save this one."
-        )
+        if private_count >= 10:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Private library limit reached (10/10). Please delete an old PDF to save this one."
+            )
 
     # 2. Check if already saved (deduplicate by filename)
     existing = db.query(SharedPDF).filter(
@@ -245,6 +248,22 @@ async def save_pdf_to_library(
     ).first()
     
     if existing:
+        # If existing is unlisted/public and user wants private, check limit
+        if request.visibility == "private" and existing.visibility != "private":
+             if private_count >= 10:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Private library limit reached (10/10)."
+                )
+             existing.visibility = "private"
+             db.commit()
+             return {
+                "success": True,
+                "message": "Moved to private library",
+                "pdf_id": existing.id,
+                "private_count": private_count + 1
+             }
+
         return {
             "success": True,
             "message": "PDF already in library",
@@ -252,8 +271,6 @@ async def save_pdf_to_library(
         }
 
     # 3. Upload to GCS (if configured)
-    # We need to find the file locally first.
-    # Assumes 'output' directory in backend root.
     pdf_path = os.path.join("output", request.pdf_filename)
     if not os.path.exists(pdf_path):
          raise HTTPException(
@@ -270,8 +287,6 @@ async def save_pdf_to_library(
                 pdf_url = uploaded_url
         except Exception as e:
             print(f"Failed to upload to GCS during save: {e}")
-            # We continue, saving with 'pending' url or fall back to local serving logic if supported?
-            # SharedPDF usually implies cloud link. But let's save anyway.
 
     # 4. Create Record
     new_pdf = SharedPDF(
@@ -284,7 +299,7 @@ async def save_pdf_to_library(
         difficulty=request.difficulty,
         question_count=request.question_count,
         has_solutions=request.has_solutions,
-        visibility="private"
+        visibility=request.visibility 
     )
     
     db.add(new_pdf)
@@ -293,7 +308,7 @@ async def save_pdf_to_library(
     
     return {
         "success": True,
-        "message": "Saved to library successfully",
+        "message": "Saved successfully",
         "pdf_id": new_pdf.id,
-        "private_count": private_count + 1
+        "private_count": private_count + 1 if request.visibility == "private" else private_count
     }

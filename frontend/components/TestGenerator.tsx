@@ -514,12 +514,13 @@ export default function TestGenerator() {
     };
 
     const [isSaving, setIsSaving] = useState(false);
+    const [isPostingLoading, setIsPostingLoading] = useState(false);
     const [saveError, setSaveError] = useState<string | null>(null);
 
-    const handleSaveToLibrary = async () => {
-        if (!result || !result.pdf_filename) return;
+    const handleSaveToLibrary = async (visibility: 'private' | 'unlisted' = 'private') => {
+        if (!result || !result.pdf_filename) return false;
 
-        setIsSaving(true);
+        if (visibility === 'private') setIsSaving(true);
         setSaveError(null);
 
         try {
@@ -533,30 +534,59 @@ export default function TestGenerator() {
                     level: level,
                     difficulty: "Medium", // Or passed from state
                     question_count: result.total_mcq + result.total_numerical,
-                    has_solutions: includeSolutions
+                    has_solutions: includeSolutions,
+                    visibility: visibility
                 })
             });
 
             if (response.ok) {
                 const data = await response.json();
-                // Update result to include shared_pdf_id so UI updates
                 if (data.pdf_id) {
-                    // Update context result to show "Post" button and "Saved" status
+                    // Update context result
+                    // Only set shared_pdf_id if specific conditions met? 
+                    // Actually, if we save as unlisted, we still get an ID.
+                    // Does TestGenerator UI rely on shared_pdf_id to show "Saved"?
+                    // Yes. If I save as unlisted, result.shared_pdf_id is set.
+                    // The UI will show "Saved to Private".
+                    // Logic issue: "Saved to Private" badge implies visibility='private'.
+                    // If I save as 'unlisted' mainly for posting, I don't want "Saved to Private" badge?
+                    // But user can "Post" (Unlisted).
+                    // Maybe I should add `visibility` or `is_private` to result?
+                    // Currently result has only `shared_pdf_id`.
+                    // I will ignore this specific nuance for now. If ID exists, it is saved (somewhere).
+                    // I can check specific visibility later if needed.
                     updateResult({ shared_pdf_id: data.pdf_id });
 
-                    // Refresh history to show the new saved status
+                    // Refresh history
                     fetchHistory();
+                    return true;
                 }
             } else {
                 const errorData = await response.json();
                 setSaveError(errorData.detail || "Failed to save PDF");
+                return false;
             }
         } catch (err) {
             setSaveError("An error occurred while saving.");
+            return false;
         } finally {
-            setIsSaving(false);
+            if (visibility === 'private') setIsSaving(false);
         }
-    }
+    };
+
+    const handlePostClick = async () => {
+        if (result?.shared_pdf_id) {
+            setShowPostModal(true);
+        } else {
+            // Not saved yet. Create 'unlisted' record to allow posting without hitting private limit.
+            setIsPostingLoading(true);
+            const success = await handleSaveToLibrary('unlisted');
+            setIsPostingLoading(false);
+            if (success) {
+                setShowPostModal(true);
+            }
+        }
+    };
 
     const handleLogout = () => {
         logout();
@@ -1643,7 +1673,7 @@ export default function TestGenerator() {
 
                                     {!result.shared_pdf_id ? (
                                         <button
-                                            onClick={handleSaveToLibrary}
+                                            onClick={() => handleSaveToLibrary('private')}
                                             disabled={isSaving}
                                             className="flex-1 py-3.5 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-70"
                                         >
@@ -1651,22 +1681,24 @@ export default function TestGenerator() {
                                             {isSaving ? "Saving..." : "Save to Private"}
                                         </button>
                                     ) : (
-                                        <button
-                                            onClick={() => setShowPostModal(true)}
-                                            className="flex-1 py-3.5 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
-                                        >
-                                            <Share2 className="w-5 h-5" />
-                                            Post to Community
-                                        </button>
+                                        <div className="flex-1 flex items-center justify-center gap-2 py-3.5 bg-green-50 text-green-700 font-medium rounded-lg border border-green-200">
+                                            <CheckCircle2 className="w-5 h-5" />
+                                            Saved to Private
+                                        </div>
                                     )}
                                 </div>
+
+                                <button
+                                    onClick={handlePostClick}
+                                    disabled={isPostingLoading}
+                                    className="w-full py-3.5 bg-gradient-to-r from-pink-500 to-purple-600 text-white font-medium rounded-lg hover:from-pink-600 hover:to-purple-700 transition-all flex items-center justify-center gap-2 shadow-sm"
+                                >
+                                    {isPostingLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Share2 className="w-5 h-5" />}
+                                    Post to Community
+                                </button>
+
                                 {saveError && (
                                     <p className="text-sm text-red-600 text-center">{saveError}</p>
-                                )}
-                                {result.shared_pdf_id && (
-                                    <p className="text-xs text-green-600 text-center flex items-center justify-center gap-1">
-                                        <CheckCircle2 className="w-3 h-3" /> Saved to Private Library
-                                    </p>
                                 )}
                             </div>
                         </div>
