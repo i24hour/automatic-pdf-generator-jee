@@ -493,7 +493,9 @@ async def list_models():
             "anthropic/claude-3-haiku-20240307"
         ]
     }
-
+@app.get('*')
+async def catch_all():
+    return {"error": "Not Found"}, 404
 
 # Run with: uvicorn main:app --reload
 if __name__ == "__main__":
