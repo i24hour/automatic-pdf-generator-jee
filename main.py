@@ -57,8 +57,7 @@ app.add_middleware(
 
 # Include auth router
 app.include_router(auth_router)
-app.include_router(posts_router)
-app.include_router(pdf_router, prefix="/api/pdf", tags=["PDF"]), prefix="/api/posts", tags=["Posts"])
+app.include_router(posts_router, prefix="/api/posts", tags=["Posts"])
 app.include_router(pdf_router, prefix="/api/pdf", tags=["PDF"])
 
 
