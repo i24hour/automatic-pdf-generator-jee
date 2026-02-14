@@ -22,6 +22,7 @@ from models import User, PDFGeneration, JobStatus, TopicSubjectCache
 from auth import get_current_user_required, get_current_user
 from routers.auth_router import router as auth_router
 from routers.posts_router import router as posts_router
+from routers.pdf_router import router as pdf_router
 
 # Load environment variables
 load_dotenv()
@@ -57,6 +58,8 @@ app.add_middleware(
 # Include auth router
 app.include_router(auth_router)
 app.include_router(posts_router)
+app.include_router(pdf_router, prefix="/api/pdf", tags=["PDF"]), prefix="/api/posts", tags=["Posts"])
+app.include_router(pdf_router, prefix="/api/pdf", tags=["PDF"])
 
 
 # Initialize database on startup
@@ -493,9 +496,6 @@ async def list_models():
             "anthropic/claude-3-haiku-20240307"
         ]
     }
-@app.get('*')
-async def catch_all():
-    return {"error": "Not Found"}, 404
 
 # Run with: uvicorn main:app --reload
 if __name__ == "__main__":
