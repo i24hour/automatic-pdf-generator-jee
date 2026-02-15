@@ -1,5 +1,5 @@
-import React from "react";
-import { BookOpen, Clock, Users, BarChart } from "lucide-react";
+import React, { useState } from "react";
+import { BookOpen, Clock, Users, BarChart, Share2, Check } from "lucide-react";
 import Link from "next/link";
 import { TestSummary } from "@/lib/community-api";
 
@@ -8,6 +8,17 @@ interface TestCardProps {
 }
 
 const TestCard: React.FC<TestCardProps> = ({ test }) => {
+    const [copied, setCopied] = useState(false);
+
+    const handleShare = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const url = `${window.location.origin}/community/test/${test.id}`;
+        navigator.clipboard.writeText(url).then(() => {
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        });
+    };
     // Format difficulty color
     const difficultyColor = {
         Easy: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
@@ -57,13 +68,22 @@ const TestCard: React.FC<TestCardProps> = ({ test }) => {
                 </div>
             </div>
 
-            {/* Action Button */}
-            <Link
-                href={`/community/test/${test.id}`}
-                className="block w-full text-center py-2.5 bg-black dark:bg-white text-white dark:text-black font-semibold rounded-lg hover:opacity-90 transition-opacity"
-            >
-                View & Attempt
-            </Link>
+            {/* Action Buttons */}
+            <div className="flex gap-2 mt-4">
+                <Link
+                    href={`/community/test/${test.id}`}
+                    className="flex-1 text-center py-2.5 bg-black dark:bg-white text-white dark:text-black font-semibold rounded-lg hover:opacity-90 transition-opacity"
+                >
+                    View & Attempt
+                </Link>
+                <button
+                    onClick={handleShare}
+                    className="px-3 py-2.5 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-gray-600 dark:text-gray-300 flex items-center justify-center min-w-[48px]"
+                    title="Share Test Link"
+                >
+                    {copied ? <Check className="w-5 h-5 text-green-500" /> : <Share2 className="w-5 h-5" />}
+                </button>
+            </div>
         </div>
     );
 };
