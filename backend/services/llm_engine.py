@@ -1913,38 +1913,47 @@ Return ONLY JSON:
 
             all_questions = []
 
-            # Generate EASY questions
+            # Build tasks for non-zero difficulties and run in PARALLEL
+            import asyncio
+            tasks = []
+            task_labels = []
+
             if easy_count > 0:
-                easy_qs = await self._generate_batch_for_difficulty(
+                tasks.append(self._generate_batch_for_difficulty(
                     subject=subject, topic=topic,
                     mcq_count=e_mcq, numerical_count=e_num,
                     level=level, difficulty_label="Easy",
                     level_prompt=level_prompt, **batch_kwargs
-                )
-                all_questions.extend(easy_qs)
-                print(f"[PER-DIFFICULTY] Easy batch done: {len(easy_qs)} questions")
+                ))
+                task_labels.append("Easy")
 
-            # Generate MEDIUM questions
             if medium_count > 0:
-                medium_qs = await self._generate_batch_for_difficulty(
+                tasks.append(self._generate_batch_for_difficulty(
                     subject=subject, topic=topic,
                     mcq_count=m_mcq, numerical_count=m_num,
                     level=level, difficulty_label="Medium",
                     level_prompt=level_prompt, **batch_kwargs
-                )
-                all_questions.extend(medium_qs)
-                print(f"[PER-DIFFICULTY] Medium batch done: {len(medium_qs)} questions")
+                ))
+                task_labels.append("Medium")
 
-            # Generate HARD questions
             if hard_count > 0:
-                hard_qs = await self._generate_batch_for_difficulty(
+                tasks.append(self._generate_batch_for_difficulty(
                     subject=subject, topic=topic,
                     mcq_count=h_mcq, numerical_count=h_num,
                     level=level, difficulty_label="Hard",
                     level_prompt=level_prompt, **batch_kwargs
-                )
-                all_questions.extend(hard_qs)
-                print(f"[PER-DIFFICULTY] Hard batch done: {len(hard_qs)} questions")
+                ))
+                task_labels.append("Hard")
+
+            # Run ALL difficulty batches in parallel
+            results = await asyncio.gather(*tasks, return_exceptions=True)
+
+            for label, result in zip(task_labels, results):
+                if isinstance(result, Exception):
+                    print(f"[PER-DIFFICULTY] {label} batch FAILED: {result}")
+                else:
+                    all_questions.extend(result)
+                    print(f"[PER-DIFFICULTY] {label} batch done: {len(result)} questions")
 
             # Deduplicate across all batches
             all_questions = self._deduplicate_questions(all_questions)
