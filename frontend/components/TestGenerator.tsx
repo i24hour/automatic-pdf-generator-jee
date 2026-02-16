@@ -120,6 +120,7 @@ export default function TestGenerator() {
     };
 
     // CBSE Pattern state (for CBSE Board level)
+    const [cbseMCQ, setCbseMCQ] = useState(5);
     const [cbseVeryShort, setCbseVeryShort] = useState(4);
     const [cbseShort, setCbseShort] = useState(4);
     const [cbseLong, setCbseLong] = useState(2);
@@ -469,7 +470,7 @@ export default function TestGenerator() {
         let requestTotal = questionCount;
 
         if (level === "CBSE Board") {
-            requestMcqs = cbseVeryShort + cbseShort + cbseLong + cbseCaseBased;
+            requestMcqs = cbseMCQ + cbseVeryShort + cbseShort + cbseLong + cbseCaseBased;
             requestNumericals = cbseNumericals;
             requestTotal = requestMcqs + requestNumericals;
         } else if (level === "GATE") {
@@ -500,6 +501,7 @@ export default function TestGenerator() {
             num_nat: level === "GATE" ? numNAT : undefined,
             num_ga: level === "GATE" ? numGA : undefined,
             // CBSE Board Params
+            cbse_mcq: level === "CBSE Board" ? cbseMCQ : undefined,
             cbse_vsa: level === "CBSE Board" ? cbseVeryShort : undefined,
             cbse_sa: level === "CBSE Board" ? cbseShort : undefined,
             cbse_la: level === "CBSE Board" ? cbseLong : undefined,
@@ -1278,7 +1280,7 @@ export default function TestGenerator() {
                         </span>
                         <span className="text-xs text-gray-400">
                             Total: {level === "CBSE Board"
-                                ? cbseVeryShort + cbseShort + cbseLong + cbseCaseBased + cbseNumericals
+                                ? cbseMCQ + cbseVeryShort + cbseShort + cbseLong + cbseCaseBased + cbseNumericals
                                 : level === "GATE"
                                     ? numGA + numMCQs + numMSQ + numNAT
                                     : level === "JEE Advanced"
@@ -1290,6 +1292,28 @@ export default function TestGenerator() {
                     {/* CBSE Board Pattern */}
                     {level === "CBSE Board" && (
                         <div className="space-y-3">
+                            {/* MCQ Input */}
+                            <div className="relative">
+                                <input
+                                    type="number"
+                                    min={0}
+                                    max={20}
+                                    value={cbseMCQ}
+                                    onChange={(e) => {
+                                        const val = parseInt(e.target.value) || 0;
+                                        setCbseMCQ(val);
+                                        if (e.target.value !== "" && parseInt(e.target.value).toString() !== e.target.value) {
+                                            e.target.value = parseInt(e.target.value).toString();
+                                        }
+                                    }}
+                                    disabled={isLoading}
+                                    className="peer w-full px-3 pt-5 pb-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-black text-gray-900 dark:text-white"
+                                    placeholder=" "
+                                />
+                                <label className="absolute left-3 top-1 text-[10px] text-indigo-600 font-medium">
+                                    MCQs (1M each)
+                                </label>
+                            </div>
                             <div className="grid grid-cols-2 gap-3">
                                 <div className="relative">
                                     <input
@@ -1379,7 +1403,13 @@ export default function TestGenerator() {
                                     value={numMCQs}
                                     onChange={(e) => {
                                         const val = parseInt(e.target.value) || 0;
-                                        if (val >= 0 && val + numNumericals <= 50) setNumMCQs(val);
+                                        if (val >= 0 && val + numNumericals <= 50) {
+                                            setNumMCQs(val);
+                                            // Force DOM update to strip leading zeros
+                                            if (e.target.value !== "" && parseInt(e.target.value).toString() !== e.target.value) {
+                                                e.target.value = parseInt(e.target.value).toString();
+                                            }
+                                        }
                                     }}
                                     min={0}
                                     max={50 - numNumericals}
@@ -1397,7 +1427,13 @@ export default function TestGenerator() {
                                     value={numNumericals}
                                     onChange={(e) => {
                                         const val = parseInt(e.target.value) || 0;
-                                        if (val >= 0 && numMCQs + val <= 50) setNumNumericals(val);
+                                        if (val >= 0 && numMCQs + val <= 50) {
+                                            setNumNumericals(val);
+                                            // Force DOM update to strip leading zeros
+                                            if (e.target.value !== "" && parseInt(e.target.value).toString() !== e.target.value) {
+                                                e.target.value = parseInt(e.target.value).toString();
+                                            }
+                                        }
                                     }}
                                     min={0}
                                     max={50 - numMCQs}
@@ -1422,7 +1458,13 @@ export default function TestGenerator() {
                                         value={jeeSingle}
                                         onChange={(e) => {
                                             const val = parseInt(e.target.value) || 0;
-                                            if (val >= 0 && val + jeeMulti + jeeInteger <= 50) setJeeSingle(val);
+                                            if (val >= 0 && val + jeeMulti + jeeInteger <= 50) {
+                                                setJeeSingle(val);
+                                                // Force DOM update to strip leading zeros (e.g. "030" -> "30")
+                                                if (e.target.value !== "" && parseInt(e.target.value).toString() !== e.target.value) {
+                                                    e.target.value = parseInt(e.target.value).toString();
+                                                }
+                                            }
                                         }}
                                         min={0}
                                         max={30}
@@ -1439,7 +1481,13 @@ export default function TestGenerator() {
                                         value={jeeMulti}
                                         onChange={(e) => {
                                             const val = parseInt(e.target.value) || 0;
-                                            if (val >= 0 && jeeSingle + val + jeeInteger <= 50) setJeeMulti(val);
+                                            if (val >= 0 && jeeSingle + val + jeeInteger <= 50) {
+                                                setJeeMulti(val);
+                                                // Force DOM update to strip leading zeros
+                                                if (e.target.value !== "" && parseInt(e.target.value).toString() !== e.target.value) {
+                                                    e.target.value = parseInt(e.target.value).toString();
+                                                }
+                                            }
                                         }}
                                         min={0}
                                         max={20}
@@ -1456,7 +1504,13 @@ export default function TestGenerator() {
                                         value={jeeInteger}
                                         onChange={(e) => {
                                             const val = parseInt(e.target.value) || 0;
-                                            if (val >= 0 && jeeSingle + jeeMulti + val <= 50) setJeeInteger(val);
+                                            if (val >= 0 && jeeSingle + jeeMulti + val <= 50) {
+                                                setJeeInteger(val);
+                                                // Force DOM update to strip leading zeros
+                                                if (e.target.value !== "" && parseInt(e.target.value).toString() !== e.target.value) {
+                                                    e.target.value = parseInt(e.target.value).toString();
+                                                }
+                                            }
                                         }}
                                         min={0}
                                         max={20}

@@ -1706,17 +1706,20 @@ TOTAL: {total_requested} questions. This is MANDATORY."""
             
             # Check if specific counts were provided via kwargs
             if kwargs.get('cbse_vsa') is not None:
+                mcq_cbse_count = kwargs.get('cbse_mcq') or 0
                 vsa_count = kwargs.get('cbse_vsa')
                 sa_count = kwargs.get('cbse_sa') or 0
                 la_count = kwargs.get('cbse_la') or 0
                 case_count = kwargs.get('cbse_case') or 0
-                print(f"[DEBUG] Using explicit CBSE Board counts: VSA={vsa_count}, SA={sa_count}, LA={la_count}, Case={case_count}")
+                print(f"[DEBUG] Using explicit CBSE Board counts: MCQ={mcq_cbse_count}, VSA={vsa_count}, SA={sa_count}, LA={la_count}, Case={case_count}")
             elif total_cbse_theory > 0:
-                vsa_count = max(1, int(total_cbse_theory * 0.4))
-                sa_count = max(1, int(total_cbse_theory * 0.3))
-                la_count = max(1, int(total_cbse_theory * 0.15))
-                case_count = max(0, total_cbse_theory - vsa_count - sa_count - la_count)
+                mcq_cbse_count = max(1, int(total_cbse_theory * 0.25))
+                vsa_count = max(1, int(total_cbse_theory * 0.3))
+                sa_count = max(1, int(total_cbse_theory * 0.25))
+                la_count = max(1, int(total_cbse_theory * 0.1))
+                case_count = max(0, total_cbse_theory - mcq_cbse_count - vsa_count - sa_count - la_count)
             else:
+                mcq_cbse_count = 0
                 vsa_count = 0
                 sa_count = 0
                 la_count = 0
@@ -1729,6 +1732,7 @@ TOPIC: {topic}
 {difficulty_prompt}
 
 GENERATE EXACTLY:
+- {mcq_cbse_count} MCQs (1 mark each, type: "mcq", 4 options A/B/C/D, one correct answer)
 - {vsa_count} Very Short Answer (1-2 marks, type: "short_answer", marks: 1 or 2)
 - {sa_count} Short Answer (2-3 marks, type: "short_answer", marks: 2 or 3)
 - {la_count} Long Answer (5 marks, type: "long_answer", marks: 5)
@@ -1748,6 +1752,7 @@ REQUIREMENTS FOR SOLUTIONS:
 Return ONLY JSON:
 {{
   "questions": [
+  {{"type": "mcq", "marks": 1, "text": "Which of the following is correct?", "options": ["A) Option 1", "B) Option 2", "C) Option 3", "D) Option 4"], "answer": "B", "solution": "The correct answer is B because..."}},
   {{"type": "short_answer", "marks": 2, "text": "Define electric flux.", "answer": "Electric flux is...", "solution": "\\textbf{{Step 1:}} Electric flux is defined as... \\n\\n\\textbf{{Step 2:}} It is a scalar quantity..."}},
   {{"type": "long_answer", "marks": 5, "text": "State and prove Gauss's law.", "answer": "Gauss's law states...", "solution": "\\textbf{{Step 1:}} Statement: The total electric flux... \\n\\n\\textbf{{Proof:}} Consider a sphere..."}},
   {{"type": "case_based", "marks": 4, "passage": "EM induction paragraph...", "sub_questions": [

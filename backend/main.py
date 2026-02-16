@@ -113,6 +113,7 @@ class GenerateRequest(BaseModel):
     num_nat: Optional[int] = Field(default=None, description="Number of NATs (GATE only)")
     num_ga: Optional[int] = Field(default=None, description="Number of General Aptitude questions (GATE only)")
     # Boards Specific Fields
+    cbse_mcq: Optional[int] = Field(default=None, description="Number of MCQ questions (Boards only)")
     cbse_vsa: Optional[int] = Field(default=None, description="Number of Very Short Answer questions (Boards only)")
     cbse_sa: Optional[int] = Field(default=None, description="Number of Short Answer questions (Boards only)")
     cbse_la: Optional[int] = Field(default=None, description="Number of Long Answer questions (Boards only)")
@@ -459,6 +460,7 @@ async def generate_test(
             num_msq=request.num_msq,
             num_nat=request.num_nat,
             num_ga=request.num_ga,
+            cbse_mcq=request.cbse_mcq,
             cbse_vsa=request.cbse_vsa,
             cbse_sa=request.cbse_sa,
             cbse_la=request.cbse_la,
@@ -637,6 +639,7 @@ async def generate_test_verified(
             num_msq=request.num_msq,
             num_nat=request.num_nat,
             num_ga=request.num_ga,
+            cbse_mcq=request.cbse_mcq,
             cbse_vsa=request.cbse_vsa,
             cbse_sa=request.cbse_sa,
             cbse_la=request.cbse_la,
@@ -1068,6 +1071,7 @@ async def run_generation_job(
             # Fresh Questions: Pass past questions to avoid repetition
             past_questions=past_questions if fresh_questions_enabled else None,
             # Boards Parameters
+            cbse_mcq=request.cbse_mcq,
             cbse_vsa=request.cbse_vsa,
             cbse_sa=request.cbse_sa,
             cbse_la=request.cbse_la,
