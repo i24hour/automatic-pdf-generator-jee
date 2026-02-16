@@ -526,7 +526,7 @@ export default function TestGenerator() {
         setSaveError(null);
 
         try {
-            const response = await authFetch(`${API_BASE_URL}/api/pdf/save`, {
+            const response = await authFetch(`${API_BASE_URL}/pdf/save`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
