@@ -73,6 +73,7 @@ app.include_router(auth_router)
 app.include_router(institute_router)
 app.include_router(posts_router)
 app.include_router(pdf_router)
+app.include_router(pdf_router, prefix="/api") # Support legacy/cached frontend calls to /api/pdf
 app.include_router(test_router)
 app.include_router(community_router)
 from routers.diagram_router import router as diagram_router
