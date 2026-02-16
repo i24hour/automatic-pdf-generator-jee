@@ -1597,54 +1597,73 @@ Return ONLY valid JSON:
             past_qs_formatted = "\n".join([f"{i+1}. {q[:200]}" for i, q in enumerate(past_questions[:30])])
             prompt += f"\n\nAVOID REPETITION — do NOT generate questions similar to:\n{past_qs_formatted}\n"
 
-        max_retries = 1
-        for attempt in range(max_retries + 1):
-            try:
-                response = await litellm.acompletion(
-                    model=self.model,
-                    messages=[
-                        {"role": "system", "content": f"Expert {subject} question setter specializing in {difficulty_label.upper()} difficulty questions. Return ONLY valid JSON."},
-                        {"role": "user", "content": prompt}
-                    ],
-                    temperature=temperature
-                )
+        # SINGLE LLM call — no full retries
+        try:
+            response = await litellm.acompletion(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": f"Expert {subject} question setter specializing in {difficulty_label.upper()} difficulty questions. Return ONLY valid JSON."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=temperature
+            )
 
-                response_text = response.choices[0].message.content
-                cleaned_json = self._clean_json_response(response_text)
-                data = json.loads(cleaned_json)
+            response_text = response.choices[0].message.content
+            cleaned_json = self._clean_json_response(response_text)
+            data = json.loads(cleaned_json)
 
-                if "questions" in data:
-                    questions = self._process_questions(data["questions"])
-                    questions = self._deduplicate_questions(questions)
-
-                    # Stamp difficulty on each question
-                    for q in questions:
-                        q["difficulty"] = difficulty_label.lower()
-
-                    # Trim if too many
-                    if len(questions) > total:
-                        questions = questions[:total]
-
-                    # Only retry if less than 70% returned (don't retry for 9/10)
-                    if len(questions) < total * 0.7 and attempt < max_retries:
-                        print(f"[{difficulty_label}] Got {len(questions)}/{total} questions (<70%), retrying...")
-                        continue
-
-                    print(f"[{difficulty_label}] Generated {len(questions)} questions successfully")
-                    return questions
-
-            except json.JSONDecodeError as e:
-                if attempt < max_retries:
-                    continue
-                print(f"[{difficulty_label}] JSON parse failed: {e}")
-                return []
-            except Exception as e:
-                if attempt < max_retries:
-                    continue
-                print(f"[{difficulty_label}] LLM call failed: {e}")
+            if "questions" not in data:
+                print(f"[{difficulty_label}] No 'questions' key in response")
                 return []
 
-        return data.get("questions", []) if 'data' in locals() else []
+            questions = self._process_questions(data["questions"])
+            questions = self._deduplicate_questions(questions)
+
+            # Stamp difficulty on each question
+            for q in questions:
+                q["difficulty"] = difficulty_label.lower()
+
+            # Trim if too many
+            if len(questions) > total:
+                questions = questions[:total]
+
+            # SMART TOP-UP: If we got fewer, generate ONLY the missing ones
+            missing = total - len(questions)
+            if missing > 0 and len(questions) > 0:
+                print(f"[{difficulty_label}] Got {len(questions)}/{total}, topping up {missing} more...")
+                try:
+                    topup_prompt = f"""Generate EXACTLY {missing} more {difficulty_label.lower()} {subject} questions on {topic}.
+Same format as before. Type can be 'mcq' or 'numerical'.
+Return ONLY JSON: {{"questions": [...]}}"""
+                    topup_response = await litellm.acompletion(
+                        model=self.model,
+                        messages=[
+                            {"role": "system", "content": f"Expert {subject} question setter. Return ONLY valid JSON."},
+                            {"role": "user", "content": topup_prompt}
+                        ],
+                        temperature=temperature
+                    )
+                    topup_text = topup_response.choices[0].message.content
+                    topup_json = self._clean_json_response(topup_text)
+                    topup_data = json.loads(topup_json)
+                    if "questions" in topup_data:
+                        topup_qs = self._process_questions(topup_data["questions"])
+                        for q in topup_qs:
+                            q["difficulty"] = difficulty_label.lower()
+                        questions.extend(topup_qs[:missing])
+                        print(f"[{difficulty_label}] Top-up added {min(len(topup_qs), missing)} questions")
+                except Exception as e:
+                    print(f"[{difficulty_label}] Top-up failed (non-critical): {e}")
+
+            print(f"[{difficulty_label}] Final: {len(questions)} questions")
+            return questions
+
+        except json.JSONDecodeError as e:
+            print(f"[{difficulty_label}] JSON parse failed: {e}")
+            return []
+        except Exception as e:
+            print(f"[{difficulty_label}] LLM call failed: {e}")
+            return []
 
     async def generate_questions_async(
         self,
