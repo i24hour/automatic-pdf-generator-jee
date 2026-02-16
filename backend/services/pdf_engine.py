@@ -420,7 +420,11 @@ class PDFEngine:
                 if key == "text":
                     sanitized_q[key] = sanitize_for_latex(cleaned_text)
                 elif key == "options" and isinstance(value, list):
-                    sanitized_q[key] = [sanitize_for_latex(str(opt)) for opt in value]
+                    opts = [sanitize_for_latex(str(opt)) for opt in value]
+                    # Pad to 4 options to prevent Jinja index errors
+                    while len(opts) < 4:
+                        opts.append("")
+                    sanitized_q[key] = opts
                 elif key == "answer":
                     # Special formatting for answers (already formatted string or list?)
                     # Assuming value is the raw answer
