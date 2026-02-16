@@ -2,6 +2,7 @@
 PDF Router: Endpoints for PDF access including slug-based unlisted PDF access.
 """
 
+import os
 import secrets
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status
