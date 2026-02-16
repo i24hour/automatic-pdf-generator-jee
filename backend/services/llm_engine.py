@@ -1369,7 +1369,7 @@ QUALITY CHECK:
 Return ONLY valid JSON:
 {json_example}"""
 
-        max_retries = 2
+        max_retries = 1
         for attempt in range(max_retries + 1):
             try:
                 response = litellm.completion(
@@ -1597,7 +1597,7 @@ Return ONLY valid JSON:
             past_qs_formatted = "\n".join([f"{i+1}. {q[:200]}" for i, q in enumerate(past_questions[:30])])
             prompt += f"\n\nAVOID REPETITION — do NOT generate questions similar to:\n{past_qs_formatted}\n"
 
-        max_retries = 2
+        max_retries = 1
         for attempt in range(max_retries + 1):
             try:
                 response = await litellm.acompletion(
@@ -1625,9 +1625,9 @@ Return ONLY valid JSON:
                     if len(questions) > total:
                         questions = questions[:total]
 
-                    # Retry if too few
-                    if len(questions) < total and attempt < max_retries:
-                        print(f"[{difficulty_label}] Got {len(questions)}/{total} questions, retrying...")
+                    # Only retry if less than 70% returned (don't retry for 9/10)
+                    if len(questions) < total * 0.7 and attempt < max_retries:
+                        print(f"[{difficulty_label}] Got {len(questions)}/{total} questions (<70%), retrying...")
                         continue
 
                     print(f"[{difficulty_label}] Generated {len(questions)} questions successfully")
@@ -1766,7 +1766,7 @@ Return ONLY JSON:
 }}
 """
             # ---- CBSE: Send prompt to LLM ----
-            max_retries = 2
+            max_retries = 1
             for attempt in range(max_retries + 1):
                 try:
                     response = await litellm.acompletion(
@@ -1848,7 +1848,7 @@ Use LaTeX: $...$
 Return ONLY JSON:
 {{"questions": ["""
             # ---- GATE: Send prompt to LLM ----
-            max_retries = 2
+            max_retries = 1
             for attempt in range(max_retries + 1):
                 try:
                     response = await litellm.acompletion(
