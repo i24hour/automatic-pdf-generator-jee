@@ -1471,6 +1471,181 @@ Return ONLY valid JSON:
             "questions": data.get("questions", []) if 'data' in locals() else []
         }
 
+    # ==================== PER-DIFFICULTY HELPER ====================
+    async def _generate_batch_for_difficulty(
+        self,
+        subject: str,
+        topic: str,
+        mcq_count: int,
+        numerical_count: int,
+        level: str,
+        difficulty_label: str,
+        level_prompt: str,
+        **kwargs
+    ) -> List[Dict[str, Any]]:
+        """
+        Generate questions for a SINGLE difficulty level (Easy/Medium/Hard).
+        Returns a list of question dicts, each stamped with 'difficulty' field.
+        """
+        import random
+        total = mcq_count + numerical_count
+        if total <= 0:
+            return []
+
+        # Difficulty-specific instructions — these are much more descriptive
+        # than a single line, forcing the LLM to truly calibrate
+        difficulty_descriptions = {
+            "Easy": f"""DIFFICULTY: EASY (All {total} questions must be EASY)
+WHAT EASY MEANS — follow these rules strictly:
+- Direct formula application with ONE step of calculation
+- The student should be able to solve each question in under 2 minutes
+- No hidden traps, no multi-concept integration
+- Values should be simple integers (not complex decimals)
+- Standard textbook-style questions that test basic understanding
+- Example calibration: "A ball is thrown upward with velocity 20 m/s. Find max height." (single formula: h = v²/2g)
+- DO NOT make these conceptually tricky. These should be confidence-builders.""",
+
+            "Medium": f"""DIFFICULTY: MEDIUM (All {total} questions must be MEDIUM)
+WHAT MEDIUM MEANS — follow these rules strictly:
+- Requires 2-3 steps of reasoning, NOT just plug-and-chug
+- Combines 2 concepts from the topic (e.g., energy conservation + kinematics)
+- Moderate calculations — may involve fractions or decimals
+- The student should need 3-5 minutes per question
+- Should require some critical thinking but no unusual tricks
+- Example calibration: "A block slides down a rough incline of angle 30° and length 2m. If μ=0.2, find the speed at the bottom."
+- These should be standard competitive exam level questions.""",
+
+            "Hard": f"""DIFFICULTY: HARD (All {total} questions must be HARD)
+WHAT HARD MEANS — follow these rules strictly:
+- Requires 4+ steps of reasoning with multi-concept integration
+- Must involve at least 3 distinct physics/chemistry/math concepts
+- Include non-obvious approaches or require insight to solve
+- May have tricky edge cases, unusual setups, or require creative problem-solving
+- The student should need 6-10 minutes per question
+- Calculations should be involved (systems of equations, integration, etc.)
+- Example calibration: "Two blocks of mass m and 2m are connected by a spring of constant k on a smooth surface. A bullet of mass m/2 embeds into the first block. Find the maximum compression."
+- These questions should differentiate toppers from average students.
+- IMPORTANT: Do NOT just add more text to make a question look hard. The CONCEPT must be genuinely challenging."""
+        }
+
+        diff_instruction = difficulty_descriptions.get(difficulty_label, difficulty_descriptions["Medium"])
+
+        # Temperature varies by difficulty for better results
+        temp_map = {"Easy": 0.5, "Medium": 0.7, "Hard": 0.85}
+        temperature = temp_map.get(difficulty_label, 0.7)
+
+        # Build the prompt for this difficulty batch
+        num_msq = kwargs.get("num_msq", 0) or 0
+        # Scale multi-correct proportionally to this batch
+        if mcq_count > 0 and num_msq > 0:
+            original_mcq = kwargs.get("_original_mcq_count", mcq_count)
+            batch_msq = max(0, round(num_msq * mcq_count / original_mcq)) if original_mcq > 0 else 0
+        else:
+            batch_msq = 0
+        batch_single = max(0, mcq_count - batch_msq)
+
+        # Construct breakdown
+        req_list = []
+        if batch_single > 0:
+            req_list.append(f"- {batch_single} Single Correct MCQs (Type: 'mcq')")
+        if batch_msq > 0:
+            req_list.append(f"- {batch_msq} Multiple Correct MCQs (Type: 'mcq_multi', one or more correct options)")
+        if numerical_count > 0:
+            req_list.append(f"- {numerical_count} Numerical Type Questions (Type: 'numerical')")
+        req_str = "\n".join(req_list)
+
+        # Numerical answer instruction
+        if level in ("JEE Mains", "Mains"):
+            num_ans_inst = "NUMERICAL ANSWERS: Must be INTEGERS ONLY (0-999). NO decimals."
+        else:
+            num_ans_inst = "NUMERICAL ANSWERS: Must be integers or decimals. NO formulas."
+
+        prompt = f"""You are an expert question paper setter for competitive exams like FIITJEE, Allen, Resonance.
+
+{diff_instruction}
+
+GENERATE EXACTLY:
+{req_str}
+TOTAL: {total} questions — ALL must be {difficulty_label.upper()} difficulty.
+
+SUBJECT: {subject}
+TOPIC: {topic}
+EXAM LEVEL: {level_prompt}
+
+STRICT REQUIREMENTS:
+1. Generate EXACTLY {total} questions. No more, no less.
+2. Every question MUST be {difficulty_label.upper()} difficulty as defined above.
+3. {num_ans_inst}
+4. Use LaTeX math mode: $...$ for inline, $$...$$ for display equations.
+5. Provide DETAILED step-by-step "solution" for EVERY question.
+   - Use \\\\textbf{{Step 1:}} format.
+   - One line gap between steps (\\n\\n).
+   - Center equations with $$...$$.
+   - End with \\\\textbf{{Final Answer:}} Option X or value.
+6. For mcq_multi: answer as "A, C" or "A, B, D".
+
+Return ONLY valid JSON:
+{{"questions": [
+  {{"type": "mcq", "text": "...", "options": ["A","B","C","D"], "answer": "A", "difficulty": "{difficulty_label.lower()}", "solution": "..."}},
+  {{"type": "numerical", "text": "...", "answer": "42", "difficulty": "{difficulty_label.lower()}", "solution": "..."}}
+]}}
+"""
+
+        # Anti-repetition
+        past_questions = kwargs.get("past_questions")
+        if past_questions and len(past_questions) > 0:
+            past_qs_formatted = "\n".join([f"{i+1}. {q[:200]}" for i, q in enumerate(past_questions[:30])])
+            prompt += f"\n\nAVOID REPETITION — do NOT generate questions similar to:\n{past_qs_formatted}\n"
+
+        max_retries = 2
+        for attempt in range(max_retries + 1):
+            try:
+                response = await litellm.acompletion(
+                    model=self.model,
+                    messages=[
+                        {"role": "system", "content": f"Expert {subject} question setter specializing in {difficulty_label.upper()} difficulty questions. Return ONLY valid JSON."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    temperature=temperature
+                )
+
+                response_text = response.choices[0].message.content
+                cleaned_json = self._clean_json_response(response_text)
+                data = json.loads(cleaned_json)
+
+                if "questions" in data:
+                    questions = self._process_questions(data["questions"])
+                    questions = self._deduplicate_questions(questions)
+
+                    # Stamp difficulty on each question
+                    for q in questions:
+                        q["difficulty"] = difficulty_label.lower()
+
+                    # Trim if too many
+                    if len(questions) > total:
+                        questions = questions[:total]
+
+                    # Retry if too few
+                    if len(questions) < total and attempt < max_retries:
+                        print(f"[{difficulty_label}] Got {len(questions)}/{total} questions, retrying...")
+                        continue
+
+                    print(f"[{difficulty_label}] Generated {len(questions)} questions successfully")
+                    return questions
+
+            except json.JSONDecodeError as e:
+                if attempt < max_retries:
+                    continue
+                print(f"[{difficulty_label}] JSON parse failed: {e}")
+                return []
+            except Exception as e:
+                if attempt < max_retries:
+                    continue
+                print(f"[{difficulty_label}] LLM call failed: {e}")
+                return []
+
+        return data.get("questions", []) if 'data' in locals() else []
+
     async def generate_questions_async(
         self,
         subject: str,
@@ -1585,6 +1760,38 @@ Return ONLY JSON:
 ]
 }}
 """
+            # ---- CBSE: Send prompt to LLM ----
+            max_retries = 2
+            for attempt in range(max_retries + 1):
+                try:
+                    response = await litellm.acompletion(
+                        model=self.model,
+                        messages=[
+                            {"role": "system", "content": f"Expert CBSE Board {subject} question setter. Return ONLY valid JSON."},
+                            {"role": "user", "content": prompt}
+                        ],
+                        temperature=0.7
+                    )
+                    response_text = response.choices[0].message.content
+                    cleaned_json = self._clean_json_response(response_text)
+                    data = json.loads(cleaned_json)
+                    if "questions" in data:
+                        data["questions"] = self._process_questions(data["questions"])
+                        data["questions"] = self._deduplicate_questions(data["questions"])
+                        if len(data["questions"]) > total_requested:
+                            data["questions"] = data["questions"][:total_requested]
+                    return {
+                        "success": True,
+                        "subject": subject,
+                        "topic": topic,
+                        "questions": data.get("questions", [])
+                    }
+                except Exception as e:
+                    if attempt < max_retries:
+                        continue
+                    return {"success": False, "error": f"CBSE LLM call failed: {str(e)}"}
+            return {"success": True, "subject": subject, "topic": topic, "questions": []}
+
         elif level == "GATE":
             gate_paper = kwargs.get("gate_paper", "CSE")
             gate_subset = kwargs.get("gate_subset", "ALL")  # NEW: Support partial generation
@@ -1635,153 +1842,123 @@ Use LaTeX: $...$
 
 Return ONLY JSON:
 {{"questions": ["""
-        else:
-            prompt = f"""You are an expert question paper setter for competitive exams like FIITJEE, Allen, Resonance.
-
-GENERATE EXACTLY:
-- {mcq_count} MCQ questions (type "mcq", with options array and answer as A/B/C/D)
-- {numerical_count} Numerical questions (type "numerical", answer as integer)
-
-SUBJECT: {subject}
-TOPIC: {topic}
-EXAM LEVEL: {level_prompt}
-{difficulty_prompt}
-
-SOLUTION REQUIREMENTS (ABSOLUTELY CRITICAL - DO NOT SKIP):
-- You MUST provide a "solution" field for EVERY SINGLE question (MCQs AND Numericals).
-- Solutions MUST be DETAILED STEP-BY-STEP, NOT just "The correct option is X".
-- A solution that only says "The correct option is X" is UNACCEPTABLE and will be REJECTED.
-- Use \\textbf{{Step 1:}} format for each step.
-- Leave a ONE LINE GAP between steps (Use \\n\\n).
-- Write equations on SEPARATE LINES using $$ ... $$ (display math) so they are centered.
-- End with \\textbf{{Final Answer:}} Option X or the numerical value.
-- MINIMUM 3 steps per solution. Show the actual reasoning, formulas, and calculations.
-
-FORMATTING REQUIREMENTS (CRITICAL):
-- Use proper spacing between ALL words and sentences
-- Use LaTeX math mode for ALL mathematical expressions: $...$
-- For subscripts: $W_0$, $v_1$ (NOT W₀, v₁)
-- For superscripts: $x^2$, $10^3$ (NOT x², 10³)
-- For Greek letters: $\\\\alpha$, $\\\\beta$, $\\\\theta$ (NOT α, β, θ)
-- For fractions: $\\\\frac{{a}}{{b}}$ 
-- DO NOT concatenate words or run sentences together
-
-Return ONLY valid JSON:
-{{"questions": [
-  {{"type": "mcq", "text": "A body of mass $m$ is dropped from height $h$. What is the velocity just before hitting the ground?", "options": ["$\\\\sqrt{{2gh}}$", "$\\\\sqrt{{gh}}$", "$2gh$", "$gh$"], "answer": "A", "solution": "\\textbf{{Step 1:}} Identify the concept — this is a free-fall problem. Initial velocity $u = 0$.\\n\\n\\textbf{{Step 2:}} Using the kinematic equation: $$ v^2 = u^2 + 2as $$ Substituting $u = 0$, $a = g$, $s = h$: $$ v^2 = 0 + 2gh = 2gh $$\\n\\n\\textbf{{Step 3:}} Taking square root: $$ v = \\\\sqrt{{2gh}} $$\\n\\n\\textbf{{Final Answer:}} Option A"}},
-  {{"type": "numerical", "text": "If $F = 10$ N and $m = 2$ kg, find acceleration in m/s$^2$.", "answer": "5", "solution": "\\textbf{{Step 1:}} Newton's Second Law states: $$ F = ma $$\\n\\n\\textbf{{Step 2:}} Substitute given values $F = 10$ N and $m = 2$ kg: $$ 10 = 2 \\\\times a $$\\n\\n\\textbf{{Step 3:}} Solving for acceleration: $$ a = \\\\frac{{10}}{{2}} = 5 \\\\, m/s^2 $$\\n\\n\\textbf{{Final Answer:}} $a = 5$ m/s$^2$"}}
-]}}
-"""
-        # Fresh Questions: Add anti-repetition instruction if past questions provided
-        past_questions = kwargs.get("past_questions")
-        if past_questions and len(past_questions) > 0:
-            # Format past questions as a numbered list (limit to avoid token overflow)
-            past_qs_formatted = "\n".join([f"{i+1}. {q[:200]}" for i, q in enumerate(past_questions[:30])])
-            anti_repeat_instruction = f"""
-
-IMPORTANT - AVOID REPETITION:
-DO NOT generate any questions similar to these previously generated questions:
-{past_qs_formatted}
-
-Generate COMPLETELY DIFFERENT questions with different wording, scenarios, and values.
-"""
-            prompt += anti_repeat_instruction
-            print(f"Added anti-repetition instruction with {len(past_questions)} past questions")
-        
-        max_retries = 2
-        for attempt in range(max_retries + 1):
-            try:
-                response = await litellm.acompletion(
-                    model=self.model,
-                    messages=[
-                        {"role": "system", "content": f"Expert {subject} question setter. Return ONLY valid JSON."},
-                        {"role": "user", "content": prompt}
-                    ],
-                    temperature=0.7
-                )
-                
-                response_text = response.choices[0].message.content
-                cleaned_json = self._clean_json_response(response_text)
-                data = json.loads(cleaned_json)
-                
-                if "questions" in data:
-                    data["questions"] = self._process_questions(data["questions"])
-                    data["questions"] = self._deduplicate_questions(data["questions"])
-                    
-                    actual_count = len(data["questions"])
-                    if actual_count < total_requested and attempt < max_retries:
-                        continue
-                    if actual_count > total_requested:
-                        data["questions"] = data["questions"][:total_requested]
-                
-                # After all retries, supplement if still short
-                final_questions = data.get("questions", [])
-                
-                # Special handling for CBSE Board - count all CBSE question types, not just MCQs
-                if level == "CBSE Board":
-                    # For CBSE Board, count all theory questions (VSA, SA, LA, case_based)
-                    actual_theory = sum(1 for q in final_questions if q.get("type") in ["short_answer", "long_answer", "case_based"])
-                    actual_num = sum(1 for q in final_questions if q.get("type") == "numerical")
-                    total_actual = actual_theory + actual_num
-                    total_expected = mcq_count + numerical_count
-                    
-                    # For CBSE Board, skip supplementing if we have enough questions total
-                    # The mcq_count parameter for CBSE represents total theory questions (VSA+SA+LA+case)
-                    if total_actual >= total_expected:
-                        missing_mcq = 0
-                        missing_num = 0
-                    else:
-                        # Only supplement if significantly short (more than 20% missing)
-                        missing_mcq = max(0, mcq_count - actual_theory)
-                        missing_num = max(0, numerical_count - actual_num)
-                        if missing_mcq + missing_num < (total_expected * 0.2):
-                            missing_mcq = 0
-                            missing_num = 0
-                else:
-                    actual_mcq = sum(1 for q in final_questions if q.get("type") in ["mcq", "mcq_multi"])
-                    actual_num = sum(1 for q in final_questions if q.get("type") == "numerical")
-                    
-                    # FORCE EXACT COUNT: If we're short, generate more questions
-                    missing_mcq = mcq_count - actual_mcq
-                    missing_num = numerical_count - actual_num
-                
-                if missing_mcq > 0 or missing_num > 0:
-                    print(f"Supplementing async: need {missing_mcq} more MCQs and {missing_num} more numericals")
-                    # Recursive call for missing questions (ASYNC)
-                    supplement_result = await self.generate_with_fallback_async(
-                        subject=subject,
-                        topic=topic,
-                        mcq_count=max(missing_mcq, 0),
-                        numerical_count=max(missing_num, 0),
-                        level=level,
-                        difficulty=difficulty
+            # ---- GATE: Send prompt to LLM ----
+            max_retries = 2
+            for attempt in range(max_retries + 1):
+                try:
+                    response = await litellm.acompletion(
+                        model=self.model,
+                        messages=[
+                            {"role": "system", "content": f"Expert GATE {gate_paper} question setter. Return ONLY valid JSON."},
+                            {"role": "user", "content": prompt}
+                        ],
+                        temperature=0.7
                     )
-                    if supplement_result.get("success") and supplement_result.get("questions"):
-                        final_questions.extend(supplement_result["questions"])
-                        # Deduplicate again after supplementing
-                        final_questions = self._deduplicate_questions(final_questions)
-                
-                return {
-                    "success": True,
-                    "subject": subject,
-                    "topic": topic,
-                    "questions": final_questions
-                }
-                
-            except Exception as e:
-                if attempt < max_retries:
-                    continue
-                return {
-                    "success": False,
-                    "error": f"Async LLM call failed: {str(e)}"
-                }
-        
-        return {
-            "success": True,
-            "subject": subject,
-            "topic": topic,
-            "questions": data.get("questions", []) if 'data' in locals() else []
-        }
+                    response_text = response.choices[0].message.content
+                    cleaned_json = self._clean_json_response(response_text)
+                    data = json.loads(cleaned_json)
+                    if "questions" in data:
+                        data["questions"] = self._process_questions(data["questions"])
+                        data["questions"] = self._deduplicate_questions(data["questions"])
+                    return {
+                        "success": True,
+                        "subject": subject,
+                        "topic": topic,
+                        "questions": data.get("questions", [])
+                    }
+                except Exception as e:
+                    if attempt < max_retries:
+                        continue
+                    return {"success": False, "error": f"GATE LLM call failed: {str(e)}"}
+            return {"success": True, "subject": subject, "topic": topic, "questions": []}
+
+        else:
+            # ============== PER-DIFFICULTY GENERATION (3 separate calls) ==============
+            import random
+            print(f"[PER-DIFFICULTY] Generating {easy_count} Easy + {medium_count} Medium + {hard_count} Hard = {total_requested} questions")
+
+            # Split MCQ and Numerical counts proportionally per difficulty
+            def split_counts(total_mcq, total_num, diff_count, total_all):
+                """Split MCQ and Numerical proportionally for a difficulty bucket."""
+                if total_all == 0:
+                    return 0, 0
+                ratio = diff_count / total_all
+                d_mcq = round(total_mcq * ratio)
+                d_num = round(total_num * ratio)
+                # Ensure at least 1 MCQ if we have MCQs to distribute
+                if d_mcq == 0 and diff_count > 0 and total_mcq > 0:
+                    d_mcq = 1
+                if d_num == 0 and diff_count > 0 and total_num > 0:
+                    d_num = 1
+                return d_mcq, d_num
+
+            e_mcq, e_num = split_counts(mcq_count, numerical_count, easy_count, total_requested)
+            h_mcq, h_num = split_counts(mcq_count, numerical_count, hard_count, total_requested)
+            # Medium gets the remainder to ensure totals match exactly
+            m_mcq = mcq_count - e_mcq - h_mcq
+            m_num = numerical_count - e_num - h_num
+            # Clamp negatives
+            if m_mcq < 0: m_mcq = 0
+            if m_num < 0: m_num = 0
+
+            print(f"[PER-DIFFICULTY] Easy: {e_mcq}M+{e_num}N, Medium: {m_mcq}M+{m_num}N, Hard: {h_mcq}M+{h_num}N")
+
+            # Pass original MCQ count so the helper can scale MSQ proportionally
+            batch_kwargs = {**kwargs, "_original_mcq_count": mcq_count}
+
+            all_questions = []
+
+            # Generate EASY questions
+            if easy_count > 0:
+                easy_qs = await self._generate_batch_for_difficulty(
+                    subject=subject, topic=topic,
+                    mcq_count=e_mcq, numerical_count=e_num,
+                    level=level, difficulty_label="Easy",
+                    level_prompt=level_prompt, **batch_kwargs
+                )
+                all_questions.extend(easy_qs)
+                print(f"[PER-DIFFICULTY] Easy batch done: {len(easy_qs)} questions")
+
+            # Generate MEDIUM questions
+            if medium_count > 0:
+                medium_qs = await self._generate_batch_for_difficulty(
+                    subject=subject, topic=topic,
+                    mcq_count=m_mcq, numerical_count=m_num,
+                    level=level, difficulty_label="Medium",
+                    level_prompt=level_prompt, **batch_kwargs
+                )
+                all_questions.extend(medium_qs)
+                print(f"[PER-DIFFICULTY] Medium batch done: {len(medium_qs)} questions")
+
+            # Generate HARD questions
+            if hard_count > 0:
+                hard_qs = await self._generate_batch_for_difficulty(
+                    subject=subject, topic=topic,
+                    mcq_count=h_mcq, numerical_count=h_num,
+                    level=level, difficulty_label="Hard",
+                    level_prompt=level_prompt, **batch_kwargs
+                )
+                all_questions.extend(hard_qs)
+                print(f"[PER-DIFFICULTY] Hard batch done: {len(hard_qs)} questions")
+
+            # Deduplicate across all batches
+            all_questions = self._deduplicate_questions(all_questions)
+
+            # Shuffle so Easy/Medium/Hard aren't grouped together
+            random.shuffle(all_questions)
+
+            # Trim if we got too many
+            if len(all_questions) > total_requested:
+                all_questions = all_questions[:total_requested]
+
+            print(f"[PER-DIFFICULTY] Final total: {len(all_questions)} questions")
+
+            return {
+                "success": True,
+                "subject": subject,
+                "topic": topic,
+                "questions": all_questions
+            }
 
 
 
