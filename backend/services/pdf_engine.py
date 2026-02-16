@@ -457,24 +457,40 @@ class PDFEngine:
                     print(f"Error generating diagram for PDF: {e}")
                     sanitized_q["diagram_tikz"] = None
             
+
+
+            sanitized_q["id"] = q.get("id", i)
+            sanitized_q["type"] = q.get("type", "mcq")
+            sanitized_q["answer"] = q.get("answer", "")
             sanitized_questions.append(sanitized_q)
         
-        rendered = template.render(
-            subject=sanitize_for_latex(data.get("subject", "")),
-            topic=sanitize_for_latex(data.get("topic", "")),
-            level=sanitize_for_latex(data.get("level", "JEE Mains")),
-            difficulty=sanitize_for_latex(data.get("difficulty", "Medium")),
-            total_questions=len(sanitized_questions),
-            questions=sanitized_questions,
+        # Prepare context
+        context = {
+            "subject": sanitize_for_latex(data.get("subject", "")),
+            "topic": sanitize_for_latex(data.get("topic", "")),
+            "level": sanitize_for_latex(data.get("level", "JEE Mains")),
+            "difficulty": sanitize_for_latex(data.get("difficulty", "Medium")),
+            "total_questions": len(sanitized_questions),
+            "questions": sanitized_questions,
             # Institute branding
-            institute_name=sanitize_for_latex(data.get("institute_name", "")),
-            institute_contact=sanitize_for_latex(data.get("institute_contact", "")),
-            institute_email=sanitize_for_latex(data.get("institute_email", "")),
-            is_institute=is_institute,
-            include_solutions=data.get("include_solutions", False)
-        )
+            "institute_name": sanitize_for_latex(data.get("institute_name", "")),
+            "institute_contact": sanitize_for_latex(data.get("institute_contact", "")),
+            "institute_email": sanitize_for_latex(data.get("institute_email", "")),
+            "is_institute": is_institute,
+            "include_solutions": data.get("include_solutions", False)
+        }
         
-        return rendered
+        try:
+            # Render template
+            latex_content = template.render(**context)
+            return latex_content
+        except Exception as e:
+            import traceback
+            print(f"ERROR: LaTeX Template Rendering Failed: {e}")
+            print(traceback.format_exc())
+            # Log specific context that might cause issues (truncate to avoid huge logs)
+            print(f"Context Sample: {str(context)[:1000]}")
+            raise e # Re-raise to trigger fallback in caller
     
     def compile_pdf(self, latex_content: str, filename: str = "test_paper") -> Optional[str]:
         """
