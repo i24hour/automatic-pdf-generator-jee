@@ -764,7 +764,8 @@ Example: {{"subject":"Chemistry","confidence":"high"}}
         processed = []
         for q in questions:
             # Apply spacing fixes before LaTeX escaping
-            text = self._fix_spacing(q.get("text", ""))
+            raw_text = q.get("text") or q.get("question") or ""
+            text = self._fix_spacing(raw_text)
             text = self._escape_latex_outside_math(text)
             
             processed_q = {
@@ -795,7 +796,8 @@ Example: {{"subject":"Chemistry","confidence":"high"}}
         
         for q in questions:
             # Normalize text for comparison (lowercase, remove extra spaces)
-            normalized = ' '.join(q.get('text', '').lower().split())
+            raw_text = q.get('text') or q.get('question') or ''
+            normalized = ' '.join(raw_text.lower().split())
             
             # Only add if we haven't seen similar text
             if normalized not in seen_texts and len(normalized) > 10:
