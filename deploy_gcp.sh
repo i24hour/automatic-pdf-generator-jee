@@ -13,10 +13,10 @@ echo "🚀 Deploying Mentors Mantra API to Google Cloud Run..."
 # gcloud config set project mentors-mantra-pdf
 
 # Deploy
-gcloud run deploy mentors-mantra-api \
+gcloud run deploy test-generator-backend --quiet \
   --source ./backend \
   --platform managed \
-  --region us-central1 \
+  --region asia-south1 \
   --allow-unauthenticated \
   --timeout=300 \
   --memory=1Gi

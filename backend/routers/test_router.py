@@ -14,7 +14,7 @@ import asyncio
 
 from database import get_db
 from auth import get_current_user_required
-from models import User, TestAttempt, QuestionResponse, TestLeaderboard
+from models import User, TestAttempt, QuestionResponse, TestLeaderboard, Test
 from services.llm_engine import llm_engine
 
 router = APIRouter(prefix="/test", tags=["Test Portal"])
@@ -137,7 +137,12 @@ def calculate_time_remaining(test: TestAttempt) -> int:
     if not test.started_at:
         return test.duration_minutes * 60
     
-    elapsed = (datetime.now(timezone.utc) - test.started_at).total_seconds()
+    # Ensure started_at is timezone aware for calculation (SQLite stores naive)
+    started_at = test.started_at
+    if started_at.tzinfo is None:
+        started_at = started_at.replace(tzinfo=timezone.utc)
+        
+    elapsed = (datetime.now(timezone.utc) - started_at).total_seconds()
     remaining = (test.duration_minutes * 60) - elapsed
     return max(0, int(remaining))
 
@@ -164,200 +169,75 @@ def get_question_status(response: QuestionResponse) -> str:
 # ENDPOINTS
 # ============================================
 
-@router.post("/create", response_model=TestCreatedResponse)
-async def create_test(
-    request: CreateTestRequest,
+@router.post("/{test_id}/launch")
+def launch_test_attempt(
+    test_id: str,
     current_user: User = Depends(get_current_user_required),
     db: Session = Depends(get_db)
 ):
-    """Create a new test with AI-generated questions."""
-    
-    # Calculate total questions
-    total_questions = sum(s.count for s in request.subject_inputs.values())
-    
-    if total_questions < 1:
-        raise HTTPException(status_code=400, detail="At least 1 question required")
-    if total_questions > 200:
-        raise HTTPException(status_code=400, detail="Maximum 200 questions allowed")
-    
-    # Extract simple subject distribution for JSON storage (using counts)
-    subject_counts = {subj: data.count for subj, data in request.subject_inputs.items()}
-    
-    # Extract difficulty distribution (storing full subject inputs for detailed reproduction if needed)
-    # We'll store the full request as difficulty_distribution_json to preserve all config
-    full_config = {
-        subj: data.dict() for subj, data in request.subject_inputs.items()
-    }
-    
-    # Extract all topics
-    all_topics = []
-    for data in request.subject_inputs.values():
-        all_topics.extend(data.topics)
+    """
+    Launch a new attempt for a Master Test.
+    Creates a TestAttempt record linked to the Master Test.
+    """
+    # 1. Fetch Master Test
+    master_test = db.query(Test).filter(Test.id == test_id).first()
+    if not master_test:
+        raise HTTPException(status_code=404, detail="Test not found")
+        
+    # 2. Check Permissions (Basic Visibility Check)
+    if master_test.visibility_type == "PRIVATE" and master_test.creator_id != current_user.id:
+        # Allow admins in future
+        raise HTTPException(status_code=403, detail="Access denied to private test")
+        
+    # 3. Create Attempt
+    try:
+        questions = json.loads(master_test.questions_data)
+        
+        # Calculate subject distribution
+        subject_counts = {}
+        for q in questions:
+            subj = q.get("subject", master_test.subject) or "General"
+            subject_counts[subj] = subject_counts.get(subj, 0) + 1
 
-    # Create test attempt
-    test = TestAttempt(
-        user_id=current_user.id,
-        exam_type=request.exam_type,
-        total_questions=total_questions,
-        duration_minutes=request.duration_minutes,
-        topics_json=json.dumps(all_topics),
-        subject_distribution_json=json.dumps(subject_counts),
-        difficulty_distribution_json=json.dumps(full_config),
-        status="NOT_STARTED"
-    )
-    db.add(test)
-    db.flush()  # Get test ID
-    
-    # 2. Generate Questions via LLM (Parallel Execution)
-    tasks = []
-    task_metadata = []
-    
-    for subject, config in request.subject_inputs.items():
-        count = config.count
-        if count <= 0: continue
+        attempt = TestAttempt(
+            user_id=current_user.id,
+            test_id=master_test.id,
+            exam_type=master_test.exam_type,
+            total_questions=master_test.total_questions,
+            duration_minutes=master_test.duration_minutes,
+            topics_json=master_test.topics_json,
+            subject_distribution_json=json.dumps(subject_counts),
+            status="NOT_STARTED"
+        )
+        db.add(attempt)
+        db.flush()
         
-        difficulty_dist = config.difficulty
-        subject_topics = config.topics if config.topics else ["General"]
-        topic_str = ", ".join(subject_topics)
-        
-        # Use exact counts from input
-        easy_count = int(difficulty_dist.get("easy", 0))
-        medium_count = int(difficulty_dist.get("medium", 0))
-        hard_count = int(difficulty_dist.get("hard", 0))
-        
-        # Create tasks for each difficulty level
-        levels = [
-            ("Easy", easy_count), 
-            ("Medium", medium_count), 
-            ("Hard", hard_count)
-        ]
-        
-        for diff_name, diff_count in levels:
-            if diff_count > 0:
-                tasks.append(llm_engine.generate_with_fallback_async(
-                    subject=subject,
-                    topic=topic_str,
-                    mcq_count=diff_count,
-                    numerical_count=0,
-                    level=request.exam_type,
-                    difficulty=diff_name
-                ))
-                task_metadata.append({
-                    "subject": subject, 
-                    "difficulty": diff_name, 
-                    "topics": subject_topics,
-                    "count": diff_count
-                })
-
-    # Execute all generation tasks in parallel
-    print(f"Starting {len(tasks)} generation tasks...")
-    results = await asyncio.gather(*tasks, return_exceptions=True)
-    
-    q_index = 0
-    questions_added = 0
-    
-    for i, result in enumerate(results):
-        meta = task_metadata[i]
-        
-        # Handle Task Failure
-        if isinstance(result, Exception):
-            print(f"Task failed for {meta['subject']} {meta['difficulty']}: {result}")
-            # Fallback for failed task: Create placeholders ONLY for this failed batch
-            for k in range(meta['count']):
-                fallback_q = QuestionResponse(
-                    test_attempt_id=test.id,
-                    question_index=q_index,
-                    subject=meta['subject'],
-                    topic=meta['topics'][0],
-                    difficulty=meta['difficulty'],
-                    question_type="mcq",
-                    question_text=f"[Error generating question] Please report this ID.\nSubject: {meta['subject']}\nTopic: {meta['topics']}",
-                    options_json=json.dumps({"A": "Error", "B": "Error", "C": "Error", "D": "Error"}),
-                    correct_answer="A",
-                    marks_correct=4,
-                    marks_wrong=-1,
-                    status="NOT_VISITED",
-                    diagram_json=None
-                )
-                db.add(fallback_q)
-                q_index += 1
-                questions_added += 1
-            continue
-
-        if not result or not result.get("success"):
-            error_msg = result.get('error') if result else "Unknown error"
-            print(f"Generation failed for {meta['subject']} {meta['difficulty']}: {error_msg}")
-            # Fallback logic same as above
-            for k in range(meta['count']):
-                fallback_q = QuestionResponse(
-                    test_attempt_id=test.id,
-                    question_index=q_index,
-                    subject=meta['subject'],
-                    topic=meta['topics'][0],
-                    difficulty=meta['difficulty'],
-                    question_type="mcq",
-                    question_text=f"[Generation Failed] We could not generate a valid question here.\nSubject: {meta['subject']}",
-                     options_json=json.dumps({"A": "Error", "B": "Error", "C": "Error", "D": "Error"}),
-                    correct_answer="A",
-                    marks_correct=4,
-                    marks_wrong=-1,
-                    status="NOT_VISITED"
-                )
-                db.add(fallback_q)
-                q_index += 1
-                questions_added += 1
-            continue
-            
-        # Process Successful Questions
-        generated_qs = result.get("questions", [])
-        
-        # If we got fewer than requested, fill with placeholders
-        # (Though engine handles supplementing, safe to double check)
-        
-        for q_data in generated_qs:
-            # Map options list to dict A,B,C,D
-            options_list = q_data.get("options", [])
+        # 4. Create Question Responses
+        for idx, q_data in enumerate(questions):
+            # Extract options
             options_dict = {}
-            labels = ["A", "B", "C", "D"]
-            for idx, opt_text in enumerate(options_list):
-                if idx < 4:
-                    options_dict[labels[idx]] = opt_text
+            if "options" in q_data and isinstance(q_data["options"], list):
+                labels = ["A", "B", "C", "D"]
+                for i, opt in enumerate(q_data["options"][:4]):
+                    options_dict[labels[i]] = opt
+            elif "options" in q_data and isinstance(q_data["options"], dict):
+                options_dict = q_data["options"]
             
-            # Ensure we have 4 options
-            while len(options_dict) < 4:
-                btn = labels[len(options_dict)]
-                options_dict[btn] = "Option " + btn
-            
-            # Map answer (if it comes as full text, try to find key, otherwise default A)
-            correct_ans = q_data.get("answer", "A").strip()
-            # If answer is like "Option A" or just "A"
-            if len(correct_ans) == 1 and correct_ans.upper() in ["A", "B", "C", "D"]:
-                correct_ans = correct_ans.upper()
-            elif correct_ans.startswith("Option "):
-                correct_ans = correct_ans.replace("Option ", "")[0].upper()
-            else:
-                # If full text, try to match with options
-                found = False
-                for key, val in options_dict.items():
-                    if val == correct_ans:
-                        correct_ans = key
-                        found = True
-                        break
-                if not found:
-                    correct_ans = "A" # Fallback
+            # Extract correct answer
+            correct_ans = q_data.get("answer", "A")
             
             response = QuestionResponse(
-                test_attempt_id=test.id,
-                question_index=q_index,
-                subject=meta['subject'],
-                topic=meta['topics'][0], # TODO: Can we get specific topic? Engine returns 'topic'
-                difficulty=meta['difficulty'],
-                question_type="mcq",
+                test_attempt_id=attempt.id,
+                question_index=idx,
+                subject=q_data.get("subject", master_test.subject) or "General",
+                topic=q_data.get("topic", master_test.title),
+                difficulty=q_data.get("difficulty", master_test.difficulty),
+                question_type=q_data.get("type", "mcq"),
                 question_text=q_data.get("question_text", q_data.get("text", "Question text missing")),
                 options_json=json.dumps(options_dict),
                 correct_answer=correct_ans,
-                marks_correct=4,
-                marks_wrong=-1 if request.exam_type != "NEET" else -1, # Marking scheme
+                marks_correct=q_data.get("marks", 4),
+                marks_wrong=-1,
                 status="NOT_VISITED",
                 diagram_json=json.dumps({
                     "type": q_data.get("diagram_type"),
@@ -365,41 +245,20 @@ async def create_test(
                 }) if q_data.get("diagram_type") else None
             )
             db.add(response)
-            q_index += 1
-            questions_added += 1
             
-        # Fill remainder if partial success
-        remaining = meta['count'] - len(generated_qs)
-        if remaining > 0:
-            print(f"Warning: Missing {remaining} questions for {meta['subject']} {meta['difficulty']}. Filling with placeholders.")
-            for _ in range(remaining):
-                fallback_q = QuestionResponse(
-                    test_attempt_id=test.id,
-                    question_index=q_index,
-                    subject=meta['subject'],
-                    topic=meta['topics'][0],
-                    difficulty=meta['difficulty'],
-                    question_type="mcq",
-                    question_text=f"[Partial Generation Failure] We could not generate a valid question here. (Missing {remaining})\nSubject: {meta['subject']}",
-                    options_json=json.dumps({"A": "Error", "B": "Error", "C": "Error", "D": "Error"}),
-                    correct_answer="A",
-                    marks_correct=4,
-                    marks_wrong=-1,
-                    status="NOT_VISITED"
-                )
-                db.add(fallback_q)
-                q_index += 1
-                questions_added += 1
-
-    
-    db.commit()
-    
-    return TestCreatedResponse(
-        test_id=test.id,
-        total_questions=total_questions,
-        duration_minutes=request.duration_minutes,
-        redirect_url=f"/test/{test.id}/instructions"
-    )
+        # Increment attempt count on master
+        master_test.attempt_count += 1
+        db.commit()
+        
+        return {
+            "attempt_id": attempt.id,
+            "redirect_url": f"/test/{attempt.id}/instructions"
+        }
+        
+    except Exception as e:
+        db.rollback()
+        print(f"Error launching test {test_id}: {e}")
+        raise HTTPException(status_code=500, detail="Failed to launch test attempt")
 
 
 @router.get("/{test_id}/state", response_model=TestStateResponse)
@@ -462,8 +321,11 @@ async def start_test(
     if not test:
         raise HTTPException(status_code=404, detail="Test not found")
     
+    if test.status == "IN_PROGRESS":
+        return {"message": "Test resumed", "redirect_url": f"/test/{test_id}"}
+
     if test.status != "NOT_STARTED":
-        raise HTTPException(status_code=400, detail="Test already started")
+        raise HTTPException(status_code=400, detail="Test already submitted or expired")
     
     test.status = "IN_PROGRESS"
     test.started_at = datetime.now(timezone.utc)

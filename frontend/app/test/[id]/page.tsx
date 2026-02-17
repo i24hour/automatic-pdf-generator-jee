@@ -347,16 +347,21 @@ export default function TestInterfacePage() {
                             const firstQ = testState.palette.find(p => p.subject.trim() === subjectClean);
 
                             if (firstQ) {
+                                console.log(`Switching to subject: ${subject}, Jumping to Q${firstQ.index}`);
                                 if (firstQ.index !== question.question_index) {
-                                    handleAction('JUMP', firstQ.index);
+                                    handleAction('JUMP', firstQ.index).catch(err => {
+                                        console.error("Jump failed:", err);
+                                        // alert("Failed to switch subject. Please checks your connection.");
+                                    });
                                 }
                             } else {
                                 console.warn(`No questions found for subject: ${subject}`);
+                                // alert(`No questions found for ${subject}`);
                             }
                         }}
-                        className={`px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${activeSection === subject
-                            ? 'bg-indigo-600 text-white'
-                            : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                        className={`px-4 py-2 rounded-lg font-bold transition-colors whitespace-nowrap border-b-2 ${activeSection === subject
+                                ? 'border-indigo-600 text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20'
+                                : 'border-transparent text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
                             }`}
                     >
                         {subject}

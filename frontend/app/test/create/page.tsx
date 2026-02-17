@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { Minus, Plus, BookOpen, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Minus, Plus, BookOpen, AlertCircle, CheckCircle2, Globe, Lock, School } from 'lucide-react';
+import TopicSelector from '@/components/TopicSelector';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://mentors-mantra-api-87253755436.us-central1.run.app';
 
@@ -18,23 +19,31 @@ interface SubjectConfig {
     count: number;
     difficulty: DifficultyDist;
     topics: string;
+    selectedChapters: string[];
 }
 
 type ExamType = 'JEE_MAINS' | 'JEE_ADV' | 'NEET' | 'CUSTOM';
+type VisibilityType = 'PRIVATE' | 'COMMUNITY' | 'CLASSROOM';
 
 const DEFAULT_DIFFICULTY: DifficultyDist = { easy: 3, medium: 4, hard: 3 };
 
 const INITIAL_SUBJECTS: Record<string, SubjectConfig> = {
-    'Physics': { enabled: true, count: 10, difficulty: { ...DEFAULT_DIFFICULTY }, topics: '' },
-    'Chemistry': { enabled: true, count: 10, difficulty: { ...DEFAULT_DIFFICULTY }, topics: '' },
-    'Maths': { enabled: true, count: 10, difficulty: { ...DEFAULT_DIFFICULTY }, topics: '' },
-    'Biology': { enabled: false, count: 10, difficulty: { ...DEFAULT_DIFFICULTY }, topics: '' },
-    'Botany': { enabled: false, count: 10, difficulty: { ...DEFAULT_DIFFICULTY }, topics: '' },
-    'Zoology': { enabled: false, count: 10, difficulty: { ...DEFAULT_DIFFICULTY }, topics: '' },
+    'Physics': { enabled: true, count: 10, difficulty: { ...DEFAULT_DIFFICULTY }, topics: '', selectedChapters: [] },
+    'Chemistry': { enabled: true, count: 10, difficulty: { ...DEFAULT_DIFFICULTY }, topics: '', selectedChapters: [] },
+    'Maths': { enabled: true, count: 10, difficulty: { ...DEFAULT_DIFFICULTY }, topics: '', selectedChapters: [] },
+    'Biology': { enabled: false, count: 10, difficulty: { ...DEFAULT_DIFFICULTY }, topics: '', selectedChapters: [] },
+    'Botany': { enabled: false, count: 10, difficulty: { ...DEFAULT_DIFFICULTY }, topics: '', selectedChapters: [] },
+    'Zoology': { enabled: false, count: 10, difficulty: { ...DEFAULT_DIFFICULTY }, topics: '', selectedChapters: [] },
 };
 
-export default function CreateTestPage() {
+function CreateTestForm() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const mode = searchParams.get('mode'); // 'public' or null
+
+    // Default visibility based on mode query param (backward compatibility)
+    const [visibility, setVisibility] = useState<VisibilityType>(mode === 'public' ? 'COMMUNITY' : 'PRIVATE');
+
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
@@ -116,10 +125,15 @@ export default function CreateTestPage() {
         for (const [subj, config] of Object.entries(subjects)) {
             if (!config.enabled || config.count <= 0) continue;
 
-            // Validate difficulty sum
-            // Validate total count
             if (config.count < 1) {
                 setError(`${subj}: Must have at least 1 question`);
+                setLoading(false);
+                return;
+            }
+
+            // Check mandatory topics for Community Tests
+            if (visibility === 'COMMUNITY' && !config.topics.trim()) {
+                setError(`${subj}: At least one topic is required for Community Tests`);
                 setLoading(false);
                 return;
             }
@@ -132,7 +146,11 @@ export default function CreateTestPage() {
         }
 
         try {
-            const response = await fetch(`${API_BASE}/test/create`, {
+            // UNIFIED ENDPOINT
+            const endpoint = `${API_BASE}/api/tests/create`;
+
+            // 1. Create Master Test
+            const response = await fetch(endpoint, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -141,27 +159,47 @@ export default function CreateTestPage() {
                 body: JSON.stringify({
                     exam_type: examType,
                     subject_inputs: subjectInputs,
-                    duration_minutes: duration
+                    duration_minutes: duration,
+                    visibility: visibility,
+                    classroom_id: null // Placeholder for future
                 })
             });
 
             if (!response.ok) {
                 const data = await response.json();
                 let errMsg = 'Failed to create test';
-                if (data.detail) {
-                    if (typeof data.detail === 'string') {
-                        errMsg = data.detail;
-                    } else if (Array.isArray(data.detail)) {
-                        errMsg = data.detail.map((e: any) => e.msg).join(', ');
-                    } else if (typeof data.detail === 'object') {
-                        errMsg = JSON.stringify(data.detail);
-                    }
-                }
+                if (data.detail) errMsg = typeof data.detail === 'string' ? data.detail : JSON.stringify(data.detail);
                 throw new Error(errMsg);
             }
 
             const data = await response.json();
-            router.push(data.redirect_url);
+            console.log('Master Test created:', data);
+
+            // 2. Launch Attempt (Create Session)
+            try {
+                const launchResponse = await fetch(`${API_BASE}/test/${data.test_id}/launch`, { // Using launch endpoint
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!launchResponse.ok) {
+                    throw new Error('Test created but failed to start session.');
+                }
+
+                const launchData = await launchResponse.json();
+
+                // 3. Redirect to Attempt Interface
+                router.push(launchData.redirect_url);
+
+            } catch (launchErr) {
+                console.error('Launch failed:', launchErr);
+                setError('Test created but launch failed. Please try again from My Tests/Community');
+                // Could redirect to My Tests list here
+            }
+
         } catch (err: unknown) {
             const errorMessage = err instanceof Error ? err.message : 'Failed to create test';
             setError(errorMessage);
@@ -180,7 +218,9 @@ export default function CreateTestPage() {
                             INFINITEST
                         </Link>
                         <span className="text-gray-500 dark:text-gray-400">|</span>
-                        <span className="text-lg font-semibold text-gray-700 dark:text-gray-300">Create Test</span>
+                        <span className="text-lg font-semibold text-gray-700 dark:text-gray-300">
+                            Create Test
+                        </span>
                     </div>
                     <Link href="/test" className="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">
                         ← Back to History
@@ -191,7 +231,55 @@ export default function CreateTestPage() {
             <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <form onSubmit={handleSubmit} className="space-y-8">
 
-                    {/* Top Configuration */}
+                    {/* Step 0: Visibility Selection */}
+                    <div className="bg-white dark:bg-[#16181c] rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 p-6">
+                        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">Who is this test for?</h2>
+                        <div className="grid md:grid-cols-3 gap-4">
+                            <button
+                                type="button"
+                                onClick={() => setVisibility('PRIVATE')}
+                                className={`p-4 rounded-xl border-2 text-left transition-all ${visibility === 'PRIVATE'
+                                    ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20'
+                                    : 'border-gray-200 dark:border-gray-700 hover:border-indigo-300'
+                                    }`}
+                            >
+                                <div className="flex items-center gap-3 mb-2">
+                                    <Lock className={`w-5 h-5 ${visibility === 'PRIVATE' ? 'text-indigo-600' : 'text-gray-500'}`} />
+                                    <span className="font-bold text-gray-900 dark:text-white">Just Me</span>
+                                </div>
+                                <p className="text-sm text-gray-500">Private practice session. Not visible to others.</p>
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => setVisibility('COMMUNITY')}
+                                className={`p-4 rounded-xl border-2 text-left transition-all ${visibility === 'COMMUNITY'
+                                    ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20'
+                                    : 'border-gray-200 dark:border-gray-700 hover:border-indigo-300'
+                                    }`}
+                            >
+                                <div className="flex items-center gap-3 mb-2">
+                                    <Globe className={`w-5 h-5 ${visibility === 'COMMUNITY' ? 'text-indigo-600' : 'text-gray-500'}`} />
+                                    <span className="font-bold text-gray-900 dark:text-white">Everyone</span>
+                                </div>
+                                <p className="text-sm text-gray-500">Public community test. Visible on leaderboard.</p>
+                            </button>
+
+                            <button
+                                type="button"
+                                disabled
+                                className="p-4 rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-800 text-left opacity-60 cursor-not-allowed"
+                            >
+                                <div className="flex items-center gap-3 mb-2">
+                                    <School className="w-5 h-5 text-gray-400" />
+                                    <span className="font-bold text-gray-400">My Class</span>
+                                </div>
+                                <p className="text-sm text-gray-400">Classroom assignments. (Coming Soon)</p>
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Step 1: General Config */}
                     <div className="bg-white dark:bg-[#16181c] rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 p-6">
                         <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">1. General Configuration</h2>
 
@@ -278,13 +366,27 @@ export default function CreateTestPage() {
                                             {/* Topics Input */}
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                                    Topics <span className="text-gray-400 font-normal">(Optional)</span>
+                                                    Topics {visibility === 'COMMUNITY' ? <span className="text-red-500">*</span> : <span className="text-gray-400 font-normal">(Optional)</span>}
                                                 </label>
-                                                <textarea
-                                                    value={config.topics}
-                                                    onChange={(e) => handleSubjectChange(subject, 'topics', e.target.value)}
-                                                    placeholder={`e.g. ${subject === 'Physics' ? 'Optics, Mechanics' : 'Organic, Electrochemistry'}`}
-                                                    className="w-full h-24 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm bg-gray-50 dark:bg-[#0a0b0d] text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
+                                                <TopicSelector
+                                                    subject={subject}
+                                                    customTopic={config.topics}
+                                                    selectedChapters={config.selectedChapters || []}
+                                                    onCustomTopicChange={(val) => handleSubjectChange(subject, 'topics', val)}
+                                                    onSelectionChange={(chapters) => {
+                                                        const newTopics = chapters.join(', ');
+                                                        setSubjects(prev => ({
+                                                            ...prev,
+                                                            [subject]: {
+                                                                ...prev[subject],
+                                                                selectedChapters: chapters,
+                                                                topics: newTopics
+                                                            }
+                                                        }));
+                                                    }}
+                                                    placeholder={subject === 'Physics' ? 'e.g. Optics, Mechanics' : 'e.g. Organic, Electrochemistry'}
+                                                    className="w-full"
+                                                    error={visibility === 'COMMUNITY' && !config.topics.trim() && error.includes(subject)}
                                                 />
                                                 <p className="mt-1 text-xs text-gray-500">Comma-separated topics</p>
                                             </div>
@@ -375,5 +477,13 @@ export default function CreateTestPage() {
                 </form>
             </main>
         </div>
+    );
+}
+
+export default function CreateTestPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+            <CreateTestForm />
+        </Suspense>
     );
 }

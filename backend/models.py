@@ -2,7 +2,7 @@
 Database models for User, Tokens, and PDF Generation tracking.
 """
 
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, Boolean, UniqueConstraint
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, Boolean, UniqueConstraint, Index
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from database import Base
@@ -396,7 +396,18 @@ class Test(Base):
     # Content
     questions_data = Column(Text, nullable=False) # Full JSON of questions [{}, {}]
     
-    is_public = Column(Boolean, default=True)
+    # Visibility & Access Control (New Schema)
+    # visibility_type: PRIVATE, CLASSROOM, COMMUNITY, ADMIN_CURATED
+    visibility_type = Column(String, default="PRIVATE", index=True)
+    
+    # status: draft, pending_review, published, archived
+    status = Column(String, default="published", index=True)
+    
+    classroom_id = Column(String, nullable=True, index=True)
+    share_code = Column(String, unique=True, index=True, nullable=True)
+    is_featured = Column(Boolean, default=False)
+    is_generated_practice = Column(Boolean, default=False) # True for AI practice tests
+    
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     
     # Relationships
@@ -404,6 +415,11 @@ class Test(Base):
     leaderboard_entries = relationship("TestLeaderboard", back_populates="test", cascade="all, delete-orphan")
     attempts = relationship("TestAttempt", back_populates="test")
     
+    # Composite Index for efficient feed filtering
+    __table_args__ = (
+        Index('idx_test_visibility_status', 'visibility_type', 'status'),
+    )
+
     def __repr__(self):
         return f"<Test {self.title} ({self.id})>"
 

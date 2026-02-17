@@ -152,7 +152,7 @@ export default function TestGenerator() {
 
     // NCERT Chapter Dropdown State
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-    const [isCustomMode, setIsCustomMode] = useState(false);
+    // Removed isCustomMode - Input is now hybrid
     const [filteredChapters, setFilteredChapters] = useState<{ class: string; name: string; matchedTopic?: string }[]>([]);
     const [selectedChapters, setSelectedChapters] = useState<string[]>([]);
     const [searchQuery, setSearchQuery] = useState(''); // Separate search from topic
@@ -766,7 +766,7 @@ export default function TestGenerator() {
                 {/* Topic Input with NCERT Chapter Dropdown */}
                 <div className="mb-6 relative" ref={dropdownRef}>
                     <label htmlFor="topic" className="block mb-3 font-medium text-gray-700 dark:text-gray-300">
-                        Topic <span className="text-xs text-gray-400 font-normal">(Select from NCERT or type custom)</span>
+                        Topic <span className="text-xs text-gray-400 font-normal">(Select chapters or type custom topic)</span>
                     </label>
 
                     {/* Selected chapters tags */}
@@ -799,60 +799,36 @@ export default function TestGenerator() {
                             onChange={(e) => {
                                 const val = e.target.value;
                                 setSearchQuery(val);
-                                if (isCustomMode) {
+                                setIsDropdownOpen(true);
+
+                                // Hybrid Mode: If no chapters selected, typing sets the topic directly
+                                if (selectedChapters.length === 0) {
                                     setTopic(val);
-                                } else {
-                                    setIsDropdownOpen(true);
                                 }
                             }}
                             onFocus={() => {
-                                if (!isCustomMode) {
-                                    setIsDropdownOpen(true);
-                                    // Initialize chapters list on focus
-                                    const chapters = searchQuery.trim()
-                                        ? searchMultipleSubjects(subject, searchQuery.trim())
-                                        : getChaptersForMultipleSubjects(subject);
-                                    setFilteredChapters(chapters);
-                                }
+                                setIsDropdownOpen(true);
+                                // Initialize chapters list on focus
+                                const chapters = searchQuery.trim()
+                                    ? searchMultipleSubjects(subject, searchQuery.trim())
+                                    : getChaptersForMultipleSubjects(subject);
+                                setFilteredChapters(chapters);
                             }}
-                            placeholder={isCustomMode ? "Type your custom topic here..." : (selectedChapters.length > 0 ? "Search for more chapters..." : "Select from NCERT or switch to custom")}
-                            className="w-full px-4 py-3 pr-20 bg-white dark:bg-black border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900"
+                            placeholder={selectedChapters.length > 0 ? "Search for more chapters..." : "Select chapters or type a custom topic..."}
+                            className="w-full px-4 py-3 pr-4 bg-white dark:bg-black border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900"
                             disabled={isLoading}
                             autoComplete="off"
                         />
                         <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                            {/* Toggle Mode Button */}
+                            {/* Dropdown Chevron */}
                             <button
                                 type="button"
-                                onClick={() => {
-                                    const newMode = !isCustomMode;
-                                    setIsCustomMode(newMode);
-                                    if (newMode) {
-                                        setIsDropdownOpen(false);
-                                        setTopic(searchQuery); // Sync search query to topic immediately
-                                    } else {
-                                        // Switching back to NCERT mode
-                                        setTopic(selectedChapters.join(', '));
-                                        // If there was custom text that isn't a chapter, search query remains
-                                    }
-                                }}
-                                className="p-1.5 text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                                title={isCustomMode ? "Switch to NCERT Selection" : "Switch to Custom Input"}
+                                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                                className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                                disabled={isLoading}
                             >
-                                {isCustomMode ? <List className="w-5 h-5" /> : <Keyboard className="w-5 h-5" />}
+                                <ChevronDown className={`w-5 h-5 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
                             </button>
-
-                            {/* Dropdown Chevron (Only in NCERT Mode) */}
-                            {!isCustomMode && (
-                                <button
-                                    type="button"
-                                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                                    className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                                    disabled={isLoading}
-                                >
-                                    <ChevronDown className={`w-5 h-5 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
-                                </button>
-                            )}
                         </div>
                     </div>
 

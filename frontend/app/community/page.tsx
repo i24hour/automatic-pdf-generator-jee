@@ -105,7 +105,7 @@ export function DiscoveryContent({ tests, loading, filters, setFilters }: Discov
                     </p>
                 </div>
                 <Link
-                    href="/community/create"
+                    href="/test/create?mode=public"
                     className="flex items-center justify-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold transition-colors shadow-lg shadow-indigo-500/30"
                 >
                     <Plus className="w-5 h-5" />
@@ -187,7 +187,7 @@ export function DiscoveryContent({ tests, loading, filters, setFilters }: Discov
                         We couldn't find any public tests matching your filters. Why not create one?
                     </p>
                     <Link
-                        href="/community/create"
+                        href="/test/create?mode=public"
                         className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold transition-colors"
                     >
                         <Plus className="w-5 h-5" />

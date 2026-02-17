@@ -74,7 +74,11 @@ def search_tests(
     db: Session = Depends(get_db)
 ):
     """Search for public community tests."""
-    query = db.query(Test).filter(Test.is_public == True)
+    # REFACTOR: Visibility Logic
+    query = db.query(Test).filter(
+        Test.visibility_type == "COMMUNITY",
+        Test.status == "published"
+    )
     
     if search:
         # Search by title or topics
@@ -124,135 +128,7 @@ def search_tests(
         
     return results
 
-@router.post("/tests/create")
-async def create_public_test(
-    request: CreatePublicTestRequest,
-    current_user: User = Depends(get_current_user_required),
-    db: Session = Depends(get_db)
-):
-    """Save a generated test as a public community test."""
-    
-    final_questions = []
-    
-    # 1. Calculate total questions and topics
-    total_questions = sum(s.count for s in request.subject_inputs.values())
-    all_topics = []
-    for data in request.subject_inputs.values():
-        all_topics.extend(data.topics)
-    
-    if total_questions < 1:
-        raise HTTPException(status_code=400, detail="At least 1 question required")
-
-    # 2. Check if questions provided directly, else Generate
-    if request.questions_data:
-        final_questions = request.questions_data
-    else:
-        # Parallel Generation Logic (Copied from test_router)
-        tasks = []
-        task_metadata = []
-        
-        for subject, config in request.subject_inputs.items():
-            count = config.count
-            if count <= 0: continue
-            
-            difficulty_dist = config.difficulty
-            subject_topics = config.topics if config.topics else ["General"]
-            topic_str = ", ".join(subject_topics)
-            
-            # Use exact counts
-            easy_count = int(difficulty_dist.get("easy", 0))
-            medium_count = int(difficulty_dist.get("medium", 0))
-            hard_count = int(difficulty_dist.get("hard", 0))
-            
-            levels = [("Easy", easy_count), ("Medium", medium_count), ("Hard", hard_count)]
-            
-            for diff_name, diff_count in levels:
-                if diff_count > 0:
-                    tasks.append(llm_engine.generate_with_fallback_async(
-                        subject=subject,
-                        topic=topic_str,
-                        mcq_count=diff_count,
-                        numerical_count=0,
-                        level=request.exam_type,
-                        difficulty=diff_name
-                    ))
-                    task_metadata.append({
-                        "subject": subject, 
-                        "difficulty": diff_name, 
-                        "topics": subject_topics,
-                        "count": diff_count
-                    })
-
-        # Execute parallel tasks
-        print(f"[Community] Starting {len(tasks)} generation tasks...")
-        results = await asyncio.gather(*tasks, return_exceptions=True)
-        
-        for i, result in enumerate(results):
-            meta = task_metadata[i]
-            
-            # Handle Failure
-            if isinstance(result, Exception) or (isinstance(result, dict) and not result.get("success")):
-                print(f"Task failed for {meta['subject']} {meta['difficulty']}")
-                # create placeholder questions locally if needed, or skip
-                # For public tests, we prefer skipping broken ones or retrying, but for now we skip to avoid bad data
-                # Or better: generate simple fallback structure
-                fallback_qs = [{
-                   "text": f"Error generating question for {meta['subject']}",
-                   "options": {"A": "Error", "B": "Error", "C": "Error", "D": "Error"},
-                   "answer": "A",
-                   "marks": 4,
-                   "type": "mcq",
-                   "difficulty": meta['difficulty'],
-                   "subject": meta['subject'],
-                   "topic": meta['topics'][0]
-                }] * meta['count']
-                final_questions.extend(fallback_qs)
-                continue
-
-            generated_qs = result.get("questions", [])
-            # Enrich with subject/topic info if missing
-            for q in generated_qs:
-                if "subject" not in q: q["subject"] = meta["subject"]
-                if "topic" not in q: q["topic"] = meta["topics"][0]
-                if "difficulty" not in q: q["difficulty"] = meta["difficulty"]
-            
-            final_questions.extend(generated_qs)
-    
-    # Calculate metadata
-    total_marks = sum(q.get("marks", 4) for q in final_questions)
-    
-    # Determine Title
-    active_subjects = [s for s, c in request.subject_inputs.items() if c.count > 0]
-    if len(active_subjects) == 1:
-        # Single Subject
-        main_topic = request.subject_inputs[active_subjects[0]].topics[0] if request.subject_inputs[active_subjects[0]].topics else "General"
-        title = f"{active_subjects[0]}: {main_topic} Practice"
-        subject_label = active_subjects[0]
-    else:
-        # Multi Subject
-        title = f"Full Mock: {request.exam_type} Practice"
-        subject_label = "Mixed"
-    
-    # 3. Create Test Record
-    new_test = Test(
-        title=title,
-        creator_id=current_user.id,
-        subject=subject_label,
-        topics_json=json.dumps(all_topics),
-        exam_type=request.exam_type,
-        difficulty="Mixed", # Since it's detailed distribution
-        total_questions=len(final_questions),
-        total_marks=total_marks,
-        duration_minutes=request.duration_minutes,
-        questions_data=json.dumps(final_questions),
-        is_public=True
-    )
-    
-    db.add(new_test)
-    db.commit()
-    db.refresh(new_test)
-    
-    return {"id": new_test.id, "message": "Test published to community"}
+# DEPRECATED: POST /tests/create removed. Use tests_router.py
 
 @router.get("/tests/{test_id}", response_model=TestDetailSchema)
 def get_test_details(

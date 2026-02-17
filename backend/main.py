@@ -22,12 +22,16 @@ from services.pdf_engine import pdf_engine
 from database import get_db, init_db
 from models import User, PDFGeneration, PromoCode, PromoCodeUsage, TopicSubjectCache, SharedPDF, SystemErrorLog
 from auth import get_current_user_required, get_current_user
-from routers.auth_router import router as auth_router
-from routers.institute_router import router as institute_router
-from routers.posts_router import router as posts_router
-from routers.pdf_router import router as pdf_router
-from routers.test_router import router as test_router
-from routers.community_router import router as community_router
+from routers import (
+    auth_router,
+    pdf_router,
+    institute_router,
+    posts_router,
+    community_router, # Keep for viewing
+    support_router,
+    test_router, # Keep for attempts
+    tests_router # NEW
+)
 from services.email_service import email_service
 # from services.r2_storage import r2_storage  # Deprecated
 from services.gcs_storage import gcs_storage
@@ -69,13 +73,14 @@ app.add_middleware(
 )
 
 # Include routers
-app.include_router(auth_router)
-app.include_router(institute_router)
-app.include_router(posts_router)
-app.include_router(pdf_router)
-app.include_router(pdf_router, prefix="/api") # Support legacy/cached frontend calls to /api/pdf
-app.include_router(test_router)
-app.include_router(community_router)
+app.include_router(auth_router.router)
+app.include_router(institute_router.router)
+app.include_router(posts_router.router)
+app.include_router(pdf_router.router)
+app.include_router(test_router.router)
+app.include_router(support_router.router)
+app.include_router(tests_router.router)
+app.include_router(community_router.router)
 from routers.diagram_router import router as diagram_router
 app.include_router(diagram_router)
 
