@@ -1473,6 +1473,183 @@ Return ONLY valid JSON:
             "questions": data.get("questions", []) if 'data' in locals() else []
         }
 
+    # ==================== HARD DIFFICULTY PROMPT GENERATOR ====================
+    
+    # Level normalization map — handles different naming conventions
+    # Test portal uses JEE_MAINS, JEE_ADV; PDF generator uses JEE Mains, JEE Advanced
+    LEVEL_ALIASES = {
+        "JEE_MAINS": "JEE Mains",
+        "JEE_ADV": "JEE Advanced",
+        "Mains": "JEE Mains",
+        "Advanced": "JEE Advanced",
+        "NEET": "NEET",
+        "GATE": "GATE",
+        "Olympiad": "Olympiad",
+        "CBSE Board": "CBSE Board",
+        "CBSE": "CBSE Board",
+        "CUSTOM": "JEE Mains",  # Default for custom tests
+    }
+    
+    def _normalize_level(self, level: str) -> str:
+        """Normalize level name to canonical form."""
+        return self.LEVEL_ALIASES.get(level, level)
+    
+    def _get_hard_difficulty_prompt(self, total: int, level: str) -> str:
+        """
+        Returns a level-aware Hard difficulty prompt.
+        JEE Advanced Hard ≠ CBSE Hard ≠ Olympiad Hard.
+        """
+        level = self._normalize_level(level)  # Normalize level name
+        # Base hard instructions (always included)
+        base = f"""DIFFICULTY: HARD — ABSOLUTE MAXIMUM DIFFICULTY (All {total} questions)
+⚠️  CRITICAL: These must be the HARDEST possible questions. NOT medium-hard. NOT "slightly tricky". 
+We mean GENUINELY BRUTAL problems that only the top 0.1% of students can solve.
+
+MANDATORY REQUIREMENTS FOR EVERY HARD QUESTION:
+- Minimum 5+ steps of non-trivial reasoning to reach the answer
+- Must combine concepts from AT LEAST 3 different sub-topics or chapters
+- The approach should NOT be immediately obvious — student must think laterally
+- Calculations must be complex: systems of equations, integration, matrix methods, etc.
+- A well-prepared student should need 8-15 minutes per question
+- If a student can solve it in under 5 minutes with a single formula, it is NOT hard enough
+
+ANTI-SIMPLIFICATION CHECK — your question FAILS if:
+✘ It can be solved by direct formula substitution
+✘ It only tests one concept
+✘ The setup is a standard textbook problem with different numbers
+✘ A coaching institute student would call it "easy marks"
+✘ The solution is less than 4 steps"""
+
+        # Level-specific additions
+        level_specific = {
+            "JEE Advanced": f"""
+LEVEL CALIBRATION: IIT JEE ADVANCED PAPER 2 (Toughest questions only)
+Think like a senior IIT professor setting Paper 2, Section C (the hardest section).
+
+WHAT JEE ADVANCED HARD LOOKS LIKE:
+- Paragraph-based problems where 2-3 questions share a complex physical/chemical/mathematical scenario
+- Problems requiring insight that isn't taught in any textbook
+- Setups where you must derive intermediate results before solving
+- Questions where choosing the wrong approach leads to impossibly complex math
+- Edge case problems where intuition fails and rigorous analysis is needed
+
+PHYSICS EXAMPLES (this level of difficulty):
+- "A charged particle enters a region with crossed E and B fields that vary as functions of position. The particle follows a specific trajectory. Find the work done by the electric field over one complete cycle."
+- "A rigid body with a cavity containing fluid rotates about a tilted axis. Find the steady-state angular velocity considering viscous damping."
+- "Two conducting spheres connected by a wire in a non-uniform external field — find the charge distribution and force between them."
+
+MATHS EXAMPLES (this level of difficulty):
+- "Find all continuous functions f: R→R satisfying f(x+y) = f(x)f(y) - sin(x)sin(y) for all x,y ∈ R"
+- "A parabola and ellipse intersect at 4 points. A circle passes through all 4 intersection points. Prove the circle's center lies on a fixed line and find that line."
+- "Evaluate ∫₀^π x·ln(sin x) dx using properties of definite integrals and series expansion"
+
+CHEMISTRY EXAMPLES (this level of difficulty):
+- "Predict the major product when a bridged bicyclic compound with 3 different functional groups undergoes a specific sequence of 4 reactions, justifying each stereochemical outcome."
+- "Calculate the EMF of a cell involving a complex equilibrium with 3 simultaneous reactions and activity coefficients."
+- "A mixture of 5 gases reaches equilibrium. Given Kp values for 3 independent reactions, find the partial pressure of each gas."
+
+REMEMBER: JEE Advanced Hard means only 1-2% of JEE aspirants can solve these correctly.""",
+
+            "Olympiad": f"""
+LEVEL CALIBRATION: INTERNATIONAL OLYMPIAD (IMO / IPhO / IChO)
+These are competition-level problems that require mathematical maturity beyond the syllabus.
+
+WHAT OLYMPIAD HARD LOOKS LIKE:
+- Problems requiring proof or construction, not just calculation
+- Elegant problems with surprising solutions
+- Problems where brute force doesn't work — you need a key insight
+- Questions that connect seemingly unrelated areas of mathematics/physics
+- Problems that professional mathematicians/physicists find interesting
+
+PHYSICS (IPhO level):
+- "Design an experiment using only a pendulum and ruler to measure the coefficient of restitution of a ball. Derive all equations from first principles."
+- "A soap bubble of radius R contains a gas at temperature T. The bubble is illuminated by monochromatic light. Derive the condition for constructive interference as the bubble slowly evaporates."
+
+MATHS (IMO level):
+- "Find all functions f: Z⁺ → Z⁺ such that f(m²+n²) = f(m)²+f(n)² for all positive integers m, n."
+- "Given n points in the plane, no three collinear, prove that the number of convex quadrilaterals is at most C(n,4). When does equality hold?"
+
+CHEMISTRY (IChO level):
+- "Propose a complete retrosynthetic analysis for a natural product with 5+ stereocenters, justifying each disconnection based on reactivity principles."
+
+REMEMBER: Olympiad Hard means these could appear in an actual international competition.""",
+
+            "JEE Mains": f"""
+LEVEL CALIBRATION: JEE MAINS — HARDEST TIER (99.9+ percentile questions)
+These are the questions that even JEE Mains toppers find time-consuming.
+
+WHAT JEE MAINS HARD LOOKS LIKE:
+- Multi-step problems combining 3+ concepts (NOT standard plug-and-chug)
+- Tricky numerical answers that require careful substitution
+- Problems with non-standard setups that test deep conceptual clarity
+- Questions where most students pick the wrong approach
+- Must require minimum 5-6 minutes even for well-prepared students
+
+EXAMPLES:
+- "A capacitor with a dielectric slab partially inserted is connected to a battery. Find the force on the dielectric as a function of its position, then find the equilibrium position."
+- "Find the number of solutions of sin(x) = x/100 using graphical and analytical methods."
+- "A thermodynamic cycle consists of an isothermal, adiabatic, and isochoric process. Given efficiency, find the ratio of volumes."
+
+REMEMBER: These questions should make coaching students say "yeh tough tha".""",
+
+            "NEET": f"""
+LEVEL CALIBRATION: NEET — HARDEST TIER
+These are the trickiest NEET questions requiring deep conceptual understanding.
+
+WHAT NEET HARD LOOKS LIKE:
+- Assertion-reason questions where the reasoning is non-obvious
+- Application of concepts to unseen biological/medical scenarios
+- Multi-step problems in Physics/Chemistry sections
+- Questions requiring integration of multiple NCERT chapters
+- Tricky exception-based questions in Biology
+
+REMEMBER: These should stump even students who memorized the entire NCERT.""",
+
+            "CBSE Board": f"""
+LEVEL CALIBRATION: CBSE — HOTS (Higher Order Thinking Skills)
+These are the toughest questions that appear in CBSE board examinations.
+
+WHAT CBSE HARD LOOKS LIKE:
+- Multi-concept application problems
+- Case-study based questions requiring analysis
+- Problems that require derivations combined with numerical application
+- Cross-chapter integration questions
+
+REMEMBER: These are the 5-mark questions that even board toppers find challenging.""",
+
+            "GATE": f"""
+LEVEL CALIBRATION: GATE — HARDEST TIER
+These are the questions that differentiate AIR 1-100 from the rest.
+
+WHAT GATE HARD LOOKS LIKE:
+- Problems requiring deep mathematical analysis
+- Multi-concept questions spanning multiple subjects
+- Numerical answer questions with complex calculations
+- Questions requiring derivation from first principles
+
+REMEMBER: Only the top 0.1% of GATE aspirants should get these right."""
+        }
+
+        # Get level-specific prompt, default to JEE Advanced if not found
+        specific = level_specific.get(level, level_specific.get("JEE Mains", ""))
+
+        return base + specific
+
+    def _get_system_message(self, subject: str, difficulty_label: str, level: str) -> str:
+        """Level-aware system message for LLM calls."""
+        level = self._normalize_level(level)  # Normalize level name
+        if difficulty_label == "Hard":
+            level_personas = {
+                "JEE Advanced": f"You are a senior IIT professor who sets the hardest questions for JEE Advanced Paper 2. You are known for creating problems that only the top 100 rankers can solve. Your {subject} questions are feared by coaching institutes. Return ONLY valid JSON.",
+                "Advanced": f"You are a senior IIT professor who sets the hardest questions for JEE Advanced Paper 2. Your {subject} questions are legendarily difficult. Return ONLY valid JSON.",
+                "Olympiad": f"You are a national Olympiad team coach for {subject}. You train students for IMO/IPhO/IChO. Your problems require deep mathematical maturity and creative insight. Return ONLY valid JSON.",
+                "JEE Mains": f"You are a senior question paper setter for NTA JEE Mains. You design the hardest 20% of questions that differentiate 99.9 percentile students. Your {subject} questions are tricky and time-consuming. Return ONLY valid JSON.",
+                "NEET": f"You are a senior NEET paper setter. You create the trickiest conceptual questions in {subject} that even NCERT-memorizers cannot answer without deep understanding. Return ONLY valid JSON.",
+                "GATE": f"You are a GATE paper setter from IISc/IIT. Your {subject} questions require deep mathematical analysis and first-principles derivation. Return ONLY valid JSON."
+            }
+            return level_personas.get(level, f"Expert {subject} question setter specializing in extremely challenging problems. Return ONLY valid JSON.")
+        return f"Expert {subject} question setter specializing in {difficulty_label.upper()} difficulty questions. Return ONLY valid JSON."
+
     # ==================== PER-DIFFICULTY HELPER ====================
     async def _generate_batch_for_difficulty(
         self,
@@ -1517,23 +1694,13 @@ WHAT MEDIUM MEANS — follow these rules strictly:
 - Example calibration: "A block slides down a rough incline of angle 30° and length 2m. If μ=0.2, find the speed at the bottom."
 - These should be standard competitive exam level questions.""",
 
-            "Hard": f"""DIFFICULTY: HARD (All {total} questions must be HARD)
-WHAT HARD MEANS — follow these rules strictly:
-- Requires 4+ steps of reasoning with multi-concept integration
-- Must involve at least 3 distinct physics/chemistry/math concepts
-- Include non-obvious approaches or require insight to solve
-- May have tricky edge cases, unusual setups, or require creative problem-solving
-- The student should need 6-10 minutes per question
-- Calculations should be involved (systems of equations, integration, etc.)
-- Example calibration: "Two blocks of mass m and 2m are connected by a spring of constant k on a smooth surface. A bullet of mass m/2 embeds into the first block. Find the maximum compression."
-- These questions should differentiate toppers from average students.
-- IMPORTANT: Do NOT just add more text to make a question look hard. The CONCEPT must be genuinely challenging."""
+            "Hard": self._get_hard_difficulty_prompt(total, level)
         }
 
         diff_instruction = difficulty_descriptions.get(difficulty_label, difficulty_descriptions["Medium"])
 
         # Temperature varies by difficulty for better results
-        temp_map = {"Easy": 0.5, "Medium": 0.7, "Hard": 0.85}
+        temp_map = {"Easy": 0.5, "Medium": 0.7, "Hard": 0.95}
         temperature = temp_map.get(difficulty_label, 0.7)
 
         # Build the prompt for this difficulty batch
@@ -1604,7 +1771,7 @@ Return ONLY valid JSON:
             response = await litellm.acompletion(
                 model=self.model,
                 messages=[
-                    {"role": "system", "content": f"Expert {subject} question setter specializing in {difficulty_label.upper()} difficulty questions. Return ONLY valid JSON."},
+                    {"role": "system", "content": self._get_system_message(subject, difficulty_label, level)},
                     {"role": "user", "content": prompt}
                 ],
                 temperature=temperature
