@@ -399,7 +399,7 @@ class PDFEngine:
         # Sanitize all question fields for LaTeX safety
         questions = data.get("questions", [])
         sanitized_questions = []
-        for q in questions:
+        for i, q in enumerate(questions):
             sanitized_q = {}
             
             # 1. Clean Text (Remove [DIAGRAM: ...])
