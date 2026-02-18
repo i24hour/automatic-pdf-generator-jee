@@ -1019,7 +1019,6 @@ export default function TestGenerator() {
                             <button
                                 type="button"
                                 onClick={() => {
-                                    setIsCustomMode(true);
                                     setTopic(searchQuery); // Use current search as topic
                                     setIsDropdownOpen(false);
                                 }}
