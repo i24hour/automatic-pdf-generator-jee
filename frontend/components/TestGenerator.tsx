@@ -1012,11 +1012,14 @@ export default function TestGenerator() {
                     )}
 
                     {/* No results message */}
-                    {isDropdownOpen && topic.trim() && filteredChapters.length === 0 && (
+                    {/* Custom Topic Option (Always show if typing) */}
+                    {isDropdownOpen && searchQuery.trim() && (
                         <div className="absolute z-50 w-full mt-1 bg-white dark:bg-[#16181c] border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-4 text-center">
-                            <p className="text-sm text-gray-500 dark:text-gray-400">
-                                No NCERT chapters match &quot;{topic}&quot;
-                            </p>
+                            {filteredChapters.length === 0 && (
+                                <p className="text-sm text-gray-500 dark:text-gray-400">
+                                    No NCERT chapters match &quot;{searchQuery}&quot;
+                                </p>
+                            )}
                             <button
                                 type="button"
                                 onClick={() => {
