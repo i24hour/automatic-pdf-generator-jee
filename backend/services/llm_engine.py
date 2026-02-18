@@ -1666,10 +1666,16 @@ REMEMBER: Only the top 0.1% of GATE aspirants should get these right."""
         if total <= 0:
             return []
 
+        # OVER-REQUEST STRATEGY: Ask for 50% more to guarantee exact count
+        # LLMs often return fewer questions than asked. By requesting extra,
+        # we can trim to exact count without needing a top-up API call.
+        over_request_factor = 1.5
+        request_total = max(total + 3, int(total * over_request_factor))  # At least +3 extra
+
         # Difficulty-specific instructions — these are much more descriptive
         # than a single line, forcing the LLM to truly calibrate
         difficulty_descriptions = {
-            "Easy": f"""DIFFICULTY: EASY (All {total} questions must be EASY)
+            "Easy": f"""DIFFICULTY: EASY (Generate {request_total} questions, ALL must be EASY)
 WHAT EASY MEANS — follow these rules strictly:
 - Direct formula application with ONE step of calculation
 - The student should be able to solve each question in under 2 minutes
@@ -1679,7 +1685,7 @@ WHAT EASY MEANS — follow these rules strictly:
 - Example calibration: "A ball is thrown upward with velocity 20 m/s. Find max height." (single formula: h = v²/2g)
 - DO NOT make these conceptually tricky. These should be confidence-builders.""",
 
-            "Medium": f"""DIFFICULTY: MEDIUM (All {total} questions must be MEDIUM)
+            "Medium": f"""DIFFICULTY: MEDIUM (Generate {request_total} questions, ALL must be MEDIUM)
 WHAT MEDIUM MEANS — follow these rules strictly:
 - Requires 2-3 steps of reasoning, NOT just plug-and-chug
 - Combines 2 concepts from the topic (e.g., energy conservation + kinematics)
@@ -1689,7 +1695,7 @@ WHAT MEDIUM MEANS — follow these rules strictly:
 - Example calibration: "A block slides down a rough incline of angle 30° and length 2m. If μ=0.2, find the speed at the bottom."
 - These should be standard competitive exam level questions.""",
 
-            "Hard": self._get_hard_difficulty_prompt(total, level)
+            "Hard": self._get_hard_difficulty_prompt(request_total, level)
         }
 
         diff_instruction = difficulty_descriptions.get(difficulty_label, difficulty_descriptions["Medium"])
@@ -1728,16 +1734,17 @@ WHAT MEDIUM MEANS — follow these rules strictly:
 
 {diff_instruction}
 
-GENERATE EXACTLY:
+GENERATE AT LEAST:
 {req_str}
-TOTAL: {total} questions — ALL must be {difficulty_label.upper()} difficulty.
+TOTAL: Generate AT LEAST {request_total} questions — ALL must be {difficulty_label.upper()} difficulty.
+We need minimum {total} questions. Generate {request_total} to be safe. More is better.
 
 SUBJECT: {subject}
 TOPIC: {topic}
 EXAM LEVEL: {level_prompt}
 
 STRICT REQUIREMENTS:
-1. Generate EXACTLY {total} questions. No more, no less.
+1. Generate AT LEAST {request_total} questions. More is welcome. Fewer is NOT acceptable.
 2. Every question MUST be {difficulty_label.upper()} difficulty as defined above.
 3. {num_ans_inst}
 4. Use LaTeX math mode: $...$ for inline, $$...$$ for display equations.
@@ -1789,39 +1796,16 @@ Return ONLY valid JSON:
             for q in questions:
                 q["difficulty"] = difficulty_label.lower()
 
-            # Trim if too many
+            # Trim to EXACT count needed (we over-requested)
             if len(questions) > total:
+                import random
+                random.shuffle(questions)  # Shuffle before trimming for variety
                 questions = questions[:total]
+            
+            if len(questions) < total:
+                print(f"[{difficulty_label}] WARNING: Got {len(questions)}/{total} even after over-requesting {request_total}. No top-up call — accepting what we have.")
 
-            # SMART TOP-UP: If we got fewer, generate ONLY the missing ones
-            missing = total - len(questions)
-            if missing > 0 and len(questions) > 0:
-                print(f"[{difficulty_label}] Got {len(questions)}/{total}, topping up {missing} more...")
-                try:
-                    topup_prompt = f"""Generate EXACTLY {missing} more {difficulty_label.lower()} {subject} questions on {topic}.
-Same format as before. Type can be 'mcq' or 'numerical'.
-Return ONLY JSON: {{"questions": [...]}}"""
-                    topup_response = await litellm.acompletion(
-                        model=self.model,
-                        messages=[
-                            {"role": "system", "content": f"Expert {subject} question setter. Return ONLY valid JSON."},
-                            {"role": "user", "content": topup_prompt}
-                        ],
-                        temperature=temperature
-                    )
-                    topup_text = topup_response.choices[0].message.content
-                    topup_json = self._clean_json_response(topup_text)
-                    topup_data = json.loads(topup_json)
-                    if "questions" in topup_data:
-                        topup_qs = self._process_questions(topup_data["questions"])
-                        for q in topup_qs:
-                            q["difficulty"] = difficulty_label.lower()
-                        questions.extend(topup_qs[:missing])
-                        print(f"[{difficulty_label}] Top-up added {min(len(topup_qs), missing)} questions")
-                except Exception as e:
-                    print(f"[{difficulty_label}] Top-up failed (non-critical): {e}")
-
-            print(f"[{difficulty_label}] Final: {len(questions)} questions")
+            print(f"[{difficulty_label}] Final: {len(questions)}/{total} questions (requested {request_total} from LLM)")
             return questions
 
         except json.JSONDecodeError as e:
