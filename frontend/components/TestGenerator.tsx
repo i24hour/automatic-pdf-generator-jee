@@ -1214,39 +1214,7 @@ export default function TestGenerator() {
 
 
 
-                {/* Solutions Toggle */}
-                <div className="mb-4">
-                    <label className="block mb-2 font-medium text-gray-700 dark:text-gray-300 text-sm">Include Solutions</label>
-                    <div className="grid grid-cols-2 gap-2">
-                        <button
-                            onClick={() => setIncludeSolutions(false)}
-                            disabled={isLoading}
-                            className={`p-3 rounded-xl border transition-all duration-300 flex flex-col items-center gap-1 ${!includeSolutions
-                                ? "border-green-500 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400"
-                                : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 bg-white dark:bg-[#16181c]"
-                                } ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
-                        >
-                            <span className="text-sm font-medium">Without Solutions</span>
-                            <span className="text-[10px] text-green-600">Faster (~1-2 min)</span>
-                        </button>
-                        <button
-                            onClick={() => setIncludeSolutions(true)}
-                            disabled={isLoading}
-                            className={`p-3 rounded-xl border transition-all duration-300 flex flex-col items-center gap-1 ${includeSolutions
-                                ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400"
-                                : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 bg-white dark:bg-[#16181c]"
-                                } ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
-                        >
-                            <span className="text-sm font-medium">With Solutions</span>
-                            <span className="text-[10px] text-indigo-600">Slower (~3-5 min)</span>
-                        </button>
-                    </div>
-                    {includeSolutions && (
-                        <p className="text-xs text-gray-500 mt-2 text-center">
-                            Solutions are verified for accuracy before PDF generation
-                        </p>
-                    )}
-                </div>
+
 
                 {/* Dynamic Exam Pattern */}
                 <div className="mb-4">
@@ -1577,7 +1545,7 @@ export default function TestGenerator() {
                         />
                     </div>
                     <label htmlFor="includeSolutions" className="cursor-pointer flex-1">
-                        <div className="font-medium text-gray-900 dark:text-gray-100 text-sm">Include Detailed Solutions</div>
+                        <div className="font-medium text-gray-900 dark:text-gray-100 text-sm">Include Detailed Solutions (1-2 min slower)</div>
                         <div className="text-xs text-gray-500 dark:text-gray-400">
                             Generates step-by-step explanations for each question
                         </div>
