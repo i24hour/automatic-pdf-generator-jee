@@ -55,6 +55,36 @@ def escape_latex_outside_math(text: str) -> str:
     
     return ''.join(result)
 
+
+def clean_solution_for_latex(text: str) -> str:
+    """
+    Clean LLM-generated solution text to prevent LaTeX compilation errors.
+    The main issue: LLMs generate '\\\\textbf{Step 1:}' which creates stray \\\\
+    line breaks that cause 'There's no line here to end' errors.
+    """
+    if not isinstance(text, str) or not text:
+        return text or ""
+    
+    # 1. Fix stray \\\\ before LaTeX commands (\\\\textbf → \n\n\textbf)
+    #    This is the #1 cause of "There's no line here to end"
+    text = re.sub(r'\\\\\s*(\\text)', r'\n\n\1', text)
+    
+    # 2. Fix stray \\\\ at start of lines or after blank lines
+    text = re.sub(r'^\\\\\s*$', '', text, flags=re.MULTILINE)
+    text = re.sub(r'\n\\\\\s*\n', '\n\n', text)
+    
+    # 3. Replace \\\\n\\\\n (literal escaped newlines from JSON) with actual newlines
+    text = text.replace('\\n\\n', '\n\n')
+    text = text.replace('\\n', '\n')
+    
+    # 4. Fix \\\\ that appears right before \noindent, \begin, \end
+    text = re.sub(r'\\\\\s*(\\(?:noindent|begin|end|vspace|hspace|par))', r'\n\n\1', text)
+    
+    # 5. Remove standalone \\\\ on their own line (causes errors in many contexts)
+    text = re.sub(r'^\s*\\\\\s*$', '', text, flags=re.MULTILINE)
+    
+    return text.strip()
+
 def sanitize_for_latex(text: str) -> str:
     """
     Sanitize text to be LaTeX-safe by escaping problematic Unicode characters.
@@ -439,6 +469,9 @@ class PDFEngine:
                     # I will check lines 1-100 to see imports/definitions.
                     # Actually I will just sanitize it for now to be safe, unless I find format_answer.
                     sanitized_q[key] = sanitize_for_latex(str(value)) 
+                elif key == "solution" and isinstance(value, str):
+                    # Solutions need special cleaning — LLMs generate stray \\\\ that crash LaTeX
+                    sanitized_q[key] = clean_solution_for_latex(value)
                 elif isinstance(value, str):
                     sanitized_q[key] = sanitize_for_latex(value)
                 else:
@@ -634,7 +667,7 @@ class PDFEngine:
     def generate_pdf(self, data: Dict[str, Any], filename: str = "test_paper") -> Optional[str]:
         """
         Generate PDF from question data.
-        Tries pdflatex first, falls back to ReportLab.
+        Uses pdflatex ONLY — no fallback to basic layout.
         
         Args:
             data: Dictionary containing subject, topic, and questions
@@ -650,19 +683,17 @@ class PDFEngine:
             print(f"CRITICAL: Template rendering failed: {e}")
             import traceback
             traceback.print_exc()
-            # Try fallback directly with raw data
-            print("Attempting fallback PDF generation due to template error...")
-            return self.generate_fallback_pdf(data, filename)
+            return None
         
         # Compile to PDF using pdflatex
         pdf_path = self.compile_pdf(latex_content, filename)
         
         if pdf_path:
             return pdf_path
-            
-        # If pdflatex failed or is missing, try fallback
-        print("Falling back to ReportLab generation...")
-        return self.generate_fallback_pdf(data, filename)
+        
+        # No fallback — return None so caller knows it failed
+        print("ERROR: pdflatex compilation failed. No fallback.")
+        return None
 
 
 # Singleton instance

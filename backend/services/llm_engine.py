@@ -18,12 +18,7 @@ load_dotenv()
 print("DEBUG: Loading llm_engine module...")
 
 # Fallback models for reliability - if primary fails, try these in order
-FALLBACK_MODELS = [
-    "gemini/gemini-1.5-flash",
-    "gemini/gemini-1.5-pro",
-    "gemini/gemini-1.5-flash-8b",
-    "gemini/gemini-2.0-flash",
-]
+FALLBACK_MODELS = []  # No fallbacks as per user request (Quality/Cost control)
 
 
 # =============================================
@@ -245,7 +240,7 @@ class LLMEngine:
         numerical_count: int,
         level: str = "JEE Mains",
         difficulty: str = "Medium",
-        chunk_size: int = 5,  # Smaller chunks = faster parallel
+        chunk_size: int = 15,  # Larger chunks = fewer calls (Gemini 3.0 Flash)
         **kwargs
     ) -> Dict[str, Any]:
         """
@@ -1746,11 +1741,13 @@ STRICT REQUIREMENTS:
 2. Every question MUST be {difficulty_label.upper()} difficulty as defined above.
 3. {num_ans_inst}
 4. Use LaTeX math mode: $...$ for inline, $$...$$ for display equations.
-5. Provide DETAILED step-by-step "solution" for EVERY question.
+5. MANDATORY: Provide a DETAILED step-by-step "solution" for EVERY question (minimum 150 words).
    - Use \\\\textbf{{Step 1:}} format.
    - One line gap between steps (\\n\\n).
    - Center equations with $$...$$.
    - End with \\\\textbf{{Final Answer:}} Option X or value.
+   - NEVER write just "The correct option is X". That is NOT a solution.
+   - Explain the WHY and HOW of each step, not just the calculation.
 6. For mcq_multi: answer as "A, C" or "A, B, D".
 
 Return ONLY valid JSON:
@@ -2300,8 +2297,8 @@ RULES:
                 })
         
         if numerical_qs:
-            # Create chunks of 5
-            chunk_size = 5
+            # Create chunks of 10 (optimized for Gemini 3.0 Flash large context)
+            chunk_size = 10
             batches = [numerical_qs[i:i + chunk_size] for i in range(0, len(numerical_qs), chunk_size)]
             
             # Create batch tasks
@@ -2361,8 +2358,8 @@ RULES:
         for i, q in enumerate(questions):
             if q.get("type") in ["mcq", "mcq_multi"]:
                 sol = q.get("solution", "")
-                # Check for empty or placeholder solutions
-                if not sol or len(sol.strip()) < 50 or "correct option is" in sol.lower() or "correct answer is" in sol.lower():
+                # Check for empty or placeholder solutions (relaxed: prompt now demands detailed solutions)
+                if not sol or len(sol.strip()) < 20 or sol.strip().lower().startswith("the correct"):
                     mcqs_missing_indices.append(i)
                     mcqs_missing_solutions.append({
                         "text": q.get("text", ""),
@@ -2373,8 +2370,8 @@ RULES:
         if mcqs_missing_solutions:
             print(f"[Solution Fallback] {len(mcqs_missing_solutions)} MCQs missing detailed solutions. Generating...")
             try:
-                # Use batch solution generation for efficiency
-                chunk_size = 5
+                # Use batch solution generation for efficiency (optimized batch size)
+                chunk_size = 10
                 for batch_start in range(0, len(mcqs_missing_solutions), chunk_size):
                     batch = mcqs_missing_solutions[batch_start:batch_start + chunk_size]
                     batch_indices = mcqs_missing_indices[batch_start:batch_start + chunk_size]
