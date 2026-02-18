@@ -240,7 +240,7 @@ class LLMEngine:
         numerical_count: int,
         level: str = "JEE Mains",
         difficulty: str = "Medium",
-        chunk_size: int = 15,  # Larger chunks = fewer calls (Gemini 3.0 Flash)
+        chunk_size: int = 10,  # Smaller chunks = more reliable count per call
         **kwargs
     ) -> Dict[str, Any]:
         """
@@ -1666,11 +1666,11 @@ REMEMBER: Only the top 0.1% of GATE aspirants should get these right."""
         if total <= 0:
             return []
 
-        # OVER-REQUEST STRATEGY: Ask for 50% more to guarantee exact count
+        # OVER-REQUEST STRATEGY: Ask for 2x to guarantee exact count
         # LLMs often return fewer questions than asked. By requesting extra,
         # we can trim to exact count without needing a top-up API call.
-        over_request_factor = 1.5
-        request_total = max(total + 3, int(total * over_request_factor))  # At least +3 extra
+        over_request_factor = 2.0
+        request_total = max(total + 5, int(total * over_request_factor))  # At least +5 extra
 
         # Difficulty-specific instructions — these are much more descriptive
         # than a single line, forcing the LLM to truly calibrate
@@ -1748,13 +1748,11 @@ STRICT REQUIREMENTS:
 2. Every question MUST be {difficulty_label.upper()} difficulty as defined above.
 3. {num_ans_inst}
 4. Use LaTeX math mode: $...$ for inline, $$...$$ for display equations.
-5. MANDATORY: Provide a DETAILED step-by-step "solution" for EVERY question (minimum 150 words).
+5. Provide a "solution" for EVERY question.
+   - For each question, write a CONCISE solution (3-5 steps, 50-80 words).
    - Use \\\\textbf{{Step 1:}} format.
-   - One line gap between steps (\\n\\n).
-   - Center equations with $$...$$.
    - End with \\\\textbf{{Final Answer:}} Option X or value.
-   - NEVER write just "The correct option is X". That is NOT a solution.
-   - Explain the WHY and HOW of each step, not just the calculation.
+   - Keep solutions SHORT so you can generate ALL {request_total} questions.
 6. For mcq_multi: answer as "A, C" or "A, B, D".
 
 Return ONLY valid JSON:
