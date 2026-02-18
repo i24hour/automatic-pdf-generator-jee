@@ -152,7 +152,8 @@ export default function TestGenerator() {
 
     // NCERT Chapter Dropdown State
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-    // Removed isCustomMode - Input is now hybrid
+    // Added back isCustomMode as requested by user
+    const [isCustomMode, setIsCustomMode] = useState(false);
     const [filteredChapters, setFilteredChapters] = useState<{ class: string; name: string; matchedTopic?: string }[]>([]);
     const [selectedChapters, setSelectedChapters] = useState<string[]>([]);
     const [searchQuery, setSearchQuery] = useState(''); // Separate search from topic
@@ -1019,6 +1020,7 @@ export default function TestGenerator() {
                             <button
                                 type="button"
                                 onClick={() => {
+                                    setIsCustomMode(true);
                                     setTopic(searchQuery); // Use current search as topic
                                     setIsDropdownOpen(false);
                                 }}
