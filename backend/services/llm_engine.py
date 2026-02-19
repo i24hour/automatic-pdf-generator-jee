@@ -125,6 +125,7 @@ class LLMEngine:
         self.primary_model = os.getenv("ACTIVE_MODEL", "gemini/gemini-2.5-flash")
         self.model = self.primary_model
         self.fallback_models = FALLBACK_MODELS
+        self._current_user_id = None  # Set per-request for verify/solution log calls
         self._setup_api_keys()
     
     def _setup_api_keys(self):
@@ -134,6 +135,34 @@ class LLMEngine:
         if not os.getenv("GEMINI_API_KEY") and os.getenv("GOOGLE_API_KEY"):
             os.environ["GEMINI_API_KEY"] = os.getenv("GOOGLE_API_KEY")
             print("DEBUG: Mapped GOOGLE_API_KEY to GEMINI_API_KEY")
+
+    async def _log_usage(self, response, feature: str, user_id: str = None,
+                         subject: str = None, level: str = None):
+        """Fire-and-forget: log LLM API usage to api_usage_logs table."""
+        try:
+            usage = getattr(response, "usage", None)
+            if not usage:
+                return
+            from database import SessionLocal
+            from models import APIUsageLog
+            db = SessionLocal()
+            try:
+                log = APIUsageLog(
+                    user_id=user_id,
+                    feature=feature,
+                    model_name=str(self.model),
+                    input_tokens=getattr(usage, "prompt_tokens", 0) or 0,
+                    output_tokens=getattr(usage, "completion_tokens", 0) or 0,
+                    total_tokens=getattr(usage, "total_tokens", 0) or 0,
+                    subject=subject,
+                    level=level,
+                )
+                db.add(log)
+                db.commit()
+            finally:
+                db.close()
+        except Exception as e:
+            print(f"[UsageLog] Failed to log usage: {e}")
     
     def generate_with_fallback(
         self,
@@ -1825,6 +1854,11 @@ Return ONLY valid JSON:
                 temperature=temperature
             )
 
+            asyncio.create_task(self._log_usage(
+                response, feature="question_gen",
+                user_id=kwargs.get("user_id"),
+                subject=subject, level=level
+            ))
             response_text = response.choices[0].message.content
             cleaned_json = self._clean_json_response(response_text)
             data = json.loads(cleaned_json)
@@ -1990,6 +2024,11 @@ Return ONLY JSON:
                         ],
                         temperature=0.7
                     )
+                    asyncio.create_task(self._log_usage(
+                        response, feature="question_gen",
+                        user_id=kwargs.get("user_id"),
+                        subject=subject, level=level
+                    ))
                     response_text = response.choices[0].message.content
                     cleaned_json = self._clean_json_response(response_text)
                     data = json.loads(cleaned_json)
@@ -2072,6 +2111,11 @@ Return ONLY JSON:
                         ],
                         temperature=0.7
                     )
+                    asyncio.create_task(self._log_usage(
+                        response, feature="question_gen",
+                        user_id=kwargs.get("user_id"),
+                        subject=subject, level=level
+                    ))
                     response_text = response.choices[0].message.content
                     cleaned_json = self._clean_json_response(response_text)
                     data = json.loads(cleaned_json)
@@ -2250,6 +2294,11 @@ RULES:
                 temperature=0.1
             )
             
+            asyncio.create_task(self._log_usage(
+                response, feature="verify_numerical",
+                user_id=self._current_user_id,
+                subject=subject
+            ))
             response_text = response.choices[0].message.content
             cleaned = self._clean_json_response(response_text)
             data = json.loads(cleaned)
@@ -2303,6 +2352,8 @@ RULES:
         Generate questions and verify numerical answers in PARALLEL.
         If include_solutions=True, also generate solutions for MCQs.
         """
+        # Store user_id for verify/solution log calls
+        self._current_user_id = kwargs.get("user_id")
         # First, generate questions normally
         result = await self.generate_parallel(subject, topic, mcq_count, numerical_count, level, difficulty, **kwargs)
         
@@ -2473,6 +2524,10 @@ FORMATTING RULES for each solution string:
                 temperature=0.3
             )
             
+            asyncio.create_task(self._log_usage(
+                response, feature="mcq_solution",
+                user_id=self._current_user_id
+            ))
             response_text = response.choices[0].message.content
             cleaned = self._clean_json_response(response_text)
             data = json.loads(cleaned)

@@ -557,3 +557,28 @@ class SupportTicket(Base):
 
 # Update User relationship
 User.tickets = relationship("SupportTicket", back_populates="user")
+
+
+class APIUsageLog(Base):
+    """Log individual LLM API calls for cost tracking and analytics."""
+    __tablename__ = "api_usage_logs"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    # user_id is nullable mostly for system calls or pre-login checks (if any)
+    user_id = Column(String, nullable=True, index=True) 
+    feature = Column(String, nullable=False)  # e.g. "pdf_generator", "test_portal", "verify_numerical"
+    model_name = Column(String, nullable=False)
+    
+    # Token Stats
+    input_tokens = Column(Integer, nullable=False, default=0)
+    output_tokens = Column(Integer, nullable=False, default=0)
+    total_tokens = Column(Integer, nullable=False, default=0)
+    
+    # Context Metadata
+    subject = Column(String, nullable=True)
+    level = Column(String, nullable=True)    # JEE Mains, NEET, etc.
+    
+    timestamp = Column(DateTime(timezone=True), server_default=func.now(), index=True)
+
+    def __repr__(self):
+        return f"<APILog {self.feature} - {self.total_tokens} tokens>"

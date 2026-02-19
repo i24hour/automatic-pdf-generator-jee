@@ -475,7 +475,8 @@ async def generate_test(
             cbse_la=request.cbse_la,
             cbse_case=request.cbse_case,
             num_matrix=request.num_matrix,
-            num_paragraph=request.num_paragraph
+            num_paragraph=request.num_paragraph,
+            user_id=current_user.id
         )
         
         if not llm_result.get("success"):
@@ -656,7 +657,8 @@ async def generate_test_verified(
             cbse_la=request.cbse_la,
             cbse_case=request.cbse_case,
             num_matrix=request.num_matrix,
-            num_paragraph=request.num_paragraph
+            num_paragraph=request.num_paragraph,
+            user_id=current_user.id
         )
         
         if not llm_result.get("success"):
@@ -1088,7 +1090,8 @@ async def run_generation_job(
             cbse_vsa=request.cbse_vsa,
             cbse_sa=request.cbse_sa,
             cbse_la=request.cbse_la,
-            cbse_case=request.cbse_case
+            cbse_case=request.cbse_case,
+            user_id=user.id
         )
 
         
