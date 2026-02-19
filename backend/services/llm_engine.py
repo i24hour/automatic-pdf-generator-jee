@@ -125,7 +125,8 @@ class LLMEngine:
         self.primary_model = os.getenv("ACTIVE_MODEL", "gemini/gemini-2.5-flash")
         self.model = self.primary_model
         self.fallback_models = FALLBACK_MODELS
-        self._current_user_id = None  # Set per-request for verify/solution log calls
+        self._current_user_id = None      # Set per-request for verify/solution log calls
+        self._current_generation_id = None  # UUID per test generation session
         self._setup_api_keys()
     
     def _setup_api_keys(self):
@@ -149,6 +150,7 @@ class LLMEngine:
             try:
                 log = APIUsageLog(
                     user_id=user_id,
+                    generation_id=self._current_generation_id,
                     feature=feature,
                     model_name=str(self.model),
                     input_tokens=getattr(usage, "prompt_tokens", 0) or 0,
@@ -2352,6 +2354,8 @@ RULES:
         Generate questions and verify numerical answers in PARALLEL.
         If include_solutions=True, also generate solutions for MCQs.
         """
+        # Generate a unique ID for this entire generation session
+        self._current_generation_id = str(__import__('uuid').uuid4())
         # Store user_id for verify/solution log calls
         self._current_user_id = kwargs.get("user_id")
         # First, generate questions normally
@@ -2462,8 +2466,60 @@ RULES:
             except Exception as e:
                 print(f"[Solution Fallback] Failed: {e}")
         
+        # ---- Aggregate all per-call logs into total_api_usage ----
+        asyncio.create_task(self._save_total_usage(
+            generation_id=self._current_generation_id,
+            user_id=self._current_user_id,
+            subject=subject,
+            level=level,
+        ))
+
         return result
     
+    async def _save_total_usage(self, generation_id: str, user_id: str = None,
+                                subject: str = None, level: str = None):
+        """
+        Aggregate all api_usage_logs for this generation_id into one total_api_usage row.
+        Called fire-and-forget after every test generation completes.
+        """
+        try:
+            import asyncio as _asyncio
+            # Small delay so all fire-and-forget _log_usage tasks can commit first
+            await _asyncio.sleep(3)
+            from database import SessionLocal
+            from models import APIUsageLog, TotalAPIUsage
+            from sqlalchemy import func as sqlfunc
+            db = SessionLocal()
+            try:
+                # Aggregate all logs for this generation_id
+                agg = db.query(
+                    sqlfunc.sum(APIUsageLog.input_tokens).label("inp"),
+                    sqlfunc.sum(APIUsageLog.output_tokens).label("out"),
+                    sqlfunc.sum(APIUsageLog.total_tokens).label("tot"),
+                    sqlfunc.count(APIUsageLog.id).label("cnt"),
+                ).filter(APIUsageLog.generation_id == generation_id).one()
+
+                if agg.tot and agg.tot > 0:
+                    summary = TotalAPIUsage(
+                        generation_id=generation_id,
+                        user_id=user_id,
+                        feature="question_gen",
+                        subject=subject,
+                        level=level,
+                        model_name=str(self.model),
+                        total_input_tokens=int(agg.inp or 0),
+                        total_output_tokens=int(agg.out or 0),
+                        total_tokens=int(agg.tot or 0),
+                        api_call_count=int(agg.cnt or 0),
+                    )
+                    db.add(summary)
+                    db.commit()
+                    print(f"[TotalUsage] Saved: {agg.tot} tokens across {agg.cnt} calls for gen {generation_id[:8]}")
+            finally:
+                db.close()
+        except Exception as e:
+            print(f"[TotalUsage] Failed to save total usage: {e}")
+
     async def _generate_mcq_solution_batch_async(self, items: List[Dict], subject: str) -> List[str]:
         """
         Generate detailed step-by-step solutions for a batch of MCQs.

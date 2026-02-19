@@ -566,6 +566,8 @@ class APIUsageLog(Base):
     id = Column(String, primary_key=True, default=generate_uuid)
     # user_id is nullable mostly for system calls or pre-login checks (if any)
     user_id = Column(String, nullable=True, index=True) 
+    # generation_id links all per-call logs to a single test/pdf generation session
+    generation_id = Column(String, nullable=True, index=True)
     feature = Column(String, nullable=False)  # e.g. "pdf_generator", "test_portal", "verify_numerical"
     model_name = Column(String, nullable=False)
     
@@ -582,3 +584,31 @@ class APIUsageLog(Base):
 
     def __repr__(self):
         return f"<APILog {self.feature} - {self.total_tokens} tokens>"
+
+
+class TotalAPIUsage(Base):
+    """Per-generation summary: total tokens used across ALL LLM calls for one test/pdf."""
+    __tablename__ = "total_api_usage"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    generation_id = Column(String, unique=True, nullable=False, index=True)  # links to api_usage_logs.generation_id
+    user_id = Column(String, nullable=True, index=True)
+    
+    # What was generated
+    feature = Column(String, nullable=True)   # "pdf_generator", "test_portal", etc.
+    subject = Column(String, nullable=True)
+    level = Column(String, nullable=True)
+    model_name = Column(String, nullable=True)
+    
+    # Aggregated Token Stats
+    total_input_tokens = Column(Integer, nullable=False, default=0)
+    total_output_tokens = Column(Integer, nullable=False, default=0)
+    total_tokens = Column(Integer, nullable=False, default=0)
+    
+    # How many individual LLM calls were made
+    api_call_count = Column(Integer, nullable=False, default=0)
+    
+    timestamp = Column(DateTime(timezone=True), server_default=func.now(), index=True)
+
+    def __repr__(self):
+        return f"<TotalAPIUsage gen={self.generation_id[:8]} tokens={self.total_tokens}>"
