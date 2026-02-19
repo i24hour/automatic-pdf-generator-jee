@@ -13,6 +13,9 @@
 \usepackage{enumitem}
 \usepackage{float}
 \usepackage{xcolor}  % For colored text
+\usepackage{booktabs}  % For Matrix Match tables
+\usepackage{array}     % For table column formatting
+\usepackage[framemethod=tikz]{mdframed}  % For Paragraph passage box
 
 % TikZ Libraries (Standard set for Physics/Maths)
 \usetikzlibrary{arrows.meta, calc, decorations.pathmorphing, patterns, shapes.geometric}
@@ -108,6 +111,45 @@
             \par\noindent\textcolor{gray}{\dotfill}
             \vspace{0.2cm}
             \par\noindent\textcolor{gray}{\dotfill}
+        \BLOCK{ elif q.type == 'matrix_match' }
+            \hfill \textbf{[8 Marks]}
+            \vspace{0.3cm}
+            \begin{center}
+            \begin{tabular}{|p{0.42\textwidth}|p{0.42\textwidth}|}
+            \hline
+            \textbf{List-I} & \textbf{List-II} \\
+            \hline
+            \BLOCK{ for i in range([q.list1|length, q.list2|length]|min) }
+            \VAR{q.list1[i]} & \VAR{q.list2[i]} \\
+            \BLOCK{ endfor }
+            \BLOCK{ if q.list1|length > q.list2|length }
+            \BLOCK{ for i in range(q.list2|length, q.list1|length) }
+            \VAR{q.list1[i]} & \\
+            \BLOCK{ endfor }
+            \BLOCK{ elif q.list2|length > q.list1|length }
+            \BLOCK{ for i in range(q.list1|length, q.list2|length) }
+             & \VAR{q.list2[i]} \\
+            \BLOCK{ endfor }
+            \BLOCK{ endif }
+            \hline
+            \end{tabular}
+            \end{center}
+            \vspace{0.2cm}
+        \BLOCK{ elif q.type == 'paragraph' }
+            \hfill \textbf{[Comprehension]}
+            \vspace{0.2cm}
+            \begin{mdframed}[backgroundcolor=gray!10, linecolor=gray!60, linewidth=0.8pt, innerleftmargin=8pt, innerrightmargin=8pt, innertopmargin=6pt, innerbottommargin=6pt]
+            \small\textit{\VAR{q.passage|default('')}}
+            \end{mdframed}
+            \vspace{0.3cm}
+            \BLOCK{ if q.sub_questions }
+            \BLOCK{ for sq in q.sub_questions }
+            \par\noindent (\VAR{loop.index|string}) \VAR{sq.text}
+            \BLOCK{ if sq.options }
+            \fourchoices{\VAR{sq.options[0]}}{\VAR{sq.options[1]}}{\VAR{sq.options[2]}}{\VAR{sq.options[3]}}
+            \BLOCK{ endif }
+            \BLOCK{ endfor }
+            \BLOCK{ endif }
         \BLOCK{ elif q.type == 'case_based' }
             \hfill \textbf{[4 Marks]}
             \vspace{0.2cm}

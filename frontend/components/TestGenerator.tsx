@@ -131,6 +131,8 @@ export default function TestGenerator() {
     const [jeeSingle, setJeeSingle] = useState(10);
     const [jeeMulti, setJeeMulti] = useState(5);
     const [jeeInteger, setJeeInteger] = useState(5);
+    const [jeeMatrixMatch, setJeeMatrixMatch] = useState(0);
+    const [jeeParagraph, setJeeParagraph] = useState(0);
 
     const [includeSolutions, setIncludeSolutions] = useState(false);
 
@@ -481,7 +483,7 @@ export default function TestGenerator() {
         } else if (level === "JEE Advanced") {
             requestMcqs = jeeSingle + jeeMulti;
             requestNumericals = jeeInteger;
-            requestTotal = requestMcqs + requestNumericals;
+            requestTotal = requestMcqs + requestNumericals + jeeMatrixMatch + jeeParagraph;
         }
 
         // Trigger generation via Context
@@ -501,6 +503,9 @@ export default function TestGenerator() {
             num_msq: level === "GATE" || level === "JEE Advanced" ? (level === "JEE Advanced" ? jeeMulti : numMSQ) : undefined,
             num_nat: level === "GATE" ? numNAT : undefined,
             num_ga: level === "GATE" ? numGA : undefined,
+            // JEE Advanced Extended Types
+            num_matrix: level === "JEE Advanced" ? jeeMatrixMatch : undefined,
+            num_paragraph: level === "JEE Advanced" ? jeeParagraph : undefined,
             // CBSE Board Params
             cbse_mcq: level === "CBSE Board" ? cbseMCQ : undefined,
             cbse_vsa: level === "CBSE Board" ? cbseVeryShort : undefined,
@@ -1232,7 +1237,7 @@ export default function TestGenerator() {
                                 : level === "GATE"
                                     ? numGA + numMCQs + numMSQ + numNAT
                                     : level === "JEE Advanced"
-                                        ? jeeSingle + jeeMulti + jeeInteger
+                                        ? jeeSingle + jeeMulti + jeeInteger + jeeMatrixMatch + jeeParagraph
                                         : numMCQs + numNumericals} (max 50)
                         </span>
                     </div>
@@ -1406,9 +1411,8 @@ export default function TestGenerator() {
                                         value={jeeSingle}
                                         onChange={(e) => {
                                             const val = parseInt(e.target.value) || 0;
-                                            if (val >= 0 && val + jeeMulti + jeeInteger <= 50) {
+                                            if (val >= 0 && val + jeeMulti + jeeInteger + jeeMatrixMatch + jeeParagraph <= 50) {
                                                 setJeeSingle(val);
-                                                // Force DOM update to strip leading zeros (e.g. "030" -> "30")
                                                 if (e.target.value !== "" && parseInt(e.target.value).toString() !== e.target.value) {
                                                     e.target.value = parseInt(e.target.value).toString();
                                                 }
@@ -1429,9 +1433,8 @@ export default function TestGenerator() {
                                         value={jeeMulti}
                                         onChange={(e) => {
                                             const val = parseInt(e.target.value) || 0;
-                                            if (val >= 0 && jeeSingle + val + jeeInteger <= 50) {
+                                            if (val >= 0 && jeeSingle + val + jeeInteger + jeeMatrixMatch + jeeParagraph <= 50) {
                                                 setJeeMulti(val);
-                                                // Force DOM update to strip leading zeros
                                                 if (e.target.value !== "" && parseInt(e.target.value).toString() !== e.target.value) {
                                                     e.target.value = parseInt(e.target.value).toString();
                                                 }
@@ -1452,9 +1455,8 @@ export default function TestGenerator() {
                                         value={jeeInteger}
                                         onChange={(e) => {
                                             const val = parseInt(e.target.value) || 0;
-                                            if (val >= 0 && jeeSingle + jeeMulti + val <= 50) {
+                                            if (val >= 0 && jeeSingle + jeeMulti + val + jeeMatrixMatch + jeeParagraph <= 50) {
                                                 setJeeInteger(val);
-                                                // Force DOM update to strip leading zeros
                                                 if (e.target.value !== "" && parseInt(e.target.value).toString() !== e.target.value) {
                                                     e.target.value = parseInt(e.target.value).toString();
                                                 }
@@ -1467,6 +1469,47 @@ export default function TestGenerator() {
                                     />
                                     <label className="absolute left-3 top-1 text-[10px] text-indigo-600 font-medium">
                                         Integer
+                                    </label>
+                                </div>
+                            </div>
+                            {/* Row 2: Matrix Match + Paragraph */}
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="relative">
+                                    <input
+                                        type="number"
+                                        value={jeeMatrixMatch}
+                                        onChange={(e) => {
+                                            const val = parseInt(e.target.value) || 0;
+                                            if (val >= 0 && jeeSingle + jeeMulti + jeeInteger + val + jeeParagraph <= 50) {
+                                                setJeeMatrixMatch(val);
+                                            }
+                                        }}
+                                        min={0}
+                                        max={10}
+                                        className="peer w-full px-3 pt-5 pb-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 bg-white dark:bg-black text-gray-900 dark:text-white"
+                                        placeholder=" "
+                                    />
+                                    <label className="absolute left-3 top-1 text-[10px] text-purple-600 font-medium">
+                                        Matrix Match
+                                    </label>
+                                </div>
+                                <div className="relative">
+                                    <input
+                                        type="number"
+                                        value={jeeParagraph}
+                                        onChange={(e) => {
+                                            const val = parseInt(e.target.value) || 0;
+                                            if (val >= 0 && jeeSingle + jeeMulti + jeeInteger + jeeMatrixMatch + val <= 50) {
+                                                setJeeParagraph(val);
+                                            }
+                                        }}
+                                        min={0}
+                                        max={10}
+                                        className="peer w-full px-3 pt-5 pb-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 bg-white dark:bg-black text-gray-900 dark:text-white"
+                                        placeholder=" "
+                                    />
+                                    <label className="absolute left-3 top-1 text-[10px] text-purple-600 font-medium">
+                                        Paragraph/Comprehension
                                     </label>
                                 </div>
                             </div>

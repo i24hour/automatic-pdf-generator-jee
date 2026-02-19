@@ -492,6 +492,38 @@ class PDFEngine:
             
 
 
+            # Handle matrix_match special fields
+            if q.get("type") == "matrix_match":
+                list1_raw = q.get("list1", [])
+                list2_raw = q.get("list2", [])
+                sanitized_q["list1"] = [sanitize_for_latex(str(item)) for item in list1_raw]
+                sanitized_q["list2"] = [sanitize_for_latex(str(item)) for item in list2_raw]
+                # Pad both lists to same length (max 4 rows)
+                max_len = max(len(sanitized_q["list1"]), len(sanitized_q["list2"]), 4)
+                while len(sanitized_q["list1"]) < max_len:
+                    sanitized_q["list1"].append("")
+                while len(sanitized_q["list2"]) < max_len:
+                    sanitized_q["list2"].append("")
+
+            # Handle paragraph (comprehension) special fields
+            if q.get("type") == "paragraph":
+                raw_passage = q.get("passage", "")
+                sanitized_q["passage"] = sanitize_for_latex(raw_passage)
+                raw_sqs = q.get("sub_questions", [])
+                sanitized_sqs = []
+                for sq in raw_sqs:
+                    san_sq = {}
+                    san_sq["text"] = sanitize_for_latex(str(sq.get("text", "")))
+                    raw_opts = sq.get("options", [])
+                    san_opts = [sanitize_for_latex(str(o)) for o in raw_opts]
+                    while len(san_opts) < 4:
+                        san_opts.append("")
+                    san_sq["options"] = san_opts
+                    san_sq["answer"] = sanitize_for_latex(str(sq.get("answer", "")))
+                    san_sq["solution"] = clean_solution_for_latex(sq.get("solution", ""))
+                    sanitized_sqs.append(san_sq)
+                sanitized_q["sub_questions"] = sanitized_sqs
+
             sanitized_q["id"] = q.get("id", i)
             sanitized_q["type"] = q.get("type", "mcq")
             sanitized_q["answer"] = q.get("answer", "")

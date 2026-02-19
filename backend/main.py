@@ -124,6 +124,9 @@ class GenerateRequest(BaseModel):
     cbse_sa: Optional[int] = Field(default=None, description="Number of Short Answer questions (Boards only)")
     cbse_la: Optional[int] = Field(default=None, description="Number of Long Answer questions (Boards only)")
     cbse_case: Optional[int] = Field(default=None, description="Number of Case Based questions (Boards only)")
+    # JEE Advanced Specific Fields
+    num_matrix: Optional[int] = Field(default=None, description="Number of Matrix Match questions (JEE Advanced only)")
+    num_paragraph: Optional[int] = Field(default=None, description="Number of Comprehension/Paragraph sets (JEE Advanced only)")
 
 
 class GenerateResponse(BaseModel):
@@ -470,7 +473,9 @@ async def generate_test(
             cbse_vsa=request.cbse_vsa,
             cbse_sa=request.cbse_sa,
             cbse_la=request.cbse_la,
-            cbse_case=request.cbse_case
+            cbse_case=request.cbse_case,
+            num_matrix=request.num_matrix,
+            num_paragraph=request.num_paragraph
         )
         
         if not llm_result.get("success"):
@@ -649,7 +654,9 @@ async def generate_test_verified(
             cbse_vsa=request.cbse_vsa,
             cbse_sa=request.cbse_sa,
             cbse_la=request.cbse_la,
-            cbse_case=request.cbse_case
+            cbse_case=request.cbse_case,
+            num_matrix=request.num_matrix,
+            num_paragraph=request.num_paragraph
         )
         
         if not llm_result.get("success"):

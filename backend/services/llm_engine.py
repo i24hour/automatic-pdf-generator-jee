@@ -285,7 +285,7 @@ class LLMEngine:
             
             # Use ASYNC method directly - no to_thread needed
             result = await self.generate_with_fallback_async(
-                subject, topic, mcq_cnt, num_cnt, level, difficulty
+                subject, topic, mcq_cnt, num_cnt, level, difficulty, **kwargs
             )
             
             duration = time.time() - start_time
@@ -1230,15 +1230,58 @@ Return ONLY valid JSON:
 {boards_json_example}"""
         elif level == "JEE Advanced":
             num_msq = kwargs.get("num_msq", 0) or 0
-            # mcq_count contains (Single Correct + Multi Correct)
+            num_matrix = kwargs.get("num_matrix", 0) or 0
+            num_paragraph = kwargs.get("num_paragraph", 0) or 0
+            # mcq_count contains (Single Correct + Multi Correct), numericals are integer type
             num_single = max(0, mcq_count - num_msq)
-            
+
+            # Build generate list
+            gen_lines = []
+            if num_single > 0:
+                gen_lines.append(f'- {num_single} Single Correct MCQ(s) [type: "mcq", 4 options, 1 correct, Mark: 3]')
+            if num_msq > 0:
+                gen_lines.append(f'- {num_msq} Multi Correct MCQ(s) [type: "mcq_multi", 4 options, >=1 correct, Mark: 4]')
+            if numerical_count > 0:
+                gen_lines.append(f'- {numerical_count} Integer Type Question(s) [type: "numerical", integer answer, Mark: 3]')
+            if num_matrix > 0:
+                gen_lines.append(f'- {num_matrix} Matrix Match Question(s) [type: "matrix_match", Match List-I rows A/B/C/D with List-II options p/q/r/s, Mark: 8]')
+            if num_paragraph > 0:
+                gen_lines.append(f'- {num_paragraph} Comprehension Set(s) [type: "paragraph", each has a passage + 2 MCQ sub_questions, Mark: 3 each]')
+            gen_list = "\n".join(gen_lines)
+            total_jee = num_single + num_msq + numerical_count + num_matrix + num_paragraph
+
+            matrix_json = ''
+            if num_matrix > 0:
+                matrix_json = ''',
+        {{
+            "type": "matrix_match",
+            "text": "Match List-I (Column I) with List-II (Column II):",
+            "list1": ["A. Statement about concept X", "B. Statement about concept Y", "C. Statement about concept Z", "D. Statement about concept W"],
+            "list2": ["p. Result p", "q. Result q", "r. Result r", "s. Result s"],
+            "answer": "A-p,q; B-r; C-p,s; D-q,r",
+            "solution": "\\\\textbf{{Step 1:}} Analyse row A: ...",
+            "options": []
+        }}'''
+
+            paragraph_json = ''
+            if num_paragraph > 0:
+                paragraph_json = ''',
+        {{
+            "type": "paragraph",
+            "text": "Comprehension: Based on the passage below, answer the questions that follow.",
+            "passage": "A paragraph describing the physical/chemical scenario in 3-5 lines. Include relevant equations.",
+            "sub_questions": [
+                {{"text": "Sub-question 1 text based on passage", "options": ["A", "B", "C", "D"], "answer": "A", "solution": "Step 1..."}},
+                {{"text": "Sub-question 2 text based on passage", "options": ["A", "B", "C", "D"], "answer": "C", "solution": "Step 1..."}}
+            ],
+            "answer": "See sub_questions",
+            "options": []
+        }}'''
+
             prompt = f"""You are an expert JEE Advanced question setter.
-            
+
 Generate exactly:
-- {num_single} Single Correct MCQ(s) (Type: "mcq", 4 options only 1 correct, Marks: 3)
-- {num_msq} Multi Correct MCQ(s) (Type: "mcq_multi", 4 options 1 or more correct, Marks: 4)
-- {numerical_count} Integer Type Question(s) (Type: "numerical", answer is an integer, Marks: 3)
+{gen_list}
 
 Topic: "{topic}" for {subject}
 
@@ -1246,21 +1289,24 @@ Topic: "{topic}" for {subject}
 
 {difficulty_prompt}
 
-TOTAL: {num_single + num_msq + numerical_count} Questions
+TOTAL: {total_jee} questions
 
 REQUIREMENTS:
-- For multi-correct: "answer" field should be comma separated like "A, C"
-- For integer type: "answer" field should be a number string like "5"
-- Use LaTeX for math: $...$, $$...$$
-- Use LaTeX for math. Use $$...$$ for ALL equations to center them.
-- PROVIDE DETAILED SOLUTIONS in "solution" field for every question.
-- Use \\textbf{{Step 1:}} format.
-- Ensure 1 line gap between steps (Use \\n\\n).
-- START EACH STEP ON A NEW LINE.
-- Center ALL equations.
+1. For mcq: "answer" is single letter like "A"
+2. For mcq_multi: "answer" is letters like "A, C" or "B, D"
+3. For numerical: "answer" is an integer string like "5" or "-3"
+4. For matrix_match: use fields "list1" (4 rows A-D) and "list2" (4 cols p-s). "answer" format: "A-p,r; B-q; C-p,s; D-r"
+5. For paragraph: use "passage" field (3-5 line scenario) + "sub_questions" array with 2 MCQs each having text/options/answer/solution
+6. Use LaTeX for math: $...$ inline, $$...$$ for display equations (centered)
+7. PROVIDE a concise "solution" field (3-5 steps) for every question and sub_question.
+8. Use \\textbf{{Step 1:}} format. End with \\textbf{{Final Answer:}}.
 
 Return ONLY valid JSON:
-{json_example}"""
+{{"questions": [
+    {{"type": "mcq", "text": "...", "options": ["A", "B", "C", "D"], "answer": "A", "solution": "..."}},
+    {{"type": "mcq_multi", "text": "...", "options": ["A", "B", "C", "D"], "answer": "A, C", "solution": "..."}},
+    {{"type": "numerical", "text": "...", "options": [], "answer": "5", "solution": "..."}}{matrix_json}{paragraph_json}
+]}}"""
         elif level == "GATE":
             gate_paper = kwargs.get("gate_paper", "CSE")
             num_msq = kwargs.get("num_msq", 0) or 0
