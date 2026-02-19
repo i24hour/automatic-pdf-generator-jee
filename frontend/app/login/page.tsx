@@ -8,7 +8,7 @@ import { useAuth } from "@/lib/auth-context";
 import { FloatingInput } from "@/components/FloatingInput";
 import { GoogleLogin } from "@react-oauth/google";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://mentors-mantra-api-87253755436.us-central1.run.app";
+import { API_BASE_URL as API_URL } from "@/lib/config";
 
 export default function LoginPage() {
     const [email, setEmail] = useState("");

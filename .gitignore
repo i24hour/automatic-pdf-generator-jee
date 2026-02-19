@@ -46,3 +46,4 @@ backend/.env
 # Test files (may contain API keys)
 backend/test_*.py
 backend/test_*.log
+deploy_fix.sh

@@ -39,9 +39,7 @@ import UsernameModal from "@/components/UsernameModal";
 import { searchChapters, getChaptersForSubject, searchMultipleSubjects, getChaptersForMultipleSubjects } from "@/lib/ncert-chapters";
 
 // API base URL
-const API_BASE_URL =
-    process.env.NEXT_PUBLIC_API_URL ||
-    "https://mentors-mantra-api-87253755436.us-central1.run.app";
+import { API_BASE_URL } from "@/lib/config";
 
 
 
@@ -1036,7 +1034,7 @@ export default function TestGenerator() {
                             <button
                                 type="button"
                                 onClick={() => {
-                                    setIsCustomMode(true);
+                                    // setIsCustomMode(true); // Removed as isCustomMode state is deleted
                                     setTopic(searchQuery); // Use current search as topic
                                     setIsDropdownOpen(false);
                                 }}

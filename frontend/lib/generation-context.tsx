@@ -39,7 +39,7 @@ interface GenerationContextType {
 
 const GenerationContext = createContext<GenerationContextType | undefined>(undefined);
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://mentors-mantra-api-87253755436.us-central1.run.app";
+import { API_BASE_URL } from "@/lib/config";
 
 export function GenerationProvider({ children }: { children: ReactNode }) {
     const { token, authFetch } = useAuth();

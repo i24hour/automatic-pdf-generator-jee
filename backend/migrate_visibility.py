@@ -37,11 +37,11 @@ def migrate():
                 
             if 'is_featured' not in columns:
                 print("Adding is_featured column...")
-                conn.execute(text("ALTER TABLE tests ADD COLUMN is_featured BOOLEAN DEFAULT 0"))
+                conn.execute(text("ALTER TABLE tests ADD COLUMN is_featured BOOLEAN DEFAULT FALSE"))
                 
             if 'is_generated_practice' not in columns:
                 print("Adding is_generated_practice column...")
-                conn.execute(text("ALTER TABLE tests ADD COLUMN is_generated_practice BOOLEAN DEFAULT 0"))
+                conn.execute(text("ALTER TABLE tests ADD COLUMN is_generated_practice BOOLEAN DEFAULT FALSE"))
 
             # 2. Data Migration
             print("Migrating existing data...")
@@ -50,21 +50,21 @@ def migrate():
             conn.execute(text("""
                 UPDATE tests 
                 SET visibility_type = 'COMMUNITY', status = 'published' 
-                WHERE is_public = 1
+                WHERE is_public = TRUE
             """))
             
             # If is_public was False -> PRIVATE, PUBLISHED, IS_GENERATED_PRACTICE=True
             conn.execute(text("""
                 UPDATE tests 
-                SET visibility_type = 'PRIVATE', status = 'published', is_generated_practice = 1 
-                WHERE is_public = 0 OR is_public IS NULL
+                SET visibility_type = 'PRIVATE', status = 'published', is_generated_practice = TRUE 
+                WHERE is_public = FALSE OR is_public IS NULL
             """))
             
             # Set defaults for new rows if any nulls remain
             conn.execute(text("UPDATE tests SET visibility_type = 'PRIVATE' WHERE visibility_type IS NULL"))
             conn.execute(text("UPDATE tests SET status = 'published' WHERE status IS NULL"))
-            conn.execute(text("UPDATE tests SET is_featured = 0 WHERE is_featured IS NULL"))
-            conn.execute(text("UPDATE tests SET is_generated_practice = 0 WHERE is_generated_practice IS NULL"))
+            conn.execute(text("UPDATE tests SET is_featured = FALSE WHERE is_featured IS NULL"))
+            conn.execute(text("UPDATE tests SET is_generated_practice = FALSE WHERE is_generated_practice IS NULL"))
 
             # 3. Create Indexes (SQLite syntax)
             print("Creating Indexes...")

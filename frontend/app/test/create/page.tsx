@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Minus, Plus, BookOpen, AlertCircle, CheckCircle2, Globe, Lock, School } from 'lucide-react';
 import TopicSelector from '@/components/TopicSelector';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://mentors-mantra-api-87253755436.us-central1.run.app';
+import { API_BASE_URL as API_BASE } from '@/lib/config';
 
 interface DifficultyDist {
     easy: number;
