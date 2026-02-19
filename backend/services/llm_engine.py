@@ -269,7 +269,7 @@ class LLMEngine:
         numerical_count: int,
         level: str = "JEE Mains",
         difficulty: str = "Medium",
-        chunk_size: int = 10,  # Smaller chunks = more reliable count per call
+        chunk_size: int = 15,  # Larger chunks = fewer API calls = fewer input token repeats
         **kwargs
     ) -> Dict[str, Any]:
         """
@@ -1707,18 +1707,18 @@ REMEMBER: Only the top 0.1% of GATE aspirants should get these right."""
 
     def _get_system_message(self, subject: str, difficulty_label: str, level: str) -> str:
         """Level-aware system message for LLM calls."""
-        level = self._normalize_level(level)  # Normalize level name
+        level = self._normalize_level(level)
         if difficulty_label == "Hard":
-            level_personas = {
-                "JEE Advanced": f"You are a senior IIT professor who sets the hardest questions for JEE Advanced Paper 2. You are known for creating problems that only the top 100 rankers can solve. Your {subject} questions are feared by coaching institutes. Return ONLY valid JSON.",
-                "Advanced": f"You are a senior IIT professor who sets the hardest questions for JEE Advanced Paper 2. Your {subject} questions are legendarily difficult. Return ONLY valid JSON.",
-                "Olympiad": f"You are a national Olympiad team coach for {subject}. You train students for IMO/IPhO/IChO. Your problems require deep mathematical maturity and creative insight. Return ONLY valid JSON.",
-                "JEE Mains": f"You are a senior question paper setter for NTA JEE Mains. You design the hardest 20% of questions that differentiate 99.9 percentile students. Your {subject} questions are tricky and time-consuming. Return ONLY valid JSON.",
-                "NEET": f"You are a senior NEET paper setter. You create the trickiest conceptual questions in {subject} that even NCERT-memorizers cannot answer without deep understanding. Return ONLY valid JSON.",
-                "GATE": f"You are a GATE paper setter from IISc/IIT. Your {subject} questions require deep mathematical analysis and first-principles derivation. Return ONLY valid JSON."
+            hard_personas = {
+                "JEE Advanced": f"IIT professor setting JEE Advanced Paper 2 questions in {subject}. Only top 100 rankers solve these. Return ONLY valid JSON.",
+                "Advanced":     f"IIT professor setting hardest JEE Advanced {subject} questions. Return ONLY valid JSON.",
+                "Olympiad":     f"National Olympiad coach for {subject} (IMO/IPhO/IChO level). Return ONLY valid JSON.",
+                "JEE Mains":    f"NTA JEE Mains setter — hardest 20% questions in {subject} for 99.9 percentile. Return ONLY valid JSON.",
+                "NEET":         f"Senior NEET setter — trickiest conceptual {subject} questions beyond NCERT. Return ONLY valid JSON.",
+                "GATE":         f"GATE setter from IISc/IIT — deep {subject} analysis questions. Return ONLY valid JSON.",
             }
-            return level_personas.get(level, f"Expert {subject} question setter specializing in extremely challenging problems. Return ONLY valid JSON.")
-        return f"Expert {subject} question setter specializing in {difficulty_label.upper()} difficulty questions. Return ONLY valid JSON."
+            return hard_personas.get(level, f"Expert {subject} setter, extremely challenging problems. Return ONLY valid JSON.")
+        return f"Expert {subject} question setter, {difficulty_label.upper()} difficulty. Return ONLY valid JSON."
 
     # ==================== PER-DIFFICULTY HELPER ====================
     async def _generate_batch_for_difficulty(
@@ -2493,25 +2493,23 @@ Options: {options_text}
 Correct Answer: {item['answer']}
 """
 
-        prompt = f"""You are an expert {subject} teacher. Generate detailed step-by-step solutions for these {len(items)} questions.
+        prompt = f"""Generate concise hint-style solutions for these {len(items)} {subject} questions.
+Each solution must be SHORT: 2-3 key steps only. No verbose explanations. Exam-hint style.
 
 {items_str}
 
-Return a single JSON object with a "solutions" array containing the LaTeX formatted solution string for each item.
+Return JSON:
 {{
   "solutions": [
-    {{
-      "item_id": 1,
-      "solution text": "\\\\textbf{{Step 1:}} ... \\\\textbf{{Final Answer:}} Option A"
-    }}
+    {{"item_id": 1, "solution text": "Hint: [key concept]. $[key equation]$. \\\\textbf{{Ans:}} Option X."}}
   ]
 }}
 
-FORMATTING RULES for each solution string:
-1. Use \\\\textbf{{Step N:}} headers.
-2. Use $$ $$ for equations.
-3. Be clear and educational.
-4. End with \\\\textbf{{Final Answer:}} Option X.
+RULES:
+1. Max 3 steps per solution.
+2. Use $...$ for inline math only.
+3. End with \\\\textbf{{Ans:}} Option X.
+4. NO lengthy derivations — just the KEY insight and answer.
 """
 
         try:
