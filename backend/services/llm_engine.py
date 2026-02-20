@@ -2317,69 +2317,48 @@ Return ONLY JSON:
 
             all_questions = []
 
-            # Build tasks for non-zero difficulties and run in PARALLEL
-            import asyncio
-            tasks = []
-            task_labels = []
-
+            # Run difficulty batches SEQUENTIALLY to avoid Gemini rate limits
+            # (Too many parallel calls cause 429 errors and entire batches fail)
             _lp: str = level_prompt or "JEE Mains"
+            difficulty_batches = []
             if easy_count > 0:
-                tasks.append(self._generate_batch_for_difficulty(
-                    subject=subject, topic=topic,
-                    mcq_count=e_mcq, numerical_count=e_num,
-                    level=level, difficulty_label="Easy",
-                    level_prompt=_lp, **batch_kwargs
-                ))
-                task_labels.append("Easy")
-
+                difficulty_batches.append(("Easy", e_mcq, e_num))
             if medium_count > 0:
-                tasks.append(self._generate_batch_for_difficulty(
-                    subject=subject, topic=topic,
-                    mcq_count=m_mcq, numerical_count=m_num,
-                    level=level, difficulty_label="Medium",
-                    level_prompt=_lp, **batch_kwargs
-                ))
-                task_labels.append("Medium")
-
+                difficulty_batches.append(("Medium", m_mcq, m_num))
             if hard_count > 0:
-                tasks.append(self._generate_batch_for_difficulty(
-                    subject=subject, topic=topic,
-                    mcq_count=h_mcq, numerical_count=h_num,
-                    level=level, difficulty_label="Hard",
-                    level_prompt=_lp, **batch_kwargs
-                ))
-                task_labels.append("Hard")
+                difficulty_batches.append(("Hard", h_mcq, h_num))
 
-            # Run ALL difficulty batches in parallel
-            results = await asyncio.gather(*tasks, return_exceptions=True)
-
-            for label, result in zip(task_labels, results):
-                if isinstance(result, BaseException):
-                    print(f"[PER-DIFFICULTY] {label} batch FAILED: {result}")
-                elif isinstance(result, list):
-                    all_questions.extend(result)
-                    print(f"[PER-DIFFICULTY] {label} batch done: {len(result)} questions")
+            for diff_label, d_mcq, d_num in difficulty_batches:
+                try:
+                    batch_result = await self._generate_batch_for_difficulty(
+                        subject=subject, topic=topic,
+                        mcq_count=d_mcq, numerical_count=d_num,
+                        level=level, difficulty_label=diff_label,
+                        level_prompt=_lp, **batch_kwargs
+                    )
+                    if isinstance(batch_result, list):
+                        all_questions.extend(batch_result)
+                        print(f"[PER-DIFFICULTY] {diff_label} batch done: {len(batch_result)} questions")
+                    else:
+                        print(f"[PER-DIFFICULTY] {diff_label} batch returned unexpected type")
+                except Exception as batch_err:
+                    print(f"[PER-DIFFICULTY] {diff_label} batch FAILED: {batch_err}")
 
             # Deduplicate across all batches
             all_questions = self._deduplicate_questions(all_questions)
 
-            # TOP-UP LOOP: If we're still short, make additional API calls
+            # TOP-UP LOOP: Keep making small API calls until we hit exact count
             top_up_attempts = 0
-            max_top_ups = 3
+            max_top_ups = 5  # Up to 5 retry rounds
             while len(all_questions) < total_requested and top_up_attempts < max_top_ups:
                 deficit = total_requested - len(all_questions)
-                print(f"[TOP-UP] Need {deficit} more questions (attempt {top_up_attempts + 1}/{max_top_ups})")
-                # Request the deficit as Medium difficulty
-                top_up_mcq = min(deficit, mcq_count - sum(1 for q in all_questions if q.get('type') in ('mcq', 'mcq_multi')))
-                top_up_num = deficit - max(0, top_up_mcq)
-                if top_up_mcq < 0: top_up_mcq = 0
-                if top_up_num < 0: top_up_num = 0
-                if top_up_mcq + top_up_num <= 0:
-                    top_up_mcq = deficit  # fallback: all MCQ
+                # Cap each top-up request at 5 to keep it small and reliable
+                batch_size = min(deficit, 5)
+                print(f"[TOP-UP] Need {deficit} more, requesting {batch_size} (attempt {top_up_attempts + 1}/{max_top_ups})")
                 try:
                     top_up_qs = await self._generate_batch_for_difficulty(
                         subject=subject, topic=topic,
-                        mcq_count=top_up_mcq, numerical_count=top_up_num,
+                        mcq_count=batch_size, numerical_count=0,
                         level=level, difficulty_label="Medium",
                         level_prompt=_lp, **batch_kwargs
                     )
@@ -2387,6 +2366,8 @@ Return ONLY JSON:
                         all_questions.extend(top_up_qs)
                         all_questions = self._deduplicate_questions(all_questions)
                         print(f"[TOP-UP] Got {len(top_up_qs)} more, total now: {len(all_questions)}")
+                    else:
+                        print(f"[TOP-UP] Got 0 questions, retrying...")
                 except Exception as top_up_err:
                     print(f"[TOP-UP] Failed: {top_up_err}")
                 top_up_attempts += 1
