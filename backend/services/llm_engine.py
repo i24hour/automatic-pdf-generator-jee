@@ -37,7 +37,7 @@ def get_user_question_history(db, user_id: str, topic: str, level: str, limit: i
     Fetch the last N questions for a user+topic+level combination.
     Returns list of question texts to include in the "do not repeat" prompt.
     """
-    from models import UserQuestionHistory
+    from models import UserQuestionHistory  # type: ignore[attr-defined]
     try:
         history = db.query(UserQuestionHistory).filter(
             UserQuestionHistory.user_id == user_id,
@@ -56,7 +56,7 @@ def save_question_history(db, user_id: str, topic: str, level: str, questions: L
     Save new questions to history and prune old ones to keep only max_history.
     Uses rolling window approach to prevent database bloat.
     """
-    from models import UserQuestionHistory, generate_uuid
+    from models import UserQuestionHistory, generate_uuid  # type: ignore[attr-defined]
     try:
         # Get existing count for this user+topic+level
         existing_count = db.query(UserQuestionHistory).filter(
@@ -87,7 +87,7 @@ def save_question_history(db, user_id: str, topic: str, level: str, questions: L
                     user_id=user_id,
                     topic=topic,
                     level=level,
-                    question_text=q_text[:2000],  # Limit text length
+                    question_text=q_text[:2000],  # type: ignore # Limit text length
                     question_hash=q_hash
                 )
                 db.add(history_entry)
@@ -134,18 +134,18 @@ class LLMEngine:
         # litellm automatically picks up these environment variables
         # GEMINI_API_KEY, OPENAI_API_KEY, ANTHROPIC_API_KEY
         if not os.getenv("GEMINI_API_KEY") and os.getenv("GOOGLE_API_KEY"):
-            os.environ["GEMINI_API_KEY"] = os.getenv("GOOGLE_API_KEY")
+            os.environ["GEMINI_API_KEY"] = os.getenv("GOOGLE_API_KEY", "")
             print("DEBUG: Mapped GOOGLE_API_KEY to GEMINI_API_KEY")
 
-    async def _log_usage(self, response, feature: str, user_id: str = None,
-                         subject: str = None, level: str = None):
+    async def _log_usage(self, response, feature: str, user_id: Optional[str] = None,
+                         subject: Optional[str] = None, level: Optional[str] = None):
         """Fire-and-forget: log LLM API usage to api_usage_logs table."""
         try:
             usage = getattr(response, "usage", None)
             if not usage:
                 return
-            from database import SessionLocal
-            from models import APIUsageLog
+            from database import SessionLocal  # type: ignore[attr-defined]
+            from models import APIUsageLog  # type: ignore[attr-defined]
             db = SessionLocal()
             try:
                 log = APIUsageLog(
@@ -337,10 +337,10 @@ class LLMEngine:
         # Combine results
         all_questions = []
         for result in results:
-            if isinstance(result, Exception):
+            if isinstance(result, BaseException):
                 print(f"Chunk failed: {result}")
                 continue
-            if result.get("success") and result.get("questions"):
+            if isinstance(result, dict) and result.get("success") and result.get("questions"):
                 all_questions.extend(result["questions"])
         
         # Deduplicate
@@ -432,10 +432,10 @@ class LLMEngine:
         
         all_questions = []
         for result in results:
-            if isinstance(result, Exception):
+            if isinstance(result, BaseException):
                 print(f"GATE Part failed: {result}")
                 continue
-            if result.get("success") and result.get("questions"):
+            if isinstance(result, dict) and result.get("success") and result.get("questions"):
                 all_questions.extend(result["questions"])
                 
         print(f"GATE Parallel complete: {len(all_questions)} questions")
@@ -447,7 +447,7 @@ class LLMEngine:
             "questions": all_questions
         }
 
-    def detect_subject(self, topic: str) -> Dict[str, str]:
+    def detect_subject(self, topic: str) -> Dict[str, Any]:
         """Classify a topic into a subject with confidence using the LLM."""
         
         # Handle common abbreviations and patterns BEFORE sending to LLM
@@ -588,7 +588,7 @@ Example: {{"subject":"Chemistry","confidence":"high"}}
                 ],
                 temperature=0.2,
             )
-            response_text = response.choices[0].message.content
+            response_text = response.choices[0].message.content or ""  # type: ignore[union-attr]
             cleaned = self._clean_json_response(response_text)
             data = json.loads(cleaned)
             subject = str(data.get("subject", "Physics")).strip()
@@ -615,12 +615,12 @@ Example: {{"subject":"Chemistry","confidence":"high"}}
         
         # Remove ```json or ``` blocks
         if cleaned.startswith("```json"):
-            cleaned = cleaned[7:]
+            cleaned = cleaned[7:]  # type: ignore
         elif cleaned.startswith("```"):
-            cleaned = cleaned[3:]
+            cleaned = cleaned[3:]  # type: ignore
         
         if cleaned.endswith("```"):
-            cleaned = cleaned[:-3]
+            cleaned = cleaned[:-3]  # type: ignore
         
         cleaned = cleaned.strip()
         
@@ -629,7 +629,7 @@ Example: {{"subject":"Chemistry","confidence":"high"}}
         end_idx = cleaned.rfind("}") + 1
         
         if start_idx != -1 and end_idx > start_idx:
-            candidate = cleaned[start_idx:end_idx]
+            candidate = cleaned[start_idx:end_idx]  # type: ignore
             # Handle double-braced JSON {{...}} which some models might output if prompted with {{
             if candidate.startswith("{{") and candidate.endswith("}}"):
                 # Check if it's not just a nested object, but truly double braced
@@ -714,7 +714,7 @@ Example: {{"subject":"Chemistry","confidence":"high"}}
         
         for match in re.finditer(math_pattern, text):
             # Process content BEFORE this math block (non-math text)
-            non_math_part = text[last_end:match.start()]
+            non_math_part = text[last_end:match.start()]  # type: ignore
             if non_math_part:
                 escaped = non_math_part.replace('&', r'\&').replace('%', r'\%')
                 result.append(escaped)
@@ -725,7 +725,7 @@ Example: {{"subject":"Chemistry","confidence":"high"}}
             last_end = match.end()
             
         # Process remaining text after the last math block
-        remaining_part = text[last_end:]
+        remaining_part = text[last_end:]  # type: ignore
         if remaining_part:
             escaped = remaining_part.replace('&', r'\&').replace('%', r'\%')
             result.append(escaped)
@@ -832,7 +832,7 @@ Example: {{"subject":"Chemistry","confidence":"high"}}
         
         return unique_questions
 
-    def generate_questions(
+    def generate_questions(  # noqa: ... kept for API compatibility
         self,
         subject: str,
         topic: str,
@@ -857,8 +857,9 @@ Example: {{"subject":"Chemistry","confidence":"high"}}
             Dictionary with questions data
         """
         total_requested = mcq_count + numerical_count
+        return {}
 
-    async def generate_questions_async(
+    async def _generate_questions_async_v1(
         self,
         subject: str,
         topic: str,
@@ -869,7 +870,7 @@ Example: {{"subject":"Chemistry","confidence":"high"}}
         **kwargs
     ) -> Dict[str, Any]:
         """
-        ASYNC version of generate_questions.
+        Legacy ASYNC version of generate_questions (v1, kept for compatibility).
         """
         total_requested = mcq_count + numerical_count
         
@@ -1060,7 +1061,7 @@ IMPORTANT:
 - For GA, cover both Verbal (English) and Quantitative Aptitude"""
         }
         
-        level_prompt = level_prompts.get(level, level_prompts["JEE Mains"])
+        level_prompt: str = level_prompts.get(level, level_prompts["JEE Mains"])
         
         # JEE Mains uses integer-type numerical questions (0-999)
         if level == "JEE Mains":
@@ -1071,6 +1072,8 @@ IMPORTANT:
             numerical_answer_instruction = "7. NUMERICAL ANSWERS: Must be ONLY integers or decimals (e.g., \"42\", \"3.14\", \"-5.5\"). NO formulas, NO fractions, NO symbols."
         
         # JEE Advanced: first 20% of MCQs should be multi-correct
+        mcq_instruction: str = ""  # default; overridden below for specific levels
+        json_example: str = ""  # default
         if level == "JEE Advanced":
             multi_correct_count = max(1, int(mcq_count * 0.2))  # At least 1 multi-correct
             single_correct_count = mcq_count - multi_correct_count
@@ -1267,7 +1270,7 @@ Return ONLY valid JSON:
             num_single = max(0, mcq_count - num_msq)
 
             # Build generate list
-            gen_lines = []
+            gen_lines: List[str] = []
             if num_single > 0:
                 gen_lines.append(f'- {num_single} Single Correct MCQ(s) [type: "mcq", 4 options, 1 correct, Mark: 3]')
             if num_msq > 0:
@@ -1444,6 +1447,8 @@ Return ONLY valid JSON:
 {json_example}"""
 
         max_retries = 1
+        response_text: str = ""
+        data: Dict[str, Any] = {}
         for attempt in range(max_retries + 1):
             try:
                 response = litellm.completion(
@@ -1461,7 +1466,7 @@ Return ONLY valid JSON:
                     temperature=0.7
                 )
                 
-                response_text = response.choices[0].message.content
+                response_text = response.choices[0].message.content or ""  # type: ignore[union-attr]
                 
                 # DEBUG: Log raw response for troubleshooting
                 print(f"[DEBUG] LLM raw response (first 500 chars): {response_text[:500] if response_text else 'EMPTY'}")
@@ -1529,7 +1534,7 @@ Return ONLY valid JSON:
                 return {
                     "success": False,
                     "error": f"Failed to parse LLM response as JSON: {str(e)}",
-                    "raw_response": response_text if 'response_text' in locals() else None
+                    "raw_response": response_text if response_text else None
                 }
             except Exception as e:
                 return {
@@ -1542,7 +1547,7 @@ Return ONLY valid JSON:
             "success": True,
             "subject": subject,
             "topic": topic,
-            "questions": data.get("questions", []) if 'data' in locals() else []
+            "questions": list(data.get("questions", []))
         }
 
     # ==================== HARD DIFFICULTY PROMPT GENERATOR ====================
@@ -1807,21 +1812,20 @@ WHAT MEDIUM MEANS — follow these rules strictly:
         else:
             num_ans_inst = "NUMERICAL ANSWERS: Must be integers or decimals. NO formulas."
 
+        # Single strict prompt
         prompt = f"""You are an expert question paper setter for competitive exams like FIITJEE, Allen, Resonance.
 
 {diff_instruction}
 
-GENERATE AT LEAST:
+GENERATE EXACTLY:
 {req_str}
-TOTAL: Generate AT LEAST {request_total} questions — ALL must be {difficulty_label.upper()} difficulty.
-We need minimum {total} questions. Generate {request_total} to be safe. More is better.
 
 SUBJECT: {subject}
 TOPIC: {topic}
 EXAM LEVEL: {level_prompt}
 
 STRICT REQUIREMENTS:
-1. Generate AT LEAST {request_total} questions. More is welcome. Fewer is NOT acceptable.
+1. You MUST generate EXACTLY {request_total} questions. Do NOT stop early.
 2. Every question MUST be {difficulty_label.upper()} difficulty as defined above.
 3. {num_ans_inst}
 4. Use LaTeX math mode: $...$ for inline, $$...$$ for display equations.
@@ -1832,7 +1836,7 @@ STRICT REQUIREMENTS:
    - Keep solutions SHORT so you can generate ALL {request_total} questions.
 6. For mcq_multi: answer as "A, C" or "A, B, D".
 
-Return ONLY valid JSON:
+Return EXACTLY this JSON format:
 {{"questions": [
   {{"type": "mcq", "text": "...", "options": ["A","B","C","D"], "answer": "A", "difficulty": "{difficulty_label.lower()}", "solution": "..."}},
   {{"type": "numerical", "text": "...", "answer": "42", "difficulty": "{difficulty_label.lower()}", "solution": "..."}}
@@ -1847,21 +1851,25 @@ Return ONLY valid JSON:
 
         # SINGLE LLM call — no full retries
         try:
+            print(f"[{difficulty_label}] Requesting EXACTLY {request_total} questions from LLM...")
+            # Use a higher max_tokens to ensure the LLM has enough room to finish
             response = await litellm.acompletion(
                 model=self.model,
                 messages=[
                     {"role": "system", "content": self._get_system_message(subject, difficulty_label, level)},
                     {"role": "user", "content": prompt}
                 ],
-                temperature=temperature
+                temperature=temperature,
+                max_tokens=8192
             )
 
-            asyncio.create_task(self._log_usage(
+            import asyncio as _asyncio
+            _asyncio.create_task(self._log_usage(
                 response, feature="question_gen",
                 user_id=kwargs.get("user_id"),
                 subject=subject, level=level
             ))
-            response_text = response.choices[0].message.content
+            response_text = response.choices[0].message.content or ""  # type: ignore[union-attr]
             cleaned_json = self._clean_json_response(response_text)
             data = json.loads(cleaned_json)
 
@@ -2026,12 +2034,13 @@ Return ONLY JSON:
                         ],
                         temperature=0.7
                     )
-                    asyncio.create_task(self._log_usage(
+                    import asyncio as _asyncio
+                    _asyncio.create_task(self._log_usage(
                         response, feature="question_gen",
                         user_id=kwargs.get("user_id"),
                         subject=subject, level=level
                     ))
-                    response_text = response.choices[0].message.content
+                    response_text = response.choices[0].message.content or ""  # type: ignore[union-attr]
                     cleaned_json = self._clean_json_response(response_text)
                     data = json.loads(cleaned_json)
                     if "questions" in data:
@@ -2113,12 +2122,13 @@ Return ONLY JSON:
                         ],
                         temperature=0.7
                     )
-                    asyncio.create_task(self._log_usage(
+                    import asyncio as _asyncio
+                    _asyncio.create_task(self._log_usage(
                         response, feature="question_gen",
                         user_id=kwargs.get("user_id"),
                         subject=subject, level=level
                     ))
-                    response_text = response.choices[0].message.content
+                    response_text = response.choices[0].message.content or ""  # type: ignore[union-attr]
                     cleaned_json = self._clean_json_response(response_text)
                     data = json.loads(cleaned_json)
                     if "questions" in data:
@@ -2177,12 +2187,13 @@ Return ONLY JSON:
             tasks = []
             task_labels = []
 
+            _lp: str = level_prompt or "JEE Mains"
             if easy_count > 0:
                 tasks.append(self._generate_batch_for_difficulty(
                     subject=subject, topic=topic,
                     mcq_count=e_mcq, numerical_count=e_num,
                     level=level, difficulty_label="Easy",
-                    level_prompt=level_prompt, **batch_kwargs
+                    level_prompt=_lp, **batch_kwargs
                 ))
                 task_labels.append("Easy")
 
@@ -2191,7 +2202,7 @@ Return ONLY JSON:
                     subject=subject, topic=topic,
                     mcq_count=m_mcq, numerical_count=m_num,
                     level=level, difficulty_label="Medium",
-                    level_prompt=level_prompt, **batch_kwargs
+                    level_prompt=_lp, **batch_kwargs
                 ))
                 task_labels.append("Medium")
 
@@ -2200,7 +2211,7 @@ Return ONLY JSON:
                     subject=subject, topic=topic,
                     mcq_count=h_mcq, numerical_count=h_num,
                     level=level, difficulty_label="Hard",
-                    level_prompt=level_prompt, **batch_kwargs
+                    level_prompt=_lp, **batch_kwargs
                 ))
                 task_labels.append("Hard")
 
@@ -2208,9 +2219,9 @@ Return ONLY JSON:
             results = await asyncio.gather(*tasks, return_exceptions=True)
 
             for label, result in zip(task_labels, results):
-                if isinstance(result, Exception):
+                if isinstance(result, BaseException):
                     print(f"[PER-DIFFICULTY] {label} batch FAILED: {result}")
-                else:
+                elif isinstance(result, list):
                     all_questions.extend(result)
                     print(f"[PER-DIFFICULTY] {label} batch done: {len(result)} questions")
 
@@ -2296,12 +2307,13 @@ RULES:
                 temperature=0.1
             )
             
-            asyncio.create_task(self._log_usage(
+            import asyncio as _asyncio
+            _asyncio.create_task(self._log_usage(
                 response, feature="verify_numerical",
                 user_id=self._current_user_id,
                 subject=subject
             ))
-            response_text = response.choices[0].message.content
+            response_text = response.choices[0].message.content or ""  # type: ignore[union-attr]
             cleaned = self._clean_json_response(response_text)
             data = json.loads(cleaned)
             
@@ -2355,7 +2367,8 @@ RULES:
         If include_solutions=True, also generate solutions for MCQs.
         """
         # Generate a unique ID for this entire generation session
-        self._current_generation_id = str(__import__('uuid').uuid4())
+        import uuid
+        self._current_generation_id = str(uuid.uuid4())
         # Store user_id for verify/solution log calls
         self._current_user_id = kwargs.get("user_id")
         # First, generate questions normally
@@ -2397,8 +2410,8 @@ RULES:
             for res_list in batch_results_list:
                 all_verification_results.extend(res_list)
             
-            verified_count = 0
-            corrected_count = 0
+            verified_count: int = 0
+            corrected_count: int = 0
             
             # Apply results
             for i, verif_result in enumerate(all_verification_results):
@@ -2407,7 +2420,7 @@ RULES:
                 q_index = numerical_indices[i]
                 q = questions[q_index]
                 
-                if verif_result.get("success"):
+                if isinstance(verif_result, dict) and verif_result.get("success"):
                     verified_count += 1
                     if not verif_result.get("matches"):
                         # Answer mismatch - use verified answer
@@ -2436,8 +2449,8 @@ RULES:
         result["include_solutions"] = True
         
         # MCQ Solution Fallback: Generate solutions for MCQs that are missing them
-        mcqs_missing_solutions = []
-        mcqs_missing_indices = []
+        mcqs_missing_solutions: List[Dict[str, Any]] = []
+        mcqs_missing_indices: List[int] = []
         for i, q in enumerate(questions):
             if q.get("type") in ["mcq", "mcq_multi"]:
                 sol = q.get("solution", "")
@@ -2456,8 +2469,8 @@ RULES:
                 # Use batch solution generation for efficiency (optimized batch size)
                 chunk_size = 10
                 for batch_start in range(0, len(mcqs_missing_solutions), chunk_size):
-                    batch = mcqs_missing_solutions[batch_start:batch_start + chunk_size]
-                    batch_indices = mcqs_missing_indices[batch_start:batch_start + chunk_size]
+                    batch: List[Dict[str, Any]] = list(mcqs_missing_solutions[batch_start:batch_start + chunk_size])
+                    batch_indices: List[int] = list(mcqs_missing_indices[batch_start:batch_start + chunk_size])
                     solutions = await self._generate_mcq_solution_batch_async(batch, subject)
                     for j, sol in enumerate(solutions):
                         if j < len(batch_indices):
@@ -2476,8 +2489,8 @@ RULES:
 
         return result
     
-    async def _save_total_usage(self, generation_id: str, user_id: str = None,
-                                subject: str = None, level: str = None):
+    async def _save_total_usage(self, generation_id: str, user_id: Optional[str] = None,
+                                subject: Optional[str] = None, level: Optional[str] = None):
         """
         Aggregate all api_usage_logs for this generation_id into one total_api_usage row.
         Called fire-and-forget after every test generation completes.
@@ -2487,7 +2500,7 @@ RULES:
             # Small delay so all fire-and-forget _log_usage tasks can commit first
             await _asyncio.sleep(3)
             from database import SessionLocal
-            from models import APIUsageLog, TotalAPIUsage
+            from models import APIUsageLog, TotalAPIUsage  # type: ignore[attr-defined]
             from sqlalchemy import func as sqlfunc
             db = SessionLocal()
             try:
@@ -2578,11 +2591,12 @@ RULES:
                 temperature=0.3
             )
             
-            asyncio.create_task(self._log_usage(
+            import asyncio as _asyncio
+            _asyncio.create_task(self._log_usage(
                 response, feature="mcq_solution",
                 user_id=self._current_user_id
             ))
-            response_text = response.choices[0].message.content
+            response_text = response.choices[0].message.content or ""  # type: ignore[union-attr]
             cleaned = self._clean_json_response(response_text)
             data = json.loads(cleaned)
             
@@ -2649,17 +2663,13 @@ RULES:
 Generate the solution now:"""
 
         try:
-            loop = asyncio.get_event_loop()
-            response = await loop.run_in_executor(
-                None,
-                lambda: litellm.completion(
-                    model=self.model,
-                    messages=[{"role": "user", "content": prompt}],
-                    temperature=0.3
-                )
+            response = await litellm.acompletion(
+                model=self.model,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.3
             )
             
-            solution = response.choices[0].message.content.strip()
+            solution = (response.choices[0].message.content or "").strip()  # type: ignore[union-attr]
             return self._fix_spacing(solution)
         except Exception as e:
             print(f"MCQ solution generation failed: {e}")

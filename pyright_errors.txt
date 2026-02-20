@@ -1,0 +1,88 @@
+/Users/priyanshu/Desktop/Auto pdf/backend/services/llm_engine.py
+  /Users/priyanshu/Desktop/Auto pdf/backend/services/llm_engine.py:40:24 - error: "UserQuestionHistory" is unknown import symbol (reportAttributeAccessIssue)
+  /Users/priyanshu/Desktop/Auto pdf/backend/services/llm_engine.py:59:24 - error: "UserQuestionHistory" is unknown import symbol (reportAttributeAccessIssue)
+  /Users/priyanshu/Desktop/Auto pdf/backend/services/llm_engine.py:148:32 - error: "APIUsageLog" is unknown import symbol (reportAttributeAccessIssue)
+  /Users/priyanshu/Desktop/Auto pdf/backend/services/llm_engine.py:460:74 - error: Type "dict[str, str | bool]" is not assignable to return type "Dict[str, str]"
+    "Literal[True]" is not assignable to "str" (reportReturnType)
+  /Users/priyanshu/Desktop/Auto pdf/backend/services/llm_engine.py:462:73 - error: Type "dict[str, str | bool]" is not assignable to return type "Dict[str, str]"
+    "Literal[True]" is not assignable to "str" (reportReturnType)
+  /Users/priyanshu/Desktop/Auto pdf/backend/services/llm_engine.py:464:73 - error: Type "dict[str, str | bool]" is not assignable to return type "Dict[str, str]"
+    "Literal[True]" is not assignable to "str" (reportReturnType)
+  /Users/priyanshu/Desktop/Auto pdf/backend/services/llm_engine.py:471:74 - error: Type "dict[str, str | bool]" is not assignable to return type "Dict[str, str]"
+    "Literal[True]" is not assignable to "str" (reportReturnType)
+  /Users/priyanshu/Desktop/Auto pdf/backend/services/llm_engine.py:591:38 - error: Cannot access attribute "choices" for class "CustomStreamWrapper"
+    Attribute "choices" is unknown (reportAttributeAccessIssue)
+  /Users/priyanshu/Desktop/Auto pdf/backend/services/llm_engine.py:591:49 - error: Cannot access attribute "message" for class "StreamingChoices"
+    Attribute "message" is unknown (reportAttributeAccessIssue)
+  /Users/priyanshu/Desktop/Auto pdf/backend/services/llm_engine.py:592:49 - error: Argument of type "str | Unknown | None" cannot be assigned to parameter "response_text" of type "str" in function "_clean_json_response"
+    Type "str | Unknown | None" is not assignable to type "str"
+      "None" is not assignable to "str" (reportArgumentType)
+  /Users/priyanshu/Desktop/Auto pdf/backend/services/llm_engine.py:862:15 - error: Method declaration "generate_questions_async" is obscured by a declaration of the same name (reportRedeclaration)
+  /Users/priyanshu/Desktop/Auto pdf/backend/services/llm_engine.py:1389:2 - error: "json_example" is possibly unbound (reportPossiblyUnboundVariable)
+  /Users/priyanshu/Desktop/Auto pdf/backend/services/llm_engine.py:1422:5 - error: "mcq_instruction" is possibly unbound (reportPossiblyUnboundVariable)
+  /Users/priyanshu/Desktop/Auto pdf/backend/services/llm_engine.py:1445:2 - error: "json_example" is possibly unbound (reportPossiblyUnboundVariable)
+  /Users/priyanshu/Desktop/Auto pdf/backend/services/llm_engine.py:1465:42 - error: Cannot access attribute "choices" for class "CustomStreamWrapper"
+    Attribute "choices" is unknown (reportAttributeAccessIssue)
+  /Users/priyanshu/Desktop/Auto pdf/backend/services/llm_engine.py:1465:53 - error: Cannot access attribute "message" for class "StreamingChoices"
+    Attribute "message" is unknown (reportAttributeAccessIssue)
+  /Users/priyanshu/Desktop/Auto pdf/backend/services/llm_engine.py:1471:58 - error: Argument of type "str | Unknown | None" cannot be assigned to parameter "response_text" of type "str" in function "_clean_json_response"
+    Type "str | Unknown | None" is not assignable to type "str"
+      "None" is not assignable to "str" (reportArgumentType)
+  /Users/priyanshu/Desktop/Auto pdf/backend/services/llm_engine.py:1533:37 - error: "response_text" is possibly unbound (reportPossiblyUnboundVariable)
+  /Users/priyanshu/Desktop/Auto pdf/backend/services/llm_engine.py:1546:26 - error: "data" is possibly unbound (reportPossiblyUnboundVariable)
+  /Users/priyanshu/Desktop/Auto pdf/backend/services/llm_engine.py:1867:38 - error: Cannot access attribute "choices" for class "CustomStreamWrapper"
+    Attribute "choices" is unknown (reportAttributeAccessIssue)
+  /Users/priyanshu/Desktop/Auto pdf/backend/services/llm_engine.py:1867:49 - error: Cannot access attribute "message" for class "StreamingChoices"
+    Attribute "message" is unknown (reportAttributeAccessIssue)
+  /Users/priyanshu/Desktop/Auto pdf/backend/services/llm_engine.py:1868:54 - error: Argument of type "str | Unknown | None" cannot be assigned to parameter "response_text" of type "str" in function "_clean_json_response"
+    Type "str | Unknown | None" is not assignable to type "str"
+      "None" is not assignable to "str" (reportArgumentType)
+  /Users/priyanshu/Desktop/Auto pdf/backend/services/llm_engine.py:2032:21 - error: "asyncio" is unbound (reportUnboundVariable)
+  /Users/priyanshu/Desktop/Auto pdf/backend/services/llm_engine.py:2032:29 - error: Cannot access attribute "create_task" for class "Unbound" (reportAttributeAccessIssue)
+  /Users/priyanshu/Desktop/Auto pdf/backend/services/llm_engine.py:2037:46 - error: Cannot access attribute "choices" for class "CustomStreamWrapper"
+    Attribute "choices" is unknown (reportAttributeAccessIssue)
+  /Users/priyanshu/Desktop/Auto pdf/backend/services/llm_engine.py:2037:57 - error: Cannot access attribute "message" for class "StreamingChoices"
+    Attribute "message" is unknown (reportAttributeAccessIssue)
+  /Users/priyanshu/Desktop/Auto pdf/backend/services/llm_engine.py:2038:62 - error: Argument of type "str | Unknown | None" cannot be assigned to parameter "response_text" of type "str" in function "_clean_json_response"
+    Type "str | Unknown | None" is not assignable to type "str"
+      "None" is not assignable to "str" (reportArgumentType)
+  /Users/priyanshu/Desktop/Auto pdf/backend/services/llm_engine.py:2119:21 - error: "asyncio" is unbound (reportUnboundVariable)
+  /Users/priyanshu/Desktop/Auto pdf/backend/services/llm_engine.py:2119:29 - error: Cannot access attribute "create_task" for class "Unbound" (reportAttributeAccessIssue)
+  /Users/priyanshu/Desktop/Auto pdf/backend/services/llm_engine.py:2124:46 - error: Cannot access attribute "choices" for class "CustomStreamWrapper"
+    Attribute "choices" is unknown (reportAttributeAccessIssue)
+  /Users/priyanshu/Desktop/Auto pdf/backend/services/llm_engine.py:2124:57 - error: Cannot access attribute "message" for class "StreamingChoices"
+    Attribute "message" is unknown (reportAttributeAccessIssue)
+  /Users/priyanshu/Desktop/Auto pdf/backend/services/llm_engine.py:2125:62 - error: Argument of type "str | Unknown | None" cannot be assigned to parameter "response_text" of type "str" in function "_clean_json_response"
+    Type "str | Unknown | None" is not assignable to type "str"
+      "None" is not assignable to "str" (reportArgumentType)
+  /Users/priyanshu/Desktop/Auto pdf/backend/services/llm_engine.py:2188:34 - error: Argument of type "str | None" cannot be assigned to parameter "level_prompt" of type "str" in function "_generate_batch_for_difficulty"
+    Type "str | None" is not assignable to type "str"
+      "None" is not assignable to "str" (reportArgumentType)
+  /Users/priyanshu/Desktop/Auto pdf/backend/services/llm_engine.py:2197:34 - error: Argument of type "str | None" cannot be assigned to parameter "level_prompt" of type "str" in function "_generate_batch_for_difficulty"
+    Type "str | None" is not assignable to type "str"
+      "None" is not assignable to "str" (reportArgumentType)
+  /Users/priyanshu/Desktop/Auto pdf/backend/services/llm_engine.py:2206:34 - error: Argument of type "str | None" cannot be assigned to parameter "level_prompt" of type "str" in function "_generate_batch_for_difficulty"
+    Type "str | None" is not assignable to type "str"
+      "None" is not assignable to "str" (reportArgumentType)
+  /Users/priyanshu/Desktop/Auto pdf/backend/services/llm_engine.py:2307:38 - error: Cannot access attribute "choices" for class "CustomStreamWrapper"
+    Attribute "choices" is unknown (reportAttributeAccessIssue)
+  /Users/priyanshu/Desktop/Auto pdf/backend/services/llm_engine.py:2307:49 - error: Cannot access attribute "message" for class "StreamingChoices"
+    Attribute "message" is unknown (reportAttributeAccessIssue)
+  /Users/priyanshu/Desktop/Auto pdf/backend/services/llm_engine.py:2308:49 - error: Argument of type "str | Unknown | None" cannot be assigned to parameter "response_text" of type "str" in function "_clean_json_response"
+    Type "str | Unknown | None" is not assignable to type "str"
+      "None" is not assignable to "str" (reportArgumentType)
+  /Users/priyanshu/Desktop/Auto pdf/backend/services/llm_engine.py:2494:32 - error: "APIUsageLog" is unknown import symbol (reportAttributeAccessIssue)
+  /Users/priyanshu/Desktop/Auto pdf/backend/services/llm_engine.py:2494:45 - error: "TotalAPIUsage" is unknown import symbol (reportAttributeAccessIssue)
+  /Users/priyanshu/Desktop/Auto pdf/backend/services/llm_engine.py:2589:38 - error: Cannot access attribute "choices" for class "CustomStreamWrapper"
+    Attribute "choices" is unknown (reportAttributeAccessIssue)
+  /Users/priyanshu/Desktop/Auto pdf/backend/services/llm_engine.py:2589:49 - error: Cannot access attribute "message" for class "StreamingChoices"
+    Attribute "message" is unknown (reportAttributeAccessIssue)
+  /Users/priyanshu/Desktop/Auto pdf/backend/services/llm_engine.py:2590:49 - error: Argument of type "str | Unknown | None" cannot be assigned to parameter "response_text" of type "str" in function "_clean_json_response"
+    Type "str | Unknown | None" is not assignable to type "str"
+      "None" is not assignable to "str" (reportArgumentType)
+  /Users/priyanshu/Desktop/Auto pdf/backend/services/llm_engine.py:2662:33 - error: Cannot access attribute "choices" for class "CustomStreamWrapper"
+    Attribute "choices" is unknown (reportAttributeAccessIssue)
+  /Users/priyanshu/Desktop/Auto pdf/backend/services/llm_engine.py:2662:44 - error: Cannot access attribute "message" for class "StreamingChoices"
+    Attribute "message" is unknown (reportAttributeAccessIssue)
+  /Users/priyanshu/Desktop/Auto pdf/backend/services/llm_engine.py:2662:60 - error: "strip" is not a known attribute of "None" (reportOptionalMemberAccess)
+46 errors, 0 warnings, 0 informations
