@@ -271,7 +271,7 @@ class LLMEngine:
         numerical_count: int,
         level: str = "JEE Mains",
         difficulty: str = "Medium",
-        chunk_size: int = 15,  # Larger chunks = fewer API calls = fewer input token repeats
+        chunk_size: int = 25,  # Larger chunks = fewer API calls = fewer input token repeats
         **kwargs
     ) -> Dict[str, Any]:
         """
@@ -1751,8 +1751,8 @@ REMEMBER: Only the top 0.1% of GATE aspirants should get these right."""
         # OVER-REQUEST STRATEGY: Ask for 2x to guarantee exact count
         # LLMs often return fewer questions than asked. By requesting extra,
         # we can trim to exact count without needing a top-up API call.
-        over_request_factor = 2.0
-        request_total = max(total + 5, int(total * over_request_factor))  # At least +5 extra
+        over_request_factor = 1.3
+        request_total = max(total + 2, int(total * over_request_factor))  # At least +2 extra
 
         # Difficulty-specific instructions — these are much more descriptive
         # than a single line, forcing the LLM to truly calibrate
@@ -1860,7 +1860,7 @@ Return EXACTLY this JSON format:
                     {"role": "user", "content": prompt}
                 ],
                 temperature=temperature,
-                max_tokens=8192
+                max_tokens=16384
             )
 
             import asyncio as _asyncio
