@@ -691,6 +691,75 @@ Example: {{"subject":"Chemistry","confidence":"high"}}
         cleaned = re.sub(r'(?<!\\)\\([^\\])', fix_remaining_escapes, cleaned)
         
         return cleaned
+
+    def _repair_truncated_json(self, truncated: str) -> List[Dict[str, Any]]:
+        """
+        Attempt to salvage questions from a truncated JSON response.
+        When the LLM runs out of tokens mid-JSON, we try to extract
+        whatever complete question objects exist in the partial response.
+        """
+        import re
+
+        # Find all complete question objects using brace matching
+        # Look for individual {...} blocks inside the "questions" array
+        questions_match = re.search(r'"questions"\s*:\s*\[', truncated)
+        if not questions_match:
+            return []
+
+        array_start = questions_match.end()
+        salvaged_questions: List[Dict[str, Any]] = []
+        i = array_start
+        
+        while i < len(truncated):
+            # Skip whitespace and commas
+            while i < len(truncated) and truncated[i] in ' \t\n\r,':
+                i += 1
+            
+            if i >= len(truncated) or truncated[i] != '{':
+                break
+            
+            # Track braces to find complete objects
+            depth = 0
+            obj_start = i
+            in_string = False
+            escaped = False
+            
+            for j in range(i, len(truncated)):
+                c = truncated[j]
+                if escaped:
+                    escaped = False
+                    continue
+                if c == '\\':
+                    escaped = True
+                    continue
+                if c == '"' and not escaped:
+                    in_string = not in_string
+                    continue
+                if in_string:
+                    continue
+                if c == '{':
+                    depth += 1
+                elif c == '}':
+                    depth -= 1
+                    if depth == 0:
+                        # Found a complete object
+                        obj_str = truncated[obj_start:j+1]
+                        try:
+                            # Re-clean this individual object
+                            cleaned_obj = self._clean_json_response(obj_str)
+                            obj = json.loads(cleaned_obj)
+                            if isinstance(obj, dict) and obj.get("question"):
+                                salvaged_questions.append(obj)
+                        except (json.JSONDecodeError, Exception):
+                            pass  # Skip malformed individual objects
+                        i = j + 1
+                        break
+            else:
+                # Reached end without closing brace — this object is truncated
+                break
+
+        return salvaged_questions
+
     
     def _escape_latex_outside_math(self, text: str) -> str:
         """
@@ -1860,7 +1929,7 @@ Return EXACTLY this JSON format:
                     {"role": "user", "content": prompt}
                 ],
                 temperature=temperature,
-                max_tokens=16384
+                max_tokens=32768
             )
 
             import asyncio as _asyncio
@@ -1898,6 +1967,17 @@ Return EXACTLY this JSON format:
 
         except json.JSONDecodeError as e:
             print(f"[{difficulty_label}] JSON parse failed: {e}")
+            # TRUNCATED JSON REPAIR: Try to salvage questions from partial response
+            try:
+                salvaged = self._repair_truncated_json(cleaned_json)
+                if salvaged:
+                    salvaged_qs = self._process_questions(salvaged)
+                    for q in salvaged_qs:
+                        q["difficulty"] = difficulty_label.lower()
+                    print(f"[{difficulty_label}] Salvaged {len(salvaged_qs)} questions from truncated JSON")
+                    return salvaged_qs
+            except Exception as repair_err:
+                print(f"[{difficulty_label}] JSON repair also failed: {repair_err}")
             return []
         except Exception as e:
             print(f"[{difficulty_label}] LLM call failed: {e}")
