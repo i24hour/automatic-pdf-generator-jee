@@ -1817,11 +1817,66 @@ REMEMBER: Only the top 0.1% of GATE aspirants should get these right."""
         if total <= 0:
             return []
 
-        # OVER-REQUEST STRATEGY: Ask for 2x to guarantee exact count
-        # LLMs often return fewer questions than asked. By requesting extra,
-        # we can trim to exact count without needing a top-up API call.
-        over_request_factor = 1.3
-        request_total = max(total + 2, int(total * over_request_factor))  # At least +2 extra
+        # SUB-BATCH STRATEGY: If total > 7, split into parallel sub-batches
+        # Each sub-batch requests at most 7 questions to avoid LLM truncation
+        MAX_PER_CALL = 7
+        if total > MAX_PER_CALL:
+            import asyncio as _sub_asyncio
+            sub_batches = []
+            remaining = total
+            # Split MCQ and Numerical proportionally across sub-batches
+            mcq_left = mcq_count
+            num_left = numerical_count
+            batch_idx = 0
+            while remaining > 0:
+                chunk = min(MAX_PER_CALL, remaining)
+                # Proportional split for this chunk
+                if total > 0:
+                    c_mcq = min(mcq_left, round(mcq_count * chunk / total))
+                    c_num = chunk - c_mcq
+                    if c_num > num_left:
+                        c_num = num_left
+                        c_mcq = chunk - c_num
+                else:
+                    c_mcq, c_num = chunk, 0
+                c_mcq = max(0, min(c_mcq, mcq_left))
+                c_num = max(0, min(c_num, num_left))
+                # Ensure chunk is filled
+                actual_chunk = c_mcq + c_num
+                if actual_chunk < chunk:
+                    if mcq_left > c_mcq:
+                        c_mcq += min(chunk - actual_chunk, mcq_left - c_mcq)
+                    elif num_left > c_num:
+                        c_num += min(chunk - actual_chunk, num_left - c_num)
+                sub_batches.append((c_mcq, c_num))
+                mcq_left -= c_mcq
+                num_left -= c_num
+                remaining -= (c_mcq + c_num)
+                batch_idx += 1
+
+            print(f"[{difficulty_label}] Splitting {total} into {len(sub_batches)} sub-batches: {sub_batches}")
+
+            # Run sub-batches in parallel (recursive call with small counts)
+            sub_tasks = []
+            for sb_mcq, sb_num in sub_batches:
+                if sb_mcq + sb_num > 0:
+                    sub_tasks.append(self._generate_batch_for_difficulty(
+                        subject=subject, topic=topic,
+                        mcq_count=sb_mcq, numerical_count=sb_num,
+                        level=level, difficulty_label=difficulty_label,
+                        level_prompt=level_prompt, **kwargs
+                    ))
+            sub_results = await _sub_asyncio.gather(*sub_tasks, return_exceptions=True)
+            combined = []
+            for sr in sub_results:
+                if isinstance(sr, list):
+                    combined.extend(sr)
+                elif isinstance(sr, BaseException):
+                    print(f"[{difficulty_label}] Sub-batch failed: {sr}")
+            return combined
+
+        # Small batch (<=7): request exact count + 1 extra for safety
+        request_total = total + 1
 
         # Difficulty-specific instructions — these are much more descriptive
         # than a single line, forcing the LLM to truly calibrate
@@ -2307,6 +2362,34 @@ Return ONLY JSON:
 
             # Deduplicate across all batches
             all_questions = self._deduplicate_questions(all_questions)
+
+            # TOP-UP LOOP: If we're still short, make additional API calls
+            top_up_attempts = 0
+            max_top_ups = 3
+            while len(all_questions) < total_requested and top_up_attempts < max_top_ups:
+                deficit = total_requested - len(all_questions)
+                print(f"[TOP-UP] Need {deficit} more questions (attempt {top_up_attempts + 1}/{max_top_ups})")
+                # Request the deficit as Medium difficulty
+                top_up_mcq = min(deficit, mcq_count - sum(1 for q in all_questions if q.get('type') in ('mcq', 'mcq_multi')))
+                top_up_num = deficit - max(0, top_up_mcq)
+                if top_up_mcq < 0: top_up_mcq = 0
+                if top_up_num < 0: top_up_num = 0
+                if top_up_mcq + top_up_num <= 0:
+                    top_up_mcq = deficit  # fallback: all MCQ
+                try:
+                    top_up_qs = await self._generate_batch_for_difficulty(
+                        subject=subject, topic=topic,
+                        mcq_count=top_up_mcq, numerical_count=top_up_num,
+                        level=level, difficulty_label="Medium",
+                        level_prompt=_lp, **batch_kwargs
+                    )
+                    if top_up_qs:
+                        all_questions.extend(top_up_qs)
+                        all_questions = self._deduplicate_questions(all_questions)
+                        print(f"[TOP-UP] Got {len(top_up_qs)} more, total now: {len(all_questions)}")
+                except Exception as top_up_err:
+                    print(f"[TOP-UP] Failed: {top_up_err}")
+                top_up_attempts += 1
 
             # Shuffle so Easy/Medium/Hard aren't grouped together
             random.shuffle(all_questions)
