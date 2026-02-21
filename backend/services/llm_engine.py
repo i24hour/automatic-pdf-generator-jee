@@ -1856,23 +1856,21 @@ REMEMBER: Only the top 0.1% of GATE aspirants should get these right."""
 
             print(f"[{difficulty_label}] Splitting {total} into {len(sub_batches)} sub-batches: {sub_batches}")
 
-            # Run sub-batches in parallel (recursive call with small counts)
-            sub_tasks = []
+            # Run sub-batches SEQUENTIALLY to avoid rate limits
+            combined = []
             for sb_mcq, sb_num in sub_batches:
                 if sb_mcq + sb_num > 0:
-                    sub_tasks.append(self._generate_batch_for_difficulty(
-                        subject=subject, topic=topic,
-                        mcq_count=sb_mcq, numerical_count=sb_num,
-                        level=level, difficulty_label=difficulty_label,
-                        level_prompt=level_prompt, **kwargs
-                    ))
-            sub_results = await _sub_asyncio.gather(*sub_tasks, return_exceptions=True)
-            combined = []
-            for sr in sub_results:
-                if isinstance(sr, list):
-                    combined.extend(sr)
-                elif isinstance(sr, BaseException):
-                    print(f"[{difficulty_label}] Sub-batch failed: {sr}")
+                    try:
+                        sr = await self._generate_batch_for_difficulty(
+                            subject=subject, topic=topic,
+                            mcq_count=sb_mcq, numerical_count=sb_num,
+                            level=level, difficulty_label=difficulty_label,
+                            level_prompt=level_prompt, **kwargs
+                        )
+                        if isinstance(sr, list):
+                            combined.extend(sr)
+                    except Exception as e:
+                        print(f"[{difficulty_label}] Sub-batch failed: {e}")
             return combined
 
         # Small batch (<=7): request exact count + 1 extra for safety
