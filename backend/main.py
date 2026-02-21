@@ -1253,6 +1253,22 @@ async def run_generation_job(
             questions = []
             llm_result["questions"] = questions
         
+        # === STRICT COUNT ENFORCEMENT ===
+        # Separate MCQs and numericals, clip to exact requested counts
+        mcq_questions = [q for q in questions if q.get("type") != "numerical"]
+        num_questions = [q for q in questions if q.get("type") == "numerical"]
+        
+        # Clip to exact requested counts
+        if len(mcq_questions) > mcq_count:
+            mcq_questions = mcq_questions[:mcq_count]
+        if len(num_questions) > numerical_count:
+            num_questions = num_questions[:numerical_count]
+        
+        # Reassemble: MCQs FIRST, then numericals (proper paper format)
+        questions = mcq_questions + num_questions
+        llm_result["questions"] = questions
+        print(f"[SSE Job {job_id}] Final count after clipping: {len(mcq_questions)} MCQs + {len(num_questions)} Numericals = {len(questions)} total (requested: {mcq_count} MCQs + {numerical_count} Num)")
+        
         # Update: Verifying
         job_store.update_job(job_id, JobStatus.VERIFYING, 60, "Verifying answers...")
         

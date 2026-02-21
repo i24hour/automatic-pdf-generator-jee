@@ -484,6 +484,11 @@ export default function TestGenerator() {
             requestMcqs = jeeSingle + jeeMulti;
             requestNumericals = jeeInteger;
             requestTotal = requestMcqs + requestNumericals + jeeMatrixMatch + jeeParagraph;
+        } else if (level === "NEET") {
+            // NEET is MCQ-only, no numericals
+            requestMcqs = numMCQs;
+            requestNumericals = 0;
+            requestTotal = requestMcqs;
         } else {
             // Keep total aligned with explicit split to avoid stale slider/state mismatch
             requestTotal = requestMcqs + requestNumericals;
