@@ -2315,8 +2315,7 @@ Return ONLY JSON:
 
             all_questions = []
 
-            # Run difficulty batches SEQUENTIALLY to avoid Gemini rate limits
-            # (Too many parallel calls cause 429 errors and entire batches fail)
+            # Run difficulty batches in PARALLEL for faster generation
             _lp: str = level_prompt or "JEE Mains"
             difficulty_batches = []
             if easy_count > 0:
@@ -2326,7 +2325,9 @@ Return ONLY JSON:
             if hard_count > 0:
                 difficulty_batches.append(("Hard", h_mcq, h_num))
 
-            for diff_label, d_mcq, d_num in difficulty_batches:
+            import asyncio as _diff_asyncio
+
+            async def _run_difficulty_batch(diff_label, d_mcq, d_num):
                 try:
                     batch_result = await self._generate_batch_for_difficulty(
                         subject=subject, topic=topic,
@@ -2335,12 +2336,20 @@ Return ONLY JSON:
                         level_prompt=_lp, **batch_kwargs
                     )
                     if isinstance(batch_result, list):
-                        all_questions.extend(batch_result)
                         print(f"[PER-DIFFICULTY] {diff_label} batch done: {len(batch_result)} questions")
+                        return batch_result
                     else:
                         print(f"[PER-DIFFICULTY] {diff_label} batch returned unexpected type")
+                        return []
                 except Exception as batch_err:
                     print(f"[PER-DIFFICULTY] {diff_label} batch FAILED: {batch_err}")
+                    return []
+
+            # Run ALL difficulty batches in parallel (Easy + Medium + Hard simultaneously)
+            batch_tasks = [_run_difficulty_batch(dl, dm, dn) for dl, dm, dn in difficulty_batches]
+            batch_results = await _diff_asyncio.gather(*batch_tasks)
+            for result in batch_results:
+                all_questions.extend(result)
 
             # Deduplicate across all batches
             all_questions = self._deduplicate_questions(all_questions)

@@ -99,9 +99,9 @@ export function GenerationProvider({ children }: { children: ReactNode }) {
         if (timerRef.current) clearInterval(timerRef.current);
         timerRef.current = setInterval(() => {
             setElapsedTime(prev => {
-                if (prev >= 600) { // 10 mins timeout
+                if (prev >= 900) { // 15 mins timeout
                     cleanupGeneration();
-                    setError("Generation timed out (limit: 10 mins).");
+                    setError("Generation timed out (limit: 15 mins).");
                     logError({ error_type: "GENERATION_TIMEOUT", error_details: "Timeout inside context" });
                     return prev;
                 }
