@@ -567,12 +567,19 @@ async def generate_test(
 
 
 @app.get("/api/download/{filename}")
-async def download_pdf(filename: str):
+async def download_pdf(filename: str, db: Session = Depends(get_db)):
     """
     Download a generated PDF file.
     
     - **filename**: The PDF filename returned from /api/generate
     """
+    from fastapi.responses import RedirectResponse
+    
+    # First check if there's a SharedPDF in DB with this filename
+    shared_pdf = db.query(SharedPDF).filter(SharedPDF.pdf_filename == filename).first()
+    if shared_pdf and shared_pdf.pdf_url and shared_pdf.pdf_url != "pending":
+        return RedirectResponse(url=shared_pdf.pdf_url)
+    
     output_dir = os.path.join(os.path.dirname(__file__), "output")
     pdf_path = os.path.join(output_dir, filename)
     
@@ -670,11 +677,12 @@ async def generate_test_verified(
         # Generate filename - use actual generated count
         actual_total = len(questions) if questions else (mcq_count + numerical_count)
         safe_topic = request.topic.replace("&", "and").replace("/", "-").replace("\\", "-")
-        safe_topic = safe_topic.replace(" ", "_")
+        safe_topic = safe_topic.replace(" ", "_").strip()
         safe_level = request.level.replace(" ", "_")
         safe_difficulty = request.difficulty
         solutions_suffix = "_with_solutions" if request.include_solutions else ""
-        filename = f"Top{actual_total}_{safe_topic}_{safe_level}_{safe_difficulty}{solutions_suffix}"
+        unique_suffix = "_" + str(uuid.uuid4())[:6]
+        filename = f"Top{actual_total}_{safe_topic}_{safe_level}_{safe_difficulty}{solutions_suffix}{unique_suffix}"
         
         # Generate PDF
         llm_result["level"] = request.level
