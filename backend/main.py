@@ -1245,7 +1245,7 @@ async def run_generation_job(
             target_numerical=numerical_count,
             user_id=str(user.id),
             past_questions=past_questions if fresh_questions_enabled else None,
-            max_attempts=3
+            max_attempts=2
         )
 
         questions = llm_result.get("questions", [])

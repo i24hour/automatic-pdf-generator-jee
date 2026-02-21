@@ -271,7 +271,7 @@ class LLMEngine:
         numerical_count: int,
         level: str = "JEE Mains",
         difficulty: str = "Medium",
-        chunk_size: int = 25,  # Larger chunks = fewer API calls = fewer input token repeats
+        chunk_size: int = 10,  # Smaller chunks = more reliable JSON from flash-lite = fewer retries
         **kwargs
     ) -> Dict[str, Any]:
         """
@@ -1819,7 +1819,7 @@ REMEMBER: Only the top 0.1% of GATE aspirants should get these right."""
 
         # SUB-BATCH STRATEGY: If total > 7, split into parallel sub-batches
         # Each sub-batch requests at most 7 questions to avoid LLM truncation
-        MAX_PER_CALL = 7
+        MAX_PER_CALL = 5
         if total > MAX_PER_CALL:
             import asyncio as _sub_asyncio
             sub_batches = []
@@ -2347,7 +2347,7 @@ Return ONLY JSON:
 
             # TOP-UP LOOP: Keep making small API calls until we hit exact count
             top_up_attempts = 0
-            max_top_ups = 5  # Up to 5 retry rounds
+            max_top_ups = 3  # Up to 3 retry rounds (reduced to limit cascading)
             while len(all_questions) < total_requested and top_up_attempts < max_top_ups:
                 deficit = total_requested - len(all_questions)
                 # Cap each top-up request at 5 to keep it small and reliable
