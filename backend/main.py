@@ -3,6 +3,7 @@ Mentors Mantra Test Generator - FastAPI Backend
 Main application entry point with API endpoints.
 """
 
+# Force deploy
 import os
 import uuid
 import base64
@@ -21,10 +22,16 @@ from services.pdf_engine import pdf_engine
 from database import get_db, init_db
 from models import User, PDFGeneration, PromoCode, PromoCodeUsage, TopicSubjectCache, SharedPDF, SystemErrorLog
 from auth import get_current_user_required, get_current_user
-from routers.auth_router import router as auth_router
-from routers.institute_router import router as institute_router
-from routers.posts_router import router as posts_router
-from routers.pdf_router import router as pdf_router
+from routers import (
+    auth_router,
+    pdf_router,
+    institute_router,
+    posts_router,
+    community_router, # Keep for viewing
+    support_router,
+    test_router, # Keep for attempts
+    tests_router # NEW
+)
 from services.email_service import email_service
 # from services.r2_storage import r2_storage  # Deprecated
 from services.gcs_storage import gcs_storage
@@ -41,7 +48,7 @@ RATE_LIMIT_HOURS = int(os.getenv("RATE_LIMIT_HOURS", "24"))
 app = FastAPI(
     title="Mentors Mantra Test Generator",
     description="Generate professionally formatted PDF test papers using AI",
-    version="2.0.0"
+    version="2.1.0"
 )
 
 # Configure CORS
@@ -66,20 +73,33 @@ app.add_middleware(
 )
 
 # Include routers
-app.include_router(auth_router)
-app.include_router(institute_router)
-app.include_router(posts_router)
-app.include_router(pdf_router)
+app.include_router(auth_router.router)
+app.include_router(institute_router.router)
+app.include_router(posts_router.router)
+app.include_router(pdf_router.router)
+app.include_router(test_router.router)
+app.include_router(support_router.router)
+app.include_router(tests_router.router)
+app.include_router(community_router.router)
+from routers.diagram_router import router as diagram_router
+app.include_router(diagram_router)
 
-# Video Generator
-from routers.video_router import router as video_router
-app.include_router(video_router)
+# Video Generator (Disabled for stability)
+# from routers.video_router import router as video_router
+# app.include_router(video_router)
 
 
 # Initialize database on startup
 @app.on_event("startup")
 async def startup_event():
-    init_db()  # Run migrations for new columns
+    print("DEBUG: Startup event started", flush=True)
+    try:
+        print("DEBUG: Initializing database...", flush=True)
+        # init_db()  # Run migrations for new columns
+        print("DEBUG: Database initialized successfully (SKIPPED)", flush=True)
+    except Exception as e:
+        print(f"DEBUG: Database initialization failed: {e}", flush=True)
+    print("DEBUG: Startup event completed", flush=True)
 
 
 # Request/Response Models
@@ -99,10 +119,14 @@ class GenerateRequest(BaseModel):
     num_nat: Optional[int] = Field(default=None, description="Number of NATs (GATE only)")
     num_ga: Optional[int] = Field(default=None, description="Number of General Aptitude questions (GATE only)")
     # Boards Specific Fields
+    cbse_mcq: Optional[int] = Field(default=None, description="Number of MCQ questions (Boards only)")
     cbse_vsa: Optional[int] = Field(default=None, description="Number of Very Short Answer questions (Boards only)")
     cbse_sa: Optional[int] = Field(default=None, description="Number of Short Answer questions (Boards only)")
     cbse_la: Optional[int] = Field(default=None, description="Number of Long Answer questions (Boards only)")
     cbse_case: Optional[int] = Field(default=None, description="Number of Case Based questions (Boards only)")
+    # JEE Advanced Specific Fields
+    num_matrix: Optional[int] = Field(default=None, description="Number of Matrix Match questions (JEE Advanced only)")
+    num_paragraph: Optional[int] = Field(default=None, description="Number of Comprehension/Paragraph sets (JEE Advanced only)")
 
 
 class GenerateResponse(BaseModel):
@@ -239,7 +263,7 @@ async def root():
     return {
         "status": "healthy",
         "service": "Mentors Mantra Test Generator",
-        "version": "2.0.0"
+        "version": "2.1.0"
     }
 
 
@@ -297,6 +321,72 @@ async def detect_subject(request: DetectSubjectRequest, db: Session = Depends(ge
         confidence=confidence,
         cached=False
     )
+
+
+@app.get("/api/history")
+async def get_history(
+    current_user: User = Depends(get_current_user_required),
+    db: Session = Depends(get_db)
+):
+    """Get the user's recent PDF generation history."""
+    try:
+        generations = db.query(PDFGeneration).filter(
+            PDFGeneration.user_id == current_user.id
+        ).order_by(PDFGeneration.created_at.desc()).limit(10).all()
+
+        return {
+            "generations": [
+                {
+                    "id": g.id,
+                    "subject": g.subject,
+                    "topic": g.topic,
+                    "level": g.level,
+                    "question_count": g.question_count,
+                    "pdf_filename": g.pdf_filename,
+                    "status": g.status,
+                    "created_at": g.created_at.isoformat() if g.created_at else None,
+                }
+                for g in generations
+            ]
+        }
+    except Exception as e:
+        print(f"Error fetching history: {e}")
+        return {"generations": []}
+
+
+class StoreSubjectRequest(BaseModel):
+    topic: str
+    subject: str
+
+
+@app.post("/api/store-subject")
+async def store_subject(request: StoreSubjectRequest, db: Session = Depends(get_db)):
+    """Store a topic-subject mapping from user crowdsourcing."""
+    if not request.topic.strip() or not request.subject.strip():
+        return {"success": False, "message": "Topic and subject are required"}
+
+    normalized_topic = request.topic.strip().lower()
+
+    try:
+        existing = db.query(TopicSubjectCache).filter(
+            TopicSubjectCache.normalized_topic == normalized_topic
+        ).first()
+
+        if not existing:
+            cache_row = TopicSubjectCache(
+                topic=request.topic.strip(),
+                normalized_topic=normalized_topic,
+                subject=request.subject.strip(),
+                confidence="high",
+            )
+            db.add(cache_row)
+            db.commit()
+
+        return {"success": True, "message": "Subject mapping stored"}
+    except Exception as e:
+        db.rollback()
+        print(f"Error storing subject mapping: {e}")
+        return {"success": False, "message": str(e)}
 
 
 @app.get("/api/rate-limit", response_model=RateLimitInfo)
@@ -379,10 +469,14 @@ async def generate_test(
             num_msq=request.num_msq,
             num_nat=request.num_nat,
             num_ga=request.num_ga,
+            cbse_mcq=request.cbse_mcq,
             cbse_vsa=request.cbse_vsa,
             cbse_sa=request.cbse_sa,
             cbse_la=request.cbse_la,
-            cbse_case=request.cbse_case
+            cbse_case=request.cbse_case,
+            num_matrix=request.num_matrix,
+            num_paragraph=request.num_paragraph,
+            user_id=current_user.id
         )
         
         if not llm_result.get("success"):
@@ -557,10 +651,14 @@ async def generate_test_verified(
             num_msq=request.num_msq,
             num_nat=request.num_nat,
             num_ga=request.num_ga,
+            cbse_mcq=request.cbse_mcq,
             cbse_vsa=request.cbse_vsa,
             cbse_sa=request.cbse_sa,
             cbse_la=request.cbse_la,
-            cbse_case=request.cbse_case
+            cbse_case=request.cbse_case,
+            num_matrix=request.num_matrix,
+            num_paragraph=request.num_paragraph,
+            user_id=current_user.id
         )
         
         if not llm_result.get("success"):
@@ -988,10 +1086,12 @@ async def run_generation_job(
             # Fresh Questions: Pass past questions to avoid repetition
             past_questions=past_questions if fresh_questions_enabled else None,
             # Boards Parameters
+            cbse_mcq=request.cbse_mcq,
             cbse_vsa=request.cbse_vsa,
             cbse_sa=request.cbse_sa,
             cbse_la=request.cbse_la,
-            cbse_case=request.cbse_case
+            cbse_case=request.cbse_case,
+            user_id=user.id
         )
 
         
@@ -1026,6 +1126,9 @@ async def run_generation_job(
         actual_total = mcq_count + numerical_count
         safe_topic = request.topic.replace("&", "and").replace("/", "-").replace("\\", "-")
         safe_topic = safe_topic.replace(" ", "_")
+        if len(safe_topic) > 50:
+            safe_topic = safe_topic[:50] + "_" + str(uuid.uuid4())[:6]
+        
         safe_level = request.level.replace(" ", "_")
         safe_difficulty = request.difficulty
         solutions_suffix = "_with_solutions" if request.include_solutions else ""
@@ -1069,57 +1172,9 @@ async def run_generation_job(
         _, new_remaining, new_reset_hours, _ = check_rate_limit(user, db)
         print(f"[SSE Job {job_id}] TRACE: Before R2 section, rate_limit={new_remaining}")
         
-        # Create SharedPDF record FIRST (so Post button shows), then attempt GCS upload in background
+        # SharedPDF creation is now MANUAL via /api/pdf/save endpoint
+        # This prevents auto-filling the private library (limit 10)
         shared_pdf_id = None
-        try:
-            from database import SessionLocal
-            db_session = SessionLocal()
-            try:
-                # Create SharedPDF with pending URL immediately
-                shared_pdf = SharedPDF(
-                    user_id=user.id,
-                    pdf_url="pending",  # Will be updated after GCS upload
-                    pdf_filename=os.path.basename(pdf_path),
-                    subject=request.subject,
-                    topic=request.topic,
-                    level=request.level,
-                    difficulty=request.difficulty,
-                    question_count=mcq_count + numerical_count,
-                    has_solutions=request.include_solutions,
-                    visibility="private"
-                )
-                db_session.add(shared_pdf)
-                db_session.commit()
-                shared_pdf_id = shared_pdf.id
-                print(f"✓ SharedPDF created: {shared_pdf_id}")
-            finally:
-                db_session.close()
-        except Exception as e:
-            print(f"✗ Failed to create SharedPDF: {e}")
-        
-        # Attempt GCS upload in background (non-blocking) to update pdf_url later
-        if gcs_storage.is_configured() and shared_pdf_id:
-            job_store.update_job(job_id, JobStatus.UPLOADING, 90, "Uploading to cloud storage...")
-            try:
-                object_key = gcs_storage.get_object_key(str(user.id), os.path.basename(pdf_path))
-                print(f"[SSE Job {job_id}] Attempting GCS upload: {object_key}")
-                pdf_url = gcs_storage.upload_pdf(pdf_path, object_key)
-                
-                if pdf_url:
-                    # Update SharedPDF with actual GCS URL
-                    db_session = SessionLocal()
-                    try:
-                        shared = db_session.query(SharedPDF).filter(SharedPDF.id == shared_pdf_id).first()
-                        if shared:
-                            shared.pdf_url = pdf_url
-                            db_session.commit()
-                            print(f"✓ GCS upload complete: {pdf_url}")
-                    finally:
-                        db_session.close()
-                else:
-                    print(f"[SSE Job {job_id}] GCS upload returned None")
-            except Exception as e:
-                print(f"✗ GCS upload failed: {e}")
         
         # Update: Done
         job_store.update_job(
