@@ -9,7 +9,7 @@ import uuid
 import base64
 import json
 from datetime import datetime, timedelta, timezone
-from typing import Optional, Dict
+from typing import Optional, Dict, List, Any
 from fastapi import FastAPI, HTTPException, Depends, status, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse
@@ -487,7 +487,7 @@ async def generate_test(
         
         
         # Generate filename: Top{N}_{Topic}_{Level}_{Difficulty}.pdf
-        # Use actual generated count, not request.total_questions
+        # Use requested split count for this sync endpoint.
         actual_total = mcq_count + numerical_count
         safe_topic = request.topic.replace("&", "and").replace("/", "-").replace("\\", "-")
         safe_topic = safe_topic.replace(" ", "_")
@@ -668,7 +668,7 @@ async def generate_test_verified(
             )
         
         # Generate filename - use actual generated count
-        actual_total = mcq_count + numerical_count
+        actual_total = len(questions) if questions else (mcq_count + numerical_count)
         safe_topic = request.topic.replace("&", "and").replace("/", "-").replace("\\", "-")
         safe_topic = safe_topic.replace(" ", "_")
         safe_level = request.level.replace(" ", "_")
@@ -998,6 +998,130 @@ async def start_sse_generation(
     )
 
 
+def _normalize_question_text(question: Dict[str, Any]) -> str:
+    """Normalize question text for duplicate checks."""
+    raw = question.get("text") or question.get("question") or ""
+    return " ".join(str(raw).lower().split())
+
+
+def _count_question_types(questions: List[Dict[str, Any]]) -> tuple[int, int]:
+    """Count MCQ-like and numerical questions."""
+    total_mcq = sum(1 for q in questions if q.get("type") in ["mcq", "mcq_multi"])
+    total_numerical = sum(1 for q in questions if q.get("type") == "numerical")
+    return total_mcq, total_numerical
+
+
+def _merge_questions_unique(
+    base_questions: List[Dict[str, Any]],
+    new_questions: List[Dict[str, Any]]
+) -> List[Dict[str, Any]]:
+    """Merge question lists while avoiding duplicate question texts."""
+    merged = list(base_questions)
+    seen = {
+        _normalize_question_text(q)
+        for q in merged
+        if _normalize_question_text(q)
+    }
+
+    for question in new_questions:
+        normalized = _normalize_question_text(question)
+        if not normalized or normalized in seen:
+            continue
+        seen.add(normalized)
+        merged.append(question)
+
+    return merged
+
+
+async def _top_up_generation_if_needed(
+    llm_result: Dict[str, Any],
+    request: GenerateRequest,
+    target_mcq: int,
+    target_numerical: int,
+    user_id: str,
+    past_questions: Optional[List[str]] = None,
+    max_attempts: int = 3,
+) -> Dict[str, Any]:
+    """
+    Ensure generated question count matches requested count.
+    Some LLM calls under-generate; this performs focused top-ups for missing counts.
+    """
+    questions = llm_result.get("questions", [])
+    if not isinstance(questions, list):
+        questions = []
+
+    for attempt in range(1, max_attempts + 1):
+        current_mcq, current_numerical = _count_question_types(questions)
+        missing_mcq = max(0, target_mcq - current_mcq)
+        missing_numerical = max(0, target_numerical - current_numerical)
+
+        if missing_mcq == 0 and missing_numerical == 0:
+            break
+
+        print(
+            f"[TOP-UP] Attempt {attempt}/{max_attempts}: "
+            f"missing MCQ={missing_mcq}, Numerical={missing_numerical}"
+        )
+
+        # Combine old history + current generation to reduce duplicates in top-up calls
+        avoidance_pool = list(past_questions or [])
+        avoidance_pool.extend(
+            (q.get("text") or q.get("question") or "")
+            for q in questions
+            if isinstance(q, dict)
+        )
+        avoidance_pool = [q for q in avoidance_pool if isinstance(q, str) and q.strip()]
+
+        top_up_result = await llm_engine.generate_questions_with_verification_async(
+            subject=request.subject,
+            topic=request.topic,
+            mcq_count=missing_mcq,
+            numerical_count=missing_numerical,
+            level=request.level,
+            difficulty=request.difficulty,
+            include_solutions=request.include_solutions,
+            gate_paper=request.gate_paper,
+            num_msq=request.num_msq,
+            num_nat=request.num_nat,
+            num_ga=request.num_ga,
+            past_questions=avoidance_pool[:100],
+            cbse_mcq=request.cbse_mcq,
+            cbse_vsa=request.cbse_vsa,
+            cbse_sa=request.cbse_sa,
+            cbse_la=request.cbse_la,
+            cbse_case=request.cbse_case,
+            num_matrix=request.num_matrix,
+            num_paragraph=request.num_paragraph,
+            user_id=user_id
+        )
+
+        if not top_up_result.get("success"):
+            print(f"[TOP-UP] Failed attempt {attempt}: {top_up_result.get('error', 'Unknown error')}")
+            continue
+
+        top_up_questions = top_up_result.get("questions", [])
+        if not isinstance(top_up_questions, list) or not top_up_questions:
+            print(f"[TOP-UP] Attempt {attempt} returned no additional questions")
+            continue
+
+        before = len(questions)
+        questions = _merge_questions_unique(questions, top_up_questions)
+
+        # If all new questions were duplicates, still append enough to prevent hard shortfall.
+        if len(questions) == before:
+            print(f"[TOP-UP] Attempt {attempt} produced duplicate-only output, appending fallback questions")
+            current_mcq, current_numerical = _count_question_types(questions)
+            remaining_total = max(
+                0,
+                (target_mcq - current_mcq) + (target_numerical - current_numerical)
+            )
+            if remaining_total > 0:
+                questions.extend(top_up_questions[:remaining_total])
+
+    llm_result["questions"] = questions
+    return llm_result
+
+
 async def run_generation_job(
     job_id: str,
     request: GenerateRequest,
@@ -1104,6 +1228,22 @@ async def run_generation_job(
                 error=llm_result.get("error", "Unknown error")
             )
             return
+
+        # Ensure requested count is met (model can under-generate on large prompts)
+        llm_result = await _top_up_generation_if_needed(
+            llm_result=llm_result,
+            request=request,
+            target_mcq=mcq_count,
+            target_numerical=numerical_count,
+            user_id=str(user.id),
+            past_questions=past_questions if fresh_questions_enabled else None,
+            max_attempts=3
+        )
+
+        questions = llm_result.get("questions", [])
+        if not isinstance(questions, list):
+            questions = []
+            llm_result["questions"] = questions
         
         # Update: Verifying
         job_store.update_job(job_id, JobStatus.VERIFYING, 60, "Verifying answers...")
@@ -1111,7 +1251,11 @@ async def run_generation_job(
         # Fresh Questions: Save generated questions to history
         if fresh_questions_enabled and llm_result.get("questions"):
             try:
-                question_texts = [q.get("question", "") for q in llm_result.get("questions", [])]
+                question_texts = [
+                    q.get("text") or q.get("question", "")
+                    for q in llm_result.get("questions", [])
+                    if isinstance(q, dict)
+                ]
                 save_question_history(
                     db=db,
                     user_id=user.id,
@@ -1123,7 +1267,7 @@ async def run_generation_job(
                 print(f"Warning: Could not save question history: {e}")
         
         # Generate filename
-        actual_total = mcq_count + numerical_count
+        actual_total = len(questions) if questions else (mcq_count + numerical_count)
         safe_topic = request.topic.replace("&", "and").replace("/", "-").replace("\\", "-")
         safe_topic = safe_topic.replace(" ", "_")
         if len(safe_topic) > 50:
@@ -1165,8 +1309,9 @@ async def run_generation_job(
         
         # Count questions
         questions = llm_result.get("questions", [])
-        total_mcq = sum(1 for q in questions if q.get("type") in ["mcq", "mcq_multi"])
-        total_numerical = sum(1 for q in questions if q.get("type") == "numerical")
+        if not isinstance(questions, list):
+            questions = []
+        total_mcq, total_numerical = _count_question_types(questions)
         
         # Get updated rate limit
         _, new_remaining, new_reset_hours, _ = check_rate_limit(user, db)

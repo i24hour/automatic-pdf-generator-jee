@@ -484,6 +484,9 @@ export default function TestGenerator() {
             requestMcqs = jeeSingle + jeeMulti;
             requestNumericals = jeeInteger;
             requestTotal = requestMcqs + requestNumericals + jeeMatrixMatch + jeeParagraph;
+        } else {
+            // Keep total aligned with explicit split to avoid stale slider/state mismatch
+            requestTotal = requestMcqs + requestNumericals;
         }
 
         // Trigger generation via Context
@@ -1358,6 +1361,7 @@ export default function TestGenerator() {
                                         const val = parseInt(e.target.value) || 0;
                                         if (val >= 0 && val + numNumericals <= 50) {
                                             setNumMCQs(val);
+                                            setQuestionCount(val + numNumericals);
                                             // Force DOM update to strip leading zeros
                                             if (e.target.value !== "" && parseInt(e.target.value).toString() !== e.target.value) {
                                                 e.target.value = parseInt(e.target.value).toString();
@@ -1382,6 +1386,7 @@ export default function TestGenerator() {
                                         const val = parseInt(e.target.value) || 0;
                                         if (val >= 0 && numMCQs + val <= 50) {
                                             setNumNumericals(val);
+                                            setQuestionCount(numMCQs + val);
                                             // Force DOM update to strip leading zeros
                                             if (e.target.value !== "" && parseInt(e.target.value).toString() !== e.target.value) {
                                                 e.target.value = parseInt(e.target.value).toString();

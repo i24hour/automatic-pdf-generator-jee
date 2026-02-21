@@ -748,7 +748,7 @@ Example: {{"subject":"Chemistry","confidence":"high"}}
                             # Re-clean this individual object
                             cleaned_obj = self._clean_json_response(obj_str)
                             obj = json.loads(cleaned_obj)
-                            if isinstance(obj, dict) and obj.get("question"):
+                            if isinstance(obj, dict) and (obj.get("question") or obj.get("text")):
                                 salvaged_questions.append(obj)
                         except (json.JSONDecodeError, Exception):
                             pass  # Skip malformed individual objects
@@ -2820,4 +2820,3 @@ Generate the solution now:"""
 
 # Singleton instance
 llm_engine = LLMEngine()
-
