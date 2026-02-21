@@ -33,7 +33,7 @@ from routers import (
     tests_router # NEW
 )
 from services.email_service import email_service
-# from services.r2_storage import r2_storage  # Deprecated
+# GCS storage is imported on line 37
 from services.gcs_storage import gcs_storage
 from services.job_store import job_store, JobStatus
 
@@ -509,13 +509,13 @@ async def generate_test(
         # Record this generation for rate limiting
         record_generation(current_user, request, os.path.basename(pdf_path), db)
         
-        # Upload to R2 and create SharedPDF record
+        # Upload to GCS and create SharedPDF record
         pdf_url = None
         shared_pdf_id = None
-        if r2_storage.is_configured():
+        if gcs_storage.is_configured():
             try:
-                object_key = r2_storage.get_object_key(current_user.id, os.path.basename(pdf_path))
-                pdf_url = r2_storage.upload_pdf(pdf_path, object_key)
+                object_key = gcs_storage.get_object_key(current_user.id, os.path.basename(pdf_path))
+                pdf_url = gcs_storage.upload_pdf(pdf_path, object_key)
                 if pdf_url:
                     # Create SharedPDF record (default: private)
                     shared_pdf = SharedPDF(
@@ -533,9 +533,9 @@ async def generate_test(
                     db.add(shared_pdf)
                     db.commit()
                     shared_pdf_id = shared_pdf.id
-                    print(f"PDF uploaded to R2: {pdf_url}, SharedPDF ID: {shared_pdf_id}")
+                    print(f"PDF uploaded to GCS: {pdf_url}, SharedPDF ID: {shared_pdf_id}")
             except Exception as e:
-                print(f"Warning: Failed to upload to R2: {e}")
+                print(f"Warning: Failed to upload to GCS: {e}")
         
         # Get updated rate limit info
         _, new_remaining, new_reset_hours, _ = check_rate_limit(current_user, db)
@@ -704,10 +704,10 @@ async def generate_test_verified(
         # Record generation
         record_generation(current_user, request, os.path.basename(pdf_path), db)
         
-        # Upload to R2 in BACKGROUND (non-blocking) - don't wait for it
+        # Upload to GCS in BACKGROUND (non-blocking) - don't wait for it
         # This allows PDF to return immediately to user
         shared_pdf_id = None
-        if r2_storage.is_configured():
+        if gcs_storage.is_configured():
             # Create placeholder SharedPDF record (will be updated when upload completes)
             try:
                 shared_pdf = SharedPDF(
@@ -729,10 +729,10 @@ async def generate_test_verified(
                 # Schedule background upload (non-blocking)
                 import asyncio
                 
-                async def upload_to_r2_background():
+                async def upload_to_gcs_background():
                     try:
-                        object_key = r2_storage.get_object_key(current_user.id, os.path.basename(pdf_path))
-                        pdf_url = await asyncio.to_thread(r2_storage.upload_pdf, pdf_path, object_key)
+                        object_key = gcs_storage.get_object_key(current_user.id, os.path.basename(pdf_path))
+                        pdf_url = await asyncio.to_thread(gcs_storage.upload_pdf, pdf_path, object_key)
                         if pdf_url:
                             # Update the SharedPDF record with the actual URL
                             from database import SessionLocal
@@ -742,17 +742,17 @@ async def generate_test_verified(
                                 if shared:
                                     shared.pdf_url = pdf_url
                                     db_session.commit()
-                                    print(f"✓ Background R2 upload complete: {pdf_url}")
+                                    print(f"✓ Background GCS upload complete: {pdf_url}")
                             finally:
                                 db_session.close()
                     except Exception as e:
-                        print(f"✗ Background R2 upload failed: {e}")
+                        print(f"✗ Background GCS upload failed: {e}")
                 
                 # Fire and forget - don't await
-                asyncio.create_task(upload_to_r2_background())
-                print("R2 upload scheduled in background")
+                asyncio.create_task(upload_to_gcs_background())
+                print("GCS upload scheduled in background")
             except Exception as e:
-                print(f"Warning: Failed to schedule R2 upload: {e}")
+                print(f"Warning: Failed to schedule GCS upload: {e}")
         
         # Get updated rate limit info
         _, new_remaining, new_reset_hours, _ = check_rate_limit(current_user, db)
@@ -1323,11 +1323,33 @@ async def run_generation_job(
         
         # Get updated rate limit
         _, new_remaining, new_reset_hours, _ = check_rate_limit(user, db)
-        print(f"[SSE Job {job_id}] TRACE: Before R2 section, rate_limit={new_remaining}")
+        print(f"[SSE Job {job_id}] TRACE: Before GCS section, rate_limit={new_remaining}")
         
-        # SharedPDF creation is now MANUAL via /api/pdf/save endpoint
-        # This prevents auto-filling the private library (limit 10)
+        # Upload to GCS and create SharedPDF so download works from Recent Tests
         shared_pdf_id = None
+        if gcs_storage.is_configured():
+            try:
+                object_key = gcs_storage.get_object_key(user.id, os.path.basename(pdf_path))
+                gcs_url = gcs_storage.upload_pdf(pdf_path, object_key)
+                if gcs_url:
+                    shared_pdf = SharedPDF(
+                        user_id=user.id,
+                        pdf_url=gcs_url,
+                        pdf_filename=os.path.basename(pdf_path),
+                        subject=request.subject,
+                        topic=request.topic,
+                        level=request.level,
+                        difficulty=request.difficulty,
+                        question_count=len(questions),
+                        has_solutions=request.include_solutions,
+                        visibility="private"
+                    )
+                    db.add(shared_pdf)
+                    db.commit()
+                    shared_pdf_id = shared_pdf.id
+                    print(f"[SSE Job {job_id}] ✓ PDF uploaded to GCS: {gcs_url}")
+            except Exception as e:
+                print(f"[SSE Job {job_id}] ✗ GCS upload failed: {e}")
         
         # Update: Done
         job_store.update_job(
