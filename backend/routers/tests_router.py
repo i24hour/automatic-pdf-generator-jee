@@ -175,6 +175,11 @@ async def create_test(
                     "difficulty": meta['difficulty']
                 })
 
+    # Sort final_questions: MCQs first, then numericals
+    mcq_questions = [q for q in final_questions if q.get("type") != "numerical"]
+    num_questions = [q for q in final_questions if q.get("type") == "numerical"]
+    final_questions = mcq_questions + num_questions
+
     # 4. Finalize Test Object
     
     # Determine Status
