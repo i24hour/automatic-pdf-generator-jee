@@ -79,14 +79,19 @@ export default function TestInterfacePage() {
                 const data = await response.json();
                 setTestState(data);
                 setTimeRemaining(data.time_remaining_seconds);
-                if (!activeSection && data.subjects.length > 0) {
-                    setActiveSection(data.subjects[0]);
-                }
+
+                // Only set active section if it's currently null, without depending on activeSection itself
+                setActiveSection(prev => {
+                    if (!prev && data.subjects?.length > 0) {
+                        return data.subjects[0];
+                    }
+                    return prev;
+                });
             }
         } catch (error) {
             console.error('Failed to fetch test state:', error);
         }
-    }, [testId, token, activeSection]);
+    }, [testId, token]);
 
     // Fetch question
     const fetchQuestion = useCallback(async (index: number) => {
