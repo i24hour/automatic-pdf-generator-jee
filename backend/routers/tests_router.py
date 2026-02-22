@@ -103,11 +103,19 @@ async def create_test(
         
         for diff_name, diff_count in levels:
             if diff_count > 0:
+                # JEE Exams have ~20% numerical questions. NEET has 0.
+                if request.exam_type in ["JEE_MAINS", "JEE_ADV", "CUSTOM"]:
+                    num_numerical = round(diff_count * 0.2)
+                    num_mcq = diff_count - num_numerical
+                else: # NEET
+                    num_numerical = 0
+                    num_mcq = diff_count
+
                 tasks.append(llm_engine.generate_with_fallback_async(
                     subject=subj_name,
                     topic=topic_str,
-                    mcq_count=diff_count,
-                    numerical_count=0,
+                    mcq_count=num_mcq,
+                    numerical_count=num_numerical,
                     level=request.exam_type,
                     difficulty=diff_name
                 ))
