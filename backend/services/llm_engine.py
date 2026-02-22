@@ -2050,6 +2050,9 @@ Return EXACTLY this JSON format:
         ASYNC version of generate_questions using litellm.acompletion.
         Allows true parallel execution when used with asyncio.gather.
         """
+        # Normalize level string from API formats (e.g. "JEE_MAINS") to standard prompts (e.g. "JEE Mains")
+        level = self._normalize_level(level)
+        
         total_requested = mcq_count + numerical_count
         
         # Get difficulty percentages from kwargs (default: 20-50-30)
