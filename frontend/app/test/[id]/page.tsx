@@ -6,7 +6,7 @@ import { ChevronLeft, ChevronRight, Menu, X } from 'lucide-react';
 import MathText from '@/components/MathText';
 import DiagramRenderer from '@/components/test/DiagramRenderer';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://mentors-mantra-api-87253755436.us-central1.run.app';
+import { API_BASE_URL as API_BASE } from '@/lib/config';
 
 interface PaletteItem {
     index: number;
@@ -101,7 +101,8 @@ export default function TestInterfacePage() {
                 setSelectedAnswer(data.user_answer);
                 setTimeRemaining(data.time_remaining_seconds);
                 setQuestionStartTime(Date.now());
-                setActiveSection(data.subject);
+                // NOTE: Do NOT call setActiveSection here — the tab should only
+                // change when the USER explicitly clicks a subject tab.
             }
         } catch (error) {
             console.error('Failed to fetch question:', error);
@@ -141,7 +142,8 @@ export default function TestInterfacePage() {
 
     // Handle action
     const handleAction = async (action: string, jumpIndex?: number) => {
-        if (!question || actionLoading) return;
+        // For JUMP (subject switch), allow even if actionLoading to avoid blocking tab clicks
+        if (!question || (actionLoading && action !== 'JUMP')) return;
         setActionLoading(true);
 
         try {
@@ -360,8 +362,8 @@ export default function TestInterfacePage() {
                             }
                         }}
                         className={`px-4 py-2 rounded-lg font-bold transition-colors whitespace-nowrap border-b-2 ${activeSection === subject
-                                ? 'border-indigo-600 text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20'
-                                : 'border-transparent text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                            ? 'border-indigo-600 text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20'
+                            : 'border-transparent text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
                             }`}
                     >
                         {subject}
