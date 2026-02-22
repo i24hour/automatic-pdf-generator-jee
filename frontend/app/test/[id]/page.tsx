@@ -401,8 +401,25 @@ export default function TestInterfacePage() {
                             </div>
                         )}
 
-                        {/* Options */}
-                        {question.options && (
+                        {/* Options or Numerical Input */}
+                        {question.question_type === 'numerical' || (!question.options || Object.keys(question.options).length === 0) ? (
+                            <div className="mb-6">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Enter your numerical answer:
+                                </label>
+                                <input
+                                    type="text"
+                                    value={selectedAnswer || ''}
+                                    onChange={(e) => setSelectedAnswer(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        // Prevent event from bubbling to keyboard shortcuts if typing
+                                        e.stopPropagation();
+                                    }}
+                                    placeholder="Type your answer here..."
+                                    className="w-full max-w-sm px-4 py-3 rounded-lg border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-[#1e2025] text-gray-900 dark:text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors font-mono text-lg"
+                                />
+                            </div>
+                        ) : question.options && (
                             <div className="space-y-3">
                                 {Object.entries(question.options).map(([key, value]) => (
                                     <button
