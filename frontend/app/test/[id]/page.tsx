@@ -121,21 +121,20 @@ export default function TestInterfacePage() {
 
     // Timer countdown
     useEffect(() => {
-        if (timeRemaining <= 0) return;
+        // If time is up, auto-submit
+        if (timeRemaining <= 0) {
+            if (testState?.status === 'IN_PROGRESS' && !actionLoading) {
+                handleSubmit();
+            }
+            return;
+        }
 
         const interval = setInterval(() => {
-            setTimeRemaining(prev => {
-                if (prev <= 1) {
-                    // Auto-submit when time is up
-                    handleSubmit();
-                    return 0;
-                }
-                return prev - 1;
-            });
+            setTimeRemaining(prev => Math.max(0, prev - 1));
         }, 1000);
 
         return () => clearInterval(interval);
-    }, [timeRemaining]);
+    }, [timeRemaining, testState?.status, actionLoading]);
 
     // Calculate time spent on current question
     const getTimeSpent = () => Math.floor((Date.now() - questionStartTime) / 1000);
@@ -212,6 +211,8 @@ export default function TestInterfacePage() {
 
     // Handle submit
     const handleSubmit = async () => {
+        if (actionLoading) return;
+        setActionLoading(true);
         try {
             const response = await fetch(`${API_BASE}/test/${testId}/submit`, {
                 method: 'POST',
@@ -220,9 +221,12 @@ export default function TestInterfacePage() {
             if (response.ok) {
                 const data = await response.json();
                 router.push(data.redirect_url);
+            } else {
+                setActionLoading(false);
             }
         } catch (error) {
             console.error('Submit failed:', error);
+            setActionLoading(false);
         }
     };
 
