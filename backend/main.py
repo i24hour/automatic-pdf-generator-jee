@@ -425,8 +425,8 @@ async def generate_test(
 ):
     """
     Generate a test paper PDF.
-    
-    Requires authentication. Limited to 3 PDFs per 6 hours.
+
+    Requires authentication. Rate limit is per plan per month, resets on the 1st of each month.
     """
     # Check rate limit
     is_allowed, remaining, reset_hours, user_limit = check_rate_limit(current_user, db)
