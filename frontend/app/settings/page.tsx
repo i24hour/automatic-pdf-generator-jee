@@ -24,7 +24,10 @@ import {
     Download,
     ArrowLeft,
     Trash2,
-    Eye
+    Eye,
+    Zap,
+    Tag,
+    Crown
 } from "lucide-react";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://mentors-mantra-api-87253755436.us-central1.run.app';
@@ -72,6 +75,11 @@ export default function SettingsPage() {
     const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
     const [deletingId, setDeletingId] = useState<string | null>(null);
     const [updatingId, setUpdatingId] = useState<string | null>(null);
+
+    // Promo code
+    const [promoCode, setPromoCode] = useState("");
+    const [promoLoading, setPromoLoading] = useState(false);
+    const [promoMessage, setPromoMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
     useEffect(() => {
         if (user) {
@@ -277,8 +285,36 @@ export default function SettingsPage() {
         );
     }
 
+    const handleApplyPromo = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!promoCode.trim()) return;
+        setPromoLoading(true);
+        setPromoMessage(null);
+        try {
+            const res = await fetch(`${API_URL}/api/apply-promo`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`,
+                },
+                body: JSON.stringify({ code: promoCode.trim().toUpperCase() }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.detail || "Invalid promo code");
+            setPromoMessage({ type: "success", text: data.message || "Promo code applied! Bonus generations added." });
+            setPromoCode("");
+            await refreshUser();
+        } catch (err: any) {
+            setPromoMessage({ type: "error", text: err.message || "Failed to apply promo code" });
+        } finally {
+            setPromoLoading(false);
+        }
+    };
+
     const sections = [
         { id: "profile", label: "Profile", icon: User },
+        { id: "upgrade", label: "Upgrade to Pro", icon: Zap },
+        { id: "promo", label: "Promo Code", icon: Tag },
         { id: "theme", label: "Theme", icon: theme === "dark" ? Moon : Sun },
         { id: "fresh", label: "Fresh Questions", icon: Sparkles },
         { id: "private", label: "Private PDFs", icon: Lock },
@@ -507,6 +543,114 @@ export default function SettingsPage() {
                             {isLoading ? "Saving..." : "Save Changes"}
                         </button>
                     </form>
+                )}
+
+                {/* Upgrade to Pro Section */}
+                {activeSection === "upgrade" && (
+                    <div className="space-y-5">
+                        <div className="flex items-center gap-3">
+                            <Crown className="w-5 h-5 text-indigo-500" />
+                            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Your Plan</h2>
+                        </div>
+
+                        {/* Current plan badge */}
+                        <div className={`p-4 rounded-xl border-2 flex items-center gap-4 ${
+                            (user as any)?.plan === "universe"
+                                ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20"
+                                : (user as any)?.plan === "earth"
+                                ? "border-green-500 bg-green-50 dark:bg-green-900/20"
+                                : "border-gray-200 dark:border-[#2f3336] bg-gray-50 dark:bg-[#1a1d21]"
+                        }`}>
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                                (user as any)?.plan === "universe" ? "bg-indigo-600" :
+                                (user as any)?.plan === "earth" ? "bg-green-600" : "bg-gray-400"
+                            } text-white`}>
+                                <Crown className="w-5 h-5" />
+                            </div>
+                            <div>
+                                <p className="font-bold text-gray-900 dark:text-white capitalize">
+                                    {(user as any)?.plan || "free"} Plan
+                                </p>
+                                <p className="text-sm text-gray-500 dark:text-gray-400">
+                                    {(user as any)?.plan === "universe"
+                                        ? "Unlimited PDFs, tests, video generator & more"
+                                        : (user as any)?.plan === "earth"
+                                        ? "10 PDFs/6hrs, unlimited tests, 1 institute PDF"
+                                        : "5 PDFs/6hrs, 4 tests"}
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Upgrade buttons */}
+                        {(user as any)?.plan !== "universe" && (
+                            <div className="space-y-3">
+                                <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">Upgrade your plan</p>
+                                {(user as any)?.plan !== "earth" && (
+                                    <a href="/pricing" className="flex items-center justify-between w-full p-4 rounded-xl bg-gradient-to-r from-green-500 to-teal-500 text-white hover:opacity-90 transition-opacity">
+                                        <div>
+                                            <p className="font-bold">Earth Plan</p>
+                                            <p className="text-sm text-green-100">10 PDFs · Unlimited tests · ₹19/month</p>
+                                        </div>
+                                        <ChevronRight className="w-5 h-5" />
+                                    </a>
+                                )}
+                                <a href="/pricing" className="flex items-center justify-between w-full p-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:opacity-90 transition-opacity">
+                                    <div>
+                                        <p className="font-bold">Universe Plan</p>
+                                        <p className="text-sm text-indigo-200">Unlimited everything · ₹99/month</p>
+                                    </div>
+                                    <ChevronRight className="w-5 h-5" />
+                                </a>
+                            </div>
+                        )}
+                        {(user as any)?.plan === "universe" && (
+                            <div className="p-4 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 text-center">
+                                <p className="text-indigo-600 dark:text-indigo-300 font-medium">🎉 You're on the best plan!</p>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* Promo Code Section */}
+                {activeSection === "promo" && (
+                    <div className="space-y-5">
+                        <div className="flex items-center gap-3">
+                            <Tag className="w-5 h-5 text-indigo-500" />
+                            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Promo Code</h2>
+                        </div>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                            Have a promo code? Enter it below to get bonus PDF generations added to your account.
+                        </p>
+                        <form onSubmit={handleApplyPromo} className="space-y-4">
+                            <div className="flex gap-3">
+                                <input
+                                    type="text"
+                                    value={promoCode}
+                                    onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                                    placeholder="Enter promo code"
+                                    className="flex-1 px-4 py-3 rounded-xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-[#2f3336] focus:ring-2 focus:ring-indigo-500 outline-none transition-all dark:text-white font-mono tracking-widest uppercase"
+                                    maxLength={20}
+                                />
+                                <button
+                                    type="submit"
+                                    disabled={promoLoading || !promoCode.trim()}
+                                    className="px-5 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium flex items-center gap-2 disabled:opacity-50 transition-colors"
+                                >
+                                    {promoLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                                    Apply
+                                </button>
+                            </div>
+                            {promoMessage && (
+                                <div className={`p-4 rounded-xl text-sm ${
+                                    promoMessage.type === "success"
+                                        ? "bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400"
+                                        : "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400"
+                                }`}>
+                                    {promoMessage.text}
+                                </div>
+                            )}
+                        </form>
+                    </div>
                 )}
 
                 {/* Theme Section */}

@@ -82,6 +82,15 @@ export default function MobileNav() {
                 >
                     <Settings className="w-6 h-6" />
                     <span className="text-[10px] font-medium">Settings</span>
+                    {user?.plan && user.plan !== "free" && (
+                        <span className={`text-[8px] font-bold uppercase px-1 rounded-full leading-tight ${
+                            user.plan === "universe"
+                                ? "bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-300"
+                                : "bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300"
+                        }`}>
+                            {user.plan}
+                        </span>
+                    )}
                 </Link>
             </nav>
         </>

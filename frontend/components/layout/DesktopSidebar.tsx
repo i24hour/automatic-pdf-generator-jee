@@ -197,7 +197,18 @@ export default function DesktopSidebar() {
                         </div>
                         <div className="flex-1 min-w-0">
                             <p className="font-bold text-gray-900 dark:text-white truncate">{user?.name || "User"}</p>
-                            <p className="text-sm text-gray-500 truncate">@{user?.username || user?.email?.split('@')[0]}</p>
+                            <p className="text-sm text-gray-500 truncate flex items-center gap-1.5">
+                                @{user?.username || user?.email?.split('@')[0]}
+                                {user?.plan && user.plan !== "free" && (
+                                    <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${
+                                        user.plan === "universe"
+                                            ? "bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-300"
+                                            : "bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300"
+                                    }`}>
+                                        {user.plan}
+                                    </span>
+                                )}
+                            </p>
                         </div>
                         <MoreHorizontal className="w-5 h-5 text-gray-400" />
                     </button>
