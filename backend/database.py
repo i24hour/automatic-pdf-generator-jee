@@ -59,6 +59,8 @@ def init_db():
         SystemErrorLog,
         TestAttempt,
         QuestionResponse,
+        PaymentOrder,
+        UserSubscription,
     )
     
     # Create all tables
@@ -184,4 +186,54 @@ def init_db():
                 conn.rollback()
     except Exception as e:
         print(f"Migration warning (class_grade): {e}")
+
+    # Add payment / subscription columns to users
+    try:
+        from sqlalchemy import text
+        with engine.connect() as conn:
+            try:
+                conn.execute(text("ALTER TABLE users ADD COLUMN is_premium BOOLEAN DEFAULT FALSE"))
+                conn.commit()
+            except Exception:
+                conn.rollback()
+            try:
+                conn.execute(text("ALTER TABLE users ADD COLUMN plan VARCHAR(20) DEFAULT 'free'"))
+                conn.commit()
+            except Exception:
+                conn.rollback()
+    except Exception as e:
+        print(f"Migration warning (payment columns): {e}")
+
+    # Create payment_orders and user_subscriptions tables
+    try:
+        from sqlalchemy import text
+        with engine.connect() as conn:
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS payment_orders (
+                    id VARCHAR PRIMARY KEY,
+                    user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                    cf_order_id VARCHAR NOT NULL UNIQUE,
+                    cf_payment_id VARCHAR,
+                    plan_key VARCHAR NOT NULL,
+                    amount_paise INTEGER NOT NULL,
+                    currency VARCHAR DEFAULT 'INR',
+                    status VARCHAR DEFAULT 'PENDING',
+                    payment_session_id VARCHAR,
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+                )
+            """))
+            conn.execute(text("CREATE INDEX IF NOT EXISTS ix_po_cf_order_id ON payment_orders(cf_order_id)"))
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS user_subscriptions (
+                    id VARCHAR PRIMARY KEY,
+                    user_id VARCHAR NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+                    plan VARCHAR DEFAULT 'free' NOT NULL,
+                    is_active BOOLEAN DEFAULT TRUE,
+                    starts_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+                    expires_at TIMESTAMP WITH TIME ZONE
+                )
+            """))
+            conn.commit()
+    except Exception as e:
+        print(f"Migration warning (payment tables): {e}")
 

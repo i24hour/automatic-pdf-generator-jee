@@ -4,7 +4,7 @@ import { useState } from "react";
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Home, LayoutGrid, Trophy, User, Infinity as InfinityIcon, LogOut, MoreHorizontal, Sun, Moon, Settings, BookOpen, LifeBuoy, Video } from "lucide-react";
+import { Home, LayoutGrid, Trophy, User, Infinity as InfinityIcon, LogOut, MoreHorizontal, Sun, Moon, Settings, BookOpen, LifeBuoy, Video, Zap } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { useTheme } from "@/lib/theme-context";
 
@@ -133,6 +133,32 @@ export default function DesktopSidebar() {
 
             {/* User Profile / Logout */}
             <div className="mt-auto space-y-2">
+
+                {/* Upgrade CTA — only show for free / earth users */}
+                {(!user?.plan || user.plan === "free") && (
+                    <Link
+                        href="/pricing"
+                        className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:opacity-90 transition-opacity"
+                    >
+                        <Zap className="w-5 h-5 flex-shrink-0" />
+                        <div className="min-w-0">
+                            <p className="font-bold text-sm leading-tight">Upgrade to Pro</p>
+                            <p className="text-xs text-indigo-200 leading-tight">Earth ₹19 · Universe ₹99</p>
+                        </div>
+                    </Link>
+                )}
+                {user?.plan === "earth" && (
+                    <Link
+                        href="/pricing"
+                        className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-gradient-to-r from-green-600 to-teal-600 text-white hover:opacity-90 transition-opacity"
+                    >
+                        <Zap className="w-5 h-5 flex-shrink-0" />
+                        <div className="min-w-0">
+                            <p className="font-bold text-sm leading-tight">Upgrade to Universe</p>
+                            <p className="text-xs text-green-200 leading-tight">Unlimited everything · ₹99/mo</p>
+                        </div>
+                    </Link>
+                )}
                 <button
                     onClick={toggleTheme}
                     className="w-full flex items-center gap-4 px-4 py-3 rounded-full hover:bg-gray-100 dark:hover:bg-[#181818] transition-colors text-left text-gray-700 dark:text-gray-300"

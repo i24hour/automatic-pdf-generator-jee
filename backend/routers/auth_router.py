@@ -58,7 +58,9 @@ class UserResponse(BaseModel):
     username: Optional[str] = None
     class_grade: Optional[str] = None
     is_verified: bool = False
-    
+    is_premium: bool = False
+    plan: str = "free"
+
     class Config:
         from_attributes = True
 

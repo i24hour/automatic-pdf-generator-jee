@@ -30,10 +30,11 @@ from routers import (
     community_router, # Keep for viewing
     support_router,
     test_router, # Keep for attempts
-    tests_router # NEW
+    tests_router, # NEW
+    payments_router,
 )
 from services.email_service import email_service
-# GCS storage is imported on line 37
+# from services.r2_storage import r2_storage  # Deprecated
 from services.gcs_storage import gcs_storage
 from services.job_store import job_store, JobStatus
 
@@ -81,6 +82,7 @@ app.include_router(test_router.router)
 app.include_router(support_router.router)
 app.include_router(tests_router.router)
 app.include_router(community_router.router)
+app.include_router(payments_router.router)
 from routers.diagram_router import router as diagram_router
 app.include_router(diagram_router)
 
@@ -95,8 +97,8 @@ async def startup_event():
     print("DEBUG: Startup event started", flush=True)
     try:
         print("DEBUG: Initializing database...", flush=True)
-        # init_db()  # Run migrations for new columns
-        print("DEBUG: Database initialized successfully (SKIPPED)", flush=True)
+        init_db()  # Run migrations for new columns
+        print("DEBUG: Database initialized successfully", flush=True)
     except Exception as e:
         print(f"DEBUG: Database initialization failed: {e}", flush=True)
     print("DEBUG: Startup event completed", flush=True)
@@ -197,47 +199,57 @@ class ErrorLogRequest(BaseModel):
 def check_rate_limit(user: User, db: Session) -> tuple[bool, int, float]:
     """
     Check if user has exceeded rate limit.
-    Returns: (is_allowed, remaining_count, hours_until_reset)
+    Returns: (is_allowed, remaining_count, hours_until_reset, total_limit)
     """
+    from routers.payments_router import PLAN_LIMITS
 
     # Check if monthly bonus needs reset
     now = datetime.now(timezone.utc)
     current_month_str = now.strftime("%Y-%m")
-    
+
     if user.last_bonus_month != current_month_str:
         user.monthly_bonus_limit = 0
         user.last_bonus_month = current_month_str
         db.commit()
         db.refresh(user)
 
-    # User's total limit = base limit + permanent bonus + monthly bonus
-    user_total_limit = RATE_LIMIT_COUNT + (user.bonus_limit or 0) + (user.monthly_bonus_limit or 0)
-    
+    # Plan-based limit takes precedence; bonus still stacks on top
+    plan_tier = getattr(user, "plan", "free") or "free"
+    plan_pdf_limit = PLAN_LIMITS.get(plan_tier, PLAN_LIMITS["free"])["pdf"]
+
+    # If plan gives more than RATE_LIMIT_COUNT, use plan limit; else use env var + bonuses
+    base_limit = max(plan_pdf_limit, RATE_LIMIT_COUNT)
+    user_total_limit = base_limit + (user.bonus_limit or 0) + (user.monthly_bonus_limit or 0)
+
+    # Universe plan is truly unlimited (skip DB count)
+    if plan_tier == "universe":
+        return True, 999999, 0.0, 999999
+
     # Calculate start of current month
     now = datetime.now(timezone.utc)
     start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-    
+
     # Force refresh session to ensure we see latest writes
     db.expire_all()
-    
+
     # Count generations in the current month
     recent_generations = db.query(PDFGeneration).filter(
         PDFGeneration.user_id == user.id,
         PDFGeneration.created_at >= start_of_month
     ).all()
-    
+
     used_count = len(recent_generations)
-    print(f"[RateLimit] User: {user.id}, Limit: {user_total_limit}, Used: {used_count}, Start: {start_of_month}")
+    print(f"[RateLimit] User: {user.id}, Plan: {plan_tier}, Limit: {user_total_limit}, Used: {used_count}")
     remaining = max(0, user_total_limit - used_count)
-    
+
     # Calculate reset time (1st of next month)
     if now.month == 12:
         next_month = now.replace(year=now.year + 1, month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
     else:
         next_month = now.replace(month=now.month + 1, day=1, hour=0, minute=0, second=0, microsecond=0)
-        
+
     hours_until_reset = (next_month - now).total_seconds() / 3600
-    
+
     is_allowed = used_count < user_total_limit
     return is_allowed, remaining, hours_until_reset, user_total_limit
 
@@ -509,13 +521,13 @@ async def generate_test(
         # Record this generation for rate limiting
         record_generation(current_user, request, os.path.basename(pdf_path), db)
         
-        # Upload to GCS and create SharedPDF record
+        # Upload to R2 and create SharedPDF record
         pdf_url = None
         shared_pdf_id = None
-        if gcs_storage.is_configured():
+        if r2_storage.is_configured():
             try:
-                object_key = gcs_storage.get_object_key(current_user.id, os.path.basename(pdf_path))
-                pdf_url = gcs_storage.upload_pdf(pdf_path, object_key)
+                object_key = r2_storage.get_object_key(current_user.id, os.path.basename(pdf_path))
+                pdf_url = r2_storage.upload_pdf(pdf_path, object_key)
                 if pdf_url:
                     # Create SharedPDF record (default: private)
                     shared_pdf = SharedPDF(
@@ -533,9 +545,9 @@ async def generate_test(
                     db.add(shared_pdf)
                     db.commit()
                     shared_pdf_id = shared_pdf.id
-                    print(f"PDF uploaded to GCS: {pdf_url}, SharedPDF ID: {shared_pdf_id}")
+                    print(f"PDF uploaded to R2: {pdf_url}, SharedPDF ID: {shared_pdf_id}")
             except Exception as e:
-                print(f"Warning: Failed to upload to GCS: {e}")
+                print(f"Warning: Failed to upload to R2: {e}")
         
         # Get updated rate limit info
         _, new_remaining, new_reset_hours, _ = check_rate_limit(current_user, db)
@@ -704,10 +716,10 @@ async def generate_test_verified(
         # Record generation
         record_generation(current_user, request, os.path.basename(pdf_path), db)
         
-        # Upload to GCS in BACKGROUND (non-blocking) - don't wait for it
+        # Upload to R2 in BACKGROUND (non-blocking) - don't wait for it
         # This allows PDF to return immediately to user
         shared_pdf_id = None
-        if gcs_storage.is_configured():
+        if r2_storage.is_configured():
             # Create placeholder SharedPDF record (will be updated when upload completes)
             try:
                 shared_pdf = SharedPDF(
@@ -729,10 +741,10 @@ async def generate_test_verified(
                 # Schedule background upload (non-blocking)
                 import asyncio
                 
-                async def upload_to_gcs_background():
+                async def upload_to_r2_background():
                     try:
-                        object_key = gcs_storage.get_object_key(current_user.id, os.path.basename(pdf_path))
-                        pdf_url = await asyncio.to_thread(gcs_storage.upload_pdf, pdf_path, object_key)
+                        object_key = r2_storage.get_object_key(current_user.id, os.path.basename(pdf_path))
+                        pdf_url = await asyncio.to_thread(r2_storage.upload_pdf, pdf_path, object_key)
                         if pdf_url:
                             # Update the SharedPDF record with the actual URL
                             from database import SessionLocal
@@ -742,17 +754,17 @@ async def generate_test_verified(
                                 if shared:
                                     shared.pdf_url = pdf_url
                                     db_session.commit()
-                                    print(f"✓ Background GCS upload complete: {pdf_url}")
+                                    print(f"✓ Background R2 upload complete: {pdf_url}")
                             finally:
                                 db_session.close()
                     except Exception as e:
-                        print(f"✗ Background GCS upload failed: {e}")
+                        print(f"✗ Background R2 upload failed: {e}")
                 
                 # Fire and forget - don't await
-                asyncio.create_task(upload_to_gcs_background())
-                print("GCS upload scheduled in background")
+                asyncio.create_task(upload_to_r2_background())
+                print("R2 upload scheduled in background")
             except Exception as e:
-                print(f"Warning: Failed to schedule GCS upload: {e}")
+                print(f"Warning: Failed to schedule R2 upload: {e}")
         
         # Get updated rate limit info
         _, new_remaining, new_reset_hours, _ = check_rate_limit(current_user, db)
@@ -1245,29 +1257,13 @@ async def run_generation_job(
             target_numerical=numerical_count,
             user_id=str(user.id),
             past_questions=past_questions if fresh_questions_enabled else None,
-            max_attempts=2
+            max_attempts=3
         )
 
         questions = llm_result.get("questions", [])
         if not isinstance(questions, list):
             questions = []
             llm_result["questions"] = questions
-        
-        # === STRICT COUNT ENFORCEMENT ===
-        # Separate MCQs and numericals, clip to exact requested counts
-        mcq_questions = [q for q in questions if q.get("type") != "numerical"]
-        num_questions = [q for q in questions if q.get("type") == "numerical"]
-        
-        # Clip to exact requested counts
-        if len(mcq_questions) > mcq_count:
-            mcq_questions = mcq_questions[:mcq_count]
-        if len(num_questions) > numerical_count:
-            num_questions = num_questions[:numerical_count]
-        
-        # Reassemble: MCQs FIRST, then numericals (proper paper format)
-        questions = mcq_questions + num_questions
-        llm_result["questions"] = questions
-        print(f"[SSE Job {job_id}] Final count after clipping: {len(mcq_questions)} MCQs + {len(num_questions)} Numericals = {len(questions)} total (requested: {mcq_count} MCQs + {numerical_count} Num)")
         
         # Update: Verifying
         job_store.update_job(job_id, JobStatus.VERIFYING, 60, "Verifying answers...")
@@ -1339,33 +1335,11 @@ async def run_generation_job(
         
         # Get updated rate limit
         _, new_remaining, new_reset_hours, _ = check_rate_limit(user, db)
-        print(f"[SSE Job {job_id}] TRACE: Before GCS section, rate_limit={new_remaining}")
+        print(f"[SSE Job {job_id}] TRACE: Before R2 section, rate_limit={new_remaining}")
         
-        # Upload to GCS and create SharedPDF so download works from Recent Tests
+        # SharedPDF creation is now MANUAL via /api/pdf/save endpoint
+        # This prevents auto-filling the private library (limit 10)
         shared_pdf_id = None
-        if gcs_storage.is_configured():
-            try:
-                object_key = gcs_storage.get_object_key(user.id, os.path.basename(pdf_path))
-                gcs_url = gcs_storage.upload_pdf(pdf_path, object_key)
-                if gcs_url:
-                    shared_pdf = SharedPDF(
-                        user_id=user.id,
-                        pdf_url=gcs_url,
-                        pdf_filename=os.path.basename(pdf_path),
-                        subject=request.subject,
-                        topic=request.topic,
-                        level=request.level,
-                        difficulty=request.difficulty,
-                        question_count=len(questions),
-                        has_solutions=request.include_solutions,
-                        visibility="private"
-                    )
-                    db.add(shared_pdf)
-                    db.commit()
-                    shared_pdf_id = shared_pdf.id
-                    print(f"[SSE Job {job_id}] ✓ PDF uploaded to GCS: {gcs_url}")
-            except Exception as e:
-                print(f"[SSE Job {job_id}] ✗ GCS upload failed: {e}")
         
         # Update: Done
         job_store.update_job(

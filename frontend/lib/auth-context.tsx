@@ -13,6 +13,8 @@ interface User {
     phone?: string;
     class_grade?: string;
     is_verified: boolean;
+    is_premium?: boolean;
+    plan?: "free" | "earth" | "universe";
 }
 
 interface AuthContextType {

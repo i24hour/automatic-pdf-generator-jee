@@ -721,21 +721,34 @@ export default function TestGenerator() {
 
             {/* Rate Limit Badge */}
             {rateLimit && (
-                <div className="flex justify-center mb-3 md:mb-6">
-                    <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm ${rateLimit.remaining > 0
-                        ? "bg-green-100 text-green-700 border border-green-200"
-                        : "bg-red-100 text-red-700 border border-red-200"
-                        }`}>
+                <div className="flex flex-col items-center mb-3 md:mb-6 gap-2">
+                    {/* Status pill */}
+                    <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm ${
+                        rateLimit.remaining > 0
+                            ? "bg-green-100 text-green-700 border border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800"
+                            : "bg-red-100 text-red-700 border border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800"
+                    }`}>
                         <Clock className="w-4 h-4" />
                         <span>
-                            {rateLimit.remaining}/{rateLimit.limit} generations remaining
+                            {rateLimit.remaining === -1 ? "Unlimited" : `${rateLimit.remaining}/${rateLimit.limit}`} generations remaining
                         </span>
                         {rateLimit.reset_hours > 0 && (
-                            <span className="text-gray-500">
-                                • Reset on 1st {new Date(new Date().setMonth(new Date().getMonth() + 1)).toLocaleString('default', { month: 'short' })}
+                            <span className="text-gray-500 dark:text-gray-400">
+                                · resets in {rateLimit.reset_hours.toFixed(1)}h
                             </span>
                         )}
                     </div>
+
+                    {/* Upgrade nudge when limit is hit */}
+                    {rateLimit.remaining === 0 && (
+                        <a
+                            href="/pricing"
+                            className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-semibold hover:opacity-90 transition-opacity shadow-md"
+                        >
+                            <Zap className="w-4 h-4" />
+                            Upgrade — Earth ₹19 · Universe ₹99
+                        </a>
+                    )}
                 </div>
             )}
 

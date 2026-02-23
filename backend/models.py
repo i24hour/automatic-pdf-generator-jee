@@ -36,6 +36,8 @@ class User(Base):
     total_likes_received = Column(Integer, default=0)  # Cache for leaderboard
     total_posts = Column(Integer, default=0)  # Cache for leaderboard
     fresh_questions_enabled = Column(Boolean, default=True)  # Toggle for fresh questions feature
+    is_premium = Column(Boolean, default=False)   # True for paid plans
+    plan = Column(String, default="free")         # "free" | "earth" | "universe"
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     
     # Relationships
@@ -47,6 +49,8 @@ class User(Base):
     pdf_likes = relationship("PDFLike", back_populates="user")
     badges = relationship("UserBadge", back_populates="user")
     created_tests = relationship("Test", back_populates="creator")
+    payment_orders = relationship("PaymentOrder", back_populates="user", cascade="all, delete-orphan")
+    subscription = relationship("UserSubscription", back_populates="user", uselist=False, cascade="all, delete-orphan")
     
     def __repr__(self):
         return f"<User {self.email}>"
@@ -612,3 +616,45 @@ class TotalAPIUsage(Base):
 
     def __repr__(self):
         return f"<TotalAPIUsage gen={self.generation_id[:8]} tokens={self.total_tokens}>"
+
+
+# ============================================================
+# Payment & Subscription Models
+# ============================================================
+
+class PaymentOrder(Base):
+    """Tracks every Cashfree payment order."""
+    __tablename__ = "payment_orders"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    cf_order_id = Column(String, unique=True, index=True, nullable=False)
+    cf_payment_id = Column(String, nullable=True)
+    plan_key = Column(String, nullable=False)   # "earth_monthly" | "universe_monthly"
+    amount_paise = Column(Integer, nullable=False)
+    currency = Column(String, default="INR")
+    status = Column(String, default="PENDING")  # PENDING | PAID | FAILED
+    payment_session_id = Column(String, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    user = relationship("User", back_populates="payment_orders")
+
+    def __repr__(self):
+        return f"<PaymentOrder {self.cf_order_id} {self.status}>"
+
+
+class UserSubscription(Base):
+    """One row per user — upserted on each successful payment."""
+    __tablename__ = "user_subscriptions"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False)
+    plan = Column(String, default="free", nullable=False)  # "free" | "earth" | "universe"
+    is_active = Column(Boolean, default=True)
+    starts_at = Column(DateTime(timezone=True), server_default=func.now())
+    expires_at = Column(DateTime(timezone=True), nullable=True)
+
+    user = relationship("User", back_populates="subscription")
+
+    def __repr__(self):
+        return f"<UserSubscription {self.plan} expires={self.expires_at}>"
