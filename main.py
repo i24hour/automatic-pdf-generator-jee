@@ -22,7 +22,7 @@ from models import User, PDFGeneration, JobStatus, TopicSubjectCache
 from auth import get_current_user_required, get_current_user
 from routers.auth_router import router as auth_router
 from routers.posts_router import router as posts_router
-from routers.pdf_router import router as pdf_router
+from routers.payments_router import router as payments_router, PLAN_LIMITS
 
 # Load environment variables
 load_dotenv()
@@ -55,10 +55,10 @@ app.add_middleware(
     expose_headers=["*"],
 )
 
-# Include auth router
+# Include routers
 app.include_router(auth_router)
-app.include_router(posts_router, prefix="/api/posts", tags=["Posts"])
-app.include_router(pdf_router, prefix="/api/pdf", tags=["PDF"])
+app.include_router(posts_router)       # router already has prefix="/api/posts" inside it
+app.include_router(payments_router)
 
 
 # Initialize database on startup
@@ -133,9 +133,17 @@ class DetectSubjectResponse(BaseModel):
 
 def check_rate_limit(user: User, db: Session) -> tuple[bool, int, float]:
     """
-    Check if user has exceeded rate limit.
+    Check if user has exceeded their plan's PDF generation limit.
     Returns: (is_allowed, remaining_count, hours_until_reset)
     """
+    # Determine limit from user's plan
+    user_plan = getattr(user, "plan", "free") or "free"
+    plan_pdf_limit = PLAN_LIMITS.get(user_plan, PLAN_LIMITS["free"])["pdf"]
+
+    # Universe plan = unlimited (use a sentinel value of 999999)
+    if plan_pdf_limit >= 999999:
+        return True, 999999, 0
+
     cutoff_time = datetime.now(timezone.utc) - timedelta(hours=RATE_LIMIT_HOURS)
     
     # Count generations in the rate limit window
@@ -145,10 +153,10 @@ def check_rate_limit(user: User, db: Session) -> tuple[bool, int, float]:
     ).order_by(PDFGeneration.created_at.asc()).all()
     
     used_count = len(recent_generations)
-    remaining = max(0, RATE_LIMIT_COUNT - used_count)
+    remaining = max(0, plan_pdf_limit - used_count)
     
     # Calculate reset time (when the oldest generation expires)
-    if recent_generations and used_count >= RATE_LIMIT_COUNT:
+    if recent_generations and used_count >= plan_pdf_limit:
         oldest = recent_generations[0]
         reset_time = oldest.created_at + timedelta(hours=RATE_LIMIT_HOURS)
         hours_until_reset = (reset_time - datetime.now(timezone.utc)).total_seconds() / 3600
@@ -156,7 +164,7 @@ def check_rate_limit(user: User, db: Session) -> tuple[bool, int, float]:
     else:
         hours_until_reset = 0
     
-    is_allowed = used_count < RATE_LIMIT_COUNT
+    is_allowed = used_count < plan_pdf_limit
     return is_allowed, remaining, hours_until_reset
 
 
@@ -241,14 +249,17 @@ async def get_rate_limit(
     current_user: User = Depends(get_current_user_required),
     db: Session = Depends(get_db)
 ):
-    """Get current rate limit status."""
+    """Get current rate limit status for the logged-in user."""
+    user_plan = getattr(current_user, "plan", "free") or "free"
+    plan_pdf_limit = PLAN_LIMITS.get(user_plan, PLAN_LIMITS["free"])["pdf"]
+
     is_allowed, remaining, reset_hours = check_rate_limit(current_user, db)
     
     return RateLimitInfo(
-        limit=RATE_LIMIT_COUNT,
-        remaining=remaining,
+        limit=plan_pdf_limit if plan_pdf_limit < 999999 else -1,
+        remaining=remaining if remaining < 999999 else -1,
         reset_hours=round(reset_hours, 2),
-        used=RATE_LIMIT_COUNT - remaining
+        used=(plan_pdf_limit - remaining) if plan_pdf_limit < 999999 else 0
     )
 
 

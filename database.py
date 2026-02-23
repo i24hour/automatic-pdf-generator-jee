@@ -55,12 +55,15 @@ def init_db():
         SharedPDF,
         PDFLike,
         UserBadge,
+        PaymentOrder,
+        UserSubscription,
     )  # Import here to avoid circular imports
     Base.metadata.create_all(bind=engine)
 
     try:
         from sqlalchemy import text
         with engine.connect() as conn:
+            # --- existing migrations ---
             try:
                 conn.execute(text("ALTER TABLE users ADD COLUMN username VARCHAR(50)"))
                 conn.commit()
@@ -72,5 +75,31 @@ def init_db():
                 conn.commit()
             except Exception:
                 conn.rollback()
+
+            # --- payment / subscription migrations ---
+            try:
+                conn.execute(text("ALTER TABLE users ADD COLUMN is_premium BOOLEAN DEFAULT FALSE"))
+                conn.commit()
+            except Exception:
+                conn.rollback()
+
+            try:
+                conn.execute(text("ALTER TABLE users ADD COLUMN plan VARCHAR(20) DEFAULT 'free'"))
+                conn.commit()
+            except Exception:
+                conn.rollback()
+
+            try:
+                conn.execute(text("ALTER TABLE users ADD COLUMN phone VARCHAR(20)"))
+                conn.commit()
+            except Exception:
+                conn.rollback()
+
+            try:
+                conn.execute(text("ALTER TABLE users ADD COLUMN class_grade VARCHAR(20)"))
+                conn.commit()
+            except Exception:
+                conn.rollback()
+
     except Exception as e:
         print(f"Migration warning (can be ignored if columns exist): {e}")

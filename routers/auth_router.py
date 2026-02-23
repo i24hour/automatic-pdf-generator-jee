@@ -45,7 +45,12 @@ class UserResponse(BaseModel):
     id: str
     email: str
     name: str = None
+    username: str = None
+    phone: str = None
+    class_grade: str = None
     is_verified: bool = False
+    is_premium: bool = False
+    plan: str = "free"
     
     class Config:
         from_attributes = True

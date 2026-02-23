@@ -27,8 +27,13 @@ class User(Base):
     hashed_password = Column(String, nullable=False)
     name = Column(String, nullable=True)
     username = Column(String, unique=True, index=True, nullable=True)
+    phone = Column(String, nullable=True)
+    class_grade = Column(String, nullable=True)
     is_verified = Column(Boolean, default=False)
     total_posts = Column(Integer, default=0)
+    # Subscription fields
+    is_premium = Column(Boolean, default=False)
+    plan = Column(String, default="free")  # "free" | "earth" | "universe"
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     
     # Relationships
@@ -37,6 +42,8 @@ class User(Base):
     shared_pdfs = relationship("SharedPDF", back_populates="user", cascade="all, delete-orphan")
     pdf_likes = relationship("PDFLike", back_populates="user", cascade="all, delete-orphan")
     badges = relationship("UserBadge", back_populates="user", cascade="all, delete-orphan")
+    payment_orders = relationship("PaymentOrder", back_populates="user", cascade="all, delete-orphan")
+    subscription = relationship("UserSubscription", back_populates="user", uselist=False, cascade="all, delete-orphan")
     
     def __repr__(self):
         return f"<User {self.email}>"
@@ -216,3 +223,51 @@ class UserBadge(Base):
 
     def __repr__(self):
         return f"<UserBadge {self.badge_type} for {self.user_id}>"
+
+
+# ============================================================
+# Payment & Subscription Models
+# ============================================================
+
+class PaymentOrder(Base):
+    """Tracks every Cashfree payment order."""
+    __tablename__ = "payment_orders"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    # Cashfree order_id we generate (e.g. "order_abc12_17...") 
+    cf_order_id = Column(String, unique=True, index=True, nullable=False)
+    # Cashfree's own payment ID, filled after payment
+    cf_payment_id = Column(String, nullable=True)
+    # "earth_monthly" | "earth_annual" | "universe_monthly" | "universe_annual"
+    plan_key = Column(String, nullable=False)
+    amount_paise = Column(Integer, nullable=False)   # amount in paise (₹19 = 1900)
+    currency = Column(String, default="INR")
+    # PENDING | PAID | FAILED
+    status = Column(String, default="PENDING")
+    # Returned by Cashfree on order creation – SDK uses this to open checkout
+    payment_session_id = Column(String, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    user = relationship("User", back_populates="payment_orders")
+
+    def __repr__(self):
+        return f"<PaymentOrder {self.cf_order_id} {self.status}>"
+
+
+class UserSubscription(Base):
+    """Active subscription record for a user (one row per user, upserted on each payment)."""
+    __tablename__ = "user_subscriptions"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False)
+    # "free" | "earth" | "universe"
+    plan = Column(String, default="free", nullable=False)
+    is_active = Column(Boolean, default=True)
+    starts_at = Column(DateTime(timezone=True), server_default=func.now())
+    expires_at = Column(DateTime(timezone=True), nullable=True)
+
+    user = relationship("User", back_populates="subscription")
+
+    def __repr__(self):
+        return f"<UserSubscription {self.plan} expires={self.expires_at}>"
