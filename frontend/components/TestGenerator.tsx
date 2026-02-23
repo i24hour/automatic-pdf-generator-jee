@@ -801,6 +801,18 @@ export default function TestGenerator() {
         }
     }, [subject]);
 
+    const fetchRateLimit = async () => {
+        try {
+            const response = await authFetch(`${API_BASE_URL}/api/rate-limit`);
+            if (response.ok) {
+                const data = await response.json();
+                setRateLimit(data);
+            }
+        } catch (err) {
+            console.error("Failed to fetch rate limit:", err);
+        }
+    };
+
     // Fetch rate limit on mount and after generation
     useEffect(() => {
         if (isAuthenticated && token) {
@@ -900,18 +912,6 @@ export default function TestGenerator() {
             if (checkTimeoutRef.current) clearTimeout(checkTimeoutRef.current);
         };
     }, [topic, subject, level]);
-
-    const fetchRateLimit = async () => {
-        try {
-            const response = await authFetch(`${API_BASE_URL}/api/rate-limit`);
-            if (response.ok) {
-                const data = await response.json();
-                setRateLimit(data);
-            }
-        } catch (err) {
-            console.error("Failed to fetch rate limit:", err);
-        }
-    };
 
     const handleGenerate = async () => {
         if (!isAuthenticated) {
