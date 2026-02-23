@@ -801,13 +801,6 @@ export default function TestGenerator() {
         }
     }, [subject]);
 
-    // Redirect to login if not authenticated
-    useEffect(() => {
-        if (!authLoading && !isAuthenticated) {
-            router.push("/login");
-        }
-    }, [authLoading, isAuthenticated, router]);
-
     // Fetch rate limit on mount and after generation
     useEffect(() => {
         if (isAuthenticated) {
@@ -921,6 +914,11 @@ export default function TestGenerator() {
     };
 
     const handleGenerate = async () => {
+        if (!isAuthenticated) {
+            router.push("/signup");
+            return;
+        }
+
         const remaining = rateLimit?.remaining ?? 0;
         if (remaining <= 0) {
             alert("Limit reached! Please wait for reset.");
@@ -1089,21 +1087,16 @@ export default function TestGenerator() {
 
     const handleLogout = () => {
         logout();
-        router.push("/login");
+        router.push("/signup");
     };
 
-    // Show loading while checking auth
+    // Show loading while checking auth (brief spinner, then render the full UI)
     if (authLoading) {
         return (
             <main className="min-h-screen flex items-center justify-center">
                 <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
             </main>
         );
-    }
-
-    // Don't render if not authenticated (will redirect)
-    if (!isAuthenticated) {
-        return null;
     }
 
     const handleResendVerification = async () => {
@@ -1177,15 +1170,24 @@ export default function TestGenerator() {
     return (
         <div className="w-full min-h-screen md:min-h-0 bg-white dark:bg-black pb-16 md:pb-0">
             <div className="max-w-2xl mx-auto px-4">
-                {/* Mobile Header with Logout */}
+                {/* Mobile Header with Login/Logout */}
                 <div className="md:hidden flex justify-end px-4 pt-4">
-                    <button
-                        onClick={logout}
-                        className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
-                    >
-                        <LogOut className="w-4 h-4" />
-                        <span>Logout</span>
-                    </button>
+                    {isAuthenticated ? (
+                        <button
+                            onClick={logout}
+                            className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                        >
+                            <LogOut className="w-4 h-4" />
+                            <span>Logout</span>
+                        </button>
+                    ) : (
+                        <a
+                            href="/signup"
+                            className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition-colors"
+                        >
+                            Sign Up Free
+                        </a>
+                    )}
                 </div>
 
                 {/* Header */}
@@ -1219,6 +1221,10 @@ export default function TestGenerator() {
                     </button>
                     <button
                         onClick={() => {
+                            if (!isAuthenticated) {
+                                router.push("/signup");
+                                return;
+                            }
                             const plan = (user as any)?.plan || "free";
                             if (plan === "free") {
                                 router.push("/pricing");
@@ -1237,37 +1243,45 @@ export default function TestGenerator() {
                 </div>
             </div>
 
-            {/* Rate Limit Badge */}
-            {pageMode === "student" && rateLimit && (
-                <div className="flex flex-col items-center mb-3 md:mb-6 gap-2">
-                    {/* Status pill */}
-                    <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm ${
-                        rateLimit.remaining > 0
-                            ? "bg-green-100 text-green-700 border border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800"
-                            : "bg-red-100 text-red-700 border border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800"
-                    }`}>
-                        <Clock className="w-4 h-4" />
-                        <span>
-                            {rateLimit.remaining === -1 ? "Unlimited" : `${rateLimit.remaining}/${rateLimit.limit}`} generations this month
-                        </span>
-                        {rateLimit.reset_hours > 0 && (
-                            <span className="text-gray-500 dark:text-gray-400">
-                                · resets 1st of next month
-                            </span>
-                        )}
-                    </div>
-
-                    {/* Upgrade nudge when limit is hit */}
-                    {rateLimit.remaining === 0 && (
-                        <a
-                            href="/pricing"
-                            className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-semibold hover:opacity-90 transition-opacity shadow-md"
-                        >
-                            <Zap className="w-4 h-4" />
-                            Upgrade — Earth ₹19 · Universe ₹99
-                        </a>
-                    )}
-                </div>
+            {/* Rate Limit Badge / Sign Up CTA */}
+            {pageMode === "student" && (
+                <>
+                    {!isAuthenticated ? (
+                        <div className="flex flex-col items-center mb-3 md:mb-6 gap-2">
+                            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm bg-indigo-100 text-indigo-700 border border-indigo-200 dark:bg-indigo-900/20 dark:text-indigo-400 dark:border-indigo-800">
+                                <Zap className="w-4 h-4" />
+                                <span>Free: 5 PDFs/month — <a href="/signup" className="underline font-semibold">Sign up free</a></span>
+                            </div>
+                        </div>
+                    ) : rateLimit ? (
+                        <div className="flex flex-col items-center mb-3 md:mb-6 gap-2">
+                            <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm ${
+                                rateLimit.remaining > 0
+                                    ? "bg-green-100 text-green-700 border border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800"
+                                    : "bg-red-100 text-red-700 border border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800"
+                            }`}>
+                                <Clock className="w-4 h-4" />
+                                <span>
+                                    {rateLimit.remaining === -1 ? "Unlimited" : `${rateLimit.remaining}/${rateLimit.limit}`} generations this month
+                                </span>
+                                {rateLimit.reset_hours > 0 && (
+                                    <span className="text-gray-500 dark:text-gray-400">
+                                        · resets 1st of next month
+                                    </span>
+                                )}
+                            </div>
+                            {rateLimit.remaining === 0 && (
+                                <a
+                                    href="/pricing"
+                                    className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-semibold hover:opacity-90 transition-opacity shadow-md"
+                                >
+                                    <Zap className="w-4 h-4" />
+                                    Upgrade — Earth ₹19 · Universe ₹99
+                                </a>
+                            )}
+                        </div>
+                    ) : null}
+                </>
             )}
 
             {/* Main Card - Student Mode */}

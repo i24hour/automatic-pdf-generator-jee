@@ -61,7 +61,7 @@ export default function PricingPage() {
 
     const handleBuy = async (planKey: string) => {
         if (!isAuthenticated) {
-            router.push("/login?redirect=/pricing");
+            router.push("/signup");
             return;
         }
 

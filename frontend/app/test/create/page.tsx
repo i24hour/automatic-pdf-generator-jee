@@ -115,7 +115,7 @@ function CreateTestForm() {
 
         const token = localStorage.getItem('auth_token');
         if (!token) {
-            router.push('/login?redirect=/test/create');
+            router.push('/signup');
             return;
         }
 

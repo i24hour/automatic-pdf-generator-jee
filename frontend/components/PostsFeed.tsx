@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '@/lib/auth-context';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://mentors-mantra-api-87253755436.us-central1.run.app';
@@ -37,6 +37,7 @@ interface FeedResponse {
 export default function PostsFeed() {
     const { token, user } = useAuth();
     const searchParams = useSearchParams();
+    const router = useRouter();
 
     // Initial state from URL params
     const [posts, setPosts] = useState<Post[]>([]);
@@ -152,7 +153,7 @@ export default function PostsFeed() {
 
     const handleLike = async (postId: string, isLiked: boolean) => {
         if (!token) {
-            alert('Please login to like posts');
+            router.push('/signup');
             return;
         }
 
@@ -200,6 +201,11 @@ export default function PostsFeed() {
     };
 
     const handleDownload = async (post: Post) => {
+        if (!token) {
+            router.push('/signup');
+            return;
+        }
+
         // Track download
         try {
             await fetch(`${API_URL}/api/posts/${post.id}/download`, { method: 'POST' });
