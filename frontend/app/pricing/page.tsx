@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
     Check,
@@ -40,9 +40,22 @@ const FEATURES: PlanFeature[] = [
 // ---------------------------------------------------------
 export default function PricingPage() {
     const router = useRouter();
-    const { user, isAuthenticated, authFetch } = useAuth();
+    const { user, isAuthenticated, authFetch, refreshUser } = useAuth();
     const [loading, setLoading] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const [planLoading, setPlanLoading] = useState(true);
+
+    // Always fetch fresh plan from server when pricing page loads
+    useEffect(() => {
+        const fetchFreshPlan = async () => {
+            try {
+                await refreshUser();
+            } finally {
+                setPlanLoading(false);
+            }
+        };
+        fetchFreshPlan();
+    }, []);
 
     const currentPlan = (user as any)?.plan || "free";
 
@@ -91,20 +104,11 @@ export default function PricingPage() {
         <div className="min-h-screen bg-white dark:bg-black">
             {/* Mobile */}
             <div className="md:hidden pb-20">
-                <PricingContent
-                    currentPlan={currentPlan}
-                    loading={loading}
-                    error={error}
-                    onBuy={handleBuy}
-                    onBack={() => router.back()}
-                />
-                <MobileNav />
-            </div>
-
-            {/* Desktop */}
-            <div className="hidden md:flex min-h-screen">
-                <DesktopSidebar />
-                <main className="flex-1 ml-[275px] min-h-screen p-8">
+                {planLoading ? (
+                    <div className="flex items-center justify-center h-screen">
+                        <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+                    </div>
+                ) : (
                     <PricingContent
                         currentPlan={currentPlan}
                         loading={loading}
@@ -112,6 +116,27 @@ export default function PricingPage() {
                         onBuy={handleBuy}
                         onBack={() => router.back()}
                     />
+                )}
+                <MobileNav />
+            </div>
+
+            {/* Desktop */}
+            <div className="hidden md:flex min-h-screen">
+                <DesktopSidebar />
+                <main className="flex-1 ml-[275px] min-h-screen p-8">
+                    {planLoading ? (
+                        <div className="flex items-center justify-center h-screen">
+                            <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+                        </div>
+                    ) : (
+                        <PricingContent
+                            currentPlan={currentPlan}
+                            loading={loading}
+                            error={error}
+                            onBuy={handleBuy}
+                            onBack={() => router.back()}
+                        />
+                    )}
                 </main>
             </div>
         </div>
