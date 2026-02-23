@@ -237,14 +237,14 @@ async def cashfree_webhook(request: Request, db: Session = Depends(get_db)):
     if not order:
         return {"status": "ignored", "reason": "order not in DB"}
 
-    if event_type == "PAYMENT_SUCCESS":
+    if event_type == "PAYMENT_SUCCESS_WEBHOOK":
         cf_payment_id = data.get("data", {}).get("payment", {}).get("cf_payment_id")
         order.status        = "PAID"
         order.cf_payment_id = str(cf_payment_id) if cf_payment_id else None
         db.commit()
         _activate_subscription(order, db)
 
-    elif event_type in ("PAYMENT_FAILED", "PAYMENT_USER_DROPPED"):
+    elif event_type in ("PAYMENT_FAILED_WEBHOOK", "PAYMENT_USER_DROPPED_WEBHOOK"):
         order.status = "FAILED"
         db.commit()
 
