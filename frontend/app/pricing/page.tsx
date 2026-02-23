@@ -174,8 +174,6 @@ function PricingContent({ currentPlan, loading, error, onBuy, onBack }: PricingC
                     features={[
                         "5 PDFs per 6 hours",
                         "4 tests",
-                        "No Institute PDF",
-                        "No Video Generator",
                         "Limited Bot Analysis",
                     ]}
                     badFeatures={["Institute PDF", "Video Generator"]}
