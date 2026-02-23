@@ -254,7 +254,30 @@ def check_rate_limit(user: User, db: Session) -> tuple[bool, int, float]:
     return is_allowed, remaining, hours_until_reset, user_total_limit
 
 
-def record_generation(user: User, request: GenerateRequest, pdf_filename: str, db: Session):
+def check_institute_rate_limit(user: User, db: Session) -> tuple:
+    """Check if user can generate more institute PDFs this month.
+    Returns (is_allowed, remaining, limit).
+    earth plan: 1 institute PDF/month, universe plan: 4 institute PDFs/month.
+    """
+    INSTITUTE_LIMITS = {"earth": 1, "universe": 4}
+    plan = getattr(user, "plan", "free") or "free"
+    limit = INSTITUTE_LIMITS.get(plan, 0)
+    if limit == 0:
+        return False, 0, 0
+
+    now = datetime.now(timezone.utc)
+    start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    db.expire_all()
+    used = db.query(PDFGeneration).filter(
+        PDFGeneration.user_id == user.id,
+        PDFGeneration.is_institute == True,
+        PDFGeneration.created_at >= start_of_month
+    ).count()
+    remaining = max(0, limit - used)
+    return remaining > 0, remaining, limit
+
+
+def record_generation(user: User, request: GenerateRequest, pdf_filename: str, db: Session, is_institute: bool = False):
     """Record a PDF generation for rate limiting."""
     generation = PDFGeneration(
         user_id=user.id,
@@ -262,7 +285,8 @@ def record_generation(user: User, request: GenerateRequest, pdf_filename: str, d
         topic=request.topic,
         level=request.level,
         question_count=request.total_questions,
-        pdf_filename=pdf_filename
+        pdf_filename=pdf_filename,
+        is_institute=is_institute
     )
     db.add(generation)
     db.commit()
@@ -600,6 +624,7 @@ class InstituteGenerateUserResponse(BaseModel):
     pdf_filename: Optional[str] = None
     pdf_base64: Optional[str] = None
     chapters_classified: List[dict] = []
+    institute_remaining: Optional[int] = None
 
 
 @app.post("/api/generate-institute", response_model=InstituteGenerateUserResponse)
@@ -617,6 +642,14 @@ async def generate_institute_test_for_user(
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Institute PDF generation is available on Earth and Universe plans only."
+        )
+
+    # Check institute PDF monthly limit (Earth: 1/month, Universe: 4/month)
+    inst_allowed, inst_remaining, inst_limit = check_institute_rate_limit(current_user, db)
+    if not inst_allowed:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=f"Institute PDF limit reached. Your {plan.capitalize()} plan allows {inst_limit} institute PDF(s) per month. Resets on the 1st of next month."
         )
 
     EXAM_LIMITS = {
@@ -760,7 +793,10 @@ async def generate_institute_test_for_user(
         "cbse_mcq": None, "cbse_vsa": None, "cbse_sa": None, "cbse_la": None, "cbse_case": None,
         "num_matrix": None, "num_paragraph": None
     })()
-    record_generation(current_user, fake_req, os.path.basename(pdf_path), db)
+    record_generation(current_user, fake_req, os.path.basename(pdf_path), db, is_institute=True)
+
+    # Recalculate remaining after recording
+    _, inst_remaining_after, _ = check_institute_rate_limit(current_user, db)
 
     pdf_base64_str = None
     try:
@@ -774,7 +810,8 @@ async def generate_institute_test_for_user(
         message=f"Institute test paper generated with {len(all_questions)} questions",
         pdf_filename=os.path.basename(pdf_path),
         pdf_base64=pdf_base64_str,
-        chapters_classified=chapters_classified
+        chapters_classified=chapters_classified,
+        institute_remaining=inst_remaining_after
     )
 
 

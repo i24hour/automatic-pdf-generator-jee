@@ -108,6 +108,14 @@ function InstituteSection({
     const [difficulty, setDifficulty] = React.useState("Medium");
     const [pdfBase64, setPdfBase64] = React.useState<string | null>(null);
     const [pdfFilename, setPdfFilename] = React.useState<string | null>(null);
+    const [instituteRemaining, setInstituteRemaining] = React.useState<number | null>(null);
+
+    // Per-subject question count limits per exam type
+    const EXAM_LIMITS: Record<string, Record<string, number>> = {
+        "Mains":    { Physics: 25, Chemistry: 25, Maths: 25 },
+        "NEET":     { Physics: 45, Chemistry: 45, Zoology: 45, Botany: 45 },
+        "Advanced": { Physics: 18, Chemistry: 18, Maths: 18 },
+    };
 
     // Chapter dropdown state (mirrors student mode)
     const [instSubject, setInstSubject] = React.useState<string[]>(["Physics"]);
@@ -117,16 +125,24 @@ function InstituteSection({
     const [instDropdownOpen, setInstDropdownOpen] = React.useState(false);
     const instDropdownRef = React.useRef<HTMLDivElement>(null);
 
+    // Per-subject question counts
+    const [subjectCounts, setSubjectCounts] = React.useState<Record<string, number>>(
+        { Physics: 25, Chemistry: 25, Maths: 25 }
+    );
+
     // Subjects available (same as student mode — NEET gets bio subjects)
     const allSubjects = examType === "NEET"
         ? ["Physics", "Chemistry", "Zoology", "Botany"]
         : ["Physics", "Chemistry", "Maths"];
 
-    // Keep subject selection in sync with exam type
+    // Keep subject selection and counts in sync with exam type
     React.useEffect(() => {
         setInstSubject(examType === "NEET" ? ["Physics", "Chemistry", "Zoology", "Botany"] : ["Physics", "Chemistry", "Maths"]);
         setInstSelectedChapters([]);
         setInstSearchQuery("");
+        // Reset counts to exam max when exam type changes
+        const limits = EXAM_LIMITS[examType] || {};
+        setSubjectCounts({ ...limits });
     }, [examType]);
 
     // Update dropdown list when subject or query changes
@@ -175,6 +191,11 @@ function InstituteSection({
                     chapters: instSelectedChapters,
                     exam_type: examType,
                     difficulty,
+                    physics_count: subjectCounts["Physics"] ?? undefined,
+                    chemistry_count: subjectCounts["Chemistry"] ?? undefined,
+                    maths_count: subjectCounts["Maths"] ?? undefined,
+                    zoology_count: subjectCounts["Zoology"] ?? undefined,
+                    botany_count: subjectCounts["Botany"] ?? undefined,
                 }),
             });
             const data = await res.json();
@@ -184,6 +205,9 @@ function InstituteSection({
             if (data.pdf_base64) {
                 setPdfBase64(data.pdf_base64);
                 setPdfFilename(data.pdf_filename || "institute_test.pdf");
+            }
+            if (typeof data.institute_remaining === "number") {
+                setInstituteRemaining(data.institute_remaining);
             }
         } catch (err: any) {
             setInstituteError(err.message || "Something went wrong. Please try again.");
@@ -472,6 +496,38 @@ function InstituteSection({
                 <div className="fixed inset-0 z-40" onClick={() => setInstDropdownOpen(false)} />
             )}
 
+            {/* Per-Subject Question Counts */}
+            <div className="mb-6">
+                <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Questions per Subject
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                    {allSubjects.map(subj => {
+                        const maxCount = EXAM_LIMITS[examType]?.[subj] ?? 25;
+                        const val = subjectCounts[subj] ?? maxCount;
+                        return (
+                            <div key={subj}>
+                                <label className="block mb-1 text-xs text-gray-500 dark:text-gray-400">
+                                    {subj} <span className="text-gray-400 dark:text-gray-600">(max {maxCount})</span>
+                                </label>
+                                <input
+                                    type="number"
+                                    min={1}
+                                    max={maxCount}
+                                    value={val}
+                                    onChange={e => {
+                                        const parsed = parseInt(e.target.value);
+                                        const clamped = isNaN(parsed) ? 1 : Math.min(Math.max(parsed, 1), maxCount);
+                                        setSubjectCounts(prev => ({ ...prev, [subj]: clamped }));
+                                    }}
+                                    className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-[#2f3336] bg-gray-50 dark:bg-[#1a1d21] text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                />
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+
             {/* Error */}
             {instituteError && (
                 <div className="mb-4 flex items-start gap-2 px-4 py-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm">
@@ -487,6 +543,11 @@ function InstituteSection({
                         <CheckCircle2 className="w-5 h-5" />
                         Institute test paper ready!
                     </div>
+                    {instituteRemaining !== null && (
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                            {instituteRemaining} institute PDF{instituteRemaining !== 1 ? "s" : ""} remaining this month
+                        </p>
+                    )}
                     <button
                         onClick={handleDownload}
                         className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-green-600 hover:bg-green-700 text-white text-sm font-semibold transition-colors shadow-sm"
@@ -518,7 +579,7 @@ function InstituteSection({
 
             {/* Plan info */}
             <p className="mt-3 text-center text-xs text-gray-400 dark:text-gray-500">
-                Available on Earth &amp; Universe plans · Uses your monthly generation quota
+                Earth plan: 1 institute PDF/month · Universe plan: 4 institute PDFs/month
             </p>
         </div>
     );

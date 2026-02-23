@@ -117,7 +117,9 @@ class PDFGeneration(Base):
     status = Column(String, default="COMPLETED")  # PENDING, PROCESSING, COMPLETED, FAILED
     error_message = Column(Text, nullable=True)
     job_id = Column(String, nullable=True)  # For tracking
-    
+
+    is_institute = Column(Boolean, default=False, nullable=False, server_default="false")
+
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     
     # Relationship
