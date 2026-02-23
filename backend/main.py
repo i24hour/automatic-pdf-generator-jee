@@ -42,7 +42,7 @@ from services.job_store import job_store, JobStatus
 load_dotenv()
 
 # Rate limiting configuration
-RATE_LIMIT_COUNT = int(os.getenv("RATE_LIMIT_COUNT", "8"))
+RATE_LIMIT_COUNT = int(os.getenv("RATE_LIMIT_COUNT", "5"))
 RATE_LIMIT_HOURS = int(os.getenv("RATE_LIMIT_HOURS", "24"))
 
 # Initialize FastAPI app
@@ -576,6 +576,206 @@ async def generate_test(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+class InstituteGenerateUserRequest(BaseModel):
+    """Request model for institute test generation by regular (paid) users."""
+    institute_name: str = Field(..., description="Name of the institute")
+    contact_number: Optional[str] = Field(default="", description="Contact number")
+    institute_email: Optional[str] = Field(default="", description="Institute email")
+    chapters: List[str] = Field(..., description="List of chapter names")
+    exam_type: str = Field(..., description="Mains, NEET, or Advanced")
+    difficulty: str = Field(default="Medium", description="Easy, Medium, or Hard")
+    physics_count: Optional[int] = None
+    chemistry_count: Optional[int] = None
+    maths_count: Optional[int] = None
+    zoology_count: Optional[int] = None
+    botany_count: Optional[int] = None
+
+
+class InstituteGenerateUserResponse(BaseModel):
+    """Response for institute test generation by regular users."""
+    success: bool
+    message: str
+    pdf_filename: Optional[str] = None
+    pdf_base64: Optional[str] = None
+    chapters_classified: List[dict] = []
+
+
+@app.post("/api/generate-institute", response_model=InstituteGenerateUserResponse)
+async def generate_institute_test_for_user(
+    request: InstituteGenerateUserRequest,
+    current_user: User = Depends(get_current_user_required),
+    db: Session = Depends(get_db)
+):
+    """
+    Generate an institute-branded test paper for paid (Earth/Universe) plan users.
+    """
+    from routers.payments_router import PLAN_LIMITS
+    plan = getattr(current_user, "plan", "free") or "free"
+    if plan not in ("earth", "universe"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Institute PDF generation is available on Earth and Universe plans only."
+        )
+
+    EXAM_LIMITS = {
+        "Mains": {"Physics": 25, "Chemistry": 25, "Maths": 25},
+        "NEET": {"Physics": 45, "Chemistry": 45, "Zoology": 45, "Botany": 45},
+        "Advanced": {"Physics": 18, "Chemistry": 18, "Maths": 18}
+    }
+    if request.exam_type not in EXAM_LIMITS:
+        raise HTTPException(status_code=400, detail=f"Invalid exam type: {request.exam_type}")
+
+    limits = EXAM_LIMITS[request.exam_type]
+
+    # Classify chapters by subject
+    chapters_classified = []
+    chapters_by_subject: Dict[str, List[str]] = {"Physics": [], "Chemistry": [], "Maths": [], "Zoology": [], "Botany": []}
+
+    for chapter in request.chapters:
+        if not chapter.strip():
+            continue
+        result = llm_engine.detect_subject(chapter.strip())
+        subj = result.get("subject", "Physics")
+        is_multi = result.get("is_multi", False)
+        if is_multi:
+            if subj == "PCM":
+                for s in ["Physics", "Chemistry", "Maths"]:
+                    chapters_by_subject[s].append(chapter.strip())
+                    chapters_classified.append({"chapter": chapter.strip(), "subject": s})
+            elif subj == "PCMB":
+                for s in ["Physics", "Chemistry", "Maths", "Zoology", "Botany"]:
+                    chapters_by_subject[s].append(chapter.strip())
+                    chapters_classified.append({"chapter": chapter.strip(), "subject": s})
+            elif subj == "PCB":
+                for s in ["Physics", "Chemistry", "Zoology"]:
+                    chapters_by_subject[s].append(chapter.strip())
+                    chapters_classified.append({"chapter": chapter.strip(), "subject": s})
+        else:
+            chapters_classified.append({"chapter": chapter.strip(), "subject": subj})
+            if subj in chapters_by_subject:
+                chapters_by_subject[subj].append(chapter.strip())
+
+    # Determine question counts
+    if request.exam_type == "NEET":
+        phy_count = min(request.physics_count or limits["Physics"], limits["Physics"])
+        chem_count = min(request.chemistry_count or limits["Chemistry"], limits["Chemistry"])
+        zoo_count = min(request.zoology_count or limits.get("Zoology", 45), limits.get("Zoology", 45))
+        bot_count = min(request.botany_count or limits.get("Botany", 45), limits.get("Botany", 45))
+        maths_count = 0
+    else:
+        phy_count = min(request.physics_count or limits["Physics"], limits["Physics"])
+        chem_count = min(request.chemistry_count or limits["Chemistry"], limits["Chemistry"])
+        maths_count = min(request.maths_count or limits.get("Maths", 25), limits.get("Maths", 25))
+        zoo_count = 0
+        bot_count = 0
+
+    # Async question generation per subject
+    import asyncio
+
+    async def gen_subject(subj, chapters, count, exam_type, difficulty):
+        if count == 0 or not chapters:
+            return []
+        topic = ", ".join(chapters)
+        if exam_type == "NEET":
+            mcq_count = count
+            num_count = 0
+        else:
+            mcq_count = int(count * 0.8)
+            num_count = count - mcq_count
+        result = await llm_engine.generate_questions_async(
+            subject=subj,
+            topic=topic,
+            mcq_count=mcq_count,
+            numerical_count=num_count,
+            level=exam_type,
+            difficulty=difficulty
+        )
+        if result.get("success"):
+            qs = result.get("questions", [])
+            for q in qs:
+                q["subject"] = subj
+            return qs
+        return []
+
+    tasks = []
+    if phy_count > 0 and chapters_by_subject["Physics"]:
+        tasks.append(gen_subject("Physics", chapters_by_subject["Physics"], phy_count, request.exam_type, request.difficulty))
+    if chem_count > 0 and chapters_by_subject["Chemistry"]:
+        tasks.append(gen_subject("Chemistry", chapters_by_subject["Chemistry"], chem_count, request.exam_type, request.difficulty))
+    if maths_count > 0 and chapters_by_subject["Maths"]:
+        tasks.append(gen_subject("Maths", chapters_by_subject["Maths"], maths_count, request.exam_type, request.difficulty))
+    if zoo_count > 0 and chapters_by_subject["Zoology"]:
+        tasks.append(gen_subject("Zoology", chapters_by_subject["Zoology"], zoo_count, request.exam_type, request.difficulty))
+    if bot_count > 0 and chapters_by_subject["Botany"]:
+        tasks.append(gen_subject("Botany", chapters_by_subject["Botany"], bot_count, request.exam_type, request.difficulty))
+
+    if not tasks:
+        raise HTTPException(status_code=400, detail="No valid chapters could be classified for generation.")
+
+    results = await asyncio.gather(*tasks)
+    all_questions: List[Any] = []
+    for r in results:
+        if isinstance(r, list):
+            all_questions.extend(r)
+
+    if not all_questions:
+        raise HTTPException(status_code=500, detail="Failed to generate questions. Please try again.")
+
+    # Build PDF data with institute branding
+    safe_topic = ", ".join(request.chapters[:3]).replace("&", "and").replace("/", "-").replace(" ", "_")[:50]
+    filename = f"Institute_{request.exam_type}_{request.difficulty}_{safe_topic}"
+
+    pdf_data = {
+        "subject": "Multi-Subject",
+        "topic": ", ".join(request.chapters),
+        "level": request.exam_type,
+        "difficulty": request.difficulty,
+        "questions": all_questions,
+        "institute_name": request.institute_name or "",
+        "institute_contact": request.contact_number or "",
+        "institute_email": request.institute_email or "",
+        "is_institute": True
+    }
+
+    try:
+        pdf_path = pdf_engine.generate_pdf(pdf_data, filename)
+        if not pdf_path:
+            raise Exception("PDF generation returned None")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to generate PDF: {str(e)}")
+
+    # Record for rate limiting
+    fake_req = type("Req", (), {
+        "subject": "Institute",
+        "topic": ", ".join(request.chapters[:3]),
+        "level": request.exam_type,
+        "difficulty": request.difficulty,
+        "total_questions": len(all_questions),
+        "num_mcqs": None,
+        "num_numerical": None,
+        "include_solutions": False,
+        "gate_paper": None, "num_msq": None, "num_nat": None, "num_ga": None,
+        "cbse_mcq": None, "cbse_vsa": None, "cbse_sa": None, "cbse_la": None, "cbse_case": None,
+        "num_matrix": None, "num_paragraph": None
+    })()
+    record_generation(current_user, fake_req, os.path.basename(pdf_path), db)
+
+    pdf_base64_str = None
+    try:
+        with open(pdf_path, "rb") as f:
+            pdf_base64_str = base64.b64encode(f.read()).decode("utf-8")
+    except Exception as e:
+        print(f"Warning: Could not encode institute PDF to base64: {e}")
+
+    return InstituteGenerateUserResponse(
+        success=True,
+        message=f"Institute test paper generated with {len(all_questions)} questions",
+        pdf_filename=os.path.basename(pdf_path),
+        pdf_base64=pdf_base64_str,
+        chapters_classified=chapters_classified
+    )
 
 
 @app.get("/api/download/{filename}")

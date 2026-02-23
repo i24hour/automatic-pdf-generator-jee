@@ -20,7 +20,6 @@ import {
     Award,
     LogOut,
     Clock,
-    Gift,
     Leaf,
     Dna,
     Stethoscope,
@@ -76,6 +75,235 @@ interface HistoryItem {
     pdf_filename: string | null;
     status: string;
     created_at: string;
+}
+
+interface InstituteSectionProps {
+    user: any;
+    token: string | null;
+    authFetch: (url: string, options?: RequestInit) => Promise<Response>;
+    instituteName: string;
+    setInstituteName: (v: string) => void;
+    instituteContact: string;
+    setInstituteContact: (v: string) => void;
+    instituteEmail: string;
+    setInstituteEmail: (v: string) => void;
+    instituteGenerating: boolean;
+    setInstituteGenerating: (v: boolean) => void;
+    instituteError: string | null;
+    setInstituteError: (v: string | null) => void;
+    institutePdfUrl: string | null;
+    setInstitutePdfUrl: (v: string | null) => void;
+}
+
+function InstituteSection({
+    user, token, authFetch,
+    instituteName, setInstituteName,
+    instituteContact, setInstituteContact,
+    instituteEmail, setInstituteEmail,
+    instituteGenerating, setInstituteGenerating,
+    instituteError, setInstituteError,
+    institutePdfUrl, setInstitutePdfUrl
+}: InstituteSectionProps) {
+    const [examType, setExamType] = React.useState("Mains");
+    const [difficulty, setDifficulty] = React.useState("Medium");
+    const [chaptersText, setChaptersText] = React.useState("");
+    const [pdfBase64, setPdfBase64] = React.useState<string | null>(null);
+    const [pdfFilename, setPdfFilename] = React.useState<string | null>(null);
+
+    const handleGenerate = async () => {
+        setInstituteError(null);
+        setInstitutePdfUrl(null);
+        setPdfBase64(null);
+        setPdfFilename(null);
+
+        if (!instituteName.trim()) {
+            setInstituteError("Please enter your institute name.");
+            return;
+        }
+        const chapters = chaptersText.split("\n").map(c => c.trim()).filter(Boolean);
+        if (chapters.length === 0) {
+            setInstituteError("Please enter at least one chapter.");
+            return;
+        }
+
+        setInstituteGenerating(true);
+        try {
+            const res = await authFetch(`${API_BASE_URL}/api/generate-institute`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    institute_name: instituteName,
+                    contact_number: instituteContact,
+                    institute_email: instituteEmail,
+                    chapters,
+                    exam_type: examType,
+                    difficulty,
+                }),
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                throw new Error(data.detail || data.message || "Generation failed");
+            }
+            if (data.pdf_base64) {
+                setPdfBase64(data.pdf_base64);
+                setPdfFilename(data.pdf_filename || "institute_test.pdf");
+            }
+        } catch (err: any) {
+            setInstituteError(err.message || "Something went wrong. Please try again.");
+        } finally {
+            setInstituteGenerating(false);
+        }
+    };
+
+    const handleDownload = () => {
+        if (!pdfBase64 || !pdfFilename) return;
+        const byteChars = atob(pdfBase64);
+        const byteArr = new Uint8Array(byteChars.length);
+        for (let i = 0; i < byteChars.length; i++) byteArr[i] = byteChars.charCodeAt(i);
+        const blob = new Blob([byteArr], { type: "application/pdf" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = pdfFilename;
+        a.click();
+        URL.revokeObjectURL(url);
+    };
+
+    return (
+        <div className="bg-white dark:bg-[#16181c] border border-gray-200 dark:border-[#2f3336] rounded-2xl p-4 md:p-6 shadow-lg">
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-1">Institute Test Generator</h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">Generate branded test papers for your institute</p>
+
+            {/* Institute Info */}
+            <div className="space-y-4 mb-6">
+                <div>
+                    <label className="block mb-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Institute Name <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                        type="text"
+                        value={instituteName}
+                        onChange={e => setInstituteName(e.target.value)}
+                        placeholder="e.g. Mentors Mantra Academy"
+                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-[#2f3336] bg-gray-50 dark:bg-[#1a1d21] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                    />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label className="block mb-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">Contact Number</label>
+                        <input
+                            type="text"
+                            value={instituteContact}
+                            onChange={e => setInstituteContact(e.target.value)}
+                            placeholder="e.g. 9821040290"
+                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-[#2f3336] bg-gray-50 dark:bg-[#1a1d21] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                        />
+                    </div>
+                    <div>
+                        <label className="block mb-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">Institute Email</label>
+                        <input
+                            type="email"
+                            value={instituteEmail}
+                            onChange={e => setInstituteEmail(e.target.value)}
+                            placeholder="e.g. info@institute.com"
+                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-[#2f3336] bg-gray-50 dark:bg-[#1a1d21] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                        />
+                    </div>
+                </div>
+            </div>
+
+            {/* Chapters */}
+            <div className="mb-5">
+                <label className="block mb-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Chapters <span className="text-xs text-gray-400 font-normal">(one per line)</span>
+                </label>
+                <textarea
+                    value={chaptersText}
+                    onChange={e => setChaptersText(e.target.value)}
+                    placeholder={"e.g.\nKinematics\nThermodynamics\nOrganic Chemistry"}
+                    rows={5}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-[#2f3336] bg-gray-50 dark:bg-[#1a1d21] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm resize-none font-mono"
+                />
+            </div>
+
+            {/* Exam Type & Difficulty */}
+            <div className="grid grid-cols-2 gap-4 mb-6">
+                <div>
+                    <label className="block mb-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">Exam Type</label>
+                    <select
+                        value={examType}
+                        onChange={e => setExamType(e.target.value)}
+                        className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-[#2f3336] bg-gray-50 dark:bg-[#1a1d21] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                    >
+                        <option value="Mains">JEE Mains</option>
+                        <option value="Advanced">JEE Advanced</option>
+                        <option value="NEET">NEET</option>
+                    </select>
+                </div>
+                <div>
+                    <label className="block mb-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">Difficulty</label>
+                    <select
+                        value={difficulty}
+                        onChange={e => setDifficulty(e.target.value)}
+                        className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-[#2f3336] bg-gray-50 dark:bg-[#1a1d21] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                    >
+                        <option value="Easy">Easy</option>
+                        <option value="Medium">Medium</option>
+                        <option value="Hard">Hard</option>
+                    </select>
+                </div>
+            </div>
+
+            {/* Error */}
+            {instituteError && (
+                <div className="mb-4 flex items-start gap-2 px-4 py-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm">
+                    <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                    <span>{instituteError}</span>
+                </div>
+            )}
+
+            {/* Success / Download */}
+            {pdfBase64 && pdfFilename && (
+                <div className="mb-4 flex flex-col items-center gap-3 px-4 py-4 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
+                    <div className="flex items-center gap-2 text-green-700 dark:text-green-400 text-sm font-medium">
+                        <CheckCircle2 className="w-5 h-5" />
+                        Institute test paper ready!
+                    </div>
+                    <button
+                        onClick={handleDownload}
+                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-green-600 hover:bg-green-700 text-white text-sm font-semibold transition-colors shadow-sm"
+                    >
+                        <Download className="w-4 h-4" />
+                        Download PDF
+                    </button>
+                </div>
+            )}
+
+            {/* Generate Button */}
+            <button
+                onClick={handleGenerate}
+                disabled={instituteGenerating}
+                className="w-full py-3 px-6 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold text-sm transition-colors shadow-sm flex items-center justify-center gap-2"
+            >
+                {instituteGenerating ? (
+                    <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Generating Institute Test…
+                    </>
+                ) : (
+                    <>
+                        <Sparkles className="w-4 h-4" />
+                        Generate Institute Test
+                    </>
+                )}
+            </button>
+
+            {/* Plan info */}
+            <p className="mt-3 text-center text-xs text-gray-400 dark:text-gray-500">
+                Available on Earth &amp; Universe plans · Uses your monthly generation quota
+            </p>
+        </div>
+    );
 }
 
 export default function TestGenerator() {
@@ -139,10 +367,18 @@ export default function TestGenerator() {
     const [rateLimit, setRateLimit] = useState<RateLimitInfo | null>(null);
     const [resendLoading, setResendLoading] = useState(false);
     const [resendMessage, setResendMessage] = useState<string | null>(null);
-    const [promoCode, setPromoCode] = useState("");
-    const [promoLoading, setPromoLoading] = useState(false);
-    const [promoMessage, setPromoMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
     const [isDetectingSubject, setIsDetectingSubject] = useState(false);
+
+    // Page mode: student or institute
+    const [pageMode, setPageMode] = useState<"student" | "institute">("student");
+
+    // Institute form state
+    const [instituteName, setInstituteName] = useState("");
+    const [instituteContact, setInstituteContact] = useState("");
+    const [instituteEmail, setInstituteEmail] = useState("");
+    const [instituteGenerating, setInstituteGenerating] = useState(false);
+    const [instituteError, setInstituteError] = useState<string | null>(null);
+    const [institutePdfUrl, setInstitutePdfUrl] = useState<string | null>(null);
     const detectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     // Note: Removed local elapsedTime, progressStep, timerRef, eventSourceRef, jobId, progressMessage
@@ -402,36 +638,6 @@ export default function TestGenerator() {
             }
         } catch (err) {
             console.error("Failed to fetch rate limit:", err);
-        }
-    };
-
-    const handleApplyPromo = async () => {
-        if (!promoCode.trim()) return;
-
-        setPromoLoading(true);
-        setPromoMessage(null);
-
-        try {
-            const response = await authFetch(`${API_BASE_URL}/api/apply-promo`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ code: promoCode.trim() }),
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                setPromoMessage({ type: "success", text: data.message });
-                setPromoCode("");
-                // Refresh rate limit to show new limit
-                fetchRateLimit();
-            } else {
-                setPromoMessage({ type: "error", text: data.detail || "Failed to apply promo code" });
-            }
-        } catch {
-            setPromoMessage({ type: "error", text: "Failed to apply promo code" });
-        } finally {
-            setPromoLoading(false);
         }
     };
 
@@ -719,8 +925,41 @@ export default function TestGenerator() {
                 </div>
             </div>
 
+            {/* Student / Institute Tab Toggle */}
+            <div className="flex justify-center mb-4 md:mb-6 px-4">
+                <div className="flex bg-gray-100 dark:bg-[#1a1d21] rounded-full p-1 gap-1">
+                    <button
+                        onClick={() => setPageMode("student")}
+                        className={`px-6 py-2 rounded-full text-sm font-semibold transition-all duration-200 ${
+                            pageMode === "student"
+                                ? "bg-white dark:bg-[#16181c] text-gray-900 dark:text-white shadow-sm"
+                                : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+                        }`}
+                    >
+                        Student
+                    </button>
+                    <button
+                        onClick={() => {
+                            const plan = (user as any)?.plan || "free";
+                            if (plan === "free") {
+                                router.push("/pricing");
+                                return;
+                            }
+                            setPageMode("institute");
+                        }}
+                        className={`px-6 py-2 rounded-full text-sm font-semibold transition-all duration-200 ${
+                            pageMode === "institute"
+                                ? "bg-white dark:bg-[#16181c] text-gray-900 dark:text-white shadow-sm"
+                                : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+                        }`}
+                    >
+                        Institute
+                    </button>
+                </div>
+            </div>
+
             {/* Rate Limit Badge */}
-            {rateLimit && (
+            {pageMode === "student" && rateLimit && (
                 <div className="flex flex-col items-center mb-3 md:mb-6 gap-2">
                     {/* Status pill */}
                     <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm ${
@@ -752,41 +991,8 @@ export default function TestGenerator() {
                 </div>
             )}
 
-            {/* Promo Code Section */}
-            <div className="flex justify-center mb-3 md:mb-6">
-                <div className="flex items-center gap-2">
-                    <div className="relative">
-                        <Gift className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <input
-                            type="text"
-                            placeholder="Enter promo code"
-                            value={promoCode}
-                            onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
-
-                            className="pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent w-48 bg-white dark:bg-black text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600"
-                        />
-                    </div>
-                    <button
-                        onClick={handleApplyPromo}
-                        disabled={promoLoading || !promoCode.trim()}
-                        className="px-4 py-2 bg-indigo-500 text-white rounded-lg text-sm font-medium hover:bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    >
-                        {promoLoading ? "Applying..." : "Apply"}
-                    </button>
-                </div>
-            </div>
-            {promoMessage && (
-                <div className={`flex justify-center mb-6`}>
-                    <div className={`text-sm px-4 py-2 rounded-lg ${promoMessage.type === "success"
-                        ? "bg-green-100 text-green-700"
-                        : "bg-red-100 text-red-700"
-                        }`}>
-                        {promoMessage.text}
-                    </div>
-                </div>
-            )}
-
-            {/* Main Card */}
+            {/* Main Card - Student Mode */}
+            {pageMode === "student" && (
             <div className="bg-white dark:bg-[#16181c] border border-gray-200 dark:border-[#2f3336] rounded-2xl p-4 md:p-6 shadow-lg">
                 {/* Topic Input with NCERT Chapter Dropdown */}
                 <div className="mb-6 relative" ref={dropdownRef}>
@@ -1828,6 +2034,28 @@ export default function TestGenerator() {
                     </div>
                 </div>
             </div >
+            )} {/* end pageMode === "student" */}
+
+            {/* Institute Mode Section */}
+            {pageMode === "institute" && (
+                <InstituteSection
+                    user={user}
+                    token={token}
+                    authFetch={authFetch}
+                    instituteName={instituteName}
+                    setInstituteName={setInstituteName}
+                    instituteContact={instituteContact}
+                    setInstituteContact={setInstituteContact}
+                    instituteEmail={instituteEmail}
+                    setInstituteEmail={setInstituteEmail}
+                    instituteGenerating={instituteGenerating}
+                    setInstituteGenerating={setInstituteGenerating}
+                    instituteError={instituteError}
+                    setInstituteError={setInstituteError}
+                    institutePdfUrl={institutePdfUrl}
+                    setInstitutePdfUrl={setInstitutePdfUrl}
+                />
+            )}
 
             {/* Post Modal */}
             {
