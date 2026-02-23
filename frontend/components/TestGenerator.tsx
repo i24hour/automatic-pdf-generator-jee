@@ -817,10 +817,12 @@ export default function TestGenerator() {
         }
     };
 
-    // Fetch rate limit on mount
+    // Fetch rate limit on mount and whenever auth state changes
     useEffect(() => {
-        fetchRateLimit();
-    }, []);
+        if (isAuthenticated) {
+            fetchRateLimit();
+        }
+    }, [isAuthenticated]);
 
     // Fetch history (Last 3 PDFs)
     const fetchHistory = async () => {
@@ -842,10 +844,12 @@ export default function TestGenerator() {
         }
     };
 
-    // Fetch history on mount
+    // Fetch history on mount and whenever auth state changes
     useEffect(() => {
-        fetchHistory();
-    }, []);
+        if (isAuthenticated) {
+            fetchHistory();
+        }
+    }, [isAuthenticated]);
 
     // Auto-detect subject when topic changes (Local Detection)
     // Auto-detect subject when topic changes (Database Cache Only)
