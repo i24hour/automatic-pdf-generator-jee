@@ -1187,11 +1187,11 @@ export default function TestGenerator() {
                     }`}>
                         <Clock className="w-4 h-4" />
                         <span>
-                            {rateLimit.remaining === -1 ? "Unlimited" : `${rateLimit.remaining}/${rateLimit.limit}`} generations remaining
+                            {rateLimit.remaining === -1 ? "Unlimited" : `${rateLimit.remaining}/${rateLimit.limit}`} generations this month
                         </span>
                         {rateLimit.reset_hours > 0 && (
                             <span className="text-gray-500 dark:text-gray-400">
-                                · resets in {rateLimit.reset_hours.toFixed(1)}h
+                                · resets 1st of next month
                             </span>
                         )}
                     </div>

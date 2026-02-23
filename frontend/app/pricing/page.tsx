@@ -28,7 +28,7 @@ interface PlanFeature {
 }
 
 const FEATURES: PlanFeature[] = [
-    { label: "PDF generations / 6 hrs", free: "5",         earth: "10",        universe: "Unlimited" },
+    { label: "PDF generations / month",  free: "5",         earth: "10",        universe: "Unlimited" },
     { label: "Tests",                    free: "4",         earth: "Unlimited", universe: "Unlimited" },
     { label: "Institute PDF",            free: false,       earth: "1",         universe: "4"         },
     { label: "Video Generator",          free: false,       earth: false,       universe: true        },
@@ -197,7 +197,7 @@ function PricingContent({ currentPlan, loading, error, onBuy, onBack }: PricingC
                     loading={loading}
                     onBuy={onBuy}
                     features={[
-                        "5 PDFs per 6 hours",
+                        "5 PDFs per month",
                         "4 tests",
                         "Limited Bot Analysis",
                     ]}
@@ -216,7 +216,7 @@ function PricingContent({ currentPlan, loading, error, onBuy, onBack }: PricingC
                     loading={loading}
                     onBuy={onBuy}
                     features={[
-                        "10 PDFs per 6 hours",
+                        "10 PDFs per month",
                         "Unlimited tests",
                         "1 Institute PDF",
                         "Unlimited Bot Analysis",
