@@ -333,15 +333,7 @@ async def get_current_user_info(
     current_user: User = Depends(get_current_user_required)
 ):
     """Get current authenticated user info."""
-    return UserResponse(
-        id=current_user.id,
-        email=current_user.email,
-        name=current_user.name,
-        phone=current_user.phone,
-        username=current_user.username,
-        class_grade=current_user.class_grade,
-        is_verified=current_user.is_verified
-    )
+    return UserResponse.model_validate(current_user)
 
 
 @router.post("/verify-email", response_model=MessageResponse)
