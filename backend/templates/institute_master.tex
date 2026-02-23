@@ -27,17 +27,18 @@
 % Header and Footer
 \pagestyle{fancy}
 \fancyhf{}
-\lhead{\small \textbf{INFINITEST} - A Mentors Mantra Product}
+\lhead{%
+    \footnotesize
+    \BLOCK{ if institute_name }\textbf{\VAR{institute_name}}\BLOCK{ else }\textbf{Institute Test}\BLOCK{ endif }%
+}
 \rhead{\small \VAR{level} | \VAR{difficulty}}
 \cfoot{
     \footnotesize
-    \BLOCK{ if institute_name }
-    \textbf{\VAR{institute_name}}
-    \BLOCK{ if institute_contact or institute_email } | \BLOCK{ endif }
-    \BLOCK{ endif }
-    \BLOCK{ if institute_contact }Contact: \VAR{institute_contact}\BLOCK{ endif }
-    \BLOCK{ if institute_contact and institute_email } | \BLOCK{ endif }
-    \BLOCK{ if institute_email }\VAR{institute_email}\BLOCK{ endif }
+    \BLOCK{ if institute_contact }Contact: \VAR{institute_contact}\BLOCK{ endif }%
+    \BLOCK{ if institute_contact and institute_email } $|$ \BLOCK{ endif }%
+    \BLOCK{ if institute_email }\VAR{institute_email}\BLOCK{ endif }%
+    \BLOCK{ if institute_contact or institute_email } \quad \BLOCK{ endif }%
+    {\textit{Partnered with \textbf{infinitest.tech}}}
 }
 \rfoot{\thepage}
 \renewcommand{\headrulewidth}{0.4pt}
@@ -67,11 +68,17 @@
 % =============== TITLE PAGE ===============
 \begin{center}
     \vspace*{0.3cm}
-    {\Huge \textbf{INFINITEST}} \\[0.1cm]
-    {\small \textit{A Mentors Mantra Product}} \\[0.4cm]
-    
     \BLOCK{ if institute_name }
-    {\Large \textbf{\VAR{institute_name}}} \\[0.3cm]
+    {\Huge \textbf{\VAR{institute_name}}} \\[0.2cm]
+    \BLOCK{ if institute_contact or institute_email }
+    {\small
+        \BLOCK{ if institute_contact }Contact: \VAR{institute_contact}\BLOCK{ endif }
+        \BLOCK{ if institute_contact and institute_email } $|$ \BLOCK{ endif }
+        \BLOCK{ if institute_email }\VAR{institute_email}\BLOCK{ endif }
+    } \\[0.3cm]
+    \BLOCK{ endif }
+    \BLOCK{ else }
+    {\Huge \textbf{Institute Test Paper}} \\[0.3cm]
     \BLOCK{ endif }
     
     \rule{\textwidth}{2pt} \\[0.2cm]
@@ -207,7 +214,8 @@
 \vspace{0.5cm}
 \begin{center}
     \rule{0.6\textwidth}{0.4pt} \\[0.2cm]
-    {\small \textbf{All the Best!}}
+    {\small \textbf{All the Best!}} \\[0.1cm]
+    {\footnotesize \textit{Partnered with \textbf{infinitest.tech}}}
 \end{center}
 
 \end{document}

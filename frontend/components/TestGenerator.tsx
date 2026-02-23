@@ -96,7 +96,7 @@ interface InstituteSectionProps {
 }
 
 function InstituteSection({
-    user, token, authFetch,
+    user, authFetch,
     instituteName, setInstituteName,
     instituteContact, setInstituteContact,
     instituteEmail, setInstituteEmail,
@@ -106,9 +106,47 @@ function InstituteSection({
 }: InstituteSectionProps) {
     const [examType, setExamType] = React.useState("Mains");
     const [difficulty, setDifficulty] = React.useState("Medium");
-    const [chaptersText, setChaptersText] = React.useState("");
     const [pdfBase64, setPdfBase64] = React.useState<string | null>(null);
     const [pdfFilename, setPdfFilename] = React.useState<string | null>(null);
+
+    // Chapter dropdown state (mirrors student mode)
+    const [instSubject, setInstSubject] = React.useState<string[]>(["Physics"]);
+    const [instSelectedChapters, setInstSelectedChapters] = React.useState<string[]>([]);
+    const [instSearchQuery, setInstSearchQuery] = React.useState("");
+    const [instFilteredChapters, setInstFilteredChapters] = React.useState<{ class: string; name: string; matchedTopic?: string }[]>([]);
+    const [instDropdownOpen, setInstDropdownOpen] = React.useState(false);
+    const instDropdownRef = React.useRef<HTMLDivElement>(null);
+
+    // Subjects available (same as student mode — NEET gets bio subjects)
+    const allSubjects = examType === "NEET"
+        ? ["Physics", "Chemistry", "Zoology", "Botany"]
+        : ["Physics", "Chemistry", "Maths"];
+
+    // Keep subject selection in sync with exam type
+    React.useEffect(() => {
+        setInstSubject(examType === "NEET" ? ["Physics", "Chemistry", "Zoology", "Botany"] : ["Physics", "Chemistry", "Maths"]);
+        setInstSelectedChapters([]);
+        setInstSearchQuery("");
+    }, [examType]);
+
+    // Update dropdown list when subject or query changes
+    React.useEffect(() => {
+        const chapters = instSearchQuery.trim()
+            ? searchMultipleSubjects(instSubject, instSearchQuery.trim())
+            : getChaptersForMultipleSubjects(instSubject);
+        setInstFilteredChapters(chapters);
+    }, [instSubject, instSearchQuery]);
+
+    // Close dropdown on outside click
+    React.useEffect(() => {
+        const handler = (e: MouseEvent) => {
+            if (instDropdownRef.current && !instDropdownRef.current.contains(e.target as Node)) {
+                setInstDropdownOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handler);
+        return () => document.removeEventListener("mousedown", handler);
+    }, []);
 
     const handleGenerate = async () => {
         setInstituteError(null);
@@ -120,9 +158,8 @@ function InstituteSection({
             setInstituteError("Please enter your institute name.");
             return;
         }
-        const chapters = chaptersText.split("\n").map(c => c.trim()).filter(Boolean);
-        if (chapters.length === 0) {
-            setInstituteError("Please enter at least one chapter.");
+        if (instSelectedChapters.length === 0) {
+            setInstituteError("Please select at least one chapter.");
             return;
         }
 
@@ -135,7 +172,7 @@ function InstituteSection({
                     institute_name: instituteName,
                     contact_number: instituteContact,
                     institute_email: instituteEmail,
-                    chapters,
+                    chapters: instSelectedChapters,
                     exam_type: examType,
                     difficulty,
                 }),
@@ -212,47 +249,228 @@ function InstituteSection({
                 </div>
             </div>
 
-            {/* Chapters */}
-            <div className="mb-5">
-                <label className="block mb-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Chapters <span className="text-xs text-gray-400 font-normal">(one per line)</span>
-                </label>
-                <textarea
-                    value={chaptersText}
-                    onChange={e => setChaptersText(e.target.value)}
-                    placeholder={"e.g.\nKinematics\nThermodynamics\nOrganic Chemistry"}
-                    rows={5}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-[#2f3336] bg-gray-50 dark:bg-[#1a1d21] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm resize-none font-mono"
-                />
-            </div>
-
             {/* Exam Type & Difficulty */}
-            <div className="grid grid-cols-2 gap-4 mb-6">
+            <div className="grid grid-cols-2 gap-4 mb-5">
                 <div>
                     <label className="block mb-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">Exam Type</label>
-                    <select
-                        value={examType}
-                        onChange={e => setExamType(e.target.value)}
-                        className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-[#2f3336] bg-gray-50 dark:bg-[#1a1d21] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
-                    >
-                        <option value="Mains">JEE Mains</option>
-                        <option value="Advanced">JEE Advanced</option>
-                        <option value="NEET">NEET</option>
-                    </select>
+                    <div className="flex flex-wrap gap-2">
+                        {["Mains", "NEET", "Advanced"].map(et => (
+                            <button
+                                key={et}
+                                type="button"
+                                onClick={() => setExamType(et)}
+                                className={`px-4 py-2 rounded-xl border text-sm font-medium transition-all ${examType === et
+                                    ? "bg-indigo-600 border-indigo-600 text-white"
+                                    : "border-gray-200 dark:border-[#2f3336] text-gray-600 dark:text-gray-400 hover:border-indigo-400 dark:hover:border-indigo-500"
+                                }`}
+                            >
+                                {et === "Mains" ? "JEE Mains" : et === "Advanced" ? "JEE Advanced" : et}
+                            </button>
+                        ))}
+                    </div>
                 </div>
                 <div>
                     <label className="block mb-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">Difficulty</label>
-                    <select
-                        value={difficulty}
-                        onChange={e => setDifficulty(e.target.value)}
-                        className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-[#2f3336] bg-gray-50 dark:bg-[#1a1d21] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
-                    >
-                        <option value="Easy">Easy</option>
-                        <option value="Medium">Medium</option>
-                        <option value="Hard">Hard</option>
-                    </select>
+                    <div className="flex flex-wrap gap-2">
+                        {["Easy", "Medium", "Hard"].map(d => (
+                            <button
+                                key={d}
+                                type="button"
+                                onClick={() => setDifficulty(d)}
+                                className={`px-4 py-2 rounded-xl border text-sm font-medium transition-all ${difficulty === d
+                                    ? d === "Easy" ? "bg-green-500 border-green-500 text-white"
+                                        : d === "Medium" ? "bg-amber-500 border-amber-500 text-white"
+                                        : "bg-red-500 border-red-500 text-white"
+                                    : "border-gray-200 dark:border-[#2f3336] text-gray-600 dark:text-gray-400 hover:border-indigo-400 dark:hover:border-indigo-500"
+                                }`}
+                            >
+                                {d}
+                            </button>
+                        ))}
+                    </div>
                 </div>
             </div>
+
+            {/* Chapter Dropdown — identical UX to student mode */}
+            <div className="mb-6 relative" ref={instDropdownRef}>
+                <label className="block mb-2 font-medium text-gray-700 dark:text-gray-300 text-sm">
+                    Chapters <span className="text-xs text-gray-400 font-normal">(Select chapters or type custom topic)</span>
+                </label>
+
+                {/* Selected chapter tags */}
+                {instSelectedChapters.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-2">
+                        {instSelectedChapters.map((ch, idx) => (
+                            <span key={idx} className="inline-flex items-center gap-1 px-2 py-1 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 text-xs rounded-full">
+                                {ch}
+                                <button
+                                    type="button"
+                                    onClick={() => setInstSelectedChapters(instSelectedChapters.filter((_, i) => i !== idx))}
+                                    className="hover:text-red-500 ml-1"
+                                >
+                                    ×
+                                </button>
+                            </span>
+                        ))}
+                    </div>
+                )}
+
+                <div className="relative">
+                    <input
+                        type="text"
+                        value={instSearchQuery}
+                        onChange={e => {
+                            setInstSearchQuery(e.target.value);
+                            setInstDropdownOpen(true);
+                        }}
+                        onFocus={() => {
+                            setInstDropdownOpen(true);
+                            const chapters = instSearchQuery.trim()
+                                ? searchMultipleSubjects(instSubject, instSearchQuery.trim())
+                                : getChaptersForMultipleSubjects(instSubject);
+                            setInstFilteredChapters(chapters);
+                        }}
+                        placeholder={instSelectedChapters.length > 0 ? "Search for more chapters..." : "Select chapters or type a custom topic..."}
+                        className="w-full px-4 py-3 pr-10 bg-white dark:bg-black border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900"
+                        autoComplete="off"
+                    />
+                    <button
+                        type="button"
+                        onClick={() => setInstDropdownOpen(o => !o)}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                    >
+                        <ChevronDown className={`w-5 h-5 transition-transform ${instDropdownOpen ? "rotate-180" : ""}`} />
+                    </button>
+                </div>
+
+                {/* Dropdown */}
+                {instDropdownOpen && instFilteredChapters.length > 0 && (
+                    <div className="absolute z-50 w-full mt-1 bg-white dark:bg-[#16181c] border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-80 overflow-y-auto">
+                        {/* Quick select buttons */}
+                        <div className="sticky top-0 z-10 bg-white dark:bg-[#16181c] border-b border-gray-200 dark:border-gray-700 p-2">
+                            <div className="flex flex-wrap gap-2">
+                                {["Class 11", "Class 12"].map(cls => {
+                                    const clsChapters = instFilteredChapters.filter(c => c.class === cls).map(c => c.matchedTopic || c.name);
+                                    const allSel = clsChapters.length > 0 && clsChapters.every(c => instSelectedChapters.includes(c));
+                                    return (
+                                        <button
+                                            key={cls}
+                                            type="button"
+                                            onClick={() => {
+                                                const next = allSel
+                                                    ? instSelectedChapters.filter(c => !clsChapters.includes(c))
+                                                    : [...new Set([...instSelectedChapters, ...clsChapters])];
+                                                setInstSelectedChapters(next);
+                                            }}
+                                            className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-all ${allSel
+                                                ? "bg-indigo-600 text-white border-indigo-600"
+                                                : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20"}`}
+                                        >
+                                            📚 All {cls}
+                                        </button>
+                                    );
+                                })}
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        const all = instFilteredChapters.map(c => c.matchedTopic || c.name);
+                                        const allSel = all.every(c => instSelectedChapters.includes(c));
+                                        setInstSelectedChapters(allSel ? [] : [...new Set(all)]);
+                                    }}
+                                    className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-all ${instFilteredChapters.length > 0 && instFilteredChapters.every(c => instSelectedChapters.includes(c.matchedTopic || c.name))
+                                        ? "bg-purple-600 text-white border-purple-600"
+                                        : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-purple-50 dark:hover:bg-purple-900/20"}`}
+                                >
+                                    🎯 All 11 + 12
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Selected count */}
+                        {instSelectedChapters.length > 0 && (
+                            <div className="px-3 py-2 bg-indigo-50 dark:bg-indigo-900/30 text-xs font-medium text-indigo-600 dark:text-indigo-400 flex justify-between items-center border-b border-indigo-200 dark:border-indigo-800">
+                                <span>{instSelectedChapters.length} chapter(s) selected</span>
+                                <button onClick={() => setInstSelectedChapters([])} className="text-red-500 hover:text-red-600 text-xs">
+                                    Clear all
+                                </button>
+                            </div>
+                        )}
+
+                        {/* Grouped by class */}
+                        {["Class 11", "Class 12"].map(cls => {
+                            const clsChapters = instFilteredChapters.filter(c => c.class === cls);
+                            if (clsChapters.length === 0) return null;
+                            return (
+                                <div key={cls}>
+                                    <div className="sticky top-0 px-3 py-2 bg-gray-100 dark:bg-gray-800 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                                        {cls}
+                                    </div>
+                                    {clsChapters.map((chapter, idx) => {
+                                        const key = chapter.matchedTopic || chapter.name;
+                                        const isSelected = instSelectedChapters.includes(key);
+                                        return (
+                                            <button
+                                                key={`${cls}-${chapter.name}-${idx}`}
+                                                type="button"
+                                                onClick={() => {
+                                                    const next = isSelected
+                                                        ? instSelectedChapters.filter(c => c !== key)
+                                                        : [...instSelectedChapters, key];
+                                                    setInstSelectedChapters(next);
+                                                }}
+                                                className={`w-full px-4 py-2.5 text-left hover:bg-indigo-50 dark:hover:bg-indigo-900/20 text-gray-700 dark:text-gray-200 text-sm transition-colors flex items-center gap-3 ${isSelected ? "bg-indigo-50 dark:bg-indigo-900/30" : ""}`}
+                                            >
+                                                <div className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 ${isSelected ? "bg-indigo-600 border-indigo-600" : "border-gray-300 dark:border-gray-600"}`}>
+                                                    {isSelected && (
+                                                        <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                        </svg>
+                                                    )}
+                                                </div>
+                                                <span className="truncate flex-1">
+                                                    {chapter.name}
+                                                    {chapter.matchedTopic && chapter.matchedTopic !== chapter.name && (
+                                                        <span className="text-indigo-500 dark:text-indigo-400 text-xs ml-2">→ {chapter.matchedTopic}</span>
+                                                    )}
+                                                </span>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
+
+                {/* Custom topic option when typing */}
+                {instDropdownOpen && instSearchQuery.trim() && (
+                    <div className="absolute z-50 w-full mt-1 bg-white dark:bg-[#16181c] border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-4 text-center">
+                        {instFilteredChapters.length === 0 && (
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+                                No NCERT chapters match &quot;{instSearchQuery}&quot;
+                            </p>
+                        )}
+                        <button
+                            type="button"
+                            onClick={() => {
+                                if (instSearchQuery.trim() && !instSelectedChapters.includes(instSearchQuery.trim())) {
+                                    setInstSelectedChapters([...instSelectedChapters, instSearchQuery.trim()]);
+                                }
+                                setInstSearchQuery("");
+                                setInstDropdownOpen(false);
+                            }}
+                            className="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 bg-indigo-50 dark:bg-indigo-900/30 px-3 py-1.5 rounded-full transition-colors"
+                        >
+                            Use &quot;{instSearchQuery}&quot; as Custom Topic
+                        </button>
+                    </div>
+                )}
+            </div>
+
+            {/* Click outside to close */}
+            {instDropdownOpen && (
+                <div className="fixed inset-0 z-40" onClick={() => setInstDropdownOpen(false)} />
+            )}
 
             {/* Error */}
             {instituteError && (
