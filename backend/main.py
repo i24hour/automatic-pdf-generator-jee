@@ -217,9 +217,26 @@ def check_rate_limit(user: User, db: Session) -> tuple[bool, int, float]:
     plan_tier = getattr(user, "plan", "free") or "free"
     plan_pdf_limit = PLAN_LIMITS.get(plan_tier, PLAN_LIMITS["free"])["pdf"]
 
-    # If plan gives more than RATE_LIMIT_COUNT, use plan limit; else use env var + bonuses
+    # If plan gives more than RATE_LIMIT_COUNT, use plan limit; else use env var
     base_limit = max(plan_pdf_limit, RATE_LIMIT_COUNT)
-    user_total_limit = base_limit + (user.bonus_limit or 0) + (user.monthly_bonus_limit or 0)
+    
+    # Calculate active bonus from unexpired promo codes (last 30 days)
+    thirty_days_ago = now - timedelta(days=30)
+    
+    active_bonus = 0
+    active_usages = db.query(PromoCodeUsage).join(PromoCode).filter(
+        PromoCodeUsage.user_id == user.id,
+        PromoCodeUsage.applied_at >= thirty_days_ago
+    ).all()
+    
+    for usage in active_usages:
+        if getattr(usage, "promo_code", None) and getattr(usage.promo_code, "bonus_limit", 0):
+            active_bonus += usage.promo_code.bonus_limit
+            
+    # Include any permanent manual bonuses if awarded directly
+    manual_bonus = (user.bonus_limit or 0) + (user.monthly_bonus_limit or 0)
+    
+    user_total_limit = base_limit + active_bonus + manual_bonus
 
     # Universe plan is truly unlimited (skip DB count)
     if plan_tier == "universe":
@@ -1081,32 +1098,27 @@ async def apply_promo_code(
         )
     
     # Apply the promo code
-    # Apply the promo code
-    # 1. Add bonus to user
-    if promo.is_monthly_only:
-        current_user.monthly_bonus_limit = (current_user.monthly_bonus_limit or 0) + promo.bonus_limit
-        current_user.last_bonus_month = datetime.now(timezone.utc).strftime("%Y-%m")
-    else:
-        current_user.bonus_limit = (current_user.bonus_limit or 0) + promo.bonus_limit
+    # We NO LONGER update current_user.bonus_limit because check_rate_limit calculates
+    # dynamic validities by scanning PromoCodeUsage table.
     
-    # 2. Record usage
+    # Record usage
     usage = PromoCodeUsage(
         user_id=current_user.id,
         promo_code_id=promo.id
     )
     db.add(usage)
     
-    # 3. Increment promo code usage count
+    # Increment promo code usage count
     promo.current_uses += 1
     
     db.commit()
     
-    # Calculate new total limit
-    new_total_limit = RATE_LIMIT_COUNT + (current_user.bonus_limit or 0) + (current_user.monthly_bonus_limit or 0)
+    # Calculate new total limit dynamically from check_rate_limit
+    is_allowed, remaining, reset_hours, new_total_limit = check_rate_limit(current_user, db)
     
     return ApplyPromoResponse(
         success=True,
-        message=f"Promo code applied! You now have {new_total_limit} generations.",
+        message=f"Promo code applied successfully! You now have {new_total_limit} generations.",
         new_limit=new_total_limit,
         bonus_added=promo.bonus_limit
     )
