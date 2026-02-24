@@ -83,51 +83,57 @@ async def create_test(
     for data in request.subject_inputs.values():
         all_topics.extend(data.topics)
 
-    # 3. Generate Questions (Parallel)
+    # 3. Generate Questions (Parallel) — 1 LLM call per subject (NOT per difficulty level)
+    # Combining all difficulty tiers into one call per subject cuts API round trips by ~3x.
     tasks = []
     task_metadata = []
     
     for subj_name, config in request.subject_inputs.items():
         if config.count <= 0: continue
         
-        # Prepare params
         diff_dist = config.difficulty
         subj_topics = config.topics if config.topics else ["General"]
         topic_str = ", ".join(subj_topics)
         
-        levels = [
-            ("Easy", int(diff_dist.get("easy", 0))),
-            ("Medium", int(diff_dist.get("medium", 0))),
-            ("Hard", int(diff_dist.get("hard", 0)))
-        ]
-        
-        for diff_name, diff_count in levels:
-            if diff_count > 0:
-                # JEE Exams have ~20% numerical questions. NEET has 0.
-                if request.exam_type in ["JEE_MAINS", "JEE_ADV", "CUSTOM"]:
-                    num_numerical = round(diff_count * 0.2)
-                    num_mcq = diff_count - num_numerical
-                else: # NEET
-                    num_numerical = 0
-                    num_mcq = diff_count
+        easy_count   = int(diff_dist.get("easy", 0))
+        medium_count = int(diff_dist.get("medium", 0))
+        hard_count   = int(diff_dist.get("hard", 0))
+        total_count  = config.count
 
-                tasks.append(llm_engine.generate_with_fallback_async(
-                    subject=subj_name,
-                    topic=topic_str,
-                    mcq_count=num_mcq,
-                    numerical_count=num_numerical,
-                    level=request.exam_type,
-                    difficulty=diff_name
-                ))
-                task_metadata.append({
-                    "subject": subj_name,
-                    "difficulty": diff_name,
-                    "topics": subj_topics,
-                    "count": diff_count
-                })
+        # Derive percentage distribution for the prompt
+        easy_pct   = round(easy_count   / total_count * 100) if total_count else 20
+        medium_pct = round(medium_count / total_count * 100) if total_count else 50
+        hard_pct   = 100 - easy_pct - medium_pct  # ensure sum == 100
 
-    print(f"Starting {len(tasks)} generation tasks for Master Test...")
+        # Split MCQ vs Numerical by exam type (NEET = all MCQ)
+        if request.exam_type in ["JEE_MAINS", "JEE_ADV", "CUSTOM"]:
+            num_numerical = round(total_count * 0.2)
+            num_mcq = total_count - num_numerical
+        else:  # NEET
+            num_numerical = 0
+            num_mcq = total_count
+
+        tasks.append(llm_engine.generate_with_fallback_async(
+            subject=subj_name,
+            topic=topic_str,
+            mcq_count=num_mcq,
+            numerical_count=num_numerical,
+            level=request.exam_type,
+            difficulty="Mixed",
+            easy_percent=easy_pct,
+            medium_percent=medium_pct,
+            hard_percent=hard_pct,
+            include_solutions=False,
+        ))
+        task_metadata.append({
+            "subject": subj_name,
+            "topics": subj_topics,
+            "count": total_count,
+        })
+
+    print(f"Starting {len(tasks)} generation tasks (1 per subject) for Master Test...")
     results = await asyncio.gather(*tasks, return_exceptions=True)
+
     
     final_questions = []
     
@@ -136,16 +142,16 @@ async def create_test(
         
         # Error Handling / Fallback
         if isinstance(result, Exception) or not result or not result.get("success"):
-            print(f"Generation Failed for {meta['subject']} {meta['difficulty']}")
+            print(f"Generation Failed for {meta['subject']}: {result}")
             # Fallback Placeholders
             for _ in range(meta['count']):
                 final_questions.append({
                     "text": f"Error generating question for {meta['subject']}",
-                    "options": ["Error", "Error", "Error", "Error"], # Engine expects list here usually, standardized below
+                    "options": ["Error", "Error", "Error", "Error"],
                     "answer": "A",
                     "marks": 4,
                     "type": "mcq",
-                    "difficulty": meta['difficulty'],
+                    "difficulty": "Medium",
                     "subject": meta['subject'],
                     "topic": meta['topics'][0]
                 })
@@ -153,27 +159,28 @@ async def create_test(
             
         # Success
         generated = result.get("questions", [])
-        # Enrich
+        # Enrich with subject and topic (difficulty comes from the LLM result itself)
         for q in generated:
             q["subject"] = meta["subject"]
-            q["topic"] = meta["topics"][0]
-            q["difficulty"] = meta["difficulty"]
+            q.setdefault("topic", meta["topics"][0])
+            q.setdefault("difficulty", "Medium")
             
         final_questions.extend(generated)
         
-        # Partial fill
+        # Partial fill if LLM returned fewer questions than requested
         remaining = meta['count'] - len(generated)
         if remaining > 0:
-             for _ in range(remaining):
+            for _ in range(remaining):
                 final_questions.append({
                     "text": "Partial generation error placeholder",
                     "options": ["A", "B", "C", "D"],
                     "answer": "A",
-                    "marks": 4, 
+                    "marks": 4,
                     "subject": meta['subject'],
                     "topic": meta['topics'][0],
-                    "difficulty": meta['difficulty']
+                    "difficulty": "Medium"
                 })
+
 
     # Sort final_questions: MCQs first, then numericals
     mcq_questions = [q for q in final_questions if q.get("type") != "numerical"]
