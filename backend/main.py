@@ -150,6 +150,7 @@ class RateLimitInfo(BaseModel):
     remaining: int
     reset_hours: float
     used: int
+    reset_date_str: str
 
 
 class ErrorResponse(BaseModel):
@@ -196,10 +197,10 @@ class ErrorLogRequest(BaseModel):
 
 
 
-def check_rate_limit(user: User, db: Session) -> tuple[bool, int, float]:
+def check_rate_limit(user: User, db: Session) -> tuple[bool, int, float, int, str]:
     """
     Check if user has exceeded rate limit.
-    Returns: (is_allowed, remaining_count, hours_until_reset, total_limit)
+    Returns: (is_allowed, remaining_count, hours_until_reset, total_limit, reset_date_str)
     """
     from routers.payments_router import PLAN_LIMITS
 
@@ -240,35 +241,57 @@ def check_rate_limit(user: User, db: Session) -> tuple[bool, int, float]:
 
     # Universe plan is truly unlimited (skip DB count)
     if plan_tier == "universe":
-        return True, 999999, 0.0, 999999
+        return True, 999999, 0.0, 999999, "Never"
 
-    # Calculate start of current month
+    # Helpers for suffix computation
+    def get_day_suffix(day: int) -> str:
+        if 4 <= day <= 20 or 24 <= day <= 30:
+            return "th"
+        return ["st", "nd", "rd"][day % 10 - 1]
+
+    # Calculate start of period (current month 1st by default)
     now = datetime.now(timezone.utc)
-    start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    start_of_period = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    
+    if now.month == 12:
+        next_reset = now.replace(year=now.year + 1, month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+    else:
+        next_reset = now.replace(month=now.month + 1, day=1, hour=0, minute=0, second=0, microsecond=0)
+
+    # If user is premium, change period bounds and text based on subscription
+    is_premium = getattr(user, "is_premium", False)
+    if is_premium and hasattr(user, "subscription") and user.subscription and user.subscription.starts_at:
+        # Check if their 30-day billing cycle is still active
+        curr_starts_at = user.subscription.starts_at
+        
+        # Advance curr_starts_at by 30-day increments until it's the CURRENT active period
+        while curr_starts_at + timedelta(days=30) <= now:
+             curr_starts_at += timedelta(days=30)
+             
+        start_of_period = curr_starts_at
+        next_reset = curr_starts_at + timedelta(days=30)
+        
+    # Render reset string natively: "14th of March"
+    month_name = next_reset.strftime("%B")
+    reset_date_str = f"{next_reset.day}{get_day_suffix(next_reset.day)} of {month_name}"
 
     # Force refresh session to ensure we see latest writes
     db.expire_all()
 
-    # Count generations in the current month
+    # Count generations in the current period
     recent_generations = db.query(PDFGeneration).filter(
         PDFGeneration.user_id == user.id,
-        PDFGeneration.created_at >= start_of_month
+        PDFGeneration.created_at >= start_of_period
     ).all()
 
     used_count = len(recent_generations)
     print(f"[RateLimit] User: {user.id}, Plan: {plan_tier}, Limit: {user_total_limit}, Used: {used_count}")
     remaining = max(0, user_total_limit - used_count)
 
-    # Calculate reset time (1st of next month)
-    if now.month == 12:
-        next_month = now.replace(year=now.year + 1, month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
-    else:
-        next_month = now.replace(month=now.month + 1, day=1, hour=0, minute=0, second=0, microsecond=0)
-
-    hours_until_reset = (next_month - now).total_seconds() / 3600
+    hours_until_reset = (next_reset - now).total_seconds() / 3600
 
     is_allowed = used_count < user_total_limit
-    return is_allowed, remaining, hours_until_reset, user_total_limit
+    return is_allowed, remaining, hours_until_reset, user_total_limit, reset_date_str
 
 
 def check_institute_rate_limit(user: User, db: Session) -> tuple:
@@ -448,13 +471,14 @@ async def get_rate_limit(
     db: Session = Depends(get_db)
 ):
     """Get current rate limit status."""
-    is_allowed, remaining, reset_hours, user_limit = check_rate_limit(current_user, db)
+    is_allowed, remaining, reset_hours, user_limit, reset_date_str = check_rate_limit(current_user, db)
     
     return RateLimitInfo(
         limit=user_limit,
         remaining=remaining,
         reset_hours=round(reset_hours, 2),
-        used=user_limit - remaining
+        used=user_limit - remaining,
+        reset_date_str=reset_date_str
     )
 
 
@@ -470,7 +494,7 @@ async def generate_test(
     Requires authentication. Rate limit is per plan per month, resets on the 1st of each month.
     """
     # Check rate limit
-    is_allowed, remaining, reset_hours, user_limit = check_rate_limit(current_user, db)
+    is_allowed, remaining, reset_hours, user_limit, _ = check_rate_limit(current_user, db)
     
     if not is_allowed:
         raise HTTPException(
@@ -591,7 +615,7 @@ async def generate_test(
                 print(f"Warning: Failed to upload to R2: {e}")
         
         # Get updated rate limit info
-        _, new_remaining, new_reset_hours, _ = check_rate_limit(current_user, db)
+        _, new_remaining, new_reset_hours, _, _ = check_rate_limit(current_user, db)
         
         # Read PDF file and encode as base64 for immediate download
         pdf_base64_str = None
@@ -885,7 +909,7 @@ async def generate_test_verified(
     """
     try:
         # Check rate limit
-        is_allowed, remaining, reset_hours, total_limit = check_rate_limit(current_user, db)
+        is_allowed, remaining, reset_hours, total_limit, _ = check_rate_limit(current_user, db)
         
         if not is_allowed:
             raise HTTPException(
@@ -1021,7 +1045,7 @@ async def generate_test_verified(
                 print(f"Warning: Failed to schedule R2 upload: {e}")
         
         # Get updated rate limit info
-        _, new_remaining, new_reset_hours, _ = check_rate_limit(current_user, db)
+        _, new_remaining, new_reset_hours, _, _ = check_rate_limit(current_user, db)
         
         # Read PDF file and encode as base64 for immediate download
         pdf_base64_str = None
@@ -1114,7 +1138,7 @@ async def apply_promo_code(
     db.commit()
     
     # Calculate new total limit dynamically from check_rate_limit
-    is_allowed, remaining, reset_hours, new_total_limit = check_rate_limit(current_user, db)
+    is_allowed, remaining, reset_hours, new_total_limit, _ = check_rate_limit(current_user, db)
     
     return ApplyPromoResponse(
         success=True,
@@ -1241,7 +1265,7 @@ async def start_sse_generation(
     The actual generation happens in the background.
     """
     # Check rate limit
-    is_allowed, remaining, reset_hours, total_limit = check_rate_limit(current_user, db)
+    is_allowed, remaining, reset_hours, total_limit, _ = check_rate_limit(current_user, db)
     
     if not is_allowed:
         raise HTTPException(
@@ -1583,7 +1607,7 @@ async def run_generation_job(
         total_mcq, total_numerical = _count_question_types(questions)
         
         # Get updated rate limit
-        _, new_remaining, new_reset_hours, _ = check_rate_limit(user, db)
+        _, new_remaining, new_reset_hours, _, _ = check_rate_limit(user, db)
         print(f"[SSE Job {job_id}] TRACE: Before R2 section, rate_limit={new_remaining}")
         
         # SharedPDF creation is now MANUAL via /api/pdf/save endpoint

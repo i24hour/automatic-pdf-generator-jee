@@ -64,6 +64,7 @@ interface RateLimitInfo {
     remaining: number;
     reset_hours: number;
     used: number;
+    reset_date_str: string;
 }
 
 interface HistoryItem {
@@ -112,8 +113,8 @@ function InstituteSection({
 
     // Per-subject question count limits per exam type
     const EXAM_LIMITS: Record<string, Record<string, number>> = {
-        "Mains":    { Physics: 25, Chemistry: 25, Maths: 25 },
-        "NEET":     { Physics: 45, Chemistry: 45, Zoology: 45, Botany: 45 },
+        "Mains": { Physics: 25, Chemistry: 25, Maths: 25 },
+        "NEET": { Physics: 45, Chemistry: 45, Zoology: 45, Botany: 45 },
         "Advanced": { Physics: 18, Chemistry: 18, Maths: 18 },
     };
 
@@ -286,7 +287,7 @@ function InstituteSection({
                                 className={`px-4 py-2 rounded-xl border text-sm font-medium transition-all ${examType === et
                                     ? "bg-indigo-600 border-indigo-600 text-white"
                                     : "border-gray-200 dark:border-[#2f3336] text-gray-600 dark:text-gray-400 hover:border-indigo-400 dark:hover:border-indigo-500"
-                                }`}
+                                    }`}
                             >
                                 {et === "Mains" ? "JEE Mains" : et === "Advanced" ? "JEE Advanced" : et}
                             </button>
@@ -304,9 +305,9 @@ function InstituteSection({
                                 className={`px-4 py-2 rounded-xl border text-sm font-medium transition-all ${difficulty === d
                                     ? d === "Easy" ? "bg-green-500 border-green-500 text-white"
                                         : d === "Medium" ? "bg-amber-500 border-amber-500 text-white"
-                                        : "bg-red-500 border-red-500 text-white"
+                                            : "bg-red-500 border-red-500 text-white"
                                     : "border-gray-200 dark:border-[#2f3336] text-gray-600 dark:text-gray-400 hover:border-indigo-400 dark:hover:border-indigo-500"
-                                }`}
+                                    }`}
                             >
                                 {d}
                             </button>
@@ -1224,11 +1225,10 @@ export default function TestGenerator() {
                 <div className="flex bg-gray-100 dark:bg-[#1a1d21] rounded-full p-1 gap-1">
                     <button
                         onClick={() => setPageMode("student")}
-                        className={`px-6 py-2 rounded-full text-sm font-semibold transition-all duration-200 ${
-                            pageMode === "student"
+                        className={`px-6 py-2 rounded-full text-sm font-semibold transition-all duration-200 ${pageMode === "student"
                                 ? "bg-white dark:bg-[#16181c] text-gray-900 dark:text-white shadow-sm"
                                 : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
-                        }`}
+                            }`}
                     >
                         Student
                     </button>
@@ -1245,11 +1245,10 @@ export default function TestGenerator() {
                             }
                             setPageMode("institute");
                         }}
-                        className={`px-6 py-2 rounded-full text-sm font-semibold transition-all duration-200 ${
-                            pageMode === "institute"
+                        className={`px-6 py-2 rounded-full text-sm font-semibold transition-all duration-200 ${pageMode === "institute"
                                 ? "bg-white dark:bg-[#16181c] text-gray-900 dark:text-white shadow-sm"
                                 : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
-                        }`}
+                            }`}
                     >
                         Institute
                     </button>
@@ -1268,11 +1267,10 @@ export default function TestGenerator() {
                         </div>
                     ) : (
                         <div className="flex flex-col items-center mb-3 md:mb-6 gap-2">
-                            <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm ${
-                                !rateLimit || rateLimit.remaining > 0
+                            <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm ${!rateLimit || rateLimit.remaining > 0
                                     ? "bg-green-100 text-green-700 border border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800"
                                     : "bg-red-100 text-red-700 border border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800"
-                            }`}>
+                                }`}>
                                 <Clock className="w-4 h-4" />
                                 <span>
                                     {rateLimit
@@ -1282,7 +1280,7 @@ export default function TestGenerator() {
                                 </span>
                                 {rateLimit && rateLimit.reset_hours > 0 && (
                                     <span className="text-gray-500 dark:text-gray-400">
-                                        · resets 1st of next month
+                                        · resets {rateLimit.reset_date_str}
                                     </span>
                                 )}
                             </div>
@@ -1302,774 +1300,605 @@ export default function TestGenerator() {
 
             {/* Main Card - Student Mode */}
             {pageMode === "student" && (
-            <div className="bg-white dark:bg-[#16181c] border border-gray-200 dark:border-[#2f3336] rounded-2xl p-4 md:p-6 shadow-lg">
-                {/* Topic Input with NCERT Chapter Dropdown */}
-                <div className="mb-6 relative" ref={dropdownRef}>
-                    <label htmlFor="topic" className="block mb-3 font-medium text-gray-700 dark:text-gray-300">
-                        Topic <span className="text-xs text-gray-400 font-normal">(Select chapters or type custom topic)</span>
-                    </label>
+                <div className="bg-white dark:bg-[#16181c] border border-gray-200 dark:border-[#2f3336] rounded-2xl p-4 md:p-6 shadow-lg">
+                    {/* Topic Input with NCERT Chapter Dropdown */}
+                    <div className="mb-6 relative" ref={dropdownRef}>
+                        <label htmlFor="topic" className="block mb-3 font-medium text-gray-700 dark:text-gray-300">
+                            Topic <span className="text-xs text-gray-400 font-normal">(Select chapters or type custom topic)</span>
+                        </label>
 
-                    {/* Selected chapters tags */}
-                    {selectedChapters.length > 0 && (
-                        <div className="flex flex-wrap gap-2 mb-2">
-                            {selectedChapters.map((chapter, idx) => (
-                                <span key={idx} className="inline-flex items-center gap-1 px-2 py-1 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 text-xs rounded-full">
-                                    {chapter}
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            const newSelected = selectedChapters.filter((_, i) => i !== idx);
-                                            setSelectedChapters(newSelected);
-                                            setTopic(newSelected.join(', '));
-                                        }}
-                                        className="hover:text-red-500 ml-1"
-                                    >
-                                        ×
-                                    </button>
-                                </span>
-                            ))}
-                        </div>
-                    )}
+                        {/* Selected chapters tags */}
+                        {selectedChapters.length > 0 && (
+                            <div className="flex flex-wrap gap-2 mb-2">
+                                {selectedChapters.map((chapter, idx) => (
+                                    <span key={idx} className="inline-flex items-center gap-1 px-2 py-1 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 text-xs rounded-full">
+                                        {chapter}
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const newSelected = selectedChapters.filter((_, i) => i !== idx);
+                                                setSelectedChapters(newSelected);
+                                                setTopic(newSelected.join(', '));
+                                            }}
+                                            className="hover:text-red-500 ml-1"
+                                        >
+                                            ×
+                                        </button>
+                                    </span>
+                                ))}
+                            </div>
+                        )}
 
-                    <div className="relative">
-                        <input
-                            type="text"
-                            id="topic"
-                            value={searchQuery}
-                            onChange={(e) => {
-                                const val = e.target.value;
-                                setSearchQuery(val);
-                                setIsDropdownOpen(true);
+                        <div className="relative">
+                            <input
+                                type="text"
+                                id="topic"
+                                value={searchQuery}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    setSearchQuery(val);
+                                    setIsDropdownOpen(true);
 
-                                // Hybrid Mode: If no chapters selected, typing sets the topic directly
-                                if (selectedChapters.length === 0) {
-                                    setTopic(val);
-                                }
-                            }}
-                            onFocus={() => {
-                                setIsDropdownOpen(true);
-                                // Initialize chapters list on focus
-                                const chapters = searchQuery.trim()
-                                    ? searchMultipleSubjects(subject, searchQuery.trim())
-                                    : getChaptersForMultipleSubjects(subject);
-                                setFilteredChapters(chapters);
-                            }}
-                            placeholder={selectedChapters.length > 0 ? "Search for more chapters..." : "Select chapters or type a custom topic..."}
-                            className="w-full px-4 py-3 pr-4 bg-white dark:bg-black border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900"
-                            disabled={isLoading}
-                            autoComplete="off"
-                        />
-                        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                            {/* Dropdown Chevron */}
-                            <button
-                                type="button"
-                                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                                className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                                    // Hybrid Mode: If no chapters selected, typing sets the topic directly
+                                    if (selectedChapters.length === 0) {
+                                        setTopic(val);
+                                    }
+                                }}
+                                onFocus={() => {
+                                    setIsDropdownOpen(true);
+                                    // Initialize chapters list on focus
+                                    const chapters = searchQuery.trim()
+                                        ? searchMultipleSubjects(subject, searchQuery.trim())
+                                        : getChaptersForMultipleSubjects(subject);
+                                    setFilteredChapters(chapters);
+                                }}
+                                placeholder={selectedChapters.length > 0 ? "Search for more chapters..." : "Select chapters or type a custom topic..."}
+                                className="w-full px-4 py-3 pr-4 bg-white dark:bg-black border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900"
                                 disabled={isLoading}
-                            >
-                                <ChevronDown className={`w-5 h-5 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
-                            </button>
+                                autoComplete="off"
+                            />
+                            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                                {/* Dropdown Chevron */}
+                                <button
+                                    type="button"
+                                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                                    className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                                    disabled={isLoading}
+                                >
+                                    <ChevronDown className={`w-5 h-5 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                                </button>
+                            </div>
                         </div>
+
+
+                        {/* Existing Tests Alert */}
+                        {existingTestCount > 0 && !isLoading && (
+                            <div className="mb-6 p-4 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-xl flex items-center justify-between animate-in fade-in slide-in-from-top-2 duration-300">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center shrink-0">
+                                        <Sparkles className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                                    </div>
+                                    <div>
+                                        <h3 className="font-semibold text-gray-900 dark:text-white text-sm">
+                                            Found {existingTestCount} existing {existingTestCount === 1 ? 'test' : 'tests'}!
+                                        </h3>
+                                        <p className="text-xs text-gray-600 dark:text-gray-400">
+                                            Save time & credits by using an existing test.
+                                        </p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => {
+                                        const params = new URLSearchParams();
+                                        params.set('q', topic);
+                                        params.set('subject', subject.join(', '));
+                                        params.set('level', level);
+                                        // Navigate to feed with filters
+                                        router.push(`/posts?${params.toString()}`);
+                                    }}
+                                    className="px-4 py-2 bg-white dark:bg-black border border-amber-200 dark:border-amber-700 text-amber-700 dark:text-amber-400 text-sm font-medium rounded-lg hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors shrink-0 whitespace-nowrap"
+                                >
+                                    View in Community →
+                                </button>
+                            </div>
+                        )}
+
+                        {/* Dropdown Menu - Multi-Select with Checkboxes */}
+                        {isDropdownOpen && filteredChapters.length > 0 && (
+                            <div className="absolute z-50 w-full mt-1 bg-white dark:bg-[#16181c] border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-80 overflow-y-auto">
+                                {/* Quick Select All Buttons */}
+                                <div className="sticky top-0 z-10 bg-white dark:bg-[#16181c] border-b border-gray-200 dark:border-gray-700 p-2">
+                                    <div className="flex flex-wrap gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const class11Chapters = filteredChapters
+                                                    .filter(c => c.class === 'Class 11')
+                                                    .map(c => c.matchedTopic || c.name);
+                                                const allSelected = class11Chapters.every(c => selectedChapters.includes(c));
+                                                let newSelected: string[];
+                                                if (allSelected) {
+                                                    newSelected = selectedChapters.filter(c => !class11Chapters.includes(c));
+                                                } else {
+                                                    newSelected = [...new Set([...selectedChapters, ...class11Chapters])];
+                                                }
+                                                setSelectedChapters(newSelected);
+                                                setTopic(newSelected.join(', '));
+                                            }}
+                                            className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-all ${filteredChapters.filter(c => c.class === 'Class 11').length > 0 && filteredChapters.filter(c => c.class === 'Class 11').every(c => selectedChapters.includes(c.matchedTopic || c.name))
+                                                ? 'bg-indigo-600 text-white border-indigo-600'
+                                                : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20'
+                                                }`}
+                                        >
+                                            📚 All Class 11
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const class12Chapters = filteredChapters
+                                                    .filter(c => c.class === 'Class 12')
+                                                    .map(c => c.matchedTopic || c.name);
+                                                const allSelected = class12Chapters.every(c => selectedChapters.includes(c));
+                                                let newSelected: string[];
+                                                if (allSelected) {
+                                                    newSelected = selectedChapters.filter(c => !class12Chapters.includes(c));
+                                                } else {
+                                                    newSelected = [...new Set([...selectedChapters, ...class12Chapters])];
+                                                }
+                                                setSelectedChapters(newSelected);
+                                                setTopic(newSelected.join(', '));
+                                            }}
+                                            className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-all ${filteredChapters.filter(c => c.class === 'Class 12').length > 0 && filteredChapters.filter(c => c.class === 'Class 12').every(c => selectedChapters.includes(c.matchedTopic || c.name))
+                                                ? 'bg-indigo-600 text-white border-indigo-600'
+                                                : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20'
+                                                }`}
+                                        >
+                                            📚 All Class 12
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const allChapters = filteredChapters.map(c => c.matchedTopic || c.name);
+                                                const allSelected = allChapters.every(c => selectedChapters.includes(c));
+                                                let newSelected: string[];
+                                                if (allSelected) {
+                                                    newSelected = [];
+                                                } else {
+                                                    newSelected = [...new Set(allChapters)];
+                                                }
+                                                setSelectedChapters(newSelected);
+                                                setTopic(newSelected.join(', '));
+                                            }}
+                                            className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-all ${filteredChapters.length > 0 && filteredChapters.every(c => selectedChapters.includes(c.matchedTopic || c.name))
+                                                ? 'bg-purple-600 text-white border-purple-600'
+                                                : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-purple-50 dark:hover:bg-purple-900/20'
+                                                }`}
+                                        >
+                                            🎯 All 11 + 12
+                                        </button>
+                                    </div>
+                                </div>
+                                {/* Selected count header */}
+                                {selectedChapters.length > 0 && (
+                                    <div className="px-3 py-2 bg-indigo-50 dark:bg-indigo-900/30 text-xs font-medium text-indigo-600 dark:text-indigo-400 flex justify-between items-center border-b border-indigo-200 dark:border-indigo-800">
+                                        <span>{selectedChapters.length} chapter(s) selected</span>
+                                        <button
+                                            onClick={() => {
+                                                setSelectedChapters([]);
+                                                setTopic('');
+                                            }}
+                                            className="text-red-500 hover:text-red-600 text-xs"
+                                        >
+                                            Clear all
+                                        </button>
+                                    </div>
+                                )}
+                                {/* Group by class */}
+                                {['Class 11', 'Class 12'].map((className) => {
+                                    const classChapters = filteredChapters.filter(c => c.class === className);
+                                    if (classChapters.length === 0) return null;
+
+                                    return (
+                                        <div key={className}>
+                                            <div className="sticky top-0 px-3 py-2 bg-gray-100 dark:bg-gray-800 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                                                {className}
+                                            </div>
+                                            {classChapters.map((chapter, idx) => {
+                                                const chapterKey = chapter.matchedTopic || chapter.name;
+                                                const isSelected = selectedChapters.includes(chapterKey);
+                                                return (
+                                                    <button
+                                                        key={`${className}-${chapter.name}-${idx}`}
+                                                        type="button"
+                                                        onClick={() => {
+                                                            let newSelected: string[];
+                                                            if (isSelected) {
+                                                                newSelected = selectedChapters.filter(c => c !== chapterKey);
+                                                            } else {
+                                                                newSelected = [...selectedChapters, chapterKey];
+                                                            }
+                                                            setSelectedChapters(newSelected);
+                                                            // Update topic with all selected chapters
+                                                            setTopic(newSelected.join(', '));
+                                                        }}
+                                                        className={`w-full px-4 py-2.5 text-left hover:bg-indigo-50 dark:hover:bg-indigo-900/20 text-gray-700 dark:text-gray-200 text-sm transition-colors flex items-center gap-3 ${isSelected ? 'bg-indigo-50 dark:bg-indigo-900/30' : ''}`}
+                                                    >
+                                                        {/* Checkbox */}
+                                                        <div className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 ${isSelected ? 'bg-indigo-600 border-indigo-600' : 'border-gray-300 dark:border-gray-600'}`}>
+                                                            {isSelected && (
+                                                                <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                                </svg>
+                                                            )}
+                                                        </div>
+                                                        <span className="truncate flex-1">
+                                                            {chapter.name}
+                                                            {chapter.matchedTopic && chapter.matchedTopic !== chapter.name && (
+                                                                <span className="text-indigo-500 dark:text-indigo-400 text-xs ml-2">
+                                                                    → {chapter.matchedTopic}
+                                                                </span>
+                                                            )}
+                                                        </span>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+
+                        {/* No results message */}
+                        {/* Custom Topic Option (Always show if typing) */}
+                        {isDropdownOpen && searchQuery.trim() && (
+                            <div className="absolute z-50 w-full mt-1 bg-white dark:bg-[#16181c] border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-4 text-center">
+                                {filteredChapters.length === 0 && (
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                                        No NCERT chapters match &quot;{searchQuery}&quot;
+                                    </p>
+                                )}
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        // setIsCustomMode(true); // Removed as isCustomMode state is deleted
+                                        setTopic(searchQuery); // Use current search as topic
+                                        setIsDropdownOpen(false);
+                                    }}
+                                    className="mt-2 text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 bg-indigo-50 dark:bg-indigo-900/30 px-3 py-1.5 rounded-full transition-colors"
+                                >
+                                    Use &quot;{searchQuery}&quot; as Custom Topic
+                                </button>
+                            </div>
+                        )}
                     </div>
 
-
-                    {/* Existing Tests Alert */}
-                    {existingTestCount > 0 && !isLoading && (
-                        <div className="mb-6 p-4 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-xl flex items-center justify-between animate-in fade-in slide-in-from-top-2 duration-300">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center shrink-0">
-                                    <Sparkles className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-                                </div>
-                                <div>
-                                    <h3 className="font-semibold text-gray-900 dark:text-white text-sm">
-                                        Found {existingTestCount} existing {existingTestCount === 1 ? 'test' : 'tests'}!
-                                    </h3>
-                                    <p className="text-xs text-gray-600 dark:text-gray-400">
-                                        Save time & credits by using an existing test.
-                                    </p>
-                                </div>
-                            </div>
-                            <button
-                                onClick={() => {
-                                    const params = new URLSearchParams();
-                                    params.set('q', topic);
-                                    params.set('subject', subject.join(', '));
-                                    params.set('level', level);
-                                    // Navigate to feed with filters
-                                    router.push(`/posts?${params.toString()}`);
-                                }}
-                                className="px-4 py-2 bg-white dark:bg-black border border-amber-200 dark:border-amber-700 text-amber-700 dark:text-amber-400 text-sm font-medium rounded-lg hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors shrink-0 whitespace-nowrap"
-                            >
-                                View in Community →
-                            </button>
-                        </div>
+                    {/* Click outside to close dropdown */}
+                    {isDropdownOpen && (
+                        <div
+                            className="fixed inset-0 z-40"
+                            onClick={() => setIsDropdownOpen(false)}
+                        />
                     )}
 
-                    {/* Dropdown Menu - Multi-Select with Checkboxes */}
-                    {isDropdownOpen && filteredChapters.length > 0 && (
-                        <div className="absolute z-50 w-full mt-1 bg-white dark:bg-[#16181c] border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-80 overflow-y-auto">
-                            {/* Quick Select All Buttons */}
-                            <div className="sticky top-0 z-10 bg-white dark:bg-[#16181c] border-b border-gray-200 dark:border-gray-700 p-2">
-                                <div className="flex flex-wrap gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            const class11Chapters = filteredChapters
-                                                .filter(c => c.class === 'Class 11')
-                                                .map(c => c.matchedTopic || c.name);
-                                            const allSelected = class11Chapters.every(c => selectedChapters.includes(c));
-                                            let newSelected: string[];
-                                            if (allSelected) {
-                                                newSelected = selectedChapters.filter(c => !class11Chapters.includes(c));
-                                            } else {
-                                                newSelected = [...new Set([...selectedChapters, ...class11Chapters])];
-                                            }
-                                            setSelectedChapters(newSelected);
-                                            setTopic(newSelected.join(', '));
-                                        }}
-                                        className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-all ${filteredChapters.filter(c => c.class === 'Class 11').length > 0 && filteredChapters.filter(c => c.class === 'Class 11').every(c => selectedChapters.includes(c.matchedTopic || c.name))
-                                            ? 'bg-indigo-600 text-white border-indigo-600'
-                                            : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20'
-                                            }`}
-                                    >
-                                        📚 All Class 11
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            const class12Chapters = filteredChapters
-                                                .filter(c => c.class === 'Class 12')
-                                                .map(c => c.matchedTopic || c.name);
-                                            const allSelected = class12Chapters.every(c => selectedChapters.includes(c));
-                                            let newSelected: string[];
-                                            if (allSelected) {
-                                                newSelected = selectedChapters.filter(c => !class12Chapters.includes(c));
-                                            } else {
-                                                newSelected = [...new Set([...selectedChapters, ...class12Chapters])];
-                                            }
-                                            setSelectedChapters(newSelected);
-                                            setTopic(newSelected.join(', '));
-                                        }}
-                                        className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-all ${filteredChapters.filter(c => c.class === 'Class 12').length > 0 && filteredChapters.filter(c => c.class === 'Class 12').every(c => selectedChapters.includes(c.matchedTopic || c.name))
-                                            ? 'bg-indigo-600 text-white border-indigo-600'
-                                            : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20'
-                                            }`}
-                                    >
-                                        📚 All Class 12
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            const allChapters = filteredChapters.map(c => c.matchedTopic || c.name);
-                                            const allSelected = allChapters.every(c => selectedChapters.includes(c));
-                                            let newSelected: string[];
-                                            if (allSelected) {
-                                                newSelected = [];
-                                            } else {
-                                                newSelected = [...new Set(allChapters)];
-                                            }
-                                            setSelectedChapters(newSelected);
-                                            setTopic(newSelected.join(', '));
-                                        }}
-                                        className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-all ${filteredChapters.length > 0 && filteredChapters.every(c => selectedChapters.includes(c.matchedTopic || c.name))
-                                            ? 'bg-purple-600 text-white border-purple-600'
-                                            : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-purple-50 dark:hover:bg-purple-900/20'
-                                            }`}
-                                    >
-                                        🎯 All 11 + 12
-                                    </button>
-                                </div>
-                            </div>
-                            {/* Selected count header */}
-                            {selectedChapters.length > 0 && (
-                                <div className="px-3 py-2 bg-indigo-50 dark:bg-indigo-900/30 text-xs font-medium text-indigo-600 dark:text-indigo-400 flex justify-between items-center border-b border-indigo-200 dark:border-indigo-800">
-                                    <span>{selectedChapters.length} chapter(s) selected</span>
-                                    <button
-                                        onClick={() => {
-                                            setSelectedChapters([]);
-                                            setTopic('');
-                                        }}
-                                        className="text-red-500 hover:text-red-600 text-xs"
-                                    >
-                                        Clear all
-                                    </button>
-                                </div>
-                            )}
-                            {/* Group by class */}
-                            {['Class 11', 'Class 12'].map((className) => {
-                                const classChapters = filteredChapters.filter(c => c.class === className);
-                                if (classChapters.length === 0) return null;
-
-                                return (
-                                    <div key={className}>
-                                        <div className="sticky top-0 px-3 py-2 bg-gray-100 dark:bg-gray-800 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                                            {className}
-                                        </div>
-                                        {classChapters.map((chapter, idx) => {
-                                            const chapterKey = chapter.matchedTopic || chapter.name;
-                                            const isSelected = selectedChapters.includes(chapterKey);
-                                            return (
-                                                <button
-                                                    key={`${className}-${chapter.name}-${idx}`}
-                                                    type="button"
-                                                    onClick={() => {
-                                                        let newSelected: string[];
-                                                        if (isSelected) {
-                                                            newSelected = selectedChapters.filter(c => c !== chapterKey);
-                                                        } else {
-                                                            newSelected = [...selectedChapters, chapterKey];
-                                                        }
-                                                        setSelectedChapters(newSelected);
-                                                        // Update topic with all selected chapters
-                                                        setTopic(newSelected.join(', '));
-                                                    }}
-                                                    className={`w-full px-4 py-2.5 text-left hover:bg-indigo-50 dark:hover:bg-indigo-900/20 text-gray-700 dark:text-gray-200 text-sm transition-colors flex items-center gap-3 ${isSelected ? 'bg-indigo-50 dark:bg-indigo-900/30' : ''}`}
-                                                >
-                                                    {/* Checkbox */}
-                                                    <div className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 ${isSelected ? 'bg-indigo-600 border-indigo-600' : 'border-gray-300 dark:border-gray-600'}`}>
-                                                        {isSelected && (
-                                                            <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                                            </svg>
-                                                        )}
-                                                    </div>
-                                                    <span className="truncate flex-1">
-                                                        {chapter.name}
-                                                        {chapter.matchedTopic && chapter.matchedTopic !== chapter.name && (
-                                                            <span className="text-indigo-500 dark:text-indigo-400 text-xs ml-2">
-                                                                → {chapter.matchedTopic}
-                                                            </span>
-                                                        )}
-                                                    </span>
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    )}
-
-                    {/* No results message */}
-                    {/* Custom Topic Option (Always show if typing) */}
-                    {isDropdownOpen && searchQuery.trim() && (
-                        <div className="absolute z-50 w-full mt-1 bg-white dark:bg-[#16181c] border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-4 text-center">
-                            {filteredChapters.length === 0 && (
-                                <p className="text-sm text-gray-500 dark:text-gray-400">
-                                    No NCERT chapters match &quot;{searchQuery}&quot;
-                                </p>
-                            )}
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    // setIsCustomMode(true); // Removed as isCustomMode state is deleted
-                                    setTopic(searchQuery); // Use current search as topic
-                                    setIsDropdownOpen(false);
-                                }}
-                                className="mt-2 text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 bg-indigo-50 dark:bg-indigo-900/30 px-3 py-1.5 rounded-full transition-colors"
-                            >
-                                Use &quot;{searchQuery}&quot; as Custom Topic
-                            </button>
-                        </div>
-                    )}
-                </div>
-
-                {/* Click outside to close dropdown */}
-                {isDropdownOpen && (
-                    <div
-                        className="fixed inset-0 z-40"
-                        onClick={() => setIsDropdownOpen(false)}
-                    />
-                )}
-
-                {/* Subject Selection - Hide for GATE */}
-                {level !== "GATE" && (
-                    <div className="mb-3 md:mb-4">
-                        <label className="block mb-2 font-medium text-gray-700 dark:text-gray-300 text-sm">Select Subject</label>
-                        <div className="grid grid-cols-3 gap-2">
-                            {subjects.map((sub) => {
-                                const IconComponent = sub.icon;
-                                const isSelected = subject.includes(sub.name);
-                                return (
-                                    <button
-                                        key={sub.name}
-                                        onClick={() => {
-                                            if (isSelected) {
-                                                if (subject.length > 1) {
-                                                    setSubject(prev => prev.filter(s => s !== sub.name));
+                    {/* Subject Selection - Hide for GATE */}
+                    {level !== "GATE" && (
+                        <div className="mb-3 md:mb-4">
+                            <label className="block mb-2 font-medium text-gray-700 dark:text-gray-300 text-sm">Select Subject</label>
+                            <div className="grid grid-cols-3 gap-2">
+                                {subjects.map((sub) => {
+                                    const IconComponent = sub.icon;
+                                    const isSelected = subject.includes(sub.name);
+                                    return (
+                                        <button
+                                            key={sub.name}
+                                            onClick={() => {
+                                                if (isSelected) {
+                                                    if (subject.length > 1) {
+                                                        setSubject(prev => prev.filter(s => s !== sub.name));
+                                                    }
+                                                } else {
+                                                    setSubject(prev => [...prev, sub.name]);
                                                 }
+                                            }}
+                                            disabled={isLoading}
+                                            className={`p-2 md:p-3 rounded-xl border transition-all duration-300 flex flex-col items-center gap-1 ${isSelected
+                                                ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400"
+                                                : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 bg-white dark:bg-[#16181c]"
+                                                } ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
+                                        >
+                                            <IconComponent className="w-5 h-5" />
+                                            <span className="text-xs font-medium">{sub.name}</span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* GATE Paper Selection */}
+                    {level === "GATE" && (
+                        <div className="mb-3 md:mb-4">
+                            <label className="block mb-2 font-medium text-gray-700 dark:text-gray-300 text-sm">Select GATE Paper</label>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                {gatePapers.map((paper) => {
+                                    const isSelected = gatePaper === paper.name;
+                                    return (
+                                        <button
+                                            key={paper.name}
+                                            onClick={() => setGatePaper(paper.name)}
+                                            disabled={isLoading}
+                                            className={`p-2 rounded-xl border transition-all duration-300 flex flex-col items-center gap-1 ${isSelected
+                                                ? "border-orange-500 bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400"
+                                                : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 bg-white dark:bg-[#16181c]"
+                                                } ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
+                                        >
+                                            <span className="text-sm font-bold">{paper.name}</span>
+                                            <span className="text-[10px] text-center opacity-70">{paper.label.split('(')[0]}</span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Level Selection */}
+                    <div className="mb-3 md:mb-4">
+                        <label className="block mb-2 font-medium text-gray-700 dark:text-gray-300 text-sm">Select Exam Type</label>
+                        <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                            {levels.map((lvl) => {
+                                const IconComponent = lvl.icon;
+                                const isSelected = level === lvl.name;
+                                return (
+                                    <button
+                                        key={lvl.name}
+                                        onClick={() => {
+                                            setLevel(lvl.name);
+                                            // Set default MCQ/Numerical counts based on exam type
+                                            if (lvl.name === "JEE Mains") {
+                                                setNumMCQs(20);
+                                                setNumNumericals(5);
+                                            } else if (lvl.name === "JEE Advanced") {
+                                                setNumMCQs(15);
+                                                setNumNumericals(5);
+                                            } else if (lvl.name === "NEET") {
+                                                setNumMCQs(20);
+                                                setNumNumericals(0);
+                                            } else if (lvl.name === "Olympiad") {
+                                                setNumMCQs(10);
+                                                setNumNumericals(5);
                                             } else {
-                                                setSubject(prev => [...prev, sub.name]);
+                                                setNumMCQs(15);
+                                                setNumNumericals(5);
                                             }
                                         }}
                                         disabled={isLoading}
-                                        className={`p-2 md:p-3 rounded-xl border transition-all duration-300 flex flex-col items-center gap-1 ${isSelected
+                                        className={`p-2 rounded-xl border transition-all duration-300 flex flex-col items-center gap-1 ${isSelected
                                             ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400"
                                             : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 bg-white dark:bg-[#16181c]"
                                             } ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
                                     >
-                                        <IconComponent className="w-5 h-5" />
-                                        <span className="text-xs font-medium">{sub.name}</span>
+                                        <IconComponent className="w-4 h-4" />
+                                        <span className="text-[10px] font-medium text-center">{lvl.name}</span>
                                     </button>
                                 );
                             })}
                         </div>
                     </div>
-                )}
 
-                {/* GATE Paper Selection */}
-                {level === "GATE" && (
+                    {/* Difficulty Percentage Distribution */}
                     <div className="mb-3 md:mb-4">
-                        <label className="block mb-2 font-medium text-gray-700 dark:text-gray-300 text-sm">Select GATE Paper</label>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                            {gatePapers.map((paper) => {
-                                const isSelected = gatePaper === paper.name;
-                                return (
-                                    <button
-                                        key={paper.name}
-                                        onClick={() => setGatePaper(paper.name)}
-                                        disabled={isLoading}
-                                        className={`p-2 rounded-xl border transition-all duration-300 flex flex-col items-center gap-1 ${isSelected
-                                            ? "border-orange-500 bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400"
-                                            : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 bg-white dark:bg-[#16181c]"
-                                            } ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
-                                    >
-                                        <span className="text-sm font-bold">{paper.name}</span>
-                                        <span className="text-[10px] text-center opacity-70">{paper.label.split('(')[0]}</span>
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    </div>
-                )}
-
-                {/* Level Selection */}
-                <div className="mb-3 md:mb-4">
-                    <label className="block mb-2 font-medium text-gray-700 dark:text-gray-300 text-sm">Select Exam Type</label>
-                    <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-                        {levels.map((lvl) => {
-                            const IconComponent = lvl.icon;
-                            const isSelected = level === lvl.name;
-                            return (
-                                <button
-                                    key={lvl.name}
-                                    onClick={() => {
-                                        setLevel(lvl.name);
-                                        // Set default MCQ/Numerical counts based on exam type
-                                        if (lvl.name === "JEE Mains") {
-                                            setNumMCQs(20);
-                                            setNumNumericals(5);
-                                        } else if (lvl.name === "JEE Advanced") {
-                                            setNumMCQs(15);
-                                            setNumNumericals(5);
-                                        } else if (lvl.name === "NEET") {
-                                            setNumMCQs(20);
-                                            setNumNumericals(0);
-                                        } else if (lvl.name === "Olympiad") {
-                                            setNumMCQs(10);
-                                            setNumNumericals(5);
-                                        } else {
-                                            setNumMCQs(15);
-                                            setNumNumericals(5);
-                                        }
+                        <label className="block mb-2 font-medium text-gray-700 dark:text-gray-300 text-sm">
+                            Difficulty Distribution
+                            <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
+                                (Total: {easyPercent + mediumPercent + hardPercent}%)
+                            </span>
+                            {easyPercent + mediumPercent + hardPercent !== 100 && (
+                                <span className="ml-2 text-xs text-red-500">Must equal 100%</span>
+                            )}
+                        </label>
+                        <div className="grid grid-cols-3 gap-2">
+                            <div className="relative">
+                                <label className="block text-xs text-green-600 dark:text-green-400 mb-1 font-medium">Easy %</label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    max="100"
+                                    value={easyPercent}
+                                    onChange={(e) => {
+                                        const val = Math.min(100, Math.max(0, parseInt(e.target.value) || 0));
+                                        setEasyPercent(val);
+                                        // Auto-fill hard percentage
+                                        const remaining = 100 - val - mediumPercent;
+                                        if (remaining >= 0) setHardPercent(remaining);
                                     }}
                                     disabled={isLoading}
-                                    className={`p-2 rounded-xl border transition-all duration-300 flex flex-col items-center gap-1 ${isSelected
-                                        ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400"
-                                        : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 bg-white dark:bg-[#16181c]"
-                                        } ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
-                                >
-                                    <IconComponent className="w-4 h-4" />
-                                    <span className="text-[10px] font-medium text-center">{lvl.name}</span>
-                                </button>
-                            );
-                        })}
+                                    className="w-full p-2 text-center rounded-xl border border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm font-medium"
+                                />
+                            </div>
+                            <div className="relative">
+                                <label className="block text-xs text-green-600 dark:text-green-400 mb-1 font-medium">Medium %</label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    max="100"
+                                    value={mediumPercent}
+                                    onChange={(e) => {
+                                        const val = Math.min(100, Math.max(0, parseInt(e.target.value) || 0));
+                                        setMediumPercent(val);
+                                        // Auto-fill hard percentage
+                                        const remaining = 100 - easyPercent - val;
+                                        if (remaining >= 0) setHardPercent(remaining);
+                                    }}
+                                    disabled={isLoading}
+                                    className="w-full p-2 text-center rounded-xl border border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm font-medium"
+                                />
+                            </div>
+                            <div className="relative">
+                                <label className="block text-xs text-green-600 dark:text-green-400 mb-1 font-medium">Hard %</label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    max="100"
+                                    value={hardPercent}
+                                    onChange={(e) => {
+                                        const val = Math.min(100, Math.max(0, parseInt(e.target.value) || 0));
+                                        setHardPercent(val);
+                                        // Adjust easy/medium if needed? No, usually hard is the last one adjusted.
+                                        // Or simply set it.
+                                    }}
+                                    disabled={isLoading}
+                                    className="w-full p-2 text-center rounded-xl border border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm font-medium"
+                                />
+                            </div>
+                        </div>
                     </div>
-                </div>
 
-                {/* Difficulty Percentage Distribution */}
-                <div className="mb-3 md:mb-4">
-                    <label className="block mb-2 font-medium text-gray-700 dark:text-gray-300 text-sm">
-                        Difficulty Distribution
-                        <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
-                            (Total: {easyPercent + mediumPercent + hardPercent}%)
-                        </span>
-                        {easyPercent + mediumPercent + hardPercent !== 100 && (
-                            <span className="ml-2 text-xs text-red-500">Must equal 100%</span>
+
+
+
+
+                    {/* Dynamic Exam Pattern */}
+                    <div className="mb-4">
+                        <div className="flex items-center justify-between mb-2">
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                {level === "CBSE Board" ? "CBSE Board Pattern" : `${level} Pattern`}
+                            </span>
+                            <span className="text-xs text-gray-400">
+                                Total: {level === "CBSE Board"
+                                    ? cbseMCQ + cbseVeryShort + cbseShort + cbseLong + cbseCaseBased + cbseNumericals
+                                    : level === "GATE"
+                                        ? numGA + numMCQs + numMSQ + numNAT
+                                        : level === "JEE Advanced"
+                                            ? jeeSingle + jeeMulti + jeeInteger + jeeMatrixMatch + jeeParagraph
+                                            : numMCQs + numNumericals} (max 50)
+                            </span>
+                        </div>
+
+                        {/* CBSE Board Pattern */}
+                        {level === "CBSE Board" && (
+                            <div className="space-y-3">
+                                {/* MCQ Input */}
+                                <div className="relative">
+                                    <input
+                                        type="number"
+                                        min={0}
+                                        max={20}
+                                        value={cbseMCQ}
+                                        onChange={(e) => {
+                                            const val = parseInt(e.target.value) || 0;
+                                            setCbseMCQ(val);
+                                            if (e.target.value !== "" && parseInt(e.target.value).toString() !== e.target.value) {
+                                                e.target.value = parseInt(e.target.value).toString();
+                                            }
+                                        }}
+                                        disabled={isLoading}
+                                        className="peer w-full px-3 pt-5 pb-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-black text-gray-900 dark:text-white"
+                                        placeholder=" "
+                                    />
+                                    <label className="absolute left-3 top-1 text-[10px] text-indigo-600 font-medium">
+                                        MCQs (1M each)
+                                    </label>
+                                </div>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="relative">
+                                        <input
+                                            type="number"
+                                            min={0}
+                                            max={20}
+                                            value={cbseVeryShort}
+                                            onChange={(e) => setCbseVeryShort(parseInt(e.target.value) || 0)}
+                                            disabled={isLoading}
+                                            className="peer w-full px-3 pt-5 pb-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-black text-gray-900 dark:text-white"
+                                            placeholder=" "
+                                        />
+                                        <label className="absolute left-3 top-1 text-[10px] text-indigo-600 font-medium">
+                                            Very Short Answer (1-2M)
+                                        </label>
+                                    </div>
+                                    <div className="relative">
+                                        <input
+                                            type="number"
+                                            min={0}
+                                            max={20}
+                                            value={cbseShort}
+                                            onChange={(e) => setCbseShort(parseInt(e.target.value) || 0)}
+                                            disabled={isLoading}
+                                            className="peer w-full px-3 pt-5 pb-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-black text-gray-900 dark:text-white"
+                                            placeholder=" "
+                                        />
+                                        <label className="absolute left-3 top-1 text-[10px] text-indigo-600 font-medium">
+                                            Short Answer (2-3M)
+                                        </label>
+                                    </div>
+                                    <div className="relative">
+                                        <input
+                                            type="number"
+                                            min={0}
+                                            max={20}
+                                            value={cbseLong}
+                                            onChange={(e) => setCbseLong(parseInt(e.target.value) || 0)}
+                                            disabled={isLoading}
+                                            className="peer w-full px-3 pt-5 pb-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-black text-gray-900 dark:text-white"
+                                            placeholder=" "
+                                        />
+                                        <label className="absolute left-3 top-1 text-[10px] text-indigo-600 font-medium">
+                                            Long Answer (5M)
+                                        </label>
+                                    </div>
+                                    <div className="relative">
+                                        <input
+                                            type="number"
+                                            min={0}
+                                            max={20}
+                                            value={cbseCaseBased}
+                                            onChange={(e) => setCbseCaseBased(parseInt(e.target.value) || 0)}
+                                            disabled={isLoading}
+                                            className="peer w-full px-3 pt-5 pb-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-black text-gray-900 dark:text-white"
+                                            placeholder=" "
+                                        />
+                                        <label className="absolute left-3 top-1 text-[10px] text-indigo-600 font-medium">
+                                            Case-Based
+                                        </label>
+                                    </div>
+                                </div>
+                                <div className="relative">
+                                    <input
+                                        type="number"
+                                        min={0}
+                                        max={20}
+                                        value={cbseNumericals}
+                                        onChange={(e) => setCbseNumericals(parseInt(e.target.value) || 0)}
+                                        disabled={isLoading}
+                                        className="peer w-full px-3 pt-5 pb-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-black text-gray-900 dark:text-white"
+                                        placeholder=" "
+                                    />
+                                    <label className="absolute left-3 top-1 text-[10px] text-indigo-600 font-medium">
+                                        Numericals (3-5M)
+                                    </label>
+                                </div>
+                            </div>
                         )}
-                    </label>
-                    <div className="grid grid-cols-3 gap-2">
-                        <div className="relative">
-                            <label className="block text-xs text-green-600 dark:text-green-400 mb-1 font-medium">Easy %</label>
-                            <input
-                                type="number"
-                                min="0"
-                                max="100"
-                                value={easyPercent}
-                                onChange={(e) => {
-                                    const val = Math.min(100, Math.max(0, parseInt(e.target.value) || 0));
-                                    setEasyPercent(val);
-                                    // Auto-fill hard percentage
-                                    const remaining = 100 - val - mediumPercent;
-                                    if (remaining >= 0) setHardPercent(remaining);
-                                }}
-                                disabled={isLoading}
-                                className="w-full p-2 text-center rounded-xl border border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm font-medium"
-                            />
-                        </div>
-                        <div className="relative">
-                            <label className="block text-xs text-green-600 dark:text-green-400 mb-1 font-medium">Medium %</label>
-                            <input
-                                type="number"
-                                min="0"
-                                max="100"
-                                value={mediumPercent}
-                                onChange={(e) => {
-                                    const val = Math.min(100, Math.max(0, parseInt(e.target.value) || 0));
-                                    setMediumPercent(val);
-                                    // Auto-fill hard percentage
-                                    const remaining = 100 - easyPercent - val;
-                                    if (remaining >= 0) setHardPercent(remaining);
-                                }}
-                                disabled={isLoading}
-                                className="w-full p-2 text-center rounded-xl border border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm font-medium"
-                            />
-                        </div>
-                        <div className="relative">
-                            <label className="block text-xs text-green-600 dark:text-green-400 mb-1 font-medium">Hard %</label>
-                            <input
-                                type="number"
-                                min="0"
-                                max="100"
-                                value={hardPercent}
-                                onChange={(e) => {
-                                    const val = Math.min(100, Math.max(0, parseInt(e.target.value) || 0));
-                                    setHardPercent(val);
-                                    // Adjust easy/medium if needed? No, usually hard is the last one adjusted.
-                                    // Or simply set it.
-                                }}
-                                disabled={isLoading}
-                                className="w-full p-2 text-center rounded-xl border border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm font-medium"
-                            />
-                        </div>
-                    </div>
-                </div>
 
-
-
-
-
-                {/* Dynamic Exam Pattern */}
-                <div className="mb-4">
-                    <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                            {level === "CBSE Board" ? "CBSE Board Pattern" : `${level} Pattern`}
-                        </span>
-                        <span className="text-xs text-gray-400">
-                            Total: {level === "CBSE Board"
-                                ? cbseMCQ + cbseVeryShort + cbseShort + cbseLong + cbseCaseBased + cbseNumericals
-                                : level === "GATE"
-                                    ? numGA + numMCQs + numMSQ + numNAT
-                                    : level === "JEE Advanced"
-                                        ? jeeSingle + jeeMulti + jeeInteger + jeeMatrixMatch + jeeParagraph
-                                        : numMCQs + numNumericals} (max 50)
-                        </span>
-                    </div>
-
-                    {/* CBSE Board Pattern */}
-                    {level === "CBSE Board" && (
-                        <div className="space-y-3">
-                            {/* MCQ Input */}
-                            <div className="relative">
-                                <input
-                                    type="number"
-                                    min={0}
-                                    max={20}
-                                    value={cbseMCQ}
-                                    onChange={(e) => {
-                                        const val = parseInt(e.target.value) || 0;
-                                        setCbseMCQ(val);
-                                        if (e.target.value !== "" && parseInt(e.target.value).toString() !== e.target.value) {
-                                            e.target.value = parseInt(e.target.value).toString();
-                                        }
-                                    }}
-                                    disabled={isLoading}
-                                    className="peer w-full px-3 pt-5 pb-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-black text-gray-900 dark:text-white"
-                                    placeholder=" "
-                                />
-                                <label className="absolute left-3 top-1 text-[10px] text-indigo-600 font-medium">
-                                    MCQs (1M each)
-                                </label>
-                            </div>
+                        {/* JEE Mains Pattern */}
+                        {level === "JEE Mains" && (
                             <div className="grid grid-cols-2 gap-3">
-                                <div className="relative">
-                                    <input
-                                        type="number"
-                                        min={0}
-                                        max={20}
-                                        value={cbseVeryShort}
-                                        onChange={(e) => setCbseVeryShort(parseInt(e.target.value) || 0)}
-                                        disabled={isLoading}
-                                        className="peer w-full px-3 pt-5 pb-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-black text-gray-900 dark:text-white"
-                                        placeholder=" "
-                                    />
-                                    <label className="absolute left-3 top-1 text-[10px] text-indigo-600 font-medium">
-                                        Very Short Answer (1-2M)
-                                    </label>
-                                </div>
-                                <div className="relative">
-                                    <input
-                                        type="number"
-                                        min={0}
-                                        max={20}
-                                        value={cbseShort}
-                                        onChange={(e) => setCbseShort(parseInt(e.target.value) || 0)}
-                                        disabled={isLoading}
-                                        className="peer w-full px-3 pt-5 pb-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-black text-gray-900 dark:text-white"
-                                        placeholder=" "
-                                    />
-                                    <label className="absolute left-3 top-1 text-[10px] text-indigo-600 font-medium">
-                                        Short Answer (2-3M)
-                                    </label>
-                                </div>
-                                <div className="relative">
-                                    <input
-                                        type="number"
-                                        min={0}
-                                        max={20}
-                                        value={cbseLong}
-                                        onChange={(e) => setCbseLong(parseInt(e.target.value) || 0)}
-                                        disabled={isLoading}
-                                        className="peer w-full px-3 pt-5 pb-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-black text-gray-900 dark:text-white"
-                                        placeholder=" "
-                                    />
-                                    <label className="absolute left-3 top-1 text-[10px] text-indigo-600 font-medium">
-                                        Long Answer (5M)
-                                    </label>
-                                </div>
-                                <div className="relative">
-                                    <input
-                                        type="number"
-                                        min={0}
-                                        max={20}
-                                        value={cbseCaseBased}
-                                        onChange={(e) => setCbseCaseBased(parseInt(e.target.value) || 0)}
-                                        disabled={isLoading}
-                                        className="peer w-full px-3 pt-5 pb-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-black text-gray-900 dark:text-white"
-                                        placeholder=" "
-                                    />
-                                    <label className="absolute left-3 top-1 text-[10px] text-indigo-600 font-medium">
-                                        Case-Based
-                                    </label>
-                                </div>
-                            </div>
-                            <div className="relative">
-                                <input
-                                    type="number"
-                                    min={0}
-                                    max={20}
-                                    value={cbseNumericals}
-                                    onChange={(e) => setCbseNumericals(parseInt(e.target.value) || 0)}
-                                    disabled={isLoading}
-                                    className="peer w-full px-3 pt-5 pb-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-black text-gray-900 dark:text-white"
-                                    placeholder=" "
-                                />
-                                <label className="absolute left-3 top-1 text-[10px] text-indigo-600 font-medium">
-                                    Numericals (3-5M)
-                                </label>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* JEE Mains Pattern */}
-                    {level === "JEE Mains" && (
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="relative">
-                                <input
-                                    type="number"
-                                    value={numMCQs}
-                                    onChange={(e) => {
-                                        const val = parseInt(e.target.value) || 0;
-                                        if (val >= 0 && val + numNumericals <= 50) {
-                                            setNumMCQs(val);
-                                            setQuestionCount(val + numNumericals);
-                                            // Force DOM update to strip leading zeros
-                                            if (e.target.value !== "" && parseInt(e.target.value).toString() !== e.target.value) {
-                                                e.target.value = parseInt(e.target.value).toString();
-                                            }
-                                        }
-                                    }}
-                                    min={0}
-                                    max={50 - numNumericals}
-                                    disabled={isLoading}
-                                    className="peer w-full px-3 pt-5 pb-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-black text-gray-900 dark:text-white"
-                                    placeholder=" "
-                                />
-                                <label className="absolute left-3 top-1 text-[10px] text-indigo-600 font-medium">
-                                    MCQs
-                                </label>
-                            </div>
-                            <div className="relative">
-                                <input
-                                    type="number"
-                                    value={numNumericals}
-                                    onChange={(e) => {
-                                        const val = parseInt(e.target.value) || 0;
-                                        if (val >= 0 && numMCQs + val <= 50) {
-                                            setNumNumericals(val);
-                                            setQuestionCount(numMCQs + val);
-                                            // Force DOM update to strip leading zeros
-                                            if (e.target.value !== "" && parseInt(e.target.value).toString() !== e.target.value) {
-                                                e.target.value = parseInt(e.target.value).toString();
-                                            }
-                                        }
-                                    }}
-                                    min={0}
-                                    max={50 - numMCQs}
-                                    disabled={isLoading}
-                                    className="peer w-full px-3 pt-5 pb-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-black text-gray-900 dark:text-white"
-                                    placeholder=" "
-                                />
-                                <label className="absolute left-3 top-1 text-[10px] text-indigo-600 font-medium">
-                                    Numerical
-                                </label>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* JEE Advanced Pattern */}
-                    {level === "JEE Advanced" && (
-                        <div className="space-y-3">
-                            <div className="grid grid-cols-3 gap-3">
-                                <div className="relative">
-                                    <input
-                                        type="number"
-                                        value={jeeSingle}
-                                        onChange={(e) => {
-                                            const val = parseInt(e.target.value) || 0;
-                                            if (val >= 0 && val + jeeMulti + jeeInteger + jeeMatrixMatch + jeeParagraph <= 50) {
-                                                setJeeSingle(val);
-                                                if (e.target.value !== "" && parseInt(e.target.value).toString() !== e.target.value) {
-                                                    e.target.value = parseInt(e.target.value).toString();
-                                                }
-                                            }
-                                        }}
-                                        min={0}
-                                        max={30}
-                                        className="peer w-full px-3 pt-5 pb-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-black text-gray-900 dark:text-white"
-                                        placeholder=" "
-                                    />
-                                    <label className="absolute left-3 top-1 text-[10px] text-indigo-600 font-medium">
-                                        Single Correct
-                                    </label>
-                                </div>
-                                <div className="relative">
-                                    <input
-                                        type="number"
-                                        value={jeeMulti}
-                                        onChange={(e) => {
-                                            const val = parseInt(e.target.value) || 0;
-                                            if (val >= 0 && jeeSingle + val + jeeInteger + jeeMatrixMatch + jeeParagraph <= 50) {
-                                                setJeeMulti(val);
-                                                if (e.target.value !== "" && parseInt(e.target.value).toString() !== e.target.value) {
-                                                    e.target.value = parseInt(e.target.value).toString();
-                                                }
-                                            }
-                                        }}
-                                        min={0}
-                                        max={20}
-                                        className="peer w-full px-3 pt-5 pb-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-black text-gray-900 dark:text-white"
-                                        placeholder=" "
-                                    />
-                                    <label className="absolute left-3 top-1 text-[10px] text-indigo-600 font-medium">
-                                        Multi Correct
-                                    </label>
-                                </div>
-                                <div className="relative">
-                                    <input
-                                        type="number"
-                                        value={jeeInteger}
-                                        onChange={(e) => {
-                                            const val = parseInt(e.target.value) || 0;
-                                            if (val >= 0 && jeeSingle + jeeMulti + val + jeeMatrixMatch + jeeParagraph <= 50) {
-                                                setJeeInteger(val);
-                                                if (e.target.value !== "" && parseInt(e.target.value).toString() !== e.target.value) {
-                                                    e.target.value = parseInt(e.target.value).toString();
-                                                }
-                                            }
-                                        }}
-                                        min={0}
-                                        max={20}
-                                        className="peer w-full px-3 pt-5 pb-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-black text-gray-900 dark:text-white"
-                                        placeholder=" "
-                                    />
-                                    <label className="absolute left-3 top-1 text-[10px] text-indigo-600 font-medium">
-                                        Integer
-                                    </label>
-                                </div>
-                            </div>
-                            {/* Row 2: Matrix Match + Paragraph */}
-                            <div className="grid grid-cols-2 gap-3">
-                                <div className="relative">
-                                    <input
-                                        type="number"
-                                        value={jeeMatrixMatch}
-                                        onChange={(e) => {
-                                            const val = parseInt(e.target.value) || 0;
-                                            if (val >= 0 && jeeSingle + jeeMulti + jeeInteger + val + jeeParagraph <= 50) {
-                                                setJeeMatrixMatch(val);
-                                            }
-                                        }}
-                                        min={0}
-                                        max={10}
-                                        className="peer w-full px-3 pt-5 pb-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 bg-white dark:bg-black text-gray-900 dark:text-white"
-                                        placeholder=" "
-                                    />
-                                    <label className="absolute left-3 top-1 text-[10px] text-purple-600 font-medium">
-                                        Matrix Match
-                                    </label>
-                                </div>
-                                <div className="relative">
-                                    <input
-                                        type="number"
-                                        value={jeeParagraph}
-                                        onChange={(e) => {
-                                            const val = parseInt(e.target.value) || 0;
-                                            if (val >= 0 && jeeSingle + jeeMulti + jeeInteger + jeeMatrixMatch + val <= 50) {
-                                                setJeeParagraph(val);
-                                            }
-                                        }}
-                                        min={0}
-                                        max={10}
-                                        className="peer w-full px-3 pt-5 pb-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 bg-white dark:bg-black text-gray-900 dark:text-white"
-                                        placeholder=" "
-                                    />
-                                    <label className="absolute left-3 top-1 text-[10px] text-purple-600 font-medium">
-                                        Paragraph/Comprehension
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* NEET Pattern - Only MCQs (no numericals) */}
-                    {
-                        level === "NEET" && (
-                            <div className="space-y-2">
-                                <div className="flex justify-between items-center">
-                                    <span className="text-sm text-gray-600 dark:text-gray-400">NEET Pattern (MCQ Only)</span>
-                                    <span className="text-xs text-gray-500">Total: {numMCQs} (max 50)</span>
-                                </div>
                                 <div className="relative">
                                     <input
                                         type="number"
                                         value={numMCQs}
                                         onChange={(e) => {
                                             const val = parseInt(e.target.value) || 0;
-                                            if (val >= 0 && val <= 50) setNumMCQs(val);
+                                            if (val >= 0 && val + numNumericals <= 50) {
+                                                setNumMCQs(val);
+                                                setQuestionCount(val + numNumericals);
+                                                // Force DOM update to strip leading zeros
+                                                if (e.target.value !== "" && parseInt(e.target.value).toString() !== e.target.value) {
+                                                    e.target.value = parseInt(e.target.value).toString();
+                                                }
+                                            }
                                         }}
                                         min={0}
-                                        max={50}
+                                        max={50 - numNumericals}
                                         disabled={isLoading}
                                         className="peer w-full px-3 pt-5 pb-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-black text-gray-900 dark:text-white"
                                         placeholder=" "
@@ -2078,271 +1907,440 @@ export default function TestGenerator() {
                                         MCQs
                                     </label>
                                 </div>
-                                <p className="text-xs text-gray-500 dark:text-gray-400 italic">
-                                    NEET is MCQ-only. No numerical questions.
-                                </p>
-                            </div>
-                        )
-                    }
-
-                    {/* Olympiad Pattern */}
-                    {
-                        level === "Olympiad" && (
-                            <div className="grid grid-cols-2 gap-3">
                                 <div className="relative">
                                     <input
                                         type="number"
-                                        defaultValue={10}
-                                        className="peer w-full px-3 pt-5 pb-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
-                                        placeholder=" "
-                                    />
-                                    <label className="absolute left-3 top-1 text-[10px] text-indigo-600 font-medium">
-                                        MCQs
-                                    </label>
-                                </div>
-                                <div className="relative">
-                                    <input
-                                        type="number"
-                                        defaultValue={5}
+                                        value={numNumericals}
+                                        onChange={(e) => {
+                                            const val = parseInt(e.target.value) || 0;
+                                            if (val >= 0 && numMCQs + val <= 50) {
+                                                setNumNumericals(val);
+                                                setQuestionCount(numMCQs + val);
+                                                // Force DOM update to strip leading zeros
+                                                if (e.target.value !== "" && parseInt(e.target.value).toString() !== e.target.value) {
+                                                    e.target.value = parseInt(e.target.value).toString();
+                                                }
+                                            }
+                                        }}
+                                        min={0}
+                                        max={50 - numMCQs}
+                                        disabled={isLoading}
                                         className="peer w-full px-3 pt-5 pb-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-black text-gray-900 dark:text-white"
                                         placeholder=" "
                                     />
                                     <label className="absolute left-3 top-1 text-[10px] text-indigo-600 font-medium">
-                                        Subjective
+                                        Numerical
                                     </label>
                                 </div>
                             </div>
-                        )
-                    }
-                </div >
-
-                {/* Solutions Toggle */}
-                <div className="mb-6 flex items-center gap-3 bg-indigo-50 dark:bg-indigo-900/10 p-3 rounded-xl border border-indigo-100 dark:border-indigo-900/30">
-                    <div className="relative flex items-center">
-                        <input
-                            type="checkbox"
-                            checked={includeSolutions}
-                            onChange={(e) => setIncludeSolutions(e.target.checked)}
-                            className="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500 border-gray-300 dark:border-gray-600"
-                            id="includeSolutions"
-                        />
-                    </div>
-                    <label htmlFor="includeSolutions" className="cursor-pointer flex-1">
-                        <div className="font-medium text-gray-900 dark:text-gray-100 text-sm">Include Detailed Solutions (1-2 min slower)</div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">
-                            Generates step-by-step explanations for each question
-                        </div>
-                    </label>
-                    <BookOpen className="w-5 h-5 text-indigo-500" />
-                </div>
-
-                {/* Generate Button */}
-                < button
-                    onClick={handleGenerate}
-                    disabled={isLoading || !topic.trim() || (rateLimit?.remaining === 0)}
-                    className={`w-full py-2.5 md:py-4 rounded-lg md:rounded-xl text-white font-semibold text-[11px] md:text-lg shadow-lg transition-all duration-300 flex items-center justify-center gap-1.5 md:gap-2 mb-4 btn-primary ${isLoading || !topic.trim() || (rateLimit?.remaining === 0)
-                        ? "bg-gray-400 cursor-not-allowed"
-                        : "hover:shadow-xl transform hover:-translate-y-0.5"
-                        }`}
-                >
-                    {
-                        isLoading ? (
-                            <>
-                                <Loader2 className="w-4 h-4 md:w-6 md:h-6 animate-spin" />
-                                <span>Generating...</span>
-                            </>
-                        ) : (
-                            <>
-                                <Sparkles className="w-4 h-4 md:w-6 md:h-6" />
-                                <span>Generate {level} Test Paper</span>
-                            </>
                         )}
-                </button >
 
-                {/* Progress Bar */}
-                {/* Detailed Loading Steps */}
-                {
-                    isLoading && (
-                        <div className="mb-6 bg-indigo-50 dark:bg-indigo-900/10 rounded-xl p-5 border border-indigo-100 dark:border-indigo-900/30">
-                            <div className="flex items-center justify-between mb-4">
-                                <div className="flex items-center gap-2">
-                                    <div className="w-2 h-2 rounded-full bg-indigo-600 animate-pulse"></div>
-                                    <span className="font-semibold text-indigo-900 dark:text-indigo-300">Working...</span>
-                                </div>
-                                <div className="flex items-center gap-1 text-indigo-600 dark:text-indigo-400 bg-white dark:bg-black px-2 py-1 rounded-lg border border-indigo-100 dark:border-indigo-900/30 text-xs font-mono">
-                                    <Clock className="w-3 h-3" />
-                                    <span>{Math.floor(elapsedTime / 60)}:{String(elapsedTime % 60).padStart(2, '0')}</span>
-                                </div>
-                            </div>
-
+                        {/* JEE Advanced Pattern */}
+                        {level === "JEE Advanced" && (
                             <div className="space-y-3">
-                                {[
-                                    { text: "Analyzing topic and difficulty...", start: 0, end: 5 },
-                                    { text: "Researching question patterns...", start: 5, end: 12 },
-                                    ...(numMCQs > 0 ? [{ text: "Creating MCQ questions...", start: 12, end: 25 }] : []),
-                                    ...(numNumericals > 0 ? [{ text: "Generating numerical problems...", start: 25, end: 35 }] : []),
-                                    { text: "Verifying answers...", start: 35, end: 42 },
-                                    { text: "Formatting PDF document...", start: 42, end: 1000 }
-                                ].map((step, index) => {
-                                    const isCompleted = elapsedTime > step.end;
-                                    const isCurrent = elapsedTime >= step.start && elapsedTime <= step.end;
-                                    const isPending = elapsedTime < step.start;
-
-                                    return (
-                                        <div key={index} className={`flex items-center gap-3 text-sm transition-all duration-300 ${isPending ? 'opacity-50' : 'opacity-100'}`}>
-                                            {isCompleted ? (
-                                                <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
-                                            ) : isCurrent ? (
-                                                <Loader2 className="w-5 h-5 text-indigo-600 animate-spin flex-shrink-0" />
-                                            ) : (
-                                                <div className="w-5 h-5 rounded-full border-2 border-gray-300 dark:border-gray-600 flex-shrink-0" />
-                                            )}
-                                            <span className={`${isCompleted ? 'text-green-700 dark:text-green-400' : isCurrent ? 'text-indigo-700 dark:text-indigo-300 font-medium' : 'text-gray-500 dark:text-gray-400'}`}>
-                                                {step.text}
-                                            </span>
-                                        </div>
-                                    );
-                                })}
+                                <div className="grid grid-cols-3 gap-3">
+                                    <div className="relative">
+                                        <input
+                                            type="number"
+                                            value={jeeSingle}
+                                            onChange={(e) => {
+                                                const val = parseInt(e.target.value) || 0;
+                                                if (val >= 0 && val + jeeMulti + jeeInteger + jeeMatrixMatch + jeeParagraph <= 50) {
+                                                    setJeeSingle(val);
+                                                    if (e.target.value !== "" && parseInt(e.target.value).toString() !== e.target.value) {
+                                                        e.target.value = parseInt(e.target.value).toString();
+                                                    }
+                                                }
+                                            }}
+                                            min={0}
+                                            max={30}
+                                            className="peer w-full px-3 pt-5 pb-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-black text-gray-900 dark:text-white"
+                                            placeholder=" "
+                                        />
+                                        <label className="absolute left-3 top-1 text-[10px] text-indigo-600 font-medium">
+                                            Single Correct
+                                        </label>
+                                    </div>
+                                    <div className="relative">
+                                        <input
+                                            type="number"
+                                            value={jeeMulti}
+                                            onChange={(e) => {
+                                                const val = parseInt(e.target.value) || 0;
+                                                if (val >= 0 && jeeSingle + val + jeeInteger + jeeMatrixMatch + jeeParagraph <= 50) {
+                                                    setJeeMulti(val);
+                                                    if (e.target.value !== "" && parseInt(e.target.value).toString() !== e.target.value) {
+                                                        e.target.value = parseInt(e.target.value).toString();
+                                                    }
+                                                }
+                                            }}
+                                            min={0}
+                                            max={20}
+                                            className="peer w-full px-3 pt-5 pb-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-black text-gray-900 dark:text-white"
+                                            placeholder=" "
+                                        />
+                                        <label className="absolute left-3 top-1 text-[10px] text-indigo-600 font-medium">
+                                            Multi Correct
+                                        </label>
+                                    </div>
+                                    <div className="relative">
+                                        <input
+                                            type="number"
+                                            value={jeeInteger}
+                                            onChange={(e) => {
+                                                const val = parseInt(e.target.value) || 0;
+                                                if (val >= 0 && jeeSingle + jeeMulti + val + jeeMatrixMatch + jeeParagraph <= 50) {
+                                                    setJeeInteger(val);
+                                                    if (e.target.value !== "" && parseInt(e.target.value).toString() !== e.target.value) {
+                                                        e.target.value = parseInt(e.target.value).toString();
+                                                    }
+                                                }
+                                            }}
+                                            min={0}
+                                            max={20}
+                                            className="peer w-full px-3 pt-5 pb-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-black text-gray-900 dark:text-white"
+                                            placeholder=" "
+                                        />
+                                        <label className="absolute left-3 top-1 text-[10px] text-indigo-600 font-medium">
+                                            Integer
+                                        </label>
+                                    </div>
+                                </div>
+                                {/* Row 2: Matrix Match + Paragraph */}
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="relative">
+                                        <input
+                                            type="number"
+                                            value={jeeMatrixMatch}
+                                            onChange={(e) => {
+                                                const val = parseInt(e.target.value) || 0;
+                                                if (val >= 0 && jeeSingle + jeeMulti + jeeInteger + val + jeeParagraph <= 50) {
+                                                    setJeeMatrixMatch(val);
+                                                }
+                                            }}
+                                            min={0}
+                                            max={10}
+                                            className="peer w-full px-3 pt-5 pb-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 bg-white dark:bg-black text-gray-900 dark:text-white"
+                                            placeholder=" "
+                                        />
+                                        <label className="absolute left-3 top-1 text-[10px] text-purple-600 font-medium">
+                                            Matrix Match
+                                        </label>
+                                    </div>
+                                    <div className="relative">
+                                        <input
+                                            type="number"
+                                            value={jeeParagraph}
+                                            onChange={(e) => {
+                                                const val = parseInt(e.target.value) || 0;
+                                                if (val >= 0 && jeeSingle + jeeMulti + jeeInteger + jeeMatrixMatch + val <= 50) {
+                                                    setJeeParagraph(val);
+                                                }
+                                            }}
+                                            min={0}
+                                            max={10}
+                                            className="peer w-full px-3 pt-5 pb-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 bg-white dark:bg-black text-gray-900 dark:text-white"
+                                            placeholder=" "
+                                        />
+                                        <label className="absolute left-3 top-1 text-[10px] text-purple-600 font-medium">
+                                            Paragraph/Comprehension
+                                        </label>
+                                    </div>
+                                </div>
                             </div>
+                        )}
 
-                            <button
-                                onClick={handleCancelGeneration}
-                                className="w-full mt-6 py-2.5 bg-white dark:bg-black border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:text-red-600 hover:border-red-200 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2"
-                            >
-                                <X className="w-4 h-4" />
-                                Cancel Generation
-                            </button>
-                        </div>
-                    )
-                }
-
-                {/* Error Message */}
-                {
-                    (genError || validationError) && (
-                        <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3 text-red-700 animate-in fade-in slide-in-from-top-2">
-                            <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                            <p>{genError || validationError}</p>
-                        </div>
-                    )
-                }
-
-                {/* Success Message */}
-                {
-                    result?.success && (
-                        <div className="mt-6 space-y-4">
-                            <div className="flex items-start gap-3 text-green-700 bg-green-50 border border-green-200 rounded-lg px-4 py-3">
-                                <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                                <div>
-                                    <p className="font-medium">{result.message}</p>
-                                    <p className="text-sm text-green-600">
-                                        {level === "CBSE Board" ? (
-                                            `${cbseVeryShort + cbseShort + cbseLong + cbseCaseBased} Theory + ${cbseNumericals} Numerical Questions`
-                                        ) : (
-                                            `${result.total_mcq} MCQs + ${result.total_numerical} Numerical Questions`
-                                        )}
-                                        ```
+                        {/* NEET Pattern - Only MCQs (no numericals) */}
+                        {
+                            level === "NEET" && (
+                                <div className="space-y-2">
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-sm text-gray-600 dark:text-gray-400">NEET Pattern (MCQ Only)</span>
+                                        <span className="text-xs text-gray-500">Total: {numMCQs} (max 50)</span>
+                                    </div>
+                                    <div className="relative">
+                                        <input
+                                            type="number"
+                                            value={numMCQs}
+                                            onChange={(e) => {
+                                                const val = parseInt(e.target.value) || 0;
+                                                if (val >= 0 && val <= 50) setNumMCQs(val);
+                                            }}
+                                            min={0}
+                                            max={50}
+                                            disabled={isLoading}
+                                            className="peer w-full px-3 pt-5 pb-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-black text-gray-900 dark:text-white"
+                                            placeholder=" "
+                                        />
+                                        <label className="absolute left-3 top-1 text-[10px] text-indigo-600 font-medium">
+                                            MCQs
+                                        </label>
+                                    </div>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 italic">
+                                        NEET is MCQ-only. No numerical questions.
                                     </p>
                                 </div>
-                            </div>
+                            )
+                        }
 
-
-                            <div className="flex gap-3 mt-6">
-                                <button
-                                    onClick={handleDownload}
-                                    className="flex-1 py-3 bg-white dark:bg-black border border-indigo-600 text-indigo-600 font-medium rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/10 transition-colors flex items-center justify-center gap-2"
-                                >
-                                    <Download className="w-5 h-5" />
-                                    Download PDF
-                                </button>
-
-                                <button
-                                    onClick={handlePostClick}
-                                    disabled={isPostingLoading}
-                                    className="flex-1 py-3 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2 shadow-sm disabled:opacity-70"
-                                >
-                                    {isPostingLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Share2 className="w-5 h-5" />}
-                                    Post
-                                </button>
-                            </div>
-
-                            {/* Hidden error message for save failure if any */}
-                            {saveError && (
-                                <p className="text-sm text-red-600 text-center mt-2">{saveError}</p>
-                            )}
-                        </div>
-                    )
-                }
-
-                {/* Recent Tests History */}
-                {history.length > 0 && (
-                    <div className="mt-8 p-5 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-700">
-                        <div className="flex items-center gap-2 mb-4">
-                            <Clock className="w-5 h-5 text-indigo-500" />
-                            <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200">Recent Tests</h3>
-                        </div>
-                        <div className="space-y-3">
-                            {history.slice(0, 3).map((item) => (
-                                <div
-                                    key={item.id}
-                                    onClick={() => {
-                                        if (item.status === 'COMPLETED' && item.pdf_filename) {
-                                            const url = `${API_BASE_URL}/api/download/${item.pdf_filename}`;
-                                            window.open(url, "_blank");
-                                        }
-                                    }}
-                                    className={`flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 transition-all ${item.status === 'COMPLETED'
-                                        ? 'cursor-pointer hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-800'
-                                        : ''
-                                        }`}
-                                >
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex items-center gap-2">
-                                            <p className="font-medium text-gray-800 dark:text-gray-200 truncate">
-                                                {item.topic}
-                                            </p>
-                                            {item.status === 'COMPLETED' && (
-                                                <Download className="w-3 h-3 text-gray-400" />
-                                            )}
-                                        </div>
-                                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                                            {item.subject} • {item.level} • {item.question_count} Qs
-                                        </p>
+                        {/* Olympiad Pattern */}
+                        {
+                            level === "Olympiad" && (
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="relative">
+                                        <input
+                                            type="number"
+                                            defaultValue={10}
+                                            className="peer w-full px-3 pt-5 pb-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                                            placeholder=" "
+                                        />
+                                        <label className="absolute left-3 top-1 text-[10px] text-indigo-600 font-medium">
+                                            MCQs
+                                        </label>
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                        {item.status === 'COMPLETED' && item.pdf_filename ? (
-                                            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                                                <CheckCircle2 className="w-3 h-3 mr-1" />
-                                                Ready
-                                            </span>
-                                        ) : item.status === 'PENDING' || item.status === 'PROCESSING' ? (
-                                            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">
-                                                <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                                                In Progress
-                                            </span>
-                                        ) : (
-                                            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
-                                                <AlertCircle className="w-3 h-3 mr-1" />
-                                                Failed
-                                            </span>
-                                        )}
+                                    <div className="relative">
+                                        <input
+                                            type="number"
+                                            defaultValue={5}
+                                            className="peer w-full px-3 pt-5 pb-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-white dark:bg-black text-gray-900 dark:text-white"
+                                            placeholder=" "
+                                        />
+                                        <label className="absolute left-3 top-1 text-[10px] text-indigo-600 font-medium">
+                                            Subjective
+                                        </label>
                                     </div>
                                 </div>
-                            ))}
+                            )
+                        }
+                    </div >
+
+                    {/* Solutions Toggle */}
+                    <div className="mb-6 flex items-center gap-3 bg-indigo-50 dark:bg-indigo-900/10 p-3 rounded-xl border border-indigo-100 dark:border-indigo-900/30">
+                        <div className="relative flex items-center">
+                            <input
+                                type="checkbox"
+                                checked={includeSolutions}
+                                onChange={(e) => setIncludeSolutions(e.target.checked)}
+                                className="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500 border-gray-300 dark:border-gray-600"
+                                id="includeSolutions"
+                            />
+                        </div>
+                        <label htmlFor="includeSolutions" className="cursor-pointer flex-1">
+                            <div className="font-medium text-gray-900 dark:text-gray-100 text-sm">Include Detailed Solutions (1-2 min slower)</div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400">
+                                Generates step-by-step explanations for each question
+                            </div>
+                        </label>
+                        <BookOpen className="w-5 h-5 text-indigo-500" />
+                    </div>
+
+                    {/* Generate Button */}
+                    < button
+                        onClick={handleGenerate}
+                        disabled={isLoading || !topic.trim() || (rateLimit?.remaining === 0)}
+                        className={`w-full py-2.5 md:py-4 rounded-lg md:rounded-xl text-white font-semibold text-[11px] md:text-lg shadow-lg transition-all duration-300 flex items-center justify-center gap-1.5 md:gap-2 mb-4 btn-primary ${isLoading || !topic.trim() || (rateLimit?.remaining === 0)
+                            ? "bg-gray-400 cursor-not-allowed"
+                            : "hover:shadow-xl transform hover:-translate-y-0.5"
+                            }`}
+                    >
+                        {
+                            isLoading ? (
+                                <>
+                                    <Loader2 className="w-4 h-4 md:w-6 md:h-6 animate-spin" />
+                                    <span>Generating...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <Sparkles className="w-4 h-4 md:w-6 md:h-6" />
+                                    <span>Generate {level} Test Paper</span>
+                                </>
+                            )}
+                    </button >
+
+                    {/* Progress Bar */}
+                    {/* Detailed Loading Steps */}
+                    {
+                        isLoading && (
+                            <div className="mb-6 bg-indigo-50 dark:bg-indigo-900/10 rounded-xl p-5 border border-indigo-100 dark:border-indigo-900/30">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-2 h-2 rounded-full bg-indigo-600 animate-pulse"></div>
+                                        <span className="font-semibold text-indigo-900 dark:text-indigo-300">Working...</span>
+                                    </div>
+                                    <div className="flex items-center gap-1 text-indigo-600 dark:text-indigo-400 bg-white dark:bg-black px-2 py-1 rounded-lg border border-indigo-100 dark:border-indigo-900/30 text-xs font-mono">
+                                        <Clock className="w-3 h-3" />
+                                        <span>{Math.floor(elapsedTime / 60)}:{String(elapsedTime % 60).padStart(2, '0')}</span>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-3">
+                                    {[
+                                        { text: "Analyzing topic and difficulty...", start: 0, end: 5 },
+                                        { text: "Researching question patterns...", start: 5, end: 12 },
+                                        ...(numMCQs > 0 ? [{ text: "Creating MCQ questions...", start: 12, end: 25 }] : []),
+                                        ...(numNumericals > 0 ? [{ text: "Generating numerical problems...", start: 25, end: 35 }] : []),
+                                        { text: "Verifying answers...", start: 35, end: 42 },
+                                        { text: "Formatting PDF document...", start: 42, end: 1000 }
+                                    ].map((step, index) => {
+                                        const isCompleted = elapsedTime > step.end;
+                                        const isCurrent = elapsedTime >= step.start && elapsedTime <= step.end;
+                                        const isPending = elapsedTime < step.start;
+
+                                        return (
+                                            <div key={index} className={`flex items-center gap-3 text-sm transition-all duration-300 ${isPending ? 'opacity-50' : 'opacity-100'}`}>
+                                                {isCompleted ? (
+                                                    <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
+                                                ) : isCurrent ? (
+                                                    <Loader2 className="w-5 h-5 text-indigo-600 animate-spin flex-shrink-0" />
+                                                ) : (
+                                                    <div className="w-5 h-5 rounded-full border-2 border-gray-300 dark:border-gray-600 flex-shrink-0" />
+                                                )}
+                                                <span className={`${isCompleted ? 'text-green-700 dark:text-green-400' : isCurrent ? 'text-indigo-700 dark:text-indigo-300 font-medium' : 'text-gray-500 dark:text-gray-400'}`}>
+                                                    {step.text}
+                                                </span>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+
+                                <button
+                                    onClick={handleCancelGeneration}
+                                    className="w-full mt-6 py-2.5 bg-white dark:bg-black border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:text-red-600 hover:border-red-200 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2"
+                                >
+                                    <X className="w-4 h-4" />
+                                    Cancel Generation
+                                </button>
+                            </div>
+                        )
+                    }
+
+                    {/* Error Message */}
+                    {
+                        (genError || validationError) && (
+                            <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3 text-red-700 animate-in fade-in slide-in-from-top-2">
+                                <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                                <p>{genError || validationError}</p>
+                            </div>
+                        )
+                    }
+
+                    {/* Success Message */}
+                    {
+                        result?.success && (
+                            <div className="mt-6 space-y-4">
+                                <div className="flex items-start gap-3 text-green-700 bg-green-50 border border-green-200 rounded-lg px-4 py-3">
+                                    <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                                    <div>
+                                        <p className="font-medium">{result.message}</p>
+                                        <p className="text-sm text-green-600">
+                                            {level === "CBSE Board" ? (
+                                                `${cbseVeryShort + cbseShort + cbseLong + cbseCaseBased} Theory + ${cbseNumericals} Numerical Questions`
+                                            ) : (
+                                                `${result.total_mcq} MCQs + ${result.total_numerical} Numerical Questions`
+                                            )}
+                                            ```
+                                        </p>
+                                    </div>
+                                </div>
+
+
+                                <div className="flex gap-3 mt-6">
+                                    <button
+                                        onClick={handleDownload}
+                                        className="flex-1 py-3 bg-white dark:bg-black border border-indigo-600 text-indigo-600 font-medium rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/10 transition-colors flex items-center justify-center gap-2"
+                                    >
+                                        <Download className="w-5 h-5" />
+                                        Download PDF
+                                    </button>
+
+                                    <button
+                                        onClick={handlePostClick}
+                                        disabled={isPostingLoading}
+                                        className="flex-1 py-3 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2 shadow-sm disabled:opacity-70"
+                                    >
+                                        {isPostingLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Share2 className="w-5 h-5" />}
+                                        Post
+                                    </button>
+                                </div>
+
+                                {/* Hidden error message for save failure if any */}
+                                {saveError && (
+                                    <p className="text-sm text-red-600 text-center mt-2">{saveError}</p>
+                                )}
+                            </div>
+                        )
+                    }
+
+                    {/* Recent Tests History */}
+                    {history.length > 0 && (
+                        <div className="mt-8 p-5 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-700">
+                            <div className="flex items-center gap-2 mb-4">
+                                <Clock className="w-5 h-5 text-indigo-500" />
+                                <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200">Recent Tests</h3>
+                            </div>
+                            <div className="space-y-3">
+                                {history.slice(0, 3).map((item) => (
+                                    <div
+                                        key={item.id}
+                                        onClick={() => {
+                                            if (item.status === 'COMPLETED' && item.pdf_filename) {
+                                                const url = `${API_BASE_URL}/api/download/${item.pdf_filename}`;
+                                                window.open(url, "_blank");
+                                            }
+                                        }}
+                                        className={`flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 transition-all ${item.status === 'COMPLETED'
+                                            ? 'cursor-pointer hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-800'
+                                            : ''
+                                            }`}
+                                    >
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2">
+                                                <p className="font-medium text-gray-800 dark:text-gray-200 truncate">
+                                                    {item.topic}
+                                                </p>
+                                                {item.status === 'COMPLETED' && (
+                                                    <Download className="w-3 h-3 text-gray-400" />
+                                                )}
+                                            </div>
+                                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                                                {item.subject} • {item.level} • {item.question_count} Qs
+                                            </p>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            {item.status === 'COMPLETED' && item.pdf_filename ? (
+                                                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                                                    <CheckCircle2 className="w-3 h-3 mr-1" />
+                                                    Ready
+                                                </span>
+                                            ) : item.status === 'PENDING' || item.status === 'PROCESSING' ? (
+                                                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">
+                                                    <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                                                    In Progress
+                                                </span>
+                                            ) : (
+                                                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
+                                                    <AlertCircle className="w-3 h-3 mr-1" />
+                                                    Failed
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Footer */}
+                    <div className="text-center mt-8 text-gray-500 dark:text-gray-400 text-sm pb-4">
+                        <div className="flex flex-col items-center justify-center gap-1">
+                            <a href="https://www.mentorsmantra.co.in" target="_blank" rel="noopener noreferrer" className="hover:text-indigo-600 transition-colors font-medium">
+                                www.mentorsmantra.co.in
+                            </a>
+                            <p>Contact: 9821040290 / 7982387231</p>
+                            <p className="text-gray-400 dark:text-gray-500 mt-2 italic">A Mentors Mantra Product</p>
                         </div>
                     </div>
-                )}
-
-                {/* Footer */}
-                <div className="text-center mt-8 text-gray-500 dark:text-gray-400 text-sm pb-4">
-                    <div className="flex flex-col items-center justify-center gap-1">
-                        <a href="https://www.mentorsmantra.co.in" target="_blank" rel="noopener noreferrer" className="hover:text-indigo-600 transition-colors font-medium">
-                            www.mentorsmantra.co.in
-                        </a>
-                        <p>Contact: 9821040290 / 7982387231</p>
-                        <p className="text-gray-400 dark:text-gray-500 mt-2 italic">A Mentors Mantra Product</p>
-                    </div>
-                </div>
-            </div >
+                </div >
             )} {/* end pageMode === "student" */}
 
             {/* Institute Mode Section */}
