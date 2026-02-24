@@ -315,6 +315,10 @@ export default function TestInterfacePage() {
         ? testState.palette.filter(p => p.subject === activeSection)
         : testState.palette;
 
+    // Section-relative question number: find position of current question within its own section
+    const currentQuestionSection = testState.palette.filter(p => p.subject === (question?.subject || activeSection));
+    const sectionQuestionNumber = currentQuestionSection.findIndex(p => p.index === question?.question_index) + 1;
+
     return (
         <div className="min-h-screen bg-gray-100 dark:bg-[#0a0b0d] flex flex-col">
             {/* Header - NTA Style */}
@@ -387,7 +391,10 @@ export default function TestInterfacePage() {
                     {/* Question Header */}
                     <div className="flex justify-between items-center mb-4">
                         <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                            Question {question.question_index + 1}:
+                            Question {sectionQuestionNumber || question.question_index + 1}
+                            <span className="text-sm font-normal text-gray-400 ml-2">
+                                of {currentQuestionSection.length || testState.total_questions}
+                            </span>
                         </h2>
                         <span className={`px-3 py-1 rounded text-sm font-medium ${question.difficulty === 'Easy' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' :
                             question.difficulty === 'Medium' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' :
@@ -562,7 +569,7 @@ export default function TestInterfacePage() {
 
                         {/* Palette Grid */}
                         <div className="grid grid-cols-5 gap-2">
-                            {filteredPalette.map((item) => (
+                            {filteredPalette.map((item, sectionIdx) => (
                                 <button
                                     key={item.index}
                                     onClick={() => {
@@ -572,7 +579,7 @@ export default function TestInterfacePage() {
                                     className={`w-10 h-10 rounded font-bold text-sm ${getStatusColor(item.status)} ${item.index === question.question_index ? 'ring-2 ring-yellow-400' : ''
                                         } hover:opacity-80 transition-opacity`}
                                 >
-                                    {item.index + 1}
+                                    {sectionIdx + 1}
                                 </button>
                             ))}
                         </div>
