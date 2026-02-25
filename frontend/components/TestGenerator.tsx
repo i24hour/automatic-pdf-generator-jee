@@ -110,6 +110,7 @@ function InstituteSection({
     const [pdfBase64, setPdfBase64] = React.useState<string | null>(null);
     const [pdfFilename, setPdfFilename] = React.useState<string | null>(null);
     const [instituteRemaining, setInstituteRemaining] = React.useState<number | null>(null);
+    const abortControllerRef = React.useRef<AbortController | null>(null);
 
     // Per-subject question count limits per exam type
     const EXAM_LIMITS: Record<string, Record<string, number>> = {
@@ -165,6 +166,15 @@ function InstituteSection({
         return () => document.removeEventListener("mousedown", handler);
     }, []);
 
+    const handleCancel = () => {
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+            abortControllerRef.current = null;
+        }
+        setInstituteGenerating(false);
+        setInstituteError("Generation cancelled.");
+    };
+
     const handleGenerate = async () => {
         setInstituteError(null);
         setInstitutePdfUrl(null);
@@ -180,11 +190,15 @@ function InstituteSection({
             return;
         }
 
+        const controller = new AbortController();
+        abortControllerRef.current = controller;
+
         setInstituteGenerating(true);
         try {
             const res = await authFetch(`${API_BASE_URL}/api/generate-institute`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
+                signal: controller.signal,
                 body: JSON.stringify({
                     institute_name: instituteName,
                     contact_number: instituteContact,
@@ -211,8 +225,10 @@ function InstituteSection({
                 setInstituteRemaining(data.institute_remaining);
             }
         } catch (err: any) {
+            if (err.name === "AbortError") return; // silently ignore — cancel already set state
             setInstituteError(err.message || "Something went wrong. Please try again.");
         } finally {
+            abortControllerRef.current = null;
             setInstituteGenerating(false);
         }
     };
@@ -559,24 +575,33 @@ function InstituteSection({
                 </div>
             )}
 
-            {/* Generate Button */}
-            <button
-                onClick={handleGenerate}
-                disabled={instituteGenerating}
-                className="w-full py-3 px-6 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold text-sm transition-colors shadow-sm flex items-center justify-center gap-2"
-            >
-                {instituteGenerating ? (
-                    <>
+            {/* Generate / Cancel Buttons */}
+            {instituteGenerating ? (
+                <div className="flex gap-3">
+                    <button
+                        disabled
+                        className="flex-1 py-3 px-6 rounded-xl bg-indigo-600 opacity-70 cursor-not-allowed text-white font-semibold text-sm flex items-center justify-center gap-2"
+                    >
                         <Loader2 className="w-4 h-4 animate-spin" />
-                        Generating Institute Test…
-                    </>
-                ) : (
-                    <>
-                        <Sparkles className="w-4 h-4" />
-                        Generate Institute Test
-                    </>
-                )}
-            </button>
+                        Generating…
+                    </button>
+                    <button
+                        onClick={handleCancel}
+                        className="py-3 px-5 rounded-xl bg-red-500 hover:bg-red-600 text-white font-semibold text-sm transition-colors shadow-sm flex items-center justify-center gap-2"
+                    >
+                        <X className="w-4 h-4" />
+                        Cancel
+                    </button>
+                </div>
+            ) : (
+                <button
+                    onClick={handleGenerate}
+                    className="w-full py-3 px-6 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm transition-colors shadow-sm flex items-center justify-center gap-2"
+                >
+                    <Sparkles className="w-4 h-4" />
+                    Generate Institute Test
+                </button>
+            )}
 
             {/* Plan info */}
             <p className="mt-3 text-center text-xs text-gray-400 dark:text-gray-500">
