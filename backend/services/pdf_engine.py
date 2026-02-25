@@ -59,30 +59,100 @@ def escape_latex_outside_math(text: str) -> str:
 def clean_solution_for_latex(text: str) -> str:
     """
     Clean LLM-generated solution text to prevent LaTeX compilation errors.
-    The main issue: LLMs generate '\\\\textbf{Step 1:}' which creates stray \\\\
-    line breaks that cause 'There's no line here to end' errors.
     """
     if not isinstance(text, str) or not text:
         return text or ""
-    
+
+    # 0. Replace \mbox with \text — \mbox doesn't handle \par/newlines; \text is safer
+    text = text.replace('\\mbox{', '\\text{')
+
     # 1. Fix stray \\\\ before LaTeX commands (\\\\textbf → \n\n\textbf)
     #    This is the #1 cause of "There's no line here to end"
     text = re.sub(r'\\\\\s*(\\text)', r'\n\n\1', text)
-    
+
     # 2. Fix stray \\\\ at start of lines or after blank lines
     text = re.sub(r'^\\\\\s*$', '', text, flags=re.MULTILINE)
     text = re.sub(r'\n\\\\\s*\n', '\n\n', text)
-    
-    # 3. Replace \\\\n\\\\n (literal escaped newlines from JSON) with actual newlines
+
+    # 3. Replace \\n\\n / \\n (literal escaped newlines from JSON) with actual newlines
     text = text.replace('\\n\\n', '\n\n')
     text = text.replace('\\n', '\n')
-    
+
     # 4. Fix \\\\ that appears right before \noindent, \begin, \end
     text = re.sub(r'\\\\\s*(\\(?:noindent|begin|end|vspace|hspace|par))', r'\n\n\1', text)
-    
-    # 5. Remove standalone \\\\ on their own line (causes errors in many contexts)
+
+    # 5. Remove standalone \\\\ on their own line
     text = re.sub(r'^\s*\\\\\s*$', '', text, flags=re.MULTILINE)
-    
+
+    # 6. Remove \\ immediately before closing $ (causes "Missing $ inserted")
+    #    e.g.  $\alpha \\ $ → $\alpha $
+    text = re.sub(r'\\\\\s*\$', '$', text)
+
+    # 7. Remove \\ inside inline math $...$ — \\ is not valid in inline math mode
+    def _strip_linebreaks_in_inline_math(t: str) -> str:
+        result = []
+        i = 0
+        while i < len(t):
+            if t[i] == '$' and (i == 0 or t[i-1] != '\\'):
+                # Find matching closing $
+                j = i + 1
+                while j < len(t):
+                    if t[j] == '$' and t[j-1] != '\\':
+                        break
+                    j += 1
+                inner = t[i+1:j]
+                # Replace \\ inside inline math with a space
+                inner = inner.replace('\\\\', ' ')
+                result.append('$' + inner + '$')
+                i = j + 1
+            else:
+                result.append(t[i])
+                i += 1
+        return ''.join(result)
+
+    text = _strip_linebreaks_in_inline_math(text)
+
+    # 8. Remove \par inside \text{} or \mbox{} (causes "file ended while scanning")
+    #    Walk the string and strip \par inside the first brace level of \text{ \mbox{
+    def _remove_par_in_hbox(t: str) -> str:
+        out = []
+        i = 0
+        hbox_cmds = ('\\text{', '\\mbox{', '\\textbf{', '\\textit{')
+        while i < len(t):
+            matched_cmd = None
+            for cmd in hbox_cmds:
+                if t[i:i+len(cmd)] == cmd:
+                    matched_cmd = cmd
+                    break
+            if matched_cmd:
+                out.append(matched_cmd)
+                i += len(matched_cmd)
+                depth = 1
+                while i < len(t) and depth > 0:
+                    if t[i] == '{':
+                        depth += 1
+                        out.append(t[i])
+                    elif t[i] == '}':
+                        depth -= 1
+                        if depth == 0:
+                            out.append('}')
+                        else:
+                            out.append(t[i])
+                    elif t[i:i+4] == '\\par':
+                        # Replace \par inside hbox with a space
+                        out.append(' ')
+                        i += 4
+                        continue
+                    else:
+                        out.append(t[i])
+                    i += 1
+            else:
+                out.append(t[i])
+                i += 1
+        return ''.join(out)
+
+    text = _remove_par_in_hbox(text)
+
     return text.strip()
 
 def sanitize_for_latex(text: str) -> str:
