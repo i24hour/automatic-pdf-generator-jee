@@ -305,10 +305,17 @@ async def detect_subjects(
     """Detect subjects for each chapter using AI."""
     classifications = []
     
-    for chapter in request.chapters:
-        if not chapter.strip():
-            continue
-        result = llm_engine.detect_subject(chapter.strip())
+    # Run subject detection in parallel threads
+    import asyncio
+    detect_tasks = []
+    valid_chapters = [c.strip() for c in request.chapters if c.strip()]
+    
+    for chapter in valid_chapters:
+        detect_tasks.append(asyncio.to_thread(llm_engine.detect_subject, chapter))
+        
+    detect_results = await asyncio.gather(*detect_tasks)
+    
+    for chapter, result in zip(valid_chapters, detect_results):
         subject = result.get("subject", "Physics")
         is_multi = result.get("is_multi", False)
         
@@ -331,7 +338,7 @@ async def detect_subjects(
                 classifications.append(ChapterClassification(chapter="Zoology (Full Syllabus)", subject="Zoology"))
                 classifications.append(ChapterClassification(chapter="Botany (Full Syllabus)", subject="Botany"))
         else:
-            classifications.append(ChapterClassification(chapter=chapter.strip(), subject=subject))
+            classifications.append(ChapterClassification(chapter=chapter, subject=subject))
     
     return DetectSubjectsResponse(classifications=classifications)
 
@@ -356,14 +363,22 @@ async def generate_institute_test(
     
     limits = EXAM_LIMITS[request.exam_type]
     
-    # Step 1: Classify each chapter by subject
+    # Step 1: Classify each chapter by subject concurrently to avoid blocking
+    import asyncio
+    
     chapters_classified = []
     chapters_by_subject = {"Physics": [], "Chemistry": [], "Maths": [], "Zoology": [], "Botany": []}
     
-    for chapter in request.chapters:
-        if not chapter.strip():
-            continue
-        result = llm_engine.detect_subject(chapter.strip())
+    # Run subject detection in parallel threads
+    detect_tasks = []
+    valid_chapters = [c.strip() for c in request.chapters if c.strip()]
+    
+    for chapter in valid_chapters:
+        detect_tasks.append(asyncio.to_thread(llm_engine.detect_subject, chapter))
+        
+    detect_results = await asyncio.gather(*detect_tasks)
+    
+    for chapter, result in zip(valid_chapters, detect_results):
         subject = result.get("subject", "Physics")
         is_multi = result.get("is_multi", False)
         
@@ -371,37 +386,37 @@ async def generate_institute_test(
         if is_multi:
             if subject == "PCM":
                 # Physics, Chemistry, Maths for JEE
-                chapters_by_subject["Physics"].append(chapter.strip())
-                chapters_by_subject["Chemistry"].append(chapter.strip())
-                chapters_by_subject["Maths"].append(chapter.strip())
-                chapters_classified.append(ChapterClassification(chapter=chapter.strip(), subject="Physics"))
-                chapters_classified.append(ChapterClassification(chapter=f"{chapter.strip()} (Chemistry)", subject="Chemistry"))
-                chapters_classified.append(ChapterClassification(chapter=f"{chapter.strip()} (Maths)", subject="Maths"))
+                chapters_by_subject["Physics"].append(chapter)
+                chapters_by_subject["Chemistry"].append(chapter)
+                chapters_by_subject["Maths"].append(chapter)
+                chapters_classified.append(ChapterClassification(chapter=chapter, subject="Physics"))
+                chapters_classified.append(ChapterClassification(chapter=f"{chapter} (Chemistry)", subject="Chemistry"))
+                chapters_classified.append(ChapterClassification(chapter=f"{chapter} (Maths)", subject="Maths"))
             elif subject == "PCMB":
                 # Physics, Chemistry, Maths, Biology - Add ALL subjects
-                chapters_by_subject["Physics"].append(chapter.strip())
-                chapters_by_subject["Chemistry"].append(chapter.strip())
-                chapters_by_subject["Maths"].append(chapter.strip())
-                chapters_by_subject["Zoology"].append(chapter.strip())
-                chapters_by_subject["Botany"].append(chapter.strip())
+                chapters_by_subject["Physics"].append(chapter)
+                chapters_by_subject["Chemistry"].append(chapter)
+                chapters_by_subject["Maths"].append(chapter)
+                chapters_by_subject["Zoology"].append(chapter)
+                chapters_by_subject["Botany"].append(chapter)
                 
-                chapters_classified.append(ChapterClassification(chapter=chapter.strip(), subject="Physics"))
-                chapters_classified.append(ChapterClassification(chapter=f"{chapter.strip()} (Chemistry)", subject="Chemistry"))
-                chapters_classified.append(ChapterClassification(chapter=f"{chapter.strip()} (Maths)", subject="Maths"))
-                chapters_classified.append(ChapterClassification(chapter=f"{chapter.strip()} (Zoology)", subject="Zoology"))
-                chapters_classified.append(ChapterClassification(chapter=f"{chapter.strip()} (Botany)", subject="Botany"))
+                chapters_classified.append(ChapterClassification(chapter=chapter, subject="Physics"))
+                chapters_classified.append(ChapterClassification(chapter=f"{chapter} (Chemistry)", subject="Chemistry"))
+                chapters_classified.append(ChapterClassification(chapter=f"{chapter} (Maths)", subject="Maths"))
+                chapters_classified.append(ChapterClassification(chapter=f"{chapter} (Zoology)", subject="Zoology"))
+                chapters_classified.append(ChapterClassification(chapter=f"{chapter} (Botany)", subject="Botany"))
             elif subject == "PCB":
                 # Physics, Chemistry, Biology
-                chapters_by_subject["Physics"].append(chapter.strip())
-                chapters_by_subject["Chemistry"].append(chapter.strip())
-                chapters_by_subject["Zoology"].append(chapter.strip())
-                chapters_classified.append(ChapterClassification(chapter=chapter.strip(), subject="Physics"))
-                chapters_classified.append(ChapterClassification(chapter=f"{chapter.strip()} (Chemistry)", subject="Chemistry"))
-                chapters_classified.append(ChapterClassification(chapter=f"{chapter.strip()} (Zoology)", subject="Zoology"))
+                chapters_by_subject["Physics"].append(chapter)
+                chapters_by_subject["Chemistry"].append(chapter)
+                chapters_by_subject["Zoology"].append(chapter)
+                chapters_classified.append(ChapterClassification(chapter=chapter, subject="Physics"))
+                chapters_classified.append(ChapterClassification(chapter=f"{chapter} (Chemistry)", subject="Chemistry"))
+                chapters_classified.append(ChapterClassification(chapter=f"{chapter} (Zoology)", subject="Zoology"))
         else:
-            chapters_classified.append(ChapterClassification(chapter=chapter.strip(), subject=subject))
+            chapters_classified.append(ChapterClassification(chapter=chapter, subject=subject))
             if subject in chapters_by_subject:
-                chapters_by_subject[subject].append(chapter.strip())
+                chapters_by_subject[subject].append(chapter)
     
     # Step 2: Determine question counts
     if request.exam_type == "NEET":
@@ -506,7 +521,7 @@ async def generate_institute_test(
     }
     
     try:
-        pdf_path = pdf_engine.generate_pdf(pdf_data, filename)
+        pdf_path = await asyncio.to_thread(pdf_engine.generate_pdf, pdf_data, filename)
         if not pdf_path:
             raise Exception("PDF generation returned None")
     except Exception as e:
