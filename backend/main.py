@@ -8,6 +8,7 @@ import os
 import uuid
 import base64
 import json
+import asyncio
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, List, Any
 from fastapi import FastAPI, HTTPException, Depends, status, BackgroundTasks
@@ -91,17 +92,24 @@ app.include_router(diagram_router)
 # app.include_router(video_router)
 
 
+def _init_db_background():
+    """Run DB initialization in background so uvicorn can start immediately."""
+    try:
+        print("DEBUG: Initializing database...", flush=True)
+        init_db()
+        print("DEBUG: Database initialized successfully", flush=True)
+    except Exception as e:
+        print(f"DEBUG: Database initialization failed: {e}", flush=True)
+
+
 # Initialize database on startup
 @app.on_event("startup")
 async def startup_event():
     print("DEBUG: Startup event started", flush=True)
-    try:
-        print("DEBUG: Initializing database...", flush=True)
-        init_db()  # Run migrations for new columns
-        print("DEBUG: Database initialized successfully", flush=True)
-    except Exception as e:
-        print(f"DEBUG: Database initialization failed: {e}", flush=True)
-    print("DEBUG: Startup event completed", flush=True)
+    # Run DB init in a thread so it doesn't block uvicorn from opening port 8080
+    loop = asyncio.get_event_loop()
+    loop.run_in_executor(None, _init_db_background)
+    print("DEBUG: Startup event completed (DB init running in background)", flush=True)
 
 
 # Request/Response Models
