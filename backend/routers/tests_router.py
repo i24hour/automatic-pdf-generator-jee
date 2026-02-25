@@ -194,11 +194,8 @@ async def create_test(
     is_generated = False
     
     if request.visibility == "COMMUNITY":
-        # Community tests require approval? For now, let's auto-approve or pending?
-        # Plan said pending_review.
-        # But for User "Everyone" logic, maybe strict pending if we want moderation.
-        # Let's stick to plan: pending_review
-        status_val = "pending_review"
+        # Community tests require approval? For now, we auto-approve so they show up.
+        status_val = "published"
     elif request.visibility == "PRIVATE":
         status_val = "published"
         is_generated = True # It's a personal generation

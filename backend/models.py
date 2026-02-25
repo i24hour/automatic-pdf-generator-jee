@@ -52,6 +52,14 @@ class User(Base):
     payment_orders = relationship("PaymentOrder", back_populates="user", cascade="all, delete-orphan")
     subscription = relationship("UserSubscription", back_populates="user", uselist=False, cascade="all, delete-orphan")
     
+    @property
+    def subscription_start(self):
+        return self.subscription.starts_at if self.subscription else None
+
+    @property
+    def subscription_end(self):
+        return self.subscription.expires_at if self.subscription else None
+        
     def __repr__(self):
         return f"<User {self.email}>"
 

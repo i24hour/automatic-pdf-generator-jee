@@ -554,17 +554,15 @@ export default function SettingsPage() {
                         </div>
 
                         {/* Current plan badge */}
-                        <div className={`p-4 rounded-xl border-2 flex items-center gap-4 ${
-                            (user as any)?.plan === "universe"
+                        <div className={`p-4 rounded-xl border-2 flex items-center gap-4 ${(user as any)?.plan === "universe"
                                 ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20"
                                 : (user as any)?.plan === "earth"
-                                ? "border-green-500 bg-green-50 dark:bg-green-900/20"
-                                : "border-gray-200 dark:border-[#2f3336] bg-gray-50 dark:bg-[#1a1d21]"
-                        }`}>
-                            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                                (user as any)?.plan === "universe" ? "bg-indigo-600" :
-                                (user as any)?.plan === "earth" ? "bg-green-600" : "bg-gray-400"
-                            } text-white`}>
+                                    ? "border-green-500 bg-green-50 dark:bg-green-900/20"
+                                    : "border-gray-200 dark:border-[#2f3336] bg-gray-50 dark:bg-[#1a1d21]"
+                            }`}>
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${(user as any)?.plan === "universe" ? "bg-indigo-600" :
+                                    (user as any)?.plan === "earth" ? "bg-green-600" : "bg-gray-400"
+                                } text-white`}>
                                 <Crown className="w-5 h-5" />
                             </div>
                             <div>
@@ -575,9 +573,14 @@ export default function SettingsPage() {
                                     {(user as any)?.plan === "universe"
                                         ? "Unlimited PDFs, tests, video generator & more"
                                         : (user as any)?.plan === "earth"
-                                        ? "10 PDFs/6hrs, unlimited tests, 1 institute PDF"
-                                        : "5 PDFs/6hrs, 4 tests"}
+                                            ? "10 PDFs/30 days, unlimited tests, 1 institute PDF"
+                                            : "5 PDFs/6hrs, 4 tests"}
                                 </p>
+                                {(user as any)?.subscription_end && (
+                                    <p className="text-xs text-indigo-500 mt-1">
+                                        Current cycle: {new Date((user as any).subscription_start).toLocaleDateString()} - {new Date((user as any).subscription_end).toLocaleDateString()}
+                                    </p>
+                                )}
                             </div>
                         </div>
 
@@ -641,11 +644,10 @@ export default function SettingsPage() {
                                 </button>
                             </div>
                             {promoMessage && (
-                                <div className={`p-4 rounded-xl text-sm ${
-                                    promoMessage.type === "success"
+                                <div className={`p-4 rounded-xl text-sm ${promoMessage.type === "success"
                                         ? "bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400"
                                         : "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400"
-                                }`}>
+                                    }`}>
                                     {promoMessage.text}
                                 </div>
                             )}

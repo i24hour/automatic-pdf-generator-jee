@@ -60,6 +60,8 @@ class UserResponse(BaseModel):
     is_verified: bool = False
     is_premium: bool = False
     plan: str = "free"
+    subscription_start: Optional[datetime] = None
+    subscription_end: Optional[datetime] = None
 
     class Config:
         from_attributes = True

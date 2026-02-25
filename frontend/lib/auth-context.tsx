@@ -15,6 +15,8 @@ interface User {
     is_verified: boolean;
     is_premium?: boolean;
     plan?: "free" | "earth" | "universe";
+    subscription_start?: string;
+    subscription_end?: string;
 }
 
 interface AuthContextType {
