@@ -1543,6 +1543,17 @@ async def run_generation_job(
             max_attempts=3
         )
 
+        # TRIM to exact requested counts — LLM/top-up can over-generate
+        if request.level not in ("GATE", "CBSE Board", "JEE Advanced"):
+            raw_questions = llm_result.get("questions", [])
+            if isinstance(raw_questions, list):
+                mcqs = [q for q in raw_questions if q.get("type") in ("mcq", "mcq_multi")]
+                nums = [q for q in raw_questions if q.get("type") == "numerical"]
+                others = [q for q in raw_questions if q.get("type") not in ("mcq", "mcq_multi", "numerical")]
+                trimmed = mcqs[:mcq_count] + nums[:numerical_count] + others
+                llm_result["questions"] = trimmed
+                print(f"[TRIM] {len(raw_questions)} → {len(trimmed)} questions (target MCQ={mcq_count}, Num={numerical_count})")
+
         questions = llm_result.get("questions", [])
         if not isinstance(questions, list):
             questions = []
