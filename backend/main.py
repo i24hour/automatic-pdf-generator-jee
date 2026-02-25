@@ -21,7 +21,7 @@ from dotenv import load_dotenv
 from services.llm_engine import llm_engine, get_user_question_history, save_question_history
 from services.pdf_engine import pdf_engine
 from database import get_db, init_db
-from models import User, PDFGeneration, PromoCode, PromoCodeUsage, TopicSubjectCache, SharedPDF, SystemErrorLog
+from models import User, PDFGeneration, PromoCode, PromoCodeUsage, TopicSubjectCache, SharedPDF, SystemErrorLog, UserSubscription
 from auth import get_current_user_required, get_current_user
 from routers import (
     auth_router,
@@ -268,9 +268,11 @@ def check_rate_limit(user: User, db: Session) -> tuple[bool, int, float, int, st
 
     # If user is premium, change period bounds and text based on subscription
     is_premium = getattr(user, "is_premium", False)
-    if is_premium and hasattr(user, "subscription") and user.subscription and user.subscription.starts_at:
+    # Query subscription directly to avoid DetachedInstanceError on lazy-loaded relationship
+    user_subscription = db.query(UserSubscription).filter(UserSubscription.user_id == user.id).first()
+    if is_premium and user_subscription and user_subscription.starts_at:
         # Check if their 30-day billing cycle is still active
-        curr_starts_at = user.subscription.starts_at
+        curr_starts_at = user_subscription.starts_at
         
         # Advance curr_starts_at by 30-day increments until it's the CURRENT active period
         while curr_starts_at + timedelta(days=30) <= now:
