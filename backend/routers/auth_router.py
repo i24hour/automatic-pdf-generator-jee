@@ -232,9 +232,12 @@ async def google_auth(request: GoogleAuthRequest, db: Session = Depends(get_db))
     GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "87253755436-sovpsbdnimbques0hnhstgjuc78l532p.apps.googleusercontent.com")
     
     try:
-        # Verify token with Google
-        google_response = requests.get(
-            f"https://oauth2.googleapis.com/tokeninfo?id_token={request.credential}"
+        import asyncio
+        # Verify token with Google asynchronously to prevent blocking event loop
+        google_response = await asyncio.to_thread(
+            requests.get,
+            f"https://oauth2.googleapis.com/tokeninfo?id_token={request.credential}",
+            timeout=10
         )
         
         if google_response.status_code != 200:
