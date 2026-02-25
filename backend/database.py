@@ -25,7 +25,8 @@ engine = create_engine(
     pool_pre_ping=True,
     pool_size=20,
     max_overflow=30,
-    pool_recycle=300
+    pool_recycle=300,
+    connect_args={"connect_timeout": 10},  # Fail fast if DB unreachable
 )
 
 
@@ -203,6 +204,18 @@ def init_db():
                 conn.rollback()
     except Exception as e:
         print(f"Migration warning (payment columns): {e}")
+
+    # Add is_institute column to pdf_generations if it doesn't exist
+    try:
+        from sqlalchemy import text
+        with engine.connect() as conn:
+            try:
+                conn.execute(text("ALTER TABLE pdf_generations ADD COLUMN is_institute BOOLEAN DEFAULT FALSE"))
+                conn.commit()
+            except Exception:
+                conn.rollback()
+    except Exception as e:
+        print(f"Migration warning (is_institute): {e}")
 
     # Create payment_orders and user_subscriptions tables
     try:
