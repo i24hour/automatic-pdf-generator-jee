@@ -643,7 +643,8 @@ export default function TestGenerator() {
         elapsedTime,
         clearResult,
         downloadPDF,
-        updateResult
+        updateResult,
+        partialQuestions,
     } = useGeneration();
 
     const handleCancelGeneration = () => {
@@ -1049,9 +1050,55 @@ export default function TestGenerator() {
         downloadPDF(result || undefined);
     };
 
+    // Download PDF from whatever questions are currently available.
+    // Uses the pre-compiled full PDF if ready; otherwise hits the partial-PDF endpoint.
+    const handleDownloadCurrentQuestions = async () => {
+        if (result?.pdf_base64) {
+            downloadPDF(result);
+            return;
+        }
+        if (partialQuestions.length === 0) return;
+        setIsPartialPdfLoading(true);
+        try {
+            const response = await authFetch(`${API_BASE_URL}/api/generate-partial-pdf`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    questions: partialQuestions,
+                    level,
+                    difficulty: "Mixed",
+                    include_solutions: includeSolutions,
+                    topic: topic.trim() || "Questions",
+                }),
+            });
+            if (response.ok) {
+                const data = await response.json();
+                if (data.pdf_base64) {
+                    const binary = atob(data.pdf_base64);
+                    const bytes = new Uint8Array(binary.length);
+                    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+                    const blob = new Blob([bytes], { type: "application/pdf" });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = data.pdf_filename || "questions.pdf";
+                    a.click();
+                    URL.revokeObjectURL(url);
+                }
+            }
+        } catch (err) {
+            console.error("Failed to generate partial PDF:", err);
+        } finally {
+            setIsPartialPdfLoading(false);
+        }
+    };
+
     const [isSaving, setIsSaving] = useState(false);
     const [isPostingLoading, setIsPostingLoading] = useState(false);
     const [saveError, setSaveError] = useState<string | null>(null);
+    const [isPartialPdfLoading, setIsPartialPdfLoading] = useState(false);
+    const [expandedQuestion, setExpandedQuestion] = useState<number | null>(null);
+    const [shownAnswers, setShownAnswers] = useState<Set<number>>(new Set());
 
     const handleSaveToLibrary = async (visibility: 'private' | 'unlisted' = 'private') => {
         if (!result || !result.pdf_filename) return false;
@@ -2249,10 +2296,136 @@ export default function TestGenerator() {
                         )
                     }
 
+                    {/* ── PROGRESSIVE QUESTION DISPLAY ─────────────────────────────────────
+                         Appears as soon as questions are generated (while PDF is still
+                         compiling). Download PDF is always available here.
+                    ──────────────────────────────────────────────────────────────────── */}
+                    {partialQuestions.length > 0 && (
+                        <div className="mt-5">
+                            {/* Header row */}
+                            <div className="flex items-center justify-between mb-3">
+                                <div className="flex items-center gap-2">
+                                    <CheckCircle2 className="w-4 h-4 text-green-500" />
+                                    <span className="font-semibold text-gray-900 dark:text-white text-sm">
+                                        {partialQuestions.length} Questions Ready
+                                    </span>
+                                    {isLoading && (
+                                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 animate-pulse">
+                                            Compiling PDF…
+                                        </span>
+                                    )}
+                                </div>
+                                <button
+                                    onClick={handleDownloadCurrentQuestions}
+                                    disabled={isPartialPdfLoading}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold transition-colors disabled:opacity-60 shrink-0"
+                                >
+                                    {isPartialPdfLoading
+                                        ? <Loader2 className="w-3 h-3 animate-spin" />
+                                        : <Download className="w-3 h-3" />}
+                                    {result?.pdf_base64
+                                        ? "Download PDF"
+                                        : isPartialPdfLoading
+                                            ? "Preparing…"
+                                            : `Download PDF (${partialQuestions.length})`}
+                                </button>
+                            </div>
+
+                            {/* Question cards */}
+                            <div className="space-y-2 max-h-[480px] overflow-y-auto pr-0.5">
+                                {partialQuestions.map((q: any, idx: number) => {
+                                    const isExp = expandedQuestion === idx;
+                                    const showAns = shownAnswers.has(idx);
+                                    const qType: string = q.type || "mcq";
+                                    const qText: string = q.text || q.question || "";
+                                    const opts: Record<string, string> = q.options || {};
+                                    const ans: string = String(q.answer ?? q.correct_answer ?? "");
+                                    const sol: string = q.solution || q.explanation || "";
+
+                                    return (
+                                        <div key={idx} className="border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-[#0d0f12] overflow-hidden">
+                                            {/* Collapsed header */}
+                                            <button
+                                                className="w-full flex items-start gap-2.5 p-3 text-left hover:bg-gray-50 dark:hover:bg-white/[0.03] transition-colors"
+                                                onClick={() => setExpandedQuestion(isExp ? null : idx)}
+                                            >
+                                                <span className="shrink-0 w-5 h-5 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 text-[10px] font-bold flex items-center justify-center mt-0.5">
+                                                    {idx + 1}
+                                                </span>
+                                                <span className={`shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded mt-0.5 uppercase tracking-wide ${
+                                                    qType === "numerical"
+                                                        ? "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400"
+                                                        : "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400"
+                                                }`}>
+                                                    {qType === "numerical" ? "Num" : "MCQ"}
+                                                </span>
+                                                <span className="text-sm text-gray-800 dark:text-gray-200 flex-1 leading-snug line-clamp-2">{qText}</span>
+                                                <ChevronDown className={`shrink-0 w-4 h-4 text-gray-400 mt-0.5 transition-transform duration-200 ${isExp ? "rotate-180" : ""}`} />
+                                            </button>
+
+                                            {/* Expanded content */}
+                                            {isExp && (
+                                                <div className="px-3 pb-3 pt-2 border-t border-gray-100 dark:border-gray-800">
+                                                    <p className="text-sm text-gray-800 dark:text-gray-200 mb-3 leading-relaxed">{qText}</p>
+
+                                                    {/* MCQ Options */}
+                                                    {qType !== "numerical" && Object.keys(opts).length > 0 && (
+                                                        <div className="grid grid-cols-1 gap-1 mb-3">
+                                                            {Object.entries(opts).map(([key, val]) => (
+                                                                <div key={key} className={`flex items-start gap-2 px-2.5 py-1.5 rounded-lg text-sm ${
+                                                                    showAns && ans.toUpperCase().includes(key)
+                                                                        ? "bg-green-50 dark:bg-green-900/20 border border-green-300 dark:border-green-700 text-green-800 dark:text-green-300"
+                                                                        : "bg-gray-50 dark:bg-white/[0.04] text-gray-700 dark:text-gray-300"
+                                                                }`}>
+                                                                    <span className="font-semibold shrink-0">{key}.</span>
+                                                                    <span>{String(val)}</span>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+
+                                                    {/* Show/Hide Answer */}
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setShownAnswers(prev => {
+                                                                const next = new Set(prev);
+                                                                next.has(idx) ? next.delete(idx) : next.add(idx);
+                                                                return next;
+                                                            });
+                                                        }}
+                                                        className="text-xs px-3 py-1.5 rounded-lg border border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors font-medium"
+                                                    >
+                                                        {showAns ? "Hide Answer" : "Show Answer"}
+                                                    </button>
+
+                                                    {showAns && (
+                                                        <div className="mt-2 space-y-1">
+                                                            <div className="px-3 py-2 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                                                                <span className="text-xs font-semibold text-green-700 dark:text-green-400">Answer: </span>
+                                                                <span className="text-sm text-green-800 dark:text-green-300">{ans}</span>
+                                                            </div>
+                                                            {sol && (
+                                                                <div className="px-3 py-2 bg-blue-50 dark:bg-blue-900/10 rounded-lg border border-blue-100 dark:border-blue-900/30">
+                                                                    <p className="text-[10px] font-semibold text-blue-700 dark:text-blue-400 mb-1">Solution:</p>
+                                                                    <p className="text-xs text-blue-800 dark:text-blue-300 leading-relaxed">{sol}</p>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+
                     {/* Success Message */}
                     {
                         result?.success && (
-                            <div className="mt-6 space-y-4">
+                            <div className="mt-4 space-y-3">
                                 <div className="flex items-start gap-3 text-green-700 bg-green-50 border border-green-200 rounded-lg px-4 py-3">
                                     <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5" />
                                     <div>
@@ -2263,30 +2436,17 @@ export default function TestGenerator() {
                                             ) : (
                                                 `${result.total_mcq} MCQs + ${result.total_numerical} Numerical Questions`
                                             )}
-                                            ```
                                         </p>
                                     </div>
                                 </div>
-
-
-                                <div className="flex gap-3 mt-6">
-                                    <button
-                                        onClick={handleDownload}
-                                        className="flex-1 py-3 bg-white dark:bg-black border border-indigo-600 text-indigo-600 font-medium rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/10 transition-colors flex items-center justify-center gap-2"
-                                    >
-                                        <Download className="w-5 h-5" />
-                                        Download PDF
-                                    </button>
-
-                                    <button
-                                        onClick={handlePostClick}
-                                        disabled={isPostingLoading}
-                                        className="flex-1 py-3 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2 shadow-sm disabled:opacity-70"
-                                    >
-                                        {isPostingLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Share2 className="w-5 h-5" />}
-                                        Post
-                                    </button>
-                                </div>
+                                <button
+                                    onClick={handlePostClick}
+                                    disabled={isPostingLoading}
+                                    className="w-full py-3 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2 shadow-sm disabled:opacity-70"
+                                >
+                                    {isPostingLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Share2 className="w-5 h-5" />}
+                                    Post to Community
+                                </button>
 
                                 {/* Hidden error message for save failure if any */}
                                 {saveError && (

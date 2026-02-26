@@ -1558,9 +1558,17 @@ async def run_generation_job(
         if not isinstance(questions, list):
             questions = []
             llm_result["questions"] = questions
-        
-        # Update: Verifying
-        job_store.update_job(job_id, JobStatus.VERIFYING, 60, "Verifying answers...")
+
+        # ── PROGRESSIVE DISPLAY: emit questions to frontend immediately ──
+        # This lets the UI show questions while PDF compiles in the background.
+        job_store.update_job(
+            job_id,
+            JobStatus.VERIFYING,
+            60,
+            "Questions ready! Compiling PDF in background...",
+            extras={"partial_questions": questions},
+        )
+        print(f"[SSE Job {job_id}] Emitted {len(questions)} partial questions to frontend")
         
         # Fresh Questions: Save generated questions to history
         if fresh_questions_enabled and llm_result.get("questions"):
@@ -1785,6 +1793,54 @@ async def get_job_status(job_id: str, current_user: User = Depends(get_current_u
         raise HTTPException(status_code=403, detail="Not authorized to view this job")
     
     return job.to_dict()
+
+
+@app.post("/api/generate-partial-pdf")
+async def generate_partial_pdf(
+    request: dict,
+    current_user: User = Depends(get_current_user_required)
+):
+    """
+    Generate a PDF from a partial/complete list of questions on demand.
+    Used by the frontend's 'Download PDF' button when questions are ready
+    but the full background PDF compilation is not done yet.
+    """
+    questions = request.get("questions", [])
+    level     = request.get("level", "JEE Mains")
+    difficulty = request.get("difficulty", "Medium")
+    include_solutions = request.get("include_solutions", False)
+    topic     = request.get("topic", "Questions")
+
+    if not isinstance(questions, list) or len(questions) == 0:
+        raise HTTPException(status_code=400, detail="No questions provided")
+
+    safe_topic = str(topic).replace("&", "and").replace("/", "-").replace(" ", "_")[:40]
+    safe_level = str(level).replace(" ", "_")
+    filename   = f"Partial{len(questions)}_{safe_topic}_{safe_level}_{difficulty}"
+
+    llm_result = {
+        "success": True,
+        "questions": questions,
+        "level": level,
+        "difficulty": difficulty,
+        "include_solutions": include_solutions,
+    }
+
+    loop = asyncio.get_event_loop()
+    pdf_path = await loop.run_in_executor(None, pdf_engine.generate_pdf, llm_result, filename)
+
+    if not pdf_path:
+        raise HTTPException(status_code=500, detail="PDF generation failed")
+
+    with open(pdf_path, "rb") as f:
+        pdf_base64 = base64.b64encode(f.read()).decode("utf-8")
+
+    return {
+        "success": True,
+        "pdf_base64": pdf_base64,
+        "pdf_filename": os.path.basename(pdf_path),
+        "question_count": len(questions),
+    }
 
 
 # ============== END SSE ENDPOINTS ==============

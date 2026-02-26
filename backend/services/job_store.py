@@ -88,9 +88,15 @@ class JobStore:
         progress: Optional[int] = None,
         message: Optional[str] = None,
         result: Optional[Dict[str, Any]] = None,
-        error: Optional[str] = None
+        error: Optional[str] = None,
+        extras: Optional[Dict[str, Any]] = None,
     ) -> Optional[GenerationJob]:
-        """Update a job and notify all subscribers."""
+        """Update a job and notify all subscribers.
+        
+        extras: one-off data broadcast to SSE subscribers but NOT stored in the job.
+                Use for large payloads (e.g. partial_questions) to avoid re-sending
+                on every subsequent update.
+        """
         with self._lock:
             job = self._jobs.get(job_id)
             if not job:
@@ -109,8 +115,8 @@ class JobStore:
             
             job.updated_at = datetime.now(timezone.utc)
             
-            # Notify subscribers
-            self._notify_subscribers(job_id, job)
+            # Notify subscribers, merging any one-off extras into the broadcast
+            self._notify_subscribers(job_id, job, extras=extras)
             
             print(f"[JobStore] Updated job {job_id}: {job.status.value} - {job.progress}%")
             return job
@@ -132,14 +138,18 @@ class JobStore:
                 except ValueError:
                     pass
     
-    def _notify_subscribers(self, job_id: str, job: GenerationJob):
+    def _notify_subscribers(self, job_id: str, job: GenerationJob, extras: Optional[Dict[str, Any]] = None):
         """Notify all subscribers of a job update."""
         if job_id not in self._subscribers:
             return
         
+        data = job.to_dict()
+        if extras:
+            data.update(extras)
+        
         for queue in self._subscribers[job_id]:
             try:
-                queue.put_nowait(job.to_dict())
+                queue.put_nowait(data)
             except asyncio.QueueFull:
                 pass
     

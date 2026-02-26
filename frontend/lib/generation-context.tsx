@@ -30,6 +30,7 @@ interface GenerationContextType {
     error: string | null;
     elapsedTime: number;
     jobId: string | null;
+    partialQuestions: any[];
     startGeneration: (params: any) => Promise<void>;
     cancelGeneration: () => void;
     clearResult: () => void;
@@ -52,6 +53,7 @@ export function GenerationProvider({ children }: { children: ReactNode }) {
     const [error, setError] = useState<string | null>(null);
     const [elapsedTime, setElapsedTime] = useState(0);
     const [jobId, setJobId] = useState<string | null>(null);
+    const [partialQuestions, setPartialQuestions] = useState<any[]>([]);
 
     // Refs
     const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -92,6 +94,7 @@ export function GenerationProvider({ children }: { children: ReactNode }) {
         setProgressMessage("");
         setJobId(null);
         setElapsedTime(0);
+        setPartialQuestions([]);
     };
 
     const startTimer = () => {
@@ -125,6 +128,11 @@ export function GenerationProvider({ children }: { children: ReactNode }) {
             eventSource.onmessage = (event) => {
                 try {
                     const data = JSON.parse(event.data);
+
+                    // Progressive display: capture questions as soon as they're ready
+                    if (Array.isArray(data.partial_questions) && data.partial_questions.length > 0) {
+                        setPartialQuestions(data.partial_questions);
+                    }
 
                     // Update progress
                     if (data.progress !== undefined) setProgressStep(data.progress);
@@ -192,6 +200,7 @@ export function GenerationProvider({ children }: { children: ReactNode }) {
         setIsGenerating(true);
         setError(null);
         setResult(null);
+        setPartialQuestions([]);
         setProgressStep(0);
         setProgressMessage("Starting generation...");
 
@@ -259,6 +268,7 @@ export function GenerationProvider({ children }: { children: ReactNode }) {
             error,
             elapsedTime,
             jobId,
+            partialQuestions,
             startGeneration,
             cancelGeneration,
             clearResult,
