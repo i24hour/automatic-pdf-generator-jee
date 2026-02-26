@@ -1100,13 +1100,47 @@ export default function TestGenerator() {
     const [expandedQuestion, setExpandedQuestion] = useState<number | null>(null);
     const [shownAnswers, setShownAnswers] = useState<Set<number>>(new Set());
     const questionsRef = useRef<HTMLDivElement>(null);
+    const [displayedQuestions, setDisplayedQuestions] = useState<any[]>([]);
+    const revealTimersRef = useRef<NodeJS.Timeout[]>([]);
+
+    // Progressive reveal: stream questions in one-by-one (ChatGPT style)
+    useEffect(() => {
+        // Clear any ongoing reveal timers
+        revealTimersRef.current.forEach(t => clearTimeout(t));
+        revealTimersRef.current = [];
+
+        if (partialQuestions.length === 0) {
+            setDisplayedQuestions([]);
+            return;
+        }
+
+        // Figure out how many are already shown so we only animate newly arrived ones
+        setDisplayedQuestions(prev => {
+            const alreadyShown = prev.length;
+            if (alreadyShown >= partialQuestions.length) return prev; // nothing new
+            // Start with what's already shown
+            return prev;
+        });
+
+        // Animate each new question in with a 120ms stagger
+        partialQuestions.forEach((q, idx) => {
+            const t = setTimeout(() => {
+                setDisplayedQuestions(partialQuestions.slice(0, idx + 1));
+            }, idx * 120);
+            revealTimersRef.current.push(t);
+        });
+
+        return () => {
+            revealTimersRef.current.forEach(t => clearTimeout(t));
+        };
+    }, [partialQuestions]);
 
     // Auto-scroll to questions when they first appear
     useEffect(() => {
-        if (partialQuestions.length > 0 && questionsRef.current) {
+        if (displayedQuestions.length === 1 && questionsRef.current) {
             questionsRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
         }
-    }, [partialQuestions.length]);
+    }, [displayedQuestions.length]);
 
     const handleSaveToLibrary = async (visibility: 'private' | 'unlisted' = 'private') => {
         if (!result || !result.pdf_filename) return false;
@@ -2241,18 +2275,22 @@ export default function TestGenerator() {
                          Appears as soon as questions are generated (while PDF is still
                          compiling). Download PDF is always available here.
                     ──────────────────────────────────────────────────────────────────── */}
-                    {partialQuestions.length > 0 && (
+                    {displayedQuestions.length > 0 && (
                         <div ref={questionsRef} className="mt-4">
                             {/* Header row */}
                             <div className="flex items-center justify-between mb-3">
                                 <div className="flex items-center gap-2">
                                     <CheckCircle2 className="w-4 h-4 text-green-500" />
                                     <span className="font-semibold text-gray-900 dark:text-white text-sm">
-                                        {partialQuestions.length} Questions Ready
+                                        {displayedQuestions.length}
+                                        {partialQuestions.length > displayedQuestions.length && (
+                                            <span className="text-gray-400 font-normal"> / {partialQuestions.length}</span>
+                                        )}
+                                        {" "}Questions
                                     </span>
                                     {isLoading && (
                                         <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 animate-pulse">
-                                            Compiling PDF…
+                                            {displayedQuestions.length < partialQuestions.length ? "Streaming…" : "Compiling PDF…"}
                                         </span>
                                     )}
                                 </div>
@@ -2268,13 +2306,13 @@ export default function TestGenerator() {
                                         ? "Download PDF"
                                         : isPartialPdfLoading
                                             ? "Preparing…"
-                                            : `Download PDF (${partialQuestions.length})`}
+                                            : `Download PDF (${displayedQuestions.length})`}
                                 </button>
                             </div>
 
                             {/* Question cards */}
                             <div className="space-y-2 max-h-[480px] overflow-y-auto pr-0.5">
-                                {partialQuestions.map((q: any, idx: number) => {
+                                {displayedQuestions.map((q: any, idx: number) => {
                                     const isExp = expandedQuestion === idx;
                                     const showAns = shownAnswers.has(idx);
                                     const qType: string = q.type || "mcq";
@@ -2284,7 +2322,7 @@ export default function TestGenerator() {
                                     const sol: string = q.solution || q.explanation || "";
 
                                     return (
-                                        <div key={idx} className="border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-[#0d0f12] overflow-hidden">
+                                        <div key={idx} className="border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-[#0d0f12] overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300">
                                             {/* Collapsed header */}
                                             <button
                                                 className="w-full flex items-start gap-2.5 p-3 text-left hover:bg-gray-50 dark:hover:bg-white/[0.03] transition-colors"
@@ -2465,14 +2503,24 @@ export default function TestGenerator() {
                                         </p>
                                     </div>
                                 </div>
-                                <button
-                                    onClick={handlePostClick}
-                                    disabled={isPostingLoading}
-                                    className="w-full py-3 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2 shadow-sm disabled:opacity-70"
-                                >
-                                    {isPostingLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Share2 className="w-5 h-5" />}
-                                    Post to Community
-                                </button>
+
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={handleDownload}
+                                        className="flex-1 py-3 bg-white dark:bg-black border border-indigo-600 text-indigo-600 font-medium rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/10 transition-colors flex items-center justify-center gap-2"
+                                    >
+                                        <Download className="w-5 h-5" />
+                                        Download PDF
+                                    </button>
+                                    <button
+                                        onClick={handlePostClick}
+                                        disabled={isPostingLoading}
+                                        className="flex-1 py-3 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2 shadow-sm disabled:opacity-70"
+                                    >
+                                        {isPostingLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Share2 className="w-5 h-5" />}
+                                        Post
+                                    </button>
+                                </div>
 
                                 {/* Hidden error message for save failure if any */}
                                 {saveError && (
