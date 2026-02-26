@@ -1,0 +1,173 @@
+# JEE Mains 2025/2026 Reference — Nuclear Physics
+# Source: MathonGo Chapter Archive
+# Characters: 5630
+
+N uclear Physics JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q1. JEE Main 2026 (28 January Shift 2)
+A nucleus has mass number α and radius R α. Another nucleus has mass number β and radius R β. If β = 8α then
+R α /R β is:
+(1) 8 (2) 0.5 (3) 2 (4) 1
+Q2. JEE Main 2026 (24 January Shift 2)
+The binding energy for the following nuclear reactions are expressed in MeV.
+He3 + n1 → He4 +20MeV
+2 0 2
+He4 + n1 → He5 −0.9MeV
+2 0 2
+If X 3 ,X 4 ,X 5 denote the stability of 2 He3, 2 He4 and 2 He5 , respectively, then the correct order is :
+(1) X 4 < X 5 < X 3 (2) X 4 > X 5 > X 3
+(3) X 4 > X 5 < X 3 (4) X 4 = X 5 = X 3
+Q3. JEE Main 2026 (22 January Shift 1)
+The minimum frequency of photon required to break a particle of mass 15.348 amu into 4α particles is ____ kHz.
+[mass of He nucleus = 4.002amu,1amu = 1.66×10−27 kg, h = 6.6×10−34 J.s and c = 3×108 m/s ]
+(1)
+14.94×1019
+(2)
+9×1020
+(3)
+14.94×1020
+(4)
+9×1019
+Q4. JEE Main 2026 (22 January Shift 1)
+7.9MeVα-particle scatters from a target material of atomic number 79. From the given data the estimated diameter
+of nuclei of the target material is (approximately) ____ m. [ 1 = 9×109Nm2/C2 and electron charge
+4πϵ
+o
+= 1.6×10−19C]
+(1)
+1.44×10−13
+(2)
+5.76×10−14
+(3)
+2.88×10−14
+(4)
+1.69×10−12
+Q5. JEE Main 2026 (23 January Shift 2)
+Which of the following pair of nuclei are isobars of the element?
+(1)
+3H
+and
+3He
+(2)
+2H
+and
+3H
+1 2 1 1
+(3)
+198Hg
+and
+197Au
+(4)
+236U
+and
+238U
+80 79 92 92
+Q6. JEE Main 2026 (23 January Shift 2)
+The average energy released per fission for the nucleus of
+235U
+is 190 MeV. When all the atoms of 47 g pure
+235U
+92 92
+undergo fission process, the energy released is α×1023MeV. The value of α is ____.
+(Avogadro Number = 6×1023 per mole)
+#PaperPhodnaHai
+www.mathongo.com
+N uclear Physics JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q7. JEE Main 2026 (28 January Shift 1)
+An atom
+8X
+is bombarded by shower of fundamental particles and in 10 s this atom absorbed 10 electrons, 10
+3
+protons and 9 neutrons. The percentage growth in the surface area of the nucleons is recorded by:
+(1) 250% (2) 150% (3) 900% (4) 125%
+Q8. JEE Main 2026 (24 January Shift 1)
+Given below are two statements:
+Statement I: For all elements, greater the mass of the nucleus, greater is the binding energy per nucleon.
+Statement II: For all elements, nuclei with less binding energy per nucleon transforms to nuclei with greater
+binding energy per nucleon.
+In the light of the above statements, choose the correct answer from the options given below
+(1) Statement I is true but Statement II is false
+(2) Both Statement I and Statement II are true
+(3) Both Statement I and Statement II are false
+(4) Statement I is false but Statement II is true
+#PaperPhodnaHai
+www.mathongo.com
+Nuclear Physics JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+ANSWERS AND SOLUTIONS
+1. (2) 2. (2) 3. (1) 4. (2) 5. (1) 6. 228 7. (4) 8. (4)
+1. (2) Nuclear radius follows R = R 0 A1/3 where A is mass number.
+Given β = 8α, we have R α = R 0 α1/3 and R β = R 0 (8α)1/3 = R 0 ⋅2α1/3 = 2R α.
+Thus R α /R β = 1/2 = 0.5.
+2. (2) BE He4 −BE He3 = 20MeV ...(1)
+BE He5 −BE He4 = −0.9MeV ...(2)
+From eq (1) & (2)
+BE > BE > BE
+He4 He5 He3
+X > X > X
+4 5 3
+3. (1) hv = (4×4.002−15.348)×1.66×10−27 ×(3×108) 2
+v = 14.94×1019kHz
+4. (2) For Rutherford scattering, at the closest approach all kinetic energy converts to electrostatic potential energy.
+For alpha particle-nucleus collision:
+K.E.= 1 Z 1 Z 2 e2
+4πε 0 r min
+Where: Z 1 = 2 (alpha), Z 2 = 79 (gold), K.E.= 7.9 MeV
+9×109×2×79×(1.6×10−19)2
+r =
+min
+7.9×106×1.6×10−19
+r min = 2.88×10−14 m
+The estimated nuclear diameter is approximately:
+d = 2×r min = 5.76×10−14 m
+5. (1) Isobars are atoms of different chemical elements that have the same number of nucleons (mass number A), but
+different atomic numbers (Z).
+In the given options:
+(1) 3H and 3He: Both have the same mass number A = 3. Since they have different atomic numbers (Z = 1 and
+1 2
+Z = 2), they are isobars.
+(2) 2H and 3H: These have the same atomic number (Z = 1) but different mass numbers. They are isotopes.
+1 1
+(3) 198Hg and 197Au: These have different mass numbers (198 and 197).
+80 79
+(4) 236U and 238U: These have the same atomic number (Z = 92) but different mass numbers. They are isotopes.
+92 92
+Thus, the pair
+3H
+and
+3He
+are isobars.
+1 2
+6. (228) The number of
+235U
+atoms in 47 g is determined using Avogadro's number.
+Molar mass of 235U is 235 g/mol, so the number of moles is n = 47/235 mol.
+The total number of atoms is N = (47/235)×6×1023 .
+Since each fission releases 190 MeV, the total energy released is:
+E = N ×190 = 47×6×1023 ×190 = 47×6×190 ×1023 MeV.
+total 235 235
+#PaperPhodnaHai
+www.mathongo.com
+Nuclear Physics JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Calculating the numerator: 47×6×190 = 282×190 = 53580.
+Therefore: E = 53580 ×1023 = 228×1023 MeV, giving α = 228.
+total 235
+7. (4) Surface area x ∝ A2/3
+X = 82/3K = 4K
+i
+X = (8+10+9)2/3K = 9K
+f
+% increase in surface area of nucleus
+9K−4K
+x = ×100 = 125%
+i 4K
+8. (4) Statement I is false because binding energy per nucleon does not increase monotonically with mass number. It
+peaks at Iron-56 and decreases for heavier elements.
+Statement II is true. It describes the fundamental principle of nuclear reactions: fission of heavy nuclei (low BE/A)
+and fusion of light nuclei (low BE/A) both produce nuclei with higher binding energy per nucleon, releasing
+energy in the process. Both processes are energetically favorable for the same reason: moving toward higher
+stability (higher BE/A).
+#PaperPhodnaHai
+www.mathongo.com

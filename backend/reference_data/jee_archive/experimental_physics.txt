@@ -1,0 +1,64 @@
+# JEE Mains 2025/2026 Reference — Experimental Physics
+# Source: MathonGo Chapter Archive
+# Characters: 3350
+
+E xperimental Physics JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q1. JEE Main 2026 (23 January Shift 1)
+In a screw gauge, the zero of the circular scale lies 3 divisions above the horizontal pitch line when their metallic
+studs are brought in contact. Using this instrument thickness of a sheet is measured. If pitch scale reading is 1 mm
+and the circular scale reading is 51 then the correct thickness of the sheet is ____ mm.
+[Assume least count is 0.01 mm ]
+(1) 1.50 (2) 1.48 (3) 1.54 (4) 1.51
+Q2. JEE Main 2026 (28 January Shift 2)
+In an experiment, a set of reading are obtained as follows - 1.24 mm,1.25 mm,1.23 mm, 1.21 mm. The expected
+least count of the instrument used in recording these readings is ____ mm.
+(1) 0.001 (2) 0.1 (3) 0.01 (4) 0.05
+Q3. JEE Main 2026 (24 January Shift 2)
+In a vernier callipers, 50 vernier scale divisions are equal to 48 main scale divisions. If one main scale division
+= 0.05 mm, then the least count of the vernier callipers is ____ mm.
+(1) 0.005 (2) 0.05 (3) 0.002 (4) 0.02
+Q4. JEE Main 2026 (28 January Shift 1)
+When both jaws of vernier callipers touch each other, zero mark of the vernier scale is right to zero mark of main
+scale,
+4th
+mark on vernier scale coincides with certain mark on the main scale. While measuring the length of a
+cylinder, observer observes 15 divisions on main scale and
+5th
+division of vernier scale coincides with a main scale
+division. Measured length of cylinder is ____ mm. (Least count of Vernier calliper = 0.1 mm)
+(1) 15.5 (2) 15.9 (3) 15.1 (4) 15.4
+#PaperPhodnaHai
+www.mathongo.com
+Experimental Physics JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+ANSWERS AND SOLUTIONS
+1. (3) 2. (3) 3. (3) 4. (3)
+1. (3) For a screw gauge, the measurement formula is: Reading = Pitch scale + (Circular scale × Least count) - Zero
+error
+The zero of circular scale lies 3 divisions above the pitch line, indicating negative zero error:
+Zero error = -3 × 0.01 = -0.03 mm
+Reading = 1 + (51 × 0.01) - (-0.03) = 1 + 0.51 + 0.03 = 1.54 mm
+2. (3) Least count is the smallest division readable on an instrument scale.
+Given readings are 1.24 mm, 1.25 mm, 1.23 mm, 1.21 mm, all expressed to two decimal places.
+The precision of measurement shows differences as small as 0.01 mm (e.g., 1.25 - 1.24 = 0.01 mm).
+This indicates all readings can be recorded to the nearest 0.01 mm, which represents the smallest measurable
+division.
+Therefore, the least count of the instrument is 0.01 mm.
+3. (3) Given: 50 vernier divisions = 48 main divisions and 1 main division = 0.05 mm
+50 vernier divisions = 48 × 0.05 = 2.4 mm
+1 vernier division = 2.4/50 = 0.048 mm
+Least count = 1 main division - 1 vernier division = 0.05 - 0.048 = 0.002 mm
+4. (3) Given Least Count (LC) = 0.1 mm.
+When jaws touch, the zero of the vernier scale is to the right of the main scale zero, indicating a positive zero error.
+Zero error (e) = +(n×LC), where n is the coinciding vernier division.
+e = +(4×0.1) = +0.4 mm.
+While measuring the cylinder:
+Main Scale Reading (MSR) = 15 divisions.
+Assuming 1 MSD = 1 mm (standard for LC = 0.1 mm), MSR = 15 mm.
+Vernier Scale Reading (VSR) = 5×LC = 5×0.1 = 0.5 mm.
+Observed Reading = MSR+VSR = 15+0.5 = 15.5 mm.
+True Measured Length = Observed Reading − Zero Error
+True Length = 15.5−0.4 = 15.1 mm.
+#PaperPhodnaHai
+www.mathongo.com

@@ -1,0 +1,137 @@
+# JEE Mains 2025/2026 Reference — Waves and Sound
+# Source: MathonGo Chapter Archive
+# Characters: 5140
+
+W aves and Sound JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q1. JEE Main 2026 (28 January Shift 2)
+The speed of a longitudinal wave in a metallic bar is 400 m/s. If the density and Young's modulus of the bar
+material are increased by 0.5% and 1%, respectively then the speed of the wave is changed approximately to ____
+m/s.
+(1) 398 (2) 401 (3) 399 (4) 402
+Q2. JEE Main 2026 (28 January Shift 2)
+Two tuning forks A and B are sounded together giving rise to 8 beats in 2 s. When fork A is loaded with wax, the
+beat frequency is reduced to 4 beats in 2 s. If the original frequency of tuning fork B is 380 Hz then original
+frequency of tuning fork A is ____ Hz.
+Q3. JEE Main 2026 (24 January Shift 2)
+A point source is kept at the center of a spherically enclosed detector. If the volume of the detector increased by 8
+times, the intensity will
+(1) increase by 64 times (2) increase by 8 times
+(3) decrease by 4 times (4) decrease by 8 times
+Q4. JEE Main 2026 (24 January Shift 2)
+The fifth harmonic of a closed organ pipe is found to be in unison with the first harmonic of an open pipe. The ratio
+of lengths of closed pipe to that of the open pipe is 5/x. The value of x is ____.
+(1) 3 (2) 4 (3) 1 (4) 2
+Q5. JEE Main 2026 (22 January Shift 2)
+In an open organ pipe ν 3 and ν 6 are 3rd and 6th harmonic frequencies, respectively. If ν 6 −ν 3 = 2200 Hz then
+length of the pipe is ____ mm . (Take velocity of sound in air is 330 m/s.)
+(1) 275 (2) 250 (3) 225 (4) 200
+#PaperPhodnaHai
+www.mathongo.com
+W aves and Sound JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q6. JEE Main 2026 (22 January Shift 1)
+Two loudspeakers (L 1 and L 2) are placed with a separation of 10 m, as shown in figure. Both speakers are fed with
+an audio input signal of same frequency with constant volume. A voice recorder, initially at point A, at equidistance
+to both loud speakers, is moved by 25 m along the line AB while monitoring the audio signal. The measured signal
+was found to undergo 10 cycles of minima and maxima during the movement. The frequency of the input signal is
+____ Hz (Speed of sound in air is 324 m/s and √5 = 2.23)
+Q7. JEE Main 2026 (23 January Shift 2)
+The velocity of sound in air is doubled when the temperature is raised from 0∘C to α∘C. The value of α is ____.
+Q8. JEE Main 2026 (21 January Shift 1)
+Two strings (A,B) having linear densities μ A = 2×10−4 kg/m and, μ B = 4×10−4 kg/m and lengths L A = 2.5 m
+and L B = 1.5 m respectively are joined. Free ends of A and B are tied to two rigid supports C and D, respectively
+creating a tension of 500 N in the wire. Two identical pulses, sent from C and D ends, take time t 1 and t 2,
+respectively, to reach the joint. The ratio t 1 /t 2 is :
+(1) 1.90 (2) 1.67 (3) 1.08 (4) 1.18
+#PaperPhodnaHai
+www.mathongo.com
+Waves and Sound JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+ANSWERS AND SOLUTIONS
+1. (2) 2. 384 3. (3) 4. (4) 5. (3) 6. 600 7. 819 8. (4)
+1. (2) The speed of a longitudinal wave in a solid is given by v = √Y where Y is Young's modulus and ρ is density.
+ρ
+Initial condition: v 0 = √Y ρ = 400 m/s
+After changes: ρ′ = 1.005ρ (0.5% increase) and Y ′ = 1.01Y (1% increase)
+New speed: v′ = √Y′ = √ 1.01Y = √ 1.01 ⋅√Y
+ρ′ 1.005ρ 1.005 ρ
+v′ = √ 1.01 = √1.00498... ≈ 1.00249
+v 0 1.005
+v′ = 400×1.00249 ≈ 401 m/s
+2. (384) |f A −f B | = 4
+|f −380| = 4
+A
+So, f A = 384 Hz or 376 Hz
+on loading with wax f decreases
+A
+So, f A = 384 Hz
+3. (3) For a point source, intensity is given by I = P where P is power and r is distance.
+4πr2
+If the volume of the spherical detector increases by 8 times, then 4 3 πr3 new = 8⋅ 4 3 πr3 old , giving r new = 2r old .
+The new intensity is I new = 4π(2 P r old )2 = 1 4 ⋅ 4π P r2 old = I o 4 ld.
+Therefore intensity decreases by 4 times.
+4. (4) Fifth harmonic of closed organ pipe equals first harmonic of open pipe:
+f = f
+5 closed 1 open
+5v = v
+4L 2L
+closed open
+L closed = 5
+L 2
+open
+Since the ratio is 5 , we get x = 2.
+x
+5. (3) For an open organ pipe, the n-th harmonic frequency is f n = n⋅ 2 v L .
+The 3rd harmonic is v 3 = 3⋅ 3 2 3 L 0 and the 6th harmonic is v 6 = 6⋅ 3 2 3 L 0 .
+Taking the difference: v 6 −v 3 = (6−3)⋅ 3 2 3 L 0 = 3⋅ 3 2 3 L 0 = 2200.
+Solving for L: L = 3×330 = 990 = 0.225 m = 225 mm.
+2×2200 4400
+6. (600) Point B will
+10th
+maxima
+Δx = L B−L B
+2 1
+L B = √202 +402 = 20√5 m = 44.6 m
+1
+L B = √402 +302 = 50 m
+2
+Δx = 50−44.6 = 5.4 m
+Δx = nλ
+#PaperPhodnaHai
+www.mathongo.com
+Waves and Sound JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+5.4 = 10×λ
+λ = 0.54 m
+V = fλ
+f = 324 = 600 Hz
+0.54
+7. (819) The velocity of sound in air depends on temperature as v ∝ √T (absolute temperature).
+If the velocity doubles:
+v2 = 2 = √T 2.
+v1 T
+1
+Squaring: T 2 = 4.
+T
+1
+With T 1 = 0°C = 273.15 K and T 2 = 273.15+α K:
+273.15+α = 4, giving 273.15+α = 1092.6 K.
+273.15
+Therefore α = 819.45°C ≈ 819°C.
+8. (4) Wave velocity in string: v = √T
+μ
+Time to reach joint: t = L = L√μ
+v T
+t 1 = L A
+√μ
+A and t 2 = L B
+√μ
+B
+T T
+t 1 = L A ×√ μ A = 2.5 ×√2×10−4
+t2 L B μB 1.5 4×10−4
+= 5 ×√1 = 5 = 5√2 ≈ 1.18
+3 2 3√2 6
+#PaperPhodnaHai
+www.mathongo.com

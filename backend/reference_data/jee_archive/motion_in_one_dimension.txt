@@ -1,0 +1,101 @@
+# JEE Mains 2025/2026 Reference — Motion In One Dimension
+# Source: MathonGo Chapter Archive
+# Characters: 4334
+
+M otion In One Dimension JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q1. JEE Main 2026 (28 January Shift 2)
+A particle starts moving from time t = 0 and its coordinate is given as x(t) = 4t3−3t
+A. The particle returns to its original position (origin) 0.866 units later
+B. The particle is 1 unit away from origin at its turning point
+C. Acceleration of the particle is non-negative
+D. The particle is 0.5 units away from origin at its turning point
+E. Particle never turns back as acceleration is non-negative
+Choose the correct answer from the options given below :
+(1) A, B, C Only (2) C, E Only
+(3) A, C Only (4) A, C, D Only
+Q2. JEE Main 2026 (24 January Shift 2)
+The velocity (v) - Distance (x) graph is shown in figure. Which graph represents acceleration (a) versus distance
+(x) variation of this system?
+(1) (2)
+(3) (4)
+Q3. JEE Main 2026 (23 January Shift 2)
+A paratrooper jumps from an aeroplane and opens a parachute after 2 s of free fall and starts deaccelerating with
+3 m/s2 . At 10 m height from ground, while descending with the help of parachute, the speed of paratrooper is 5 m/s
+. The initial height of the airplane is ____ m.
+(g = 10 m/s2)
+(1) 82.5 (2) 20 (3) 62.5 (4) 92.5
+#PaperPhodnaHai
+www.mathongo.com
+M otion In One Dimension JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q4. JEE Main 2026 (28 January Shift 1)
+Water drops fall from a tap on the floor, 5 m below, at regular intervals of time, the first drop strikes the floor when
+the sixth drop begins to fall. The height at which the fourth drop will be from ground, at the instant when the first
+drop strikes the ground is ____ m.
+(g = 10 m/s2)
+(1) 4.2 (2) 2.5 (3) 4.0 (4) 3.8
+#PaperPhodnaHai
+www.mathongo.com
+Motion In One Dimension JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+ANSWERS AND SOLUTIONS
+1. (1) 2. (1) 3. (4) 4. (1)
+1. (1) Given x(t) = 4t3 −3t, we find v(t) = 12t2 −3 and a(t) = 24t.
+Statement A: Setting x(t) = 0 gives 4t3 −3t = 0 ⇒ t(4t2 −3) = 0, so t = 0 or t = √3/4 = 0.866. The particle
+returns to origin at t = 0.866 units. TRUE.
+Statement B: Turning points occur at v(t) = 0 ⇒ 12t2 −3 = 0 ⇒ t = ±0.5. At t = 0.5:
+x = 4(0.125)−1.5 = −1; distance = 1 unit. At t = −0.5: x = 1; distance = 1 unit. TRUE.
+Statement C: For t ≥ 0 (particle starts at t = 0), a(t) = 24t ≥ 0. TRUE.
+Statement D: At turning points, distance is 1 unit, not 0.5. FALSE.
+Statement E: False because acceleration is non-negative only for t ≥ 0, and particle does turn back at t = 0.5.
+FALSE.
+Correct statements: A, B, C Only.
+2. (1) The v-x graph shows velocity decreasing linearly with distance. Using kinematic equation v2 = v2 +2ax, we
+0
+can establish the relationship between acceleration and position.
+From the linear v-x relationship, differentiating using a = vdv yields acceleration that is linearly proportional to
+dx
+distance from the origin.
+The a-x graph shows a straight line passing through the origin with positive slope, indicating that acceleration
+increases linearly with distance while remaining positive throughout the motion.
+3. (4) During the first 2 s of free fall, the paratrooper starts from rest (u = 0).
+Velocity after 2 s is v = u+gt = 0+10×2 = 20 m/s.
+1
+Distance covered during free fall is h 1 = 1 2 gt2 = 1 2 ×10×22 = 20 m.
+After opening the parachute, the paratrooper decelerates at a = −3 m/s2 .
+At a height of 10 m from the ground, the final velocity is v 2 = 5 m/s.
+Let h 2 be the distance covered during deceleration until reaching 10 m height.
+Using v2
+2
+= v2
+1
++2ah 2:
+52 = 202 +2(−3)h
+2
+25 = 400−6h
+2
+6h = 375
+2
+h
+2
+= 62.5 m.
+The total height of the airplane is the sum of the free fall distance, the deceleration distance, and the remaining
+height from the ground.
+H = h +h +10 = 20+62.5+10 = 92.5 m.
+1 2
+4. (1) Time for first drop to fall 5 m:
+5 = 1 ×10×t2 gives t = 1 s.
+2
+Since the first drop strikes when the sixth begins, there are 5 intervals: each interval T = 1 = 0.2 s.
+5
+#PaperPhodnaHai
+www.mathongo.com
+Motion In One Dimension JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+When drop 1 hits the ground (at t = 1 s), drop 4 has been falling for t 4 = 1−3×0.2 = 0.4 s.
+Distance fallen by drop 4: s = 1 ×10×(0.4)2 = 0.8 m.
+4 2
+Height of drop 4 above ground: 5−0.8 = 4.2 m.
+#PaperPhodnaHai
+www.mathongo.com

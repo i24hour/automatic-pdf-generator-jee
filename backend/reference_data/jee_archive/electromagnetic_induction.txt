@@ -1,0 +1,263 @@
+# JEE Mains 2025/2026 Reference — Electromagnetic Induction
+# Source: MathonGo Chapter Archive
+# Characters: 9406
+
+E lectromagnetic Induction JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q1. JEE Main 2026 (23 January Shift 1)
+A 20 m long uniform copper wire held horizontally is allowed to fall under the gravity (g = 10 m/s2 ) through a
+uniform horizontal magnetic field of 0.5 Gauss perpendicular to the length of the wire. The induced EMF across the
+wire when it travells a vertical distance of 200 m is ____ mV.
+(1)
+20√10
+(2)
+0.2√10
+(3)
+200√10
+(4)
+2√10
+Q2. JEE Main 2026 (23 January Shift 1)
+A simple pendulum made of mass 10 g and a metallic wire of length 10 cm is suspended vertically in a uniform
+magnetic field of 2 T. The magnetic field direction is perpendicular to the plane of oscillations of the pendulum. If
+the pendulum is released from an angle of
+60∘
+with vertical, then maximum induced EMF between the point of
+suspension and point of oscillation is ____ mV. (Take g = 10 m/s2 )
+Q3. JEE Main 2026 (22 January Shift 2)
+Figure shows the circuit that contains three resistances (9Ω each) and two inductors (4 mH each). The reading of
+ammeter at the moment switch K is turned ON, is ____ A.
+(1) 2 (2) 1 (3) zero (4) 3
+Q4. JEE Main 2026 (22 January Shift 2)
+A conducting circular loop is rotated about its diameter at a constant angular speed of 100rad/s in a magnetic field
+of 0.5 T perpendicular to the axis of rotation. When the loop is rotated by
+30∘
+from the horizontal position, the
+induced EMF is 15.4 mV. The radius of the loop is ____ mm. (Take π = 22 )
+7
+Q5. JEE Main 2026 (22 January Shift 1)
+Three identical coils C 1 ,C 2 and C 3 are closely placed such that they share a common axis. C 2 is exactly midway. C 1
+carries current I in anti-clockwise direction while C 3 carries current I in clockwise direction. An induced current
+flows through C 2 will be in clockwise direction when
+(1) C 1 moves away from C 2 and C 3 moves towards C 2
+(2) C 1 and C 3 move with equal speeds away from C 2
+(3) C 1 moves towards C 2 and C 3 moves away from C 2
+(4) C 1 and C 3 move with equal speeds towards C 2
+#PaperPhodnaHai
+www.mathongo.com
+E lectromagnetic Induction JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q6. JEE Main 2026 (22 January Shift 1)
+XPQY is a vertical smooth long loop having a total resistance R where PX is parallel to QY and separation
+between them is l. A constant magnetic field B perpendicular to the plane of the loop exists in the entire space. A
+rod CD of length L(L > l) and mass m is made to slide down from rest under the gravity as shown in figure. The
+terminal speed acquired by the rod is ____ m/s.(g = acceleration due to gravity)
+8mgR 2mgR m gR 2mgR
+(1) (2) (3) (4)
+B2l2 B2L2 B2l2 B2l2
+Q7. JEE Main 2026 (22 January Shift 1)
+Inductance of a coil with
+104
+turns is 10 mH and it is connected to a dc source of 10 V with internal resistance of
+10Ω. The energy density in the inductor when the current reaches (1) of its maximum value is απ× 1 J/m3 . The
+e e2
+value of α is ____. (μ 0 = 4π×10−7Tm/A).
+Q8. JEE Main 2026 (23 January Shift 2)
+Suppose a long solenoid of 100 cm length, radius 2 cm having 500 turns per unit length, carries a current
+I = 10sin(ωt)A, where ω = 1000rad./s. A circular conducting loop (B) of radius 1 cm coaxially slided through
+the solenoid at a speed v = 1 cm/s. The r.m.s. current through the loop when the coil B is inserted 10 cm inside the
+solenoid is α/√2μ A. The value of α is ____.
+[Resistance of the loop = 10Ω ]
+(1) 197 (2) 80 (3) 100 (4) 280
+Q9. JEE Main 2026 (23 January Shift 2)
+A circular loop of radius 7 cm is placed in uniform magnetic field of 0.2 T directed perpendicular to plane of loop.
+The loop is converted into a square loop in 0.5 s. The EMF induced in the loop is ____ mV.
+(1) 13.2 (2) 1.32 (3) 8.25 (4) 6.6
+Q10. JEE Main 2026 (21 January Shift 1)
+A conducting circular loop of area 1.0 m2 is placed perpendicular to a magnetic field which varies as B = sin(100t)
+Tesla. If the resistance of the loop is 100Ω, then the average thermal energy dissipated in the loop in one period is
+____ J.
+(1) π2 (2) π (3) π (4) 2π
+2
+#PaperPhodnaHai
+www.mathongo.com
+E lectromagnetic Induction JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q11. JEE Main 2026 (21 January Shift 1)
+A 1 m long metal rod AB completes the circuit as shown in figure. The area of circuit is perpendicular to the
+magnetic field of 0.10 T. If the resistance of the total circuit is 2Ω then the force needed to move the rod towards
+right with constant speed (v) of 1.5 m/s is ____ N.
+(1)
+5.7×10−2
+(2)
+7.5×10−2
+(3)
+7.5×10−3
+(4)
+5.7×10−3
+#PaperPhodnaHai
+www.mathongo.com
+Electromagnetic Induction JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+ANSWERS AND SOLUTIONS
+1. (1) 2. 100 3. (2) 4. 14 5. (3) 6. (3) 7. 20 8. (1)
+9. (2) 10. (2) 11. (3)
+1. (1) For a conducting wire falling in a magnetic field, induced EMF is: E = BLv
+After falling through height h = 200 m, velocity: v = √2gh = √2×10×200 = √4000 = 20√10 m/s
+Converting magnetic field: B = 0.5 Gauss = 0.5×10−4 T
+Induced EMF: E = (0.5×10−4)×20×20√10 = 200×10−4√10 = 0.02√10 V = 20√10 mV
+2. (100) The maximum induced EMF for a rod of length ℓ rotating in a magnetic field B is:
+ε =
+Bωmaxℓ2
+⋯(1)
+max 2
+Using energy conservation to find ω max:
+mgℓ(1−cos60°) = 1(mℓ2)ω2
+2 m
+ω = √g = √ 10 = 10 rad/s
+m ℓ 0.1
+From equation (1):
+ε = 2×10×0.01 = 0.1 V = 100 mV
+max 2
+3. (2) At the moment switch K is turned ON, inductors act as open circuits (infinite reactance at transient).
+The circuit has three 9Ω resistors. With the two 4 mH inductors blocking current initially, the resistor network
+determines the current path.
+Analyzing the effective resistance:
+Two 9Ω resistors in parallel give 9×9 = 4.5Ω.
+9+9
+This is in series with the third 9Ω and the 9V source.
+Total resistance: R total = 4.5+9 = 13.5Ω
+Current: I = 9 = 2A, which rounds to 1 A at the ammeter position due to circuit topology.
+13.5 3
+4. (14) E = BωAsinωt
+1 22 1
+15.4×10−3 = ×100× r2 ×
+2 7 2
+15.4×28×10−5
+r = √
+22
+R = 14 mm
+5. (3) Let the common axis be the z-axis.
+C is at z = −d, C is at z = 0, and C is at z = +d.
+1 2 3
+Current in C 1 is anti-clockwise (ACW), producing a magnetic field B 1 in the +z direction at C 2.
+#PaperPhodnaHai
+www.mathongo.com
+Electromagnetic Induction JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Current in C 3 is clockwise (CW), producing a magnetic field B 3 in the −z direction at C 2.
+The net magnetic field at C is B = B −B . Since C and C are equidistant and carry equal current, initially
+2 net 1 3 1 3
+B
+net
+= 0.
+To induce a clockwise current in C 2, Lenz's law states that the induced current must oppose the change in flux. A
+clockwise induced current produces a magnetic field in the −z direction.
+This happens if there is an increasing flux in the +z direction or a decreasing flux in the −z direction.
+Case 1: C 1 moves towards C 2. The distance decreases, so B 1 (in +z direction) increases. This causes an
+increasing flux in the +z direction.
+Case 2: C 3 moves away from C 2. The distance increases, so B 3 (in −z direction) decreases. This causes a
+decreasing flux in the −z direction.
+Both actions (moving C 1 towards C 2 and moving C 3 away from C 2) result in a net change in flux that induces a
+clockwise current in C 2 to oppose the change.
+Therefore, option (3) is correct.
+6. (3) As rod CD slides down with velocity v, it cuts magnetic field lines.
+Induced EMF: ε = BLv
+Induced current in the circuit: I = BLv
+R
+Magnetic force on the rod (upward, by Lenz's law):
+F = BIL =
+B2L2v
+mag
+R
+At terminal velocity, acceleration is zero.
+Applying Newton's second law:
+mg−F = 0
+mag
+B2L2v
+mg = terminal
+R
+v = mgR
+terminal
+B2L2
+7. (20) L = 10×10−3H
+N = 104
+I = 10 = 1 A (max current)
+0 10
+I = 1
+e
+#PaperPhodnaHai
+www.mathongo.com
+Electromagnetic Induction JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+E =
+B2
+d 2μ
+0
+B = μ nI
+0
+L = μ n2πR2ℓ
+0
+μ n2I2
+E = 0
+d 2
+4π×10−7×108× 1
+= e2
+2
+= 20π
+e2
+dB di
+8. (1) EMF induced ε = A = Aμ 0 n
+dt dt
+ε = Aμ ni ωcosωt
+0 0
+ε πr2μ ni ω
+0 0
+current induced i = = cosωt
+R R
+πr2μ ni ω
+0 0
+So i =
+√2R
+π×10−4 ×4π×10−7 ×500×10×103
+=
+√2×10
+20π2
+= ×10−6
+√2
+197
+≃ μA
+√2
+9. (2) Circular loop with radius r = 0.07 m in magnetic field B = 0.2 T.
+Initial flux through circular loop: Φ 1 = B×πr2 = 0.2×π(0.07)2 = 0.000980π Wb
+The loop is converted to a square maintaining the same perimeter: C = 2πr = 0.14π m
+Side of square: a = 0.14π = 0.035π m
+4
+Final flux through square loop: Φ 2 = B×a2 = 0.2×(0.035π)2 = 0.2×0.001225π2 Wb
+Evaluating: Φ = 0.2×0.0154 = 0.00308 Wb
+1
+Φ 2 = 0.2×0.001225×9.87 = 0.00242 Wb
+Change in flux: ΔΦ = 0.00308−0.00242 = 0.00066 Wb
+Average EMF: ε = ΔΦ = 0.00066 = 0.00132 V = 1.32 mV
+Δt 0.5
+10. (2) Flux: ϕ = BA = sin(100t) Wb
+Induced EMF: ε = −dϕ = −100cos(100t) V
+dt
+Induced current: I = ε = −cos(100t) A
+R
+Power dissipated: P = I2R = 100cos2(100t) W
+Average power: P avg = 1 2 ×100 = 50 W
+Time period: T = 2π s
+100
+Energy in one period: E = P avg ×T = 50× 1 2 0 π 0 = π J
+11. (3) Given: l = 1 m, B = 0.10 T, R = 2 Ω, v = 1.5 m/s
+Motional EMF: ε = Blv = 0.10×1×1.5 = 0.15 V
+#PaperPhodnaHai
+www.mathongo.com
+Electromagnetic Induction JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Current: I = ε = 0.15 = 0.075 A
+R 2
+Magnetic force on rod: F = BIl = 0.10×0.075×1 = 7.5×10−3 N
+For constant velocity, applied force equals magnetic force.
+#PaperPhodnaHai
+www.mathongo.com

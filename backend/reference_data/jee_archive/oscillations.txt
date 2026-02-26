@@ -1,0 +1,169 @@
+# JEE Mains 2025/2026 Reference — Oscillations
+# Source: MathonGo Chapter Archive
+# Characters: 6190
+
+O scillations JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q1. JEE Main 2026 (21 January Shift 2)
+The kinetic energy of a simple harmonic oscillator is oscillating with angular frequency of 176rad/s. The frequency
+of this simple harmonic oscillator is ____ Hz. [ take π = 22]
+7
+(1) 14 (2) 28 (3) 176 (4) 88
+Q2. JEE Main 2026 (23 January Shift 1)
+Two blocks with masses 100 g and 200 g are attached to the ends of springs A and B as shown in figure. The energy
+stored in A is E. The energy stored in B, when spring constants k A ,k B of A and B, respectively satisfy the relation
+4k A = 3k B′, is :
+(1) 4E (2) 4E (3) 3E (4) 2E
+3
+Q3. JEE Main 2026 (23 January Shift 1)
+A simple pendulum of string length 30 cm performs 20 oscillations in 10 s. The length of the string required for the
+pendulum to perform 40 oscillations in the same time duration is ____ cm. [Assume that the mass of the pendulum
+remains same.]
+(1) 7.5 (2) 0.75 (3) 120 (4) 15
+Q4. JEE Main 2026 (28 January Shift 2)
+The time period of a simple harmonic oscillator is T = 2π√ k . Measured value of mass (m) of the object is 10 g
+m
+with an accuracy of 10 mg and time for 50 oscillations of the spring is found to be 60 s using a watch of 2 s
+resolution. Percentage error in determination of spring constant (k) is ____ \%.
+(1) 7.60 (2) 3.35 (3) 3.43 (4) 6.76
+Q5. JEE Main 2026 (28 January Shift 2)
+As shown in the figure, a spring is kept in a stretched position with some extension by holding the masses 1 kg and
+0.2 kg with a separation more than spring natural length and are released. Assuming the horizontal surface to be
+frictionless, the angular frequency (in SI unit) of the system is : k = 150 N/m
+(1) 5 (2) 27 (3) 20 (4) 30
+#PaperPhodnaHai
+www.mathongo.com
+O scillations JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q6. JEE Main 2026 (22 January Shift 2)
+Using a simple pendulum experiment g is determind by measuring its time period T. Which of the following plots
+represent the correct relation between the pendulum length L and time period T ?
+(1) (2)
+(3) (4)
+Q7. JEE Main 2026 (28 January Shift 1)
+The displacement of a particle, executing simple harmonic motion with time period T, is expressed as
+x(t) = Asinωt, where A is the amplitude. The maximum value of potential energy of this oscillator is found at
+t = T/2β. The value of β is ____.
+Q8. JEE Main 2026 (24 January Shift 1)
+A cylindrical block of mass M and area of cross section A is floating in a liquid of density ρ and with its axis
+vertical. When depressed a little and released the block starts oscillating. The period of oscillation is ____.
+(1) π√ 2M (2) π√ ρA (3) 2π√ ρA (4) 2π√ M
+ρAg Mg Mg ρAg
+#PaperPhodnaHai
+www.mathongo.com
+Oscillations JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+ANSWERS AND SOLUTIONS
+1. (1) 2. (3) 3. (1) 4. (4) 5. (4) 6. (2) 7. 2 8. (4)
+1. (1) In a simple harmonic oscillator, if the displacement is x = Asin(ωt+ϕ), the velocity is v = Aωcos(ωt+ϕ).
+The kinetic energy is given by K = 1mv2 = 1mA2ω2cos2(ωt+ϕ).
+2 2
+Using the identity cos2θ = 1+cos2θ , we get K = 1mA2ω2[1+cos(2ωt+2ϕ)].
+2 4
+The angular frequency of the kinetic energy oscillation is ω KE = 2ω, where ω is the angular frequency of the
+SHM.
+Given ω KE = 176 rad/s, we have 2ω = 176, which gives ω = 88 rad/s.
+The frequency of the simple harmonic oscillator is f = ω .
+2π
+Substituting the values: f = 88 = 88×7 = 2×7 = 14 Hz.
+2×22 44
+7
+2. (3) For blocks hanging in equilibrium, spring extensions are:
+m g 100g m g 200g
+x A = k A = k and x B = k B = k .
+A A B B
+Energy stored:
+E = 1 2 k A x2 A = 50 k 0 A 0g2 and U B = 1 2 k B x2 B = 200 k 0 B 0g2 .
+U k
+Taking ratio: B = 4⋅ A.
+E k B
+Given 4k
+A
+= 3k B, we have
+k
+k A = 3
+4
+.
+B
+Therefore: U B = 4E⋅ 3 4 = 3E.
+3. (1) Period of simple pendulum: T = time
+number of oscillations
+Initial period: T 1 = 1 2 0 0 = 0.5 s
+Required period: T 2 = 10 = 0.25 s
+40
+Using T = 2π√L , the ratio is: T2 = √L2
+g T1 L
+1
+0.25 = √L 2 ⇒ 0.5 = √L 2
+0.5 30 30
+0.25 = L 30 2 ⇒ L 2 = 7.5 cm
+4. (4) The given formula for time period is
+T = 2π√ k .
+m
+Squaring both sides, we get T2 = 4π2 k , which gives k = 4π2m .
+m T2
+The relative error in k is given by Δk = Δm +2ΔT .
+k m T
+Given: m = 10 g, Δm = 10 mg = 0.01 g.
+Total time for n = 50 oscillations is t = 60 s with resolution Δt = 2 s.
+Since T = t/n, the relative error in T is the same as in t: ΔT = Δt .
+T t
+Substituting the values: Δk = 0.01 +2( 2 ).
+k 10 60
+Δk = 0.001+ 2 = 0.001+0.0666...
+k 30
+#PaperPhodnaHai
+www.mathongo.com
+Oscillations JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Percentage error = (0.001+ 1 )×100 = 0.1+ 100 = 0.1+6.666... = 6.766...%.
+15 15
+Rounding to two decimal places, we get 6.76%.
+5. (4) Two masses (1 kg and 0.2 kg) connected by a spring (k = 150 N/m) on a frictionless surface undergo oscillation
+about their center of mass.
+This two-body problem reduces to SHM with reduced mass μ = m 1 m 2 = 1×0.2 = 1 kg.
+m1+m2 1.2 6
+The angular frequency is ω = √k = √150 = √900 = 30 rad/s.
+μ 1/6
+6. (2) The time period T of a simple pendulum of length L is given by the formula:
+T = 2π√L
+g
+Squaring both sides, we get:
+T2 = 4π2L
+g
+Rearranging the equation to find the relationship between 1 and L:
+T2
+1 = g
+T2 4π2L
+Let y = 1 and x = L. The equation becomes:
+T2
+y = k where k = g is a constant.
+x 4π2
+This is the equation of a rectangular hyperbola in the first quadrant.
+As L increases, 1 decreases non-linearly, approaching the axes asymptotically.
+T2
+Comparing this with the given plots, option (2) correctly represents a hyperbolic relationship between 1 and L.
+T2
+7. (2) For SHM with x(t) = Asin(ωt), the potential energy is
+U = 1mω2x2 = 1mω2A2sin2(ωt).
+2 2
+Maximum potential energy occurs when sin2(ωt) = 1, i.e., when ωt = π, 3π,...
+2 2
+The first maximum occurs at ωt = π , giving t = π = π ⋅ T = T .
+2 2ω 2 2π 4
+Since this is given as t = T .
+2β
+We have T = T , so β = 2.
+4 2β
+8. (4) When the block is depressed by distance x, the additional buoyant force is F = ρAgx acting upward as
+restoring force.
+Equation of motion:
+Md2x
+= −ρAgx.
+dt2
+This gives ω2 = ρAg .
+M
+Period of oscillation: T = 2π = 2π√ M
+ω ρAg
+#PaperPhodnaHai
+www.mathongo.com

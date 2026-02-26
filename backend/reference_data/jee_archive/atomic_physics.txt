@@ -1,0 +1,141 @@
+# JEE Mains 2025/2026 Reference — Atomic Physics
+# Source: MathonGo Chapter Archive
+# Characters: 3395
+
+A tomic Physics JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q1. JEE Main 2026 (21 January Shift 2)
+The energy of an electron in an orbit of the Bohr's atom is −0.04E 0 eV where E 0 is the ground state energy. If L is
+the angular momentum of the electron in this orbit and h is the Planck's constant, then 2πL is ____ :
+h
+(1) 5 (2) 6 (3) 2 (4) 4
+Q2. JEE Main 2026 (23 January Shift 1)
+In hydrogen atom spectrum, (R → Rydberg's constant ) A. the maximum wavelength of the radiation of Lyman
+4
+series is B. the Balmer series lies in the visible region of the spectrum C. the minimum wavelength of the
+3R
+9 5
+radiation of Paschen series is D. the minimum wavelength of Lyman series is Choose the correct answer from
+R 4R
+the options given below :
+(1) B, D Only (2) A, B and C Only
+(3) A, B and D Only (4) A, B Only
+Q3. JEE Main 2026 (22 January Shift 2)
+The smallest wavelength of Lyman series is 91 nm. The difference between the largest wavelengths of Paschen and
+Balmer series is nearly ____ nm .
+(1) 1550 (2) 1217 (3) 1875 (4) 1784
+Q4. JEE Main 2026 (21 January Shift 1)
+If an alpha particle with energy 7.7 MeV is bombarded on a thin gold foil, the closest distance from nucleus it can
+reach is ____ m. (Atomic number of gold = 79 and 1 = 9×109 in SI units)
+4πϵ
+o
+(1)
+3.85×10−16
+(2)
+3.85×10−14
+(3)
+2.95×10−16
+(4)
+2.95×10−14
+Q5. JEE Main 2026 (24 January Shift 1)
+Two electrons are moving in orbits of two hydrogen like atoms with speeds 3×105 m/s and 2.5×105 m/s
+respectively. If the radii of these orbits are nearly same then the possible order of energy states are ____
+respectively.
+(1) 8 and 10 (2) 9 and 8
+(3) 10 and 12 (4) 6 and 5
+#PaperPhodnaHai
+www.mathongo.com
+Atomic Physics JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+ANSWERS AND SOLUTIONS
+1. (1) 2. (2) 3. (2) 4. (4) 5. (4)
+1. (1) In Bohr's atom, the energy levels are E n = −E 0 where E 0 is the ground state energy.
+n2
+Given E = −0.04E 0, we have −E 0 = −0.04E 0, which gives n2 = 25, so n = 5.
+n2
+The angular momentum in Bohr's model is L = nℏ = n h .
+2π
+Therefore, 2πL = 2π ×n h = n = 5.
+h h 2π
+2. (2) A. Maximum wavelength of Lyman series (n = 1 to n = 2):
+1 = R(1− 1) = 3R
+λ 4 4
+λ = 4 TRUE
+3R
+B. The Balmer series lies in the visible region of the spectrum. TRUE
+C. Minimum wavelength of Paschen series (n = 3 to n = ∞):
+1 = R(1)
+λ′ 9
+λ′ = 9 TRUE
+R
+D. Minimum wavelength of Lyman series (n = 1 to n = ∞):
+1 = R(1)
+λ
+λ = 1 , NOT 5 FALSE
+R 4R
+So A, B and C are correct.
+3. (2) Smallest wavelength of lyman
+1 1 1
+= R( − )
+λ 12 ∞2
+1 1
+R = = nm−1
+λ 91
+λ max for balmer series
+n = 2 → n = 3
+1 2
+1 1 1
+= R( − )
+λ 4 9
+B
+1 1 5
+= ( )
+λ 91 36
+B
+91×36
+λ = ( ) = 655.2 nm
+B 5
+λ max paschen
+n = 3 → n = 4
+1 2
+#PaperPhodnaHai
+www.mathongo.com
+Atomic Physics JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+1 1 1 1 1 7
+= ( − ) = ×
+λ 91 32 42 91 144
+p
+91×144
+λ = ( ) = 1872 nm
+p 7
+Δλ = λ −λ = 1872−655.2
+P B
+Δλ = 1216.8
+Δλ ≈ 1217
+4. (4) At closest approach, KE converts to PE:
+KE = 1 × (2e)(Ze)
+4πε 0 r min
+9×109×2×79×(1.6×10−19)2
+r =
+min
+7.7×106×1.6×10−19
+= 9×2×79×1.6×10−19 ×103
+7.7
+= 2275.2 ×10−16 = 2.95×10−14 m
+7.7
+5. (4) For hydrogen-like atoms:
+V ∝ Z and r ∝ n2
+n Z
+Thus r ∝ n
+V
+Since the radii are nearly the same:
+n n
+1 = 2
+V V
+1 2
+n 1 = V 1 = 3×105 = 6
+n 2 V 2 2.5×105 5
+Possible order of energy states is 6 and 5.
+#PaperPhodnaHai
+www.mathongo.com

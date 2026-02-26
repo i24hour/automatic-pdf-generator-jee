@@ -1,0 +1,371 @@
+# JEE Mains 2025/2026 Reference — Current Electricity
+# Source: MathonGo Chapter Archive
+# Characters: 14073
+
+C urrent Electricity JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q1. JEE Main 2026 (21 January Shift 2)
+Two known resistances of RΩ and 2RΩ and one unknown resistance XΩ are connected in a circuit as shown in the
+figure. If the equivalent resistance between points A and B in the circuit is XΩ, then the value of X is ____ Ω.
+(1)
+(√3−1)R
+(2)
+2(√3−1)R
+(3) (√3+1)R (4) R
+Q2. JEE Main 2026 (21 January Shift 2)
+The total length of potentiometer wire AB is 50 cm in the arrangement as shown in figure. If P is the point where
+the galvanometer shows zero reading then the length AP is ____ cm.
+(1) 25 (2) 30 (3) 20 (4) 15
+Q3. JEE Main 2026 (21 January Shift 2)
+A battery with EMF E and internal resistance r is connected across a resistance R. The power consumption in R
+will be maximum when :
+(1) R = 2r (2) R = r/2 (3) R = r (4) R = √2r
+Q4. JEE Main 2026 (23 January Shift 1)
+A wire of uniform resistance λΩ/m is bent into a circle of radius r and another piece of wire with length 2r is
+connected between points A and B(AOB) as shown in figure. The equivalent resistance between points A and B is
+____ Ω.
+(1) 3πλr (2) 6πλr (3) 2πλr (4) (π+1)2rλ
+8 3π+16
+#PaperPhodnaHai
+www.mathongo.com
+C urrent Electricity JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q5. JEE Main 2026 (28 January Shift 2)
+Which one of the following is not a measurable quantity?
+(1) Voltage (2) Resistance
+(3) Displacement current (4) Voltage difference
+Q6. JEE Main 2026 (28 January Shift 2)
+A Wheatstone bridge is initially at room temperature and all arms of the bridge have same value of resistances
+(R 1 = R 2 = R 3 = R 4 ). When R 3 resistance is heated to some temperature, its resistance value has gone up by 10%.
+The potential difference (V a −V b ) (after R 3 is heated) is ____ V.
+(1) 1.05 (2) 0.95 (3) 0 (4) 2
+Q7. JEE Main 2026 (24 January Shift 2)
+The reading of the ammeter (A) in steady state in the following circuit (assuming negligible internal resistance of
+the ammeter) is ____ A.
+(1) 1 (2) 1/2 (3) 0 (4) 2
+Q8. JEE Main 2026 (24 January Shift 2)
+A moving coil galvanometer of resistance 100Ω shows a full scale deflection for a current of 1 mA. The value of
+resistance required to convert this galvanometer into an ammeter, showing full scale deflection for a current of 5
+mA, is ____ Ω
+(1) 0.5 (2) 2.5 (3) 10 (4) 25
+Q9. JEE Main 2026 (24 January Shift 2)
+A regular hexagon is formed by six wires each of resistance rΩ and the corners are joined to the centre by wires of
+same resistance. If the current enters at one corner and leaves at the opposite corner, the equivalent resistance of the
+hexagon between the two opposite corners will be
+(1) 3 4 r (2) 4 5 r (3) 3 5 r (4) 5 8 r
+#PaperPhodnaHai
+www.mathongo.com
+C urrent Electricity JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q10. JEE Main 2026 (24 January Shift 2)
+In a meter bridge experiment to determine the value of unknown resistance, first the resistances 2Ω and 3Ω are
+connected in the left and right gaps of the bridge and the null point is obtained at a distance l cm from the left. Now
+when an unknown resistance xΩ is connected in parallel to 3Ω resistance, the null point is shifted by 10 cm to the
+right of wire. The value of unknown resistance x is ____ Ω.
+Q11. JEE Main 2026 (22 January Shift 2)
+An electric power line having total resistance of 2Ω, delivers 1 kW of power at 250 V. The percentage efficiency of
+transmission line is ____ .
+(1) 100 (2) 92.5 (3) 96.9 (4) 86.5
+Q12. JEE Main 2026 (22 January Shift 2)
+A cylindrical conductor of length 2 m and area of cross-section 0.2 mm2 carries an electric current of 1.6 A when its
+ends are connected to a 2 V battery. Mobility of electrons in the conductor is α×10−3 m2/V.s. The value of α is :
+(electron concentration = 5×1028/m3 and electron charge = 1.6×10−19C)
+Q13. JEE Main 2026 (22 January Shift 1)
+A meter bridge with two resistances R 1 and R 2 as shown in figure was balanced (null point) at 40 cm from the point
+P. The null point changed to 50 cm from the point P, when 16Ω resistance is connected in parallel to R 2. The
+values of resistances R 1 and R 2 are ____.
+(1) R 2 = 4Ω,R 1 = 4 3 Ω (2) R 2 = 16Ω,R 1 = 1 3 6Ω
+(3) R 2 = 12Ω,R 1 = 1 3 2Ω (4) R 2 = 8Ω,R 1 = 1 3 6Ω
+Q14. JEE Main 2026 (23 January Shift 2)
+To compare EMF of two cells using potentiometer the balancing lengths obtained are 200 cm and 150 cm. The least
+count of scale is 1 cm. The percentage error in the ratio of EMFs is ____.
+(1) 1.65 (2) 1.45 (3) 1.75 (4) 1.16
+#PaperPhodnaHai
+www.mathongo.com
+C urrent Electricity JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q15. JEE Main 2026 (21 January Shift 1)
+The heat generated in 1 minute between points A and B in the given circuit, when a battery of 9 V with internal
+resistance of 1Ω is connected across these points is ____ J.
+Q16. JEE Main 2026 (28 January Shift 1)
+For the two cells having same EMF E and internal resistance r, the current passing through the external resistor 6Ω
+is same when both the cells are connected either in parallel or in series. The value of internal resistance r is ____ Ω.
+(1) 6 (2) 3 (3) 4 (4) 9
+Q17. JEE Main 2026 (28 January Shift 1)
+In the potentiometer, when the cell in the secondary circuit is shunted with 4Ω resistance, the balance is obtained at
+the length 120 cm of wire. Now when the same cell is shunted with 12Ω resistance, the balance is shifted to a length
+of 180 cm. The internal resistance of cell is ____ Ω
+(1) 4 (2) 12 (3) 6 (4) 3
+Q18. JEE Main 2026 (28 January Shift 1)
+The equivalent resistance between the points A and B in the following circuit is xΩ. The value of x is ____.
+5
+#PaperPhodnaHai
+www.mathongo.com
+C urrent Electricity JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q19. JEE Main 2026 (24 January Shift 1)
+Two resistors 2Ω and 3Ω are connected in the gaps of bridge as shown in figure. The null point is obtained with the
+contact of jockey at some point on wire XY. When an unknown resistor is connected in parallel with 3Ω resistor,
+the null point is shifted by 22.5 cm toward Y. The resistance of unknown resistor is ____ Ω.
+(1) 2 (2) 1 (3) 4 (4) 3
+Q20. JEE Main 2026 (24 January Shift 1)
+Two resistors of 100Ω each are connected in series with a 9 V battery. A voltmeter of 400Ω resistance is connected
+to measure the voltage drop across one of the resistors. The voltmeter reading is ____ V.
+(1) 2 (2) 3 (3) 4 (4) 4.5
+#PaperPhodnaHai
+www.mathongo.com
+Current Electricity JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+ANSWERS AND SOLUTIONS
+1. (1) 2. (2) 3. (3) 4. (2) 5. (1) 6. (2) 7. (1) 8. (4)
+9. (2) 10. 6 11. (3) 12. 1 13. (4) 14. (4) 15. 1080 16. (1)
+17. (1) 18. 21 19. (1) 20. (3)
+1. (1) The circuit has 2R and X in series (top branch) parallel to R (bottom branch).
+(2R+X)⋅R
+The equivalent resistance is R eq = 3R+X = X.
+Setting up the equation: X(3R+X) = R(2R+X), which simplifies to X2 +2RX−2R2 = 0.
+Using the quadratic formula: X =
+−2R±2R√3
+= R(−1±√3).
+2
+Since resistance must be positive, X = (√3−1)R Ω.
+2. (2) In this potentiometer, for zero galvanometer reading, the potential at P must equal the potential at the junction
+between the 6Ω and 4Ω resistors.
+The voltage distribution across the resistors is V junction = E× 6+ 6 4 = 0.6E from point A.
+Since the potentiometer wire is uniform with length 50 cm, the potential distribution is also uniform.
+Therefore, AP = 6 , giving AP = 50×0.6 = 30 cm.
+AB 10
+3. (3) Power consumed in external resistance R is P =
+E2R
+.
+(R+r)2
+To find maximum, differentiate with respect to R:
+dP = E2(R+r)2−2R(R+r) = E2 r−R
+.
+dR (R+r)4 (R+r)3
+dP = 0 gives R = r.
+dR
+This is the maximum power transfer theorem: maximum power is delivered when the external load resistance
+equals the source internal resistance.
+4. (2) The wire bent into a circle of radius r has resistance λ⋅πr for the semicircular arcs, and the straight wire of
+length 2r has resistance λ⋅2r. The three paths between A and B (two semicircular arcs of the circle and one
+straight wire through center) are in parallel.
+1 = 2 + 1 + 2
+R AB λπr λ⋅2r λ⋅3πr
+= 1 [2 + 1 + 2 ]
+λr π 2 3π
+= 1 (12+3π+4) = 1 ⋅ 16+3π
+λr 6π λr 6π
+R = λr( 6π ) = 6πλr
+AB 16+3π 3π+16
+#PaperPhodnaHai
+www.mathongo.com
+Current Electricity JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+5. (1) In electrostatics and circuit theory, potential (voltage) at a single point is defined relative to a reference point
+(usually infinity or ground where potential is assumed to be zero).
+Absolute voltage at a point is not a physically measurable quantity because only the difference in potential
+between two points can be measured using instruments like a voltmeter.
+Resistance can be measured using an ohmmeter or bridge circuits.
+Displacement current is a physical quantity that can be calculated and its effects (magnetic field) can be measured.
+Voltage difference (potential difference) is the standard quantity measured between two points in a circuit.
+Therefore, absolute voltage is not a measurable quantity.
+6. (2) Initially, the Wheatstone bridge is balanced with R 1 = R 2 = R 3 = R 4 = R.
+Since the bridge is balanced, the potential difference across the bridge is zero: V a −V b = 0 V.
+When R 3 is heated and its resistance increases by 10%: R′ 3 = 1.1R
+The voltage at node a (between R 1 and R 2): V a = 40× R 1 R + 2 R 2 = 40× R+ R R = 40× 1 2 = 20 V
+The voltage at node b (between R′ 3 and R 4): V b = 40× R′ R + 4 R = 40× 1.1R R +R = 40× 2 1 .1 ≈ 19.05 V
+3 4
+Therefore: V a −V b = 20−19.05 = 0.95 V
+7. (1) In steady state,
+The ammeter reads 1 A.
+8. (4) To convert a galvanometer to an ammeter, a shunt resistance S is connected in parallel. For full-scale
+deflection:
+Current through galvanometer: I = 1 mA
+g
+Total current: I = 5 mA
+Current through shunt: I = 5−1 = 4 mA
+s
+Since voltage across both is equal: I g ⋅G = I s ⋅S
+0.001×100 = 0.004×S
+S = 0.1 = 25 Ω
+0.004
+#PaperPhodnaHai
+www.mathongo.com
+Current Electricity JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+9.
+(2)
+4R
+2R×
+3 8R2 4
+R = = = R
+eq 4R 10R 5
+2R+
+3
+10. (6) Meter bridge null point condition: R 1 = l
+R2 100−l
+Initial: R 1 = 2Ω, R 2 = 3Ω, null at l cm
+2 = l gives 2(100−l) = 3l, so l = 40 cm
+3 100−l
+When xΩ connected in parallel with 3Ω: R′ = 3x Ω
+2 3+x
+New null point at (40+10) = 50 cm from left:
+2 = 50 = 1
+R′ 50
+2
+2(3+x)
+= 1 gives 6+2x = 3x
+3x
+x = 6Ω
+11. (3) Current in transmission line: I = P = 1000 = 4 A.
+V 250
+Power loss: P = I2R = 42 ×2 = 32 W.
+loss
+Efficiency: η = P−P loss ×100%
+P
+= 1000−32 ×100%
+1000
+= 96.8% which rounds to 96.9%.
+12. (1) For a cylindrical conductor with length 2 m, cross-section 0.2 mm² = 0.2 × 10⁻⁶ m², carrying 1.6 A at 2 V.
+Resistance: R = V/I = 2/1.6 = 1.25 Ω.
+Resistivity: ρ = RA/L = 1.25×0.2×10−6/2
+= 0.125×10−6 Ω·m.
+#PaperPhodnaHai
+www.mathongo.com
+Current Electricity JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Using ρ = 1/(neμ), mobility: μ = 1/(neρ)
+= 1/(5×1028 ×1.6×10−19 ×0.125×10−6)
+= 1/(1×103) = 10−3 m²/V·s.
+Thus α = 1.
+13. (4) Initial balance at 40 cm: R 1 = 40 = 2 ...(i)
+R 60 3
+2
+With 16Ω parallel to R 2, null point at 50 cm:
+1 R 6R 1 2 = 5 5 0 0 = 1 ⇒ R 1 = 1 1 6 6 + R R 2 2 ...(ii)
+16+R2
+From (i): R 1 = 2 3 R 2.
+Substituting in (ii): 2 3 R 2 = 1 1 6 6 + R R 2 .
+2
+2
+3
+=
+16
+1
++
+6
+R
+⇒ 2(16+R
+2
+) = 48 ⇒ R
+2
+= 8Ω.
+2
+R = 16 Ω.
+1 3
+14. (4) ϵ = λℓ (Potential gradient)
+ϵ = λℓ
+1 1
+ϵ = λℓ
+2 2
+y = ϵ 1 = ℓ 1
+ϵ2 ℓ
+2
+Δy Δℓ Δℓ
+= 1 + 2
+y ℓ1 ℓ2
+Δy = 1 + 1
+y 200 150
+Δy ×100 = ( 1 + 1 )×100 = (3+4)×100 = 7 = 1.16%
+y 200 150 600 6
+15. (1080) Wheatstone bridge with P = 1Ω, Q = 2Ω, R = 2Ω, S = 4Ω
+P = R = 1 → Bridge is balanced, no current through middle 1Ω.
+Q S 2
+R : Upper (3Ω) and Lower (6Ω) in parallel = 3×6 = 2Ω
+AB 9
+Total resistance = 1 + 2 = 3Ω
+Current I = 9 = 3 A
+3
+Power between A and B: P = I2R = 9×2 = 18 W
+AB
+Heat in 1 min = 18×60 = 1080 J
+16. (1) For series connection of two cells: I = 2E .
+s 2r+6
+For parallel connection: I p = r/2 E +6 = r+ 2E 12 .
+Given I s = I p: 2E = 2E .
+2r+6 r+12
+This gives 2r+6 = r+12, so r = 6Ω.
+#PaperPhodnaHai
+www.mathongo.com
+Current Electricity JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+17. (1) In a potentiometer, the internal resistance r of a cell is given by the formula r = R(l0 −1), where l 0 is the
+l
+balancing length in open circuit, l is the balancing length when shunted with resistance R.
+This can be rewritten as l0 = 1+ r or l = l0 .
+l R 1+r/R
+Case 1: R 1 = 4Ω and l 1 = 120 cm.
+120 = l0 = 4l0 ... (i)
+1+r/4 4+r
+Case 2: R 2 = 12Ω and l 2 = 180 cm.
+180 = l 0 = 12l 0 ... (ii)
+1+r/12 12+r
+Dividing equation (ii) by (i):
+180 = 12l 0 × 4+r
+120 12+r 4l0
+3 = 3(4+r)
+2 12+r
+1 = 4+r
+2 12+r
+12+r = 8+2r
+r = 4Ω
+The internal resistance of the cell is 4Ω.
+18. (21) Using Kirchhoff's laws on the bridge circuit with resistances 6Ω,3Ω,3Ω,3Ω,6Ω and applying a 1V test
+voltage:
+From the loop equation:
+6i +3(2i −i) = 3(i−i )
+1 1 1
+15i = 6i ⇒ i = 2i ...(1)
+1 1 5
+From the second loop:
+3(i−i )+6i = 1
+1 1
+3i+3i = 1
+1
+(3+ 6)i = 1
+5
+i = 5 A = 1V
+21 Req
+R = 21 = 4.2 Ω
+eq 5
+19. (1) In a Wheatstone bridge with 2Ω and 3Ω, the null point is found when R1 = l .
+R L−l
+2
+Initial balance: 2 3 = L− l 1 l gives l 1 = 2 5 L .
+1
+For standard wire length L = 100 cm, l = 40 cm.
+1
+When unknown resistance R is connected in parallel with 3Ω, equivalent resistance becomes 3R .
+3+R
+#PaperPhodnaHai
+www.mathongo.com
+Current Electricity JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+New null point: 2 = l 2 , which simplifies to 2(3+R) = l 2 .
+3R L−l 2 3R L−l 2
+3+R
+Null point shifts 22.5 cm toward Y: l 2 = 40+22.5 = 62.5 cm.
+Substituting: 2(3+R) = 62.5 = 5
+3R 37.5 3
+6(3+R) = 15R ⇒ 18 = 9R ⇒ R = 2 Ω
+20. (3) When the 400Ω voltmeter is connected in parallel with one 100Ω resistor, the equivalent resistance is
+R
+eq
+= 100×400 = 80Ω.
+500
+Total circuit resistance: R total = 100+80 = 180Ω.
+Circuit current: I = 9/180 = 0.05 A.
+Voltmeter reading (voltage across parallel combination): V = 0.05×80 = 4 V
+#PaperPhodnaHai
+www.mathongo.com

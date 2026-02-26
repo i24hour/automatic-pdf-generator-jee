@@ -1,0 +1,173 @@
+# JEE Mains 2025/2026 Reference — Units and Dimensions
+# Source: MathonGo Chapter Archive
+# Characters: 5350
+
+U nits and Dimensions JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q1. JEE Main 2026 (21 January Shift 2)
+Keeping the significant figures in view, the sum of the physical quantities 52.01 m,153.2 m and 0.123 m is :
+(1) 205.3 m (2) 205.333 m (3) 205.33 m (4) 205 m
+Q2. JEE Main 2026 (28 January Shift 2)
+Match List - I with List - II.
+List-I List-II
+A. Coefficientof viscosity I. [ML−1T−1]
+B. Surfacetension II. [ML0T−2]
+C. Pressure III. [ML−1T−2]
+D. Surfaceenergy IV. [ML2T−2]
+Choose the correct answer from the options given below :
+(1) A-IV, B-III, C-I, D-II
+(2) A-IV, B-I, C-II, D-III
+(3) A-I, B-II, C-IV, D-III
+(4) A-I, B-III, C-II, D-IV
+Q3. JEE Main 2026 (22 January Shift 2)
+If ϵ,E and t represent the free space permittivity, electric field and time respectively, then the unit of ϵE will be :
+t
+(1)
+Am2
+(2) Am (3)
+A/m2
+(4) A/m
+Q4. JEE Main 2026 (22 January Shift 1)
+Match the LIST-I with LIST-II
+List-I List-II
+A. Springconstant I. ML2T−2K−1
+B. Thermalconductivity II. ML0T−2
+C. Boltzmannconstant III. ML2T−3A−2
+D. Inductivereactance IV. MLT−3K−1
+Choose the correct answer from the options given below:
+(1) A-II, B-IV, C-I, D-III
+(2) A-I, B-IV, C-II, D-III
+(3) A-II, B-I, C-IV, D-III
+(4) A-III, B-II, C-IV, D-I
+#PaperPhodnaHai
+www.mathongo.com
+U nits and Dimensions JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q5. JEE Main 2026 (23 January Shift 2)
+A ball of radius r and density ρ dropped through a viscous liquid of density σ and viscosity η attains its terminal
+velocity at time t, given by t = Aρarbηcσd , where A is a constant and a,b,c and d are integers. The value of b+c is
+a+d
+____.
+Q6. JEE Main 2026 (21 January Shift 1)
+Consider a modified Bernoulli equation.
+(P+ A )+ρg(h+Bt)+ 1ρV2 = constant
+Bt2 2
+If t has the dimension of time then the dimensions of A and B are ____, ____ respectively.
+(1)
+[ML0 T−2]
+and
+[M0LT−2]
+(2)
+[ML0 T−2]
+and
+[M0LT−1]
+(3)
+[ML0 T−1]
+and
+[M0LT]
+(4)
+[ML0 T−1]
+and
+[M0LT−1]
+Q7. JEE Main 2026 (24 January Shift 1)
+Match the LIST-I with LIST-II
+List-I List-II
+A. Magneticinduction I. MLT−2A−2
+B. Magneticflux II. ML2T−2A−2
+C. Magneticpermeability III. ML0T−2A−1
+D. Self inductance IV. ML2T−2A−1
+Choose the correct answer from the options given below:
+(1) A-III, B-IV, C-II, D-I
+(2) A-III, B-IV, C-I, D-II
+(3) A-IV, B-III, C-I, D-II
+(4) A-I, B-III, C-IV, D-II
+#PaperPhodnaHai
+www.mathongo.com
+Units and Dimensions JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+ANSWERS AND SOLUTIONS
+1. (1) 2. (1) 3. (3) 4. (1) 5. 1 6. (4) 7. (2)
+1. (1) When adding measurements, the result must be limited to the least number of decimal places among all
+quantities.
+The measurements are: 52.01 m (2 decimal places), 153.2 m (1 decimal place), and 0.123 m (3 decimal places).
+The limiting factor is 1 decimal place.
+Calculating the sum: 52.01 + 153.2 + 0.123 = 205.333 m.
+Rounding to 1 decimal place gives 205.3 m, which is option (1).
+2. (1) (A) Coefficient of viscosity:
+η = F⋅dr =
+[MLT−2][L]
+= [ML−1T−1] → IV
+A⋅dv [L2][LT−1]
+(B) Surface tension:
+S = F =
+[MLT−2]
+= [MT−2] = [ML0T−2] → III
+L [L]
+(C) Pressure:
+P = F =
+[MLT−2]
+= [ML−1T−2]
+→ I
+A [L2]
+(D) Surface energy:
+E = S×A = [MT−2][L2] = [ML2T−2] → II
+Hence, A-IV, B-III, C-I, D-II.
+ϵE
+3. (3) We need to find the unit of .
+t
+From Maxwell's equations, the displacement current density is given by J d = ϵ∂E .
+∂t
+The term ϵ
+t
+E has the same dimensions as displacement current density J d.
+Current density J is defined as current per unit area, J = I .
+A
+The SI unit of current I is Ampere (A) and the SI unit of area A is m2.
+Therefore, the unit of current density is
+A/m2
+.
+Alternatively, using dimensions:
+[ϵ] = M−1L−3T4A2
+[E] = MLT−3A−1
+[t] = T
+Dimension of ϵE =
+(M−1L−3T4A2)(MLT−3A−1)
+= L−2A.
+t T
+This corresponds to the unit
+A/m2
+.
+4. (1) A. Spring constant: F = kx ⇒ [k] = MLT−2/L = ML0T−2 → II
+B. Thermal conductivity: Q/t = KA(dT/dx) ⇒ [K] = ML2T−3/(L2 ⋅K/L) = MLT−3K−1 → IV
+C. Boltzmann constant: E = k B T ⇒ [k B ] = ML2T−2K−1 → I
+#PaperPhodnaHai
+www.mathongo.com
+Units and Dimensions JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+D. Inductive reactance: same dimension as resistance = ML2T−3A−2 → III
+Matching: A-II, B-IV, C-I, D-III.
+5. (1) Using dimensional analysis on t = Aρarbηcσd:
+the dimensions are [T] = [ML−3]a[L]b[ML−1T−1]c[ML−3]d.
+Expanding: [T] = Ma+c+dL−3a+b−c−3dT−c.
+Comparing powers: For T: 1 = −c, giving c = −1.
+For M: 0 = a+c+d, so a+d = 1.
+For L: 0 = −3a+b−c−3d = −3a+b+1−3d, giving b = 3(a+d)−1 = 3(1)−1 = 2.
+Therefore (b+c)/(a+d) = (2−1)/1 = 1.
+6. (4) All terms must have dimension of pressure [ML−1T−2].
+For (h+Bt): Since ρgh has dimension of pressure, [h] = [L].
+For dimensional consistency: [Bt] = [L], so [B] = [LT−1] = [M0LT−1]
+For A : [A] = [ML−1T−2]
+Bt2 [B][T2]
+[A] = [B][T2][ML−1T−2] = [LT−1][T2][ML−1T−2] = [ML0T−1]
+[A] = [ML0T−1] and [B] = [M0LT−1]
+7. (2) Match physical quantities with dimensional formulas using fundamental principles.
+Magnetic Induction (A): From F = qvB, [B] = MLT−2 = MT−2A−1 = III
+AT⋅LT−1
+Magnetic Flux (B): Φ = BA, [Φ] = MT−2A−1 ⋅L2 = ML2T−2A−1 = IV
+Magnetic Permeability (C): From B = μH with [H] = ALT−1 , [μ] = MT−2A−1 = MLT−2A−2 = I
+AL−1T−1
+Self Inductance (D): From ε = LdI , [L] = ML2T−3A−1 = ML2T−2A−2 = II
+dt AT−1
+Correct matching: A-III, B-IV, C-I, D-II
+#PaperPhodnaHai
+www.mathongo.com

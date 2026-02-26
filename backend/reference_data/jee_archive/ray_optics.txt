@@ -1,0 +1,441 @@
+# JEE Mains 2025/2026 Reference — Ray Optics
+# Source: MathonGo Chapter Archive
+# Characters: 15000
+
+R ay Optics JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q1. JEE Main 2026 (21 January Shift 2)
+As shown in the diagram, when the incident ray is parallel to base of the prism, the emergent ray grazes along the
+second surface.
+If refractive index of the material of prism is √2, the angle θ of prism is.
+(1)
+60∘
+(2)
+45∘
+(3)
+90∘
+(4)
+75∘
+Q2. JEE Main 2026 (23 January Shift 1)
+A thin prism with angle
+5∘
+of refractive index 1.72 is combined with another prism of refractive index 1.9 to
+produce dispersion without deviation. The angle of second prism is ____.
+(1)
+6∘
+(2)
+4.5∘
+(3)
+4∘
+(4)
+5∘
+Q3. JEE Main 2026 (23 January Shift 1)
+Consider light travelling from a medium A to medium B separated by a plane interface. If the light undergoes total
+internal reflection during its travel from medium A to B and the speed of light in media A and B are 2.4×108 m/s
+and 2.7×108 m/s, respectively, then the value of critical angle is :
+(1)
+cos−1(8)
+(2)
+sin−1(9)
+9 8
+(3) cot−1( 3 ) (4) tan−1( 8 )
+√13 √17
+Q4. JEE Main 2026 (28 January Shift 2)
+A biconvex lens is formed by using two thin planoconvex lenses, as shown in the figure. The refractive index and
+radius of curved surfaces are also mentioned in figure. When an object is placed on the left side of lens at a distance
+of 30 cm from the biconvex lens, the magnification of the image will be :
+(1) -2 (2) +2.5 (3) -2.5 (4) +2
+Q5. JEE Main 2026 (28 January Shift 2)
+For a transparent prism, if the angle of minimum deviation is equal to its refracting angle, the refractive index n of
+the prism satisfies.
+(1) 1 < n < 2 (2) √2 < n < 2√2
+(3) √2 < n < 2 (4) n ⩾ 2
+#PaperPhodnaHai
+www.mathongo.com
+∣ ∣
+R ay Optics JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q6. JEE Main 2026 (24 January Shift 2)
+Distance between an object and three times magnified real image is 40 cm. The focal length of the mirror used is
+____ cm.
+(1) −15/2 (2) -15 (3) -10 (4) -20
+Q7. JEE Main 2026 (24 January Shift 2)
+Five persons P 1 ,P 2 ,P 3 ,P 4 and P 5 recorded object distance (u) and image distance (v) using same convex lens
+having power +5 D as (25,96),(30,62),(35,37),(45,35) and (50,32) respectively. Identify correct statement
+(1) Readings recorded by P 3 and P 2 persons are incorrect
+(2) Readings recorded by P 4 and P 5 persons are incorrect
+(3) Readings recorded by all persons are correct
+(4) Readings recorded by P 3 person are incorrect
+Q8. JEE Main 2026 (22 January Shift 2)
+In parallax method for the determination of focal length of a concave mirror, the object should always be placed:
+(1) between the focus (F) and the centre of curvature (C) of the mirror ONLY
+(2) between the pole(P) and the focus (F) of the concave mirror ONLY
+(3) beyond the centre of the curvature (C) of the mirror ONLY
+(4) at any point beyond the focus (F) of the mirror
+Q9. JEE Main 2026 (22 January Shift 2)
+The wavelength of light, while it is passing through water is 540 nm. The refractive index of water is 4/3. The
+wavelength of the same light when it is passing through a transparent medium having refractive index of 3/2 is
+____ nm.
+(1) 540 (2) 480 (3) 840 (4) 380
+Q10. JEE Main 2026 (22 January Shift 1)
+Consider an equilateral prism (refractive index √2). A ray of light is incident on its one surface at a certain angle i.
+If the emergent ray is found to graze along the other surface then the angle of refraction at the incident surface is
+close to ____.
+(1)
+20∘
+(2)
+15∘
+(3)
+40∘
+(4)
+30∘
+Q11. JEE Main 2026 (22 January Shift 1)
+A thin convex lens of focal length 5 cm and a thin concave lens of focal length 4 cm are combined together (without
+any gap) and this combination has magnification m 1 when an object is placed 10 cm before the convex lens.
+Keeping the positions of convex lens and object undisturbed a gap of 1 cm is introduced between the lenses by
+moving the concave lens away, which lead to a change in magnification of total lens system to m 2. The value of
+m 1 is ____.
+m
+2
+5 5 3
+(1) (2) (3) (4) None of the above
+9 27 2
+#PaperPhodnaHai
+www.mathongo.com
+R ay Optics JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q12. JEE Main 2026 (22 January Shift 1)
+A parallel beam of light travelling in air (refractive index 1.0) is incident on a convex spherical glass surface of
+radius of curvature 50 cm. Refractive index of glass is 1.5. The rays converge to a point at a distance x cm from the
+centre of the curvature of the spherical surface. The value of x is ____ cm.
+Q13. JEE Main 2026 (23 January Shift 2)
+A prism of angle
+75∘
+and refractive index
+√3
+is coated with thin film of refractive index 1.5 only at the back exit
+surface. To have total internal reflection at the back exit surface the incident angle must be ____
+(sin15∘ = 0.25 and sin25∘ = 0.43)
+(1) 15∘ (2) > 25∘
+(3) between
+15∘
+and
+20∘
+(4) Both (1) & (3)
+Q14. JEE Main 2026 (23 January Shift 2)
+The size of the images of an object, formed by a thin lens are equal when the object is placed at two different
+positions 8 cm and 24 cm from the lens. The focal length of the lens is ____ cm.
+Q15. JEE Main 2026 (21 January Shift 1)
+A collimated beam of light of diameter 2 mm is propagating along x-axis. The beam is required to be expanded in a
+collimated beam of diameter 14 mm using a system of two convex lenses. If first lens has focal length 40 mm, then
+the focal length of second lens is ____ mm.
+Q16. JEE Main 2026 (21 January Shift 1)
+In a microscope the objective is having focal length f o = 2 cm and eye-piece is having focal length f e = 4 cm. The
+tube length is 32 cm. The magnification produced by this microscope for normal adjustment is ____.
+Q17. JEE Main 2026 (28 January Shift 1)
+The magnitudes of power of a biconvex lens (refractive index 1.5) and that of a plano-concave lens (refractive index
+= 1.7) are same. If the curvature of planoconcave lens exactly matches with the curvature of back surface of the
+biconvex lens, then ratio of radius of curvature of front and back surface of the biconvex lens is ____.
+(1) 5 : 12 (2) 12 : 5 (3) 5 : 2 (4) 2 : 5
+#PaperPhodnaHai
+www.mathongo.com
+R ay Optics JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q18. JEE Main 2026 (28 January Shift 1)
+A convex lens of refractive index 1.5 and focal length f = 18 cm is immersed in water. The difference in focal
+lengths of the given lens when it is in water and in air is α×f. The value of α is ____.
+(refractive index of water = 4/3)
+Q19. JEE Main 2026 (24 January Shift 1)
+The exit surface of a prism with refractive index n is coated with a material having refractive index n . When this
+2
+prism is set for minimum angle of deviation, it exactly meets the condition of critical angle. The prism angle is ____
+.
+(1)
+30∘
+(2)
+15∘
+(3)
+45∘
+(4)
+60∘
+Q20. JEE Main 2026 (24 January Shift 1)
+In a microscope of tube length 10 cm two convex lenses are arranged with focal length of 2 cm and 5 cm. Total
+magnification obtained with this system for normal adjustment is (5)k . The value of k is ____.
+(1) 3.5 (2) 2 (3) 4 (4) 5
+#PaperPhodnaHai
+www.mathongo.com
+Ray Optics JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+ANSWERS AND SOLUTIONS
+1. (1) 2. (3) 3. (4) 4. (1) 5. (3) 6. (2) 7. (4) 8. (4)
+9. (2) 10. (2) 11. (4) 12. 100 13. (4) 14. 16 15. 280 16. 100
+17. (3) 18. 3 19. (4) 20. (2)
+1. (1) From the geometry of the prism, the angle of the prism is A = 180∘ −(45∘ +θ).
+The incident ray is parallel to the base, so the angle of incidence i at the first surface is equal to the base angle 45∘
+. Thus, i = 45∘ .
+Applying Snell's law at the first surface: 1⋅sin(45∘) = μsin(r 1 ).
+Given μ = √2, we have √ 1 2 = √2sin(r 1 ) ⟹ sin(r 1 ) = 1 2 ⟹ r 1 = 30∘ .
+At the second surface, the emergent ray grazes the surface, so the angle of emergence e = 90∘ .
+Applying Snell's law at the second surface: μsin(r 2 ) = 1⋅sin(90∘).
+√2sin(r ) = 1 ⟹ sin(r ) = 1 ⟹ r = 45∘ .
+2 2 2
+√2
+The relation between prism angle and internal angles is A = r 1 +r 2.
+A = 30∘ +45∘ = 75∘ .
+Substituting A in the first equation: 75∘ = 180∘ −(45∘ +θ).
+75∘ = 135∘ −θ ⟹ θ = 135∘ −75∘ = 60∘ .
+2. (3) For dispersion without deviation, the condition is (μ 1 −1)A 1 +(μ 2 −1)A 2 = 0.
+Substituting values: (1.72−1)×5+(1.9−1)×A 2 = 0
+0.72×5+0.9×A = 0
+2
+3.6+0.9A = 0
+2
+A = −4°
+2
+The magnitude of the second prism angle is 4°.
+3. (4) The refractive index of a medium is inversely proportional to the speed of light in that medium, given by
+n = c .
+v
+For light travelling from medium A to medium B, the critical angle θ c is defined when light travels from a denser
+to a rarer medium.
+Given speeds are v A = 2.4×108 m/s and v B = 2.7×108 m/s.
+The refractive indices are n = c and n = c .
+A v B v
+A B
+n v
+The critical angle θ c is given by sinθ c = n B = v A.
+A B
+Substituting the values: sinθ c = 2.4×108 = 24 = 8 .
+2.7×108 27 9
+To find the value in terms of
+tan−1
+, we use the trigonometric identity for a right-angled triangle where
+perpendicular p = 8 and hypotenuse h = 9.
+The base b = √h2 −p2 = √92 −82 = √81−64 = √17.
+#PaperPhodnaHai
+www.mathongo.com
+Ray Optics JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Thus, tanθ c = p = 8 .
+b √17
+Therefore, θ c = tan−1( 8 ).
+√17
+4. (1) The biconvex lens is a combination of two thin plano-convex lenses in contact.
+For the first plano-convex lens: μ = 1.5, R = 15 cm, R = ∞.
+1 1 2
+Using lens maker's formula:
+1 = (μ −1)( 1 − 1 )
+f
+1
+1 R1 R2
+= (1.5−1)( 1 − 1 )
+15 ∞
+= 0.5× 1 = 1 cm−1.
+15 30
+For the second plano-convex lens:
+μ 2 = 1.2, R 1 = ∞, R 2 = −12 cm.
+Using lens maker's formula:
+1 = (μ −1)( 1 − 1 )
+f2 2 R 1 R 2
+= (1.2−1)( 1 − 1 )
+∞ −12
+= 0.2× 1 = 1 cm−1.
+12 60
+The equivalent focal length F of the combination is given by:
+1 = 1 + 1 = 1 + 1
+F f f 30 60
+1 2
+= 2+1 = 3 = 1 cm −1 .
+60 60 20
+Thus, F = 20 cm.
+Given object distance u = −30 cm. Using the lens formula 1 − 1 = 1 :
+v u F
+1 − 1 = 1
+v −30 20
+⇒ 1 = 1 − 1 = 3−2 = 1 .
+v 20 30 60 60
+So, v = 60 cm.
+Magnification m = v = 60 = −2.
+u −30
+5. (3) At minimum deviation, δ m = A (angle of minimum deviation equals prism angle). The refractive index
+formula becomes:
+sin( A+δm) sin(2A)
+n = 2 = 2 = sinA
+sin(A) sin(A) sin(A)
+2 2 2
+Using sinA = 2sin(A)cos(A):
+2 2
+2sin(A)cos(A)
+n = 2 2 = 2cos(A)
+sin(A) 2
+2
+For a physical prism, 0 < A < 90°, so 45° < A < 90°, giving 0 < cos(A) < 1 .
+2 2 √2
+Therefore, 1 < n < √2⋅2 = 2√2. However, more precisely, √2 < n < 2.
+6. (2) For a mirror with magnification m = -3 (real image), object and image distances satisfy |u| + |v| = 40 cm.
+Since m = v/u = -3, we have v = -3u, giving u + 3u = 40, so u = 10 cm and v = -30 cm.
+#PaperPhodnaHai
+www.mathongo.com
+Ray Optics JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Using mirror formula: 1 = 1 + 1 = 1 + 1 = 3−1 = 1
+f u v 10 −30 30 15
+Hence f = -15 cm.
+7. (4) For a convex lens with power P = +5 D, the focal length is f = 20 cm.
+The lens formula is 1 = 1 + 1 = 0.05 cm−1. Checking each measurement:
+f u v
+P 1:
+2
+1
+5
++
+9
+1
+6
+= 0.0504 Correct;
+P 2:
+3
+1
+0
++
+6
+1
+2
+= 0.0494 Correct;
+P : 1 + 1 = 0.0556 Incorrect;
+3 35 37
+P 4:
+4
+1
+5
++
+3
+1
+5
+= 0.0508 Correct;
+P 5:
+5
+1
+0
++
+3
+1
+2
+= 0.0512 Correct.
+Only P 3's readings do not satisfy the lens formula.
+8. (4) In the parallax method for determining the focal length of a concave mirror, we use an object pin and its real
+image formed by the mirror.
+The method of 'no parallax' involves aligning the tip of the object pin with the tip of its real image. This is only
+possible if the image formed is real.
+For a concave mirror, a real image is formed only when the object is placed at any position beyond the focus (F),
+i.e., u > f.
+If the object is placed between the pole (P) and the focus (F), the image formed is virtual, and it cannot be caught
+on a screen or used for the standard parallax alignment with a physical pin in front of the mirror.
+Therefore, the object should be placed at any point beyond the focus (F) of the mirror to ensure a real image is
+formed.
+9. (2) Frequency of light is constant in all media.
+In water with refractive index 4/3, wavelength is 540 nm.
+The wavelength in vacuum is λ 0 = 540× 4 3 = 720 nm.
+In a medium with refractive index 3/2, the wavelength is λ = 720 = 720× 2 = 480 nm.
+3/2 3
+10. (2) Given an equilateral prism, the angle of the prism is A = 60∘ .
+The refractive index of the prism is μ = √2.
+The emergent ray grazes the second surface, which means the angle of emergence is e = 90∘ .
+Applying Snell's law at the second surface: μsin(r ) = 1⋅sin(e).
+2
+√2sin(r
+2
+) = sin(90∘) = 1.
+sin(r 2 ) = 1 , which gives r 2 = 45∘ .
+√2
+For a prism, we know the relation r 1 +r 2 = A.
+Substituting the values: r 1 +45∘ = 60∘ .
+r 1 = 60∘ −45∘ = 15∘ .
+The angle of refraction at the incident surface is r = 15∘ .
+1
+11. (4) This question has been dropped by NTA.
+#PaperPhodnaHai
+www.mathongo.com
+Ray Optics JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+12. (100) For refraction at a single spherical surface, we use the formula: μ2 − μ1 = μ 2 −μ 1
+v u R
+Given data:
+Refractive index of air μ 1 = 1.0
+Refractive index of glass μ 2 = 1.5
+Radius of curvature R = +50 cm (convex surface)
+Object is at infinity for a parallel beam, so u = −∞
+Substituting the values:
+1.5 − 1.0 = 1.5−1.0
+v −∞ 50
+1.5 −0 = 0.5
+v 50
+1.5 = 1
+v 100
+v = 1.5×100 = 150 cm
+The image is formed at a distance of 150 cm from the pole (vertex) of the spherical surface.
+The question asks for the distance x from the centre of curvature.
+Distance from centre of curvature x = |v−R|
+x = 150−50 = 100 cm
+13.
+(4)
+r +r = 75∘
+1 2
+For T I R at back surface
+3
+√3sinr = sin90∘
+2 2
+r ≥ 60∘
+2
+r ≤ 15∘
+1
+1⋅sini = √3sin15∘
+sini = 1.73×0.25
+sini = 0.433
+i = 25∘ ⇒ i < 25∘
+f
+14. (16) The magnification of a thin lens is given by m = .
+f+u
+Given that the size of the images is equal for two different object positions, the magnitudes of the magnifications
+must be equal: |m 1 | = |m 2 |.
+For a single lens to produce images of the same size at two different object distances, one image must be real and
+the other must be virtual.
+#PaperPhodnaHai
+www.mathongo.com
+Ray Optics JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Let u 1 = −8 cm and u 2 = −24 cm.
+Then, m = −m (since one is real and one is virtual).
+1 2
+f f
+= −
+f+u f+u
+1 2
+1 = − 1
+f−8 f−24
+f −24 = −(f −8)
+f −24 = −f +8
+2f = 32
+f = 16 cm.
+The focal length of the lens is 16 cm.
+15. (280) For beam expander using two convex lenses:
+Magnification = d2 = f 2
+d f
+1 1
+14 = f 2
+2 40
+f 2 = 7×40 = 280 mm
+16. (100) For microscope at normal adjustment:
+M = L × D
+f f
+o e
+where L = 32 cm, f o = 2 cm, f e = 4 cm, D = 25 cm
+M = 32 × 25 = 16×6.25 = 100
+2 4
+17. (3) Let R and R be the radii of the front and back surfaces of the biconvex lens. The power of the biconvex lens
+1 2
+is P 1 = (1.5−1)( R 1 + R 1 ) = 0.5( R 1 + R 1 ).
+1 2 1 2
+The plano-concave lens has a flat surface and a concave surface of radius R 2 (matching the back surface of the
+biconvex lens). Its power is P 2 = (1.7−1)( R 1 2 ) = 0 R .7 2 .
+Since the magnitudes of power ar

@@ -1817,6 +1817,16 @@ REMEMBER: Only the top 0.1% of GATE aspirants should get these right."""
         if total <= 0:
             return []
 
+        # ---- Load JEE Archive reference context for this topic ----
+        # This injects real JEE Mains 2025/2026 questions as few-shot examples
+        # so the LLM calibrates difficulty and question style correctly.
+        try:
+            from services.jee_reference_loader import get_reference_context
+            jee_reference = get_reference_context(topic=topic, subject=subject, max_chars=3000)
+        except Exception:
+            jee_reference = ""
+
+
         # SUB-BATCH STRATEGY: If total > 7, split into parallel sub-batches
         # Each sub-batch requests at most 7 questions to avoid LLM truncation
         MAX_PER_CALL = 5
@@ -1980,6 +1990,20 @@ EXAMPLE 3 (Parabola Graph):
             diagram_instruction = ""
 
         # Single strict prompt
+        # Build JEE reference block (only when real archive data is available)
+        if jee_reference:
+            ref_block = f"""
+REAL JEE MAINS 2025/2026 REFERENCE QUESTIONS FOR {topic.upper()}:
+(Study these real exam questions to calibrate difficulty, phrasing and diagram style EXACTLY)
+---
+{jee_reference}
+---
+IMPORTANT: Generate NEW original questions at the SAME difficulty and style as the real JEE questions above.
+Do NOT copy any question verbatim. Use them only as style and difficulty reference.
+"""
+        else:
+            ref_block = ""
+
         prompt = f"""You are an expert question paper setter for competitive exams like FIITJEE, Allen, Resonance.
 
 {diff_instruction}
@@ -1990,7 +2014,7 @@ GENERATE EXACTLY:
 SUBJECT: {subject}
 TOPIC: {topic}
 EXAM LEVEL: {level_prompt}
-{diagram_instruction}
+{ref_block}{diagram_instruction}
 STRICT REQUIREMENTS:
 1. You MUST generate EXACTLY {request_total} questions. Do NOT stop early.
 2. Every question MUST be {difficulty_label.upper()} difficulty as defined above.
@@ -2002,6 +2026,7 @@ STRICT REQUIREMENTS:
    - End with \\\\textbf{{Final Answer:}} Option X or value.
    - Keep solutions SHORT so you can generate ALL {request_total} questions.
 6. For mcq_multi: answer as "A, C" or "A, B, D".
+
 
 Return EXACTLY this JSON format:
 {{"questions": [

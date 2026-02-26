@@ -1,0 +1,237 @@
+# JEE Mains 2025/2026 Reference — Mechanical Properties of Fluids
+# Source: MathonGo Chapter Archive
+# Characters: 9550
+
+M echanical Properties of Fluids JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q1. JEE Main 2026 (21 January Shift 2)
+A spherical body of radius r and density σ falls freely through a viscous liquid having density ρ and viscosity η and
+attains a terminal velocity v 0. Estimated maximum error in the quantity η is : (Ignore errors associated with σ,ρ and
+g, gravitational acceleration)
+(1) 2Δr + Δv o (2) 2Δr − Δv o
+r v r v
+o o
+(3) 2[Δr − Δvo] (4) 2[Δr + Δvo]
+r vo r vo
+Q2. JEE Main 2026 (21 January Shift 2)
+Surface tension of two liquids (having same densities), T 1 and T 2, are measured using capillary rise method utilizing
+two tubes with inner radii of r 1 and r 2 where r 1 > r 2. The measured liquid heights in these tubes are h 1 and h 2
+respectively. [Ignore the weight of the liquid about the lowest point of miniscus]. The heights h 1 and h 2 and surfaces
+tensions T 1 and T 2 satisfy the relation:
+(1) h 1 > h 2 and T 1 = T 2
+(2) h 1 = h 2 and T 1 = T 2
+(3) h 1 > h 2 and T 1 < T 2
+(4) h 1 < h 2 and T 1 = T 2
+Q3. JEE Main 2026 (21 January Shift 2)
+The terminal velocity of a metallic ball of radius 6 mm in a viscous fluid is 20 cm/s. The terminal velocity of
+another ball of same material and having radius 3 mm in the same fluid will be ____ cm/s.
+Q4. JEE Main 2026 (24 January Shift 2)
+A cubical block of density ρ b = 600 kg/m3 floats in a liquid of density ρ e = 900kg/m3 . If the height of block is
+H = 8.0 cm then height of the submerged part is ____ cm.
+(1) 6.3 (2) 4.3 (3) 5.3 (4) 7.3
+Q5. JEE Main 2026 (24 January Shift 2)
+A soap bubble of surface tension 0.04 N/m is blown to a diameter of 7 cm. If (15000−x)μJ of work is done in
+blowing it further to make its diameter 14 cm, then the value of x is ____. (π = 22/7)
+Q6. JEE Main 2026 (22 January Shift 2)
+When a part of a straight capillary tube is placed vertically in a liquid, the liquid raises upto certain height h. If the
+inner radius of the capillary tube, density of the liquid and surface tension of the liquid decrease by 1% each, then
+the height of the liquid in the tube will change by %.
+(1) +1 (2) -3 (3) +3 (4) -1
+#PaperPhodnaHai
+www.mathongo.com
+M echanical Properties of Fluids JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q7. JEE Main 2026 (22 January Shift 1)
+Given below are two statements:
+Statement I: Pressure of a fluid is exerted only on a solid surface in contact as the fluid-pressure does not exist
+everywhere in a still fluid.
+Statement II: Excess potential energy of the molecules on the surface of a liquid, when compared to interior, results
+in surface tension.
+In the light of the above statements, choose the correct answer from the options given below
+(1) Statement I is false but Statement II is true
+(2) Statement I is true but Statement II is false
+(3) Both Statement I and Statement II are false
+(4) Both Statement I and Statement II are true
+Q8. JEE Main 2026 (23 January Shift 2)
+A small metallic sphere of diameter 2 mm and density 10.5 g/cm3 is dropped in glycerine having viscosity 10 Poise
+and density 1.5 g/cm3 respectively. The terminal velocity attained by the sphere is ____ cm/s. (π = 22 and
+7
+g = 10 m/s2 )
+(1) 3.0 (2) 1.0 (3) 2.0 (4) 1.5
+Q9. JEE Main 2026 (23 January Shift 2)
+An air bubble of volume 2.9 cm3 rises from the bottom of a swimming pool of 5 m deep. At the bottom of the pool
+water temperature is
+17∘C.
+The volume of the bubble when it reaches the surface, where the water temperature is
+27∘C, is ____ cm3 .
+(g = 10 m/s2 , density of water = 103 kg/m3 , and 1 atm pressure is 105 Pa)
+(1) 4.5 (2) 2.0 (3) 4.2 (4) 3.0
+Q10. JEE Main 2026 (21 January Shift 1)
+Water flows through a horizontal tube as shown in the figure. The difference in height between the water columns in
+vertical tubes is 5 cm and the area of cross-sections at A and B are 6 cm2 and 3 cm2 respectively. The rate of flow
+will be ____ cm3/s. (take g = 10 m/s2 )
+(1)
+200
+(2)
+200√6
+(3)
+100√3
+(4)
+200√3
+√3
+#PaperPhodnaHai
+www.mathongo.com
+M echanical Properties of Fluids JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q11. JEE Main 2026 (24 January Shift 1)
+Sixty four rain drops of radius 1 mm each falling down with a terminal velocity of 10 cm/s coalesce to form a
+bigger drop. The terminal velocity of bigger drop is ____ cm/s.
+#PaperPhodnaHai
+www.mathongo.com
+Mechanical Properties of Fluids JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+ANSWERS AND SOLUTIONS
+1. (1) 2. (4) 3. 5 4. (3) 5. 11304 6. (1) 7. (1) 8. (3)
+9. (1) 10. (4) 11. 160
+1. (1) The terminal velocity v 0 of a spherical body falling through a viscous liquid is given by Stokes' Law:
+2r2(σ−ρ)g
+v =
+0
+9η
+Rearranging the formula to express viscosity η in terms of other variables:
+2r2(σ−ρ)g
+η =
+9v
+0
+Since we are told to ignore errors associated with σ, ρ, and g, these quantities along with the numerical factor 2
+9
+are treated as constants.
+The expression for η can be written as η = k⋅
+r2
+, where k =
+2(σ−ρ)g
+is a constant.
+v 0 9
+Taking the natural logarithm on both sides:
+lnη = lnk+2lnr−lnv
+0
+Differentiating both sides to find the relative error:
+dη = 0+2dr − dv 0
+η r v 0
+For the estimated maximum fractional error, we take the absolute sum of the individual relative errors:
+Δη = 2Δr + Δv 0
+η r v 0
+This matches option (1).
+2. (4) For capillary rise, the height of liquid in a tube is given by: h = 2Tcosθ , where T is surface tension and r is the
+ρgr
+tube radius.
+For two liquids with equal density and contact angles:
+2T cosθ 2T cosθ
+h 1 = ρ 1 gr1 and h 2 = ρ 2 gr2
+Taking the ratio: h1 = T 1 × r 2
+h 2 T 2 r 1
+Since r 1 > r 2, we have r r 2 < 1. The capillary rise is inversely proportional to tube radius, so the smaller radius
+1
+tube will have greater height. Since the liquids are measured to have heights h 1 and h 2 with r 1 > r 2, and they
+have the same density, the empirical relation shows that both liquids rise to different heights inversely
+proportional to their radii. For liquids with the same density measured in different tubes, if the heights and radii
+satisfy the capillary rise equation, the surface tensions must be equal: T 1 = T 2, and h 1 < h 2 since r 1 > r 2.
+3. (5) For a sphere in a viscous fluid, terminal velocity is proportional to r2: v t ∝ r2.
+v r2
+For two balls of the same material in the same fluid: t1 = 1.
+v t2 r2
+2
+#PaperPhodnaHai
+www.mathongo.com
+Mechanical Properties of Fluids JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Given r 1 = 6 mm, v t1 = 20 cm/s, and r 2 = 3 mm: v 2 t 0 2 = 3 9 6 = 4.
+Therefore, v t2 = 5 cm/s.
+4. (3) For a floating cubical block in equilibrium, the buoyant force equals the weight:
+ρ ⋅g⋅A⋅h = ρ ⋅g⋅A⋅H
+e s b
+where h s is the submerged height.
+Simplifying: h s = ρ ρ e b ⋅H = 6 9 0 0 0 0 ×8.0 = 2 3 ×8.0
+= 5.33 cm ≈ 5.3 cm
+5. (11304) Soap bubble has two surfaces. Work done: W = ΔA×σ
+Initial radius: r i = 3.5 cm = 0.035 m, Final radius: r f = 7 cm = 0.07 m
+Change in surface area (both surfaces): ΔA = 8π(r2 −r2) = 8π(0.072 −0.0352)
+f i
+ΔA = 8π(0.0049−0.001225) = 8π×0.003675 = 0.0294π m²
+W = 0.0294π×0.04 = 0.001176π J = 0.001176× 22 = 0.003696 J = 3696 μJ
+7
+Therefore: x = 15000−3696 = 11304
+6. (1) Capillary height formula: h = 2σcosθ
+ρgr
+When radius, density, and surface tension each decrease by 1%: r′ = 0.99r, ρ′ = 0.99ρ, σ′ = 0.99σ
+New height: h′ = 2(0.99σ)cosθ = h⋅ 0.99 = h⋅ 1 = h⋅1.0101...
+(0.99ρ)g(0.99r) 0.99×0.99 0.99
+Percentage change: (1.0101−1)×100 ≈ +1.01%, which rounds to +1%.
+7. (1) Statement I is false: Fluid pressure exists everywhere in a still fluid, not only on solid surfaces. According to
+Pascal's principle, pressure at any point in a static fluid acts equally in all directions and throughout the fluid
+volume.
+Statement II is true: Surface tension results from excess potential energy of molecules at the liquid surface.
+Surface molecules experience net inward attractive forces from interior molecules, creating an imbalance that
+increases their potential energy and manifests as surface tension acting along the surface.
+8. (3) Using Stokes' Law for terminal velocity:
+2r2g(ρ −ρ )
+v = s f .
+t 9η
+Given: r = 0.1 cm, g = 1000 cm/s², ρ
+s
+= 10.5 g/cm³, ρ
+f
+= 1.5 g/cm³, η = 10 Poise = 10 g/(cm⋅s).
+Substituting:
+2×(0.1)2×1000×(10.5−1.5)
+v =
+t
+9×10
+= 2×0.01×1000×9
+90
+= 180 = 2.0 cm/s.
+90
+9. (1) An air bubble rises through water with initial volume 2.9 cm³ at the bottom. Calculating pressures at both
+locations:
+At bottom (5 m depth): P 1 = P atm +ρgh = 105 +103(10)(5) = 1.5×105 Pa
+At surface: P = 105 Pa
+2
+#PaperPhodnaHai
+www.mathongo.com
+Mechanical Properties of Fluids JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Initial temperature: T 1 = 17°C = 290 K, Final temperature: T 2 = 27°C = 300 K
+P V P V
+Using ideal gas law: 1 1 = 2 2
+T1 T2
+V = V × P 1 × T 2 = 2.9× 1.5×105 × 300
+2 1 P 2 T 1 105 290
+= 2.9×1.5× 30 = 2.9×1.5×1.034 ≈ 4.5 cm³
+29
+10. (4) Given: h = 5 cm, A = 6 cm², A = 3 cm², g = 1000 cm/s²
+1 2
+By continuity: A 1 v 1 = A 2 v 2 ⇒ v 2 = 2v 1
+By Bernoulli's equation: P −P = 1ρ(v2 −v2)
+1 2 2 2 1
+Since P 1 −P 2 = ρgh:
+ρgh = 1ρ(4v2 −v2) =
+3ρv2
+1
+2 1 1 2
+v 1 = √2g 3 h = √2×10 3 00×5 = 1 √ 0 3 0 cm/s
+Rate of flow Q = A 1 v 1 = 6× 100 = 200√3 cm³/s
+√3
+11. (160) At terminal velocity, gravitational force equals Stokes drag: mg = 6πηrv
+For a sphere with mass m = 4πr3ρ, this gives v =
+2r2ρg
+3 9η
+Therefore, v ∝ r2
+When 64 drops coalesce: 64× 4 3 πr3 1 = 4 3 πr3 2 , so r 2 = 4r 1
+2
+v r
+New terminal velocity: 2 = ( 2) = 16
+v r
+1 1
+v 2 = 16×10 = 160 cm/s
+#PaperPhodnaHai
+www.mathongo.com

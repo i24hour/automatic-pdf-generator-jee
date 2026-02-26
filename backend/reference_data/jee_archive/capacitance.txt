@@ -1,0 +1,189 @@
+# JEE Mains 2025/2026 Reference — Capacitance
+# Source: MathonGo Chapter Archive
+# Characters: 6318
+
+C apacitance JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q1. JEE Main 2026 (21 January Shift 2)
+The charge stored by the capacitor C in the given circuit in the steady state is ____ μC.
+(1) 5 (2) 12.5 (3) 10 (4) 7.5
+Q2. JEE Main 2026 (23 January Shift 1)
+The space between the plates of a parallel plate capacitor of capacitance C (without any dielectric) is now filled with
+three dielectric slabs of dielectric constants K 1 = 2,K 2 = 3 and K 3 = 5 (as shown in figure). If new capacitance is
+nC then the value of n is ____.
+3
+Q3. JEE Main 2026 (28 January Shift 2)
+Identify the correct statements :
+A. Effective capacitance of a series combination of capacitors is always smaller than the smallest capacitance of the
+capacitor in the combination.
+B. When a dielectric medium is placed between the charged plates of a capacitor, displacement of charges cannot
+occur due to insulation property of dielectric.
+C. Increasing of area of capacitor plate or decreasing of thickness of dielectric is an alternate method to increase the
+capacitance.
+D. For a point charge, concentric spherical shells centered at the location of the charge are equipotential surfaces.
+Choose the correct answer from the options given below :
+(1) B and D Only (2) A, B and C Only
+(3) C and D Only (4) A, C and D Only
+#PaperPhodnaHai
+www.mathongo.com
+C apacitance JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q4. JEE Main 2026 (24 January Shift 2)
+Three parallel plate capacitors each with area A and separation d are filled with two dielectric (k 1 and k 2) in the
+following fashion. Which of the following is true? (k 1 > k 2 )
+(1) C C > C A > C B (2) C C > C B > C A
+(3) C A > C C > C B (4) C B > C C > C A
+Q5. JEE Main 2026 (22 January Shift 2)
+A capacitor P with capacitance 10×10−6 F is fully charged with a potential difference of 6.0 V and disconnected
+from the battery. The charged capacitor P is connected across another capacitor Q with capacitance 20×10−6 F.
+The charge on capacitor Q when equilibrium is established will be α×10−5C (assume capacitor Q does not have
+any charge initially), the value of α is ____ 。
+Q6. JEE Main 2026 (23 January Shift 2)
+A parallel plate capacitor with plate separation 5 mm is charged by a battery. On introducing a mica sheet of 2 mm
+and maintaining the connections of the plates with the terminals of the battery, it is found that it draws 25% more
+charge from the battery. The dielectric constant of mica is ____.
+(1) 1.0 (2) 2.5 (3) 2.0 (4) 1.5
+Q7. JEE Main 2026 (21 January Shift 1)
+A parallel plate capacitor has capacitance C, when there is vacuum within the parallel plates. A sheet having
+thickness (1) rd of the separation between the plates and relative permittivity K is introduced between the plates.
+3
+The new capacitance of the system is :
+4KC 3CK2 3KC CK
+(1) (2) (3) (4)
+3K−1 (2K+1)2 2K+1 2+K
+#PaperPhodnaHai
+www.mathongo.com
+Capacitance JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+ANSWERS AND SOLUTIONS
+1. (3) 2. 8 3. (4) 4. (3) 5. 4 6. (3) 7. (3)
+1. (3) In steady state:
+i = 2.5/5 = 0.5 A
+V = 4×0.5
+c
+V = 2V
+c
+charge
+Q = CV
+c
+= 5×2
+= 10μC
+ϵ A
+2. (8) The initial capacitance is C = 0 .
+d
+From the figure, the capacitor is divided into three parts.
+The bottom half is divided into two capacitors C 2 and C 3 in parallel, each with area A/2 and thickness d/2.
+C = K 2 ϵ 0 (A/2) = K ϵ 0 A = 3C
+2 d/2 2 d
+C = K3ϵ0(A/2) = K ϵ0A = 5C
+3 3
+d/2 d
+The equivalent capacitance of the bottom part is C = C +C = 3C+5C = 8C.
+eq,bottom 2 3
+The top half is a single capacitor C 1 with area A and thickness d/2.
+K ϵ A ϵ A
+C
+1
+= 1 0 = 2K
+1
+0 = 2(2)C = 4C.
+d/2 d
+The total capacitance C′ is the series combination of C 1 and C eq,bottom .
+1 = 1 + 1 = 1 + 1 = 2+1 = 3
+C′ C 1 C eq,bottom 4C 8C 8C 8C
+C′ = 8C
+3
+Comparing with C′ = nC, we get n = 8.
+3
+3. (4) A. Effective capacitance of series combination is always smaller than the smallest capacitance - TRUE. For
+series: C e 1 ff = C 1 1 + C 1 2 +…, therefore C eff < C min
+B. Dielectric prevents charge displacement - FALSE. A dielectric allows polarization (displacement of bound
+charges) but prevents free charge movement. It does not prevent displacement of bound charges.
+C. Increasing area or decreasing thickness increases capacitance - TRUE. From C = ε0εrA , increasing A or
+d
+#PaperPhodnaHai
+www.mathongo.com
+Capacitance JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+decreasing d increases C.
+D. Concentric spherical shells centered at a point charge location are equipotential surfaces - TRUE. For a point
+charge, the potential at distance r is V = kq , which depends only on distance, making concentric spheres
+r
+equipotential surfaces.
+Correct statements: A, C, D
+4. (3) For C A
+ε A
+Let 0 = C
+d
+K C K K C
+∴ C = 1 + 1 2
+A 2 K +K
+1 2
+K +2K
+= K C[ 1 2 ]
+1
+2(K +K )
+1 2
+For C
+B
+K C K K C
+C = 2 + 1 2
+B 2 K +K
+1 2
+K +2K
+= K C[ 1 2 ]
+2 2(K +K )
+1 2
+For C C
+#PaperPhodnaHai
+www.mathongo.com
+Capacitance JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+2K K C
+∴ C = 1 2
+C
+K +K
+1 2
+C > C > C
+A C B
+5. (4) Capacitor P (10 × 10⁻⁶ F) is charged to 6.0 V.
+Initial charge: Q = 10×10−6 ×6 = 60×10−6 C.
+P
+When connected to uncharged capacitor Q (20 × 10⁻⁶ F), charge redistributes until both reach same potential.
+Final voltage: V f = Q total = 60×10−6 = 2 V.
+C total 30×10−6
+Charge on Q: Q = 20×10−6 ×2 = 40×10−6 C = 4×10−5 C.
+Q
+Thus α = 4.
+6. (3) Initial capacitor has plate separation 5 mm with capacitance C = ϵ A/5.
+1 0
+After inserting 2 mm mica sheet, the gap remaining is 3 mm of air. The effective separation becomes:
+d = 3+2/k where k is the dielectric constant of mica.
+eff
+New capacitance: C 2 = 3+ ϵ 0 2 A /k
+Since battery remains connected, voltage is constant. The charge is: Q = CV
+Ratio of charges: Q 2 = C 2 = ϵ 0 A/(3+2/k) = 5
+Q 1 C 1 ϵ0A/5 3+2/k
+Given that charge increases by 25%: Q 2 = 1.25Q 1
+5 = 1.25
+3+2/k
+5 = 1.25(3+2/k)
+5 = 3.75+2.5/k
+1.25 = 2.5/k
+k = 2
+7. (3) Original capacitance: C = ε0A
+d
+d
+After inserting dielectric of thickness , system becomes two capacitors in series.
+3
+Vacuum region: C 1 = 2 ε d 0 / A 3 = 3 2 C
+Kε A
+Dielectric region: C 2 = 0 = 3KC
+d/3
+Equivalent capacitance: 1 = 1 + 1 = 2 + 1 = 2K+1
+C new C 1 C 2 3C 3KC 3KC
+C = 3KC
+new
+2K+1
+#PaperPhodnaHai
+www.mathongo.com

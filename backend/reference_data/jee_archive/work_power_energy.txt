@@ -1,0 +1,146 @@
+# JEE Mains 2025/2026 Reference — Work Power Energy
+# Source: MathonGo Chapter Archive
+# Characters: 5508
+
+W ork Power Energy JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q1. JEE Main 2026 (21 January Shift 2)
+A body of mass 2 kg is moving along x-direction such that its displacement as function of time is given by
+x(t) = αt2 +βt+γm, where α = 1 m/s2,β = 1 m/s and γ = 1 m. The work done on the body during the time
+interval t = 2 s to t = 3 s, is ____ J.
+(1) 12 (2) 49 (3) 42 (4) 24
+Q2. JEE Main 2026 (23 January Shift 1)
+A small bob A of mass m is attached to a massless rigid rod of length 1 m pivoted at point P and kept at an angle of
+60∘ with vertical as shown in figure. At distance of 1 m below point P, an identical bob B is kept at rest on a
+smooth horizontal surface that extends to a circular track of radius R as shown in figure. If bob B just manages to
+complete the circular path of radius R upto a point Q after being hit elastically by bobA, then radius R is ____ m.
+1 2−√3 3 2+√3
+(1) (2) (3) (4)
+5 5 5 5
+Q3. JEE Main 2026 (24 January Shift 2)
+In case of vertical circular motion of a particle by a thread of length r if the tension in the thread is zero at an angle
+30∘ shown in figure, the velocity at the bottom point (A) of the circular path is (g = gravitational acceleration)
+(1) √7gr (2) √5gr (3) √4gr (4) √5gr
+2 2
+#PaperPhodnaHai
+www.mathongo.com
+W ork Power Energy JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q4. JEE Main 2026 (22 January Shift 2)
+Given below are two statements :
+Statement I: An object moves from position r 1 to position r 2 under a conservative force field F→ . The work done by
+−→
+the force is W = −∫r 2F→⋅dr.
+r
+1
+Statement II: Any object moving from one location to another location can follow infinite number of paths.
+Therefore, the amount of work done by the object changes with the path it follows for a conservative force.
+In the light of the above statements, choose the correct answer from the options given below :
+(1) Both Statement I and Statement II are false
+(2) Statement I is false but Statement II is true
+(3) Statement I is true but Statement II is false
+(4) Both Statement I and Statement II are true
+Q5. JEE Main 2026 (23 January Shift 2)
+A bead P sliding on a frictionless semi-circular string (ACB) and it is at point S at t = 0 and at this instant the
+horizontal component of its velocity is v. Another bead Q of the same mass as P is ejected from point A at t = 0
+along the horizontal string AB, with the speed v, friction between the beads and the respective strings may be
+neglected in both cases. Let t P and t Q be the respective times taken by beads P and Q to reach the point B, then the
+relation between t P and t Q is
+(1) t P <t Q (2) t P >t Q (3) t P =t Q (4) t P > 1.25t Q
+#PaperPhodnaHai
+www.mathongo.com
+W ork Power Energy JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q6. JEE Main 2026 (21 January Shift 1)
+Potential energy (V) versus distance (x) is given by the graph. Rank various regions as per the magnitudes of the
+force (F) acting on a particle from high to low.
+(1) F CD > F AB > F BC > F DE
+(2) F CD > F DE > F AB > F BC
+(3) F BC > F CD > F DE > F AB
+(4) F BC > F AB > F DE > F CD
+#PaperPhodnaHai
+www.mathongo.com
+Work Power Energy JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+ANSWERS AND SOLUTIONS
+1. (4) 2. (1) 3. (1) 4. (1) 5. (1) 6. (4)
+1. (4) Given x(t) = t2 +t+1, with m = 2 kg, find work from t = 2 s to t = 3 s.
+Velocity: v(t) = dx = 2t+1
+dt
+At t = 2 s: v i = 2(2)+1 = 5 m/s
+At t = 3 s: v = 2(3)+1 = 7 m/s
+f
+Using the work-energy theorem:
+W = ΔKE = 1m(v2 −v2) = 1(2)(72 −52) = 1(49−25) = 24 J
+2 f i 2
+2. (1) Bob A swings from 60° to vertical. Height drop h = l(1−cos60°) = 1×0.5 = 0.5 m.
+Velocity of A at bottom: v = √2gh = √2×10×0.5 = √10 m/s.
+A
+Elastic collision between equal masses: B gets v B = √10 m/s, A stops.
+For B to just complete circular loop: v2 = 5gR.
+B
+10 = 5×10×R ⇒ R = 1 m.
+5
+3. (1) At the point where tension T = 0 and angle from vertical is 60° (i.e., 30° from horizontal):
+T +mgcos60° =
+mV2
+ℓ
+Since T = 0:
+V 2 = gℓ
+2
+Using mechanical energy conservation from bottom (A) to the point where T = 0:
+1mu2 = mg(ℓ+ℓcos60°)+ 1mV 2
+2 2
+u2 = 2gℓ(1+ 1)+ gℓ = 3gℓ+ gℓ = 7gℓ
+2 2 2 2
+u =
+√7gℓ
+2
+4. (1) Statement I:
+The work done by a force F → during a displacement from r→ 1 to r→ 2 is defined as W = ∫ r r 2F → ⋅dr→.
+1
+The expression given in the statement, W = −∫ r 2F→⋅dr→, is the definition of the change in potential energy (
+r
+1
+ΔU = −W), not the work done by the force itself.
+Thus, Statement I is false.
+Statement II:
+By definition, a conservative force is one for which the work done in moving an object between two points is
+independent of the path taken.
+It only depends on the initial and final positions.
+Therefore, the claim that work done changes with the path for a conservative force is false.
+#PaperPhodnaHai
+www.mathongo.com
+Work Power Energy JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Since both statements are false, the correct option is (1).
+5. (1) Horizontal displacement of Q is more than P.
+X > X
+Q P
+Horizontal component of velocity is same
+x
+p
+So t p = v
+x
+Q
+t =
+Q v
+t > t
+Q p
+6. (4) Force is related to potential energy by F = −dV .
+dx
+Magnitude of force |F| = ∣ ∣ dV ∣ ∣ = |slope of V-x graph|
+dx
+From graph coordinates: A(1, 0), B(1.5, 1), C(2, 4), D(4, 4), E(5, 3)
+|F | = 1−0 = 2
+AB 1.5−1
+|F | = 4−1 = 6
+BC 2−1.5
+|F | = 4−4 = 0
+CD 4−2
+|3−4|
+|F | = = 1
+DE 5−4
+Ranking: F BC > F AB > F DE > F CD
+#PaperPhodnaHai
+www.mathongo.com

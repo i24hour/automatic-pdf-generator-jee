@@ -1,0 +1,206 @@
+# JEE Mains 2025/2026 Reference — Magnetic Effects of Current
+# Source: MathonGo Chapter Archive
+# Characters: 6695
+
+M agnetic Effects of Current JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q1. JEE Main 2026 (21 January Shift 2)
+An infinitely long straight wire carrying current I is bent in a planer shape as shown in the diagram. The radius of
+the circular part is r. The magnetic field at the centre O of the circular loop is :
+(1)
+−μ0 I(π−1)^i
+(2)
+μ0 I(π−1)^i
+2π r 2π r
+(3)
+−μ
+0
+I(π+1)^i
+(4)
+μ
+0
+I(π+1)^i
+2π r 2π r
+Q2. JEE Main 2026 (28 January Shift 2)
+A long cylindrical conductor with large cross section carries an electric current distributed uniformly over its cross-
+section. Magnetic field due to this current is :
+A. maximum at either ends of the conductor and minimum at the midpoint
+B. maximum at the axis of the conductor
+C. minimum at the surface of the conductor
+D. minimum at the axis of the conductor
+E. same at all points in the cross-section of the conductor
+Choose the correct answer from the options given below :
+(1) A, D Only (2) D Only
+(3) E Only (4) B, C Only
+Q3. JEE Main 2026 (24 January Shift 2)
+Two identical circular loops P and Q each of radius r are lying in parallel planes such that they have common axis.
+The current through P and Q are I and 4I respectively in clockwise direction as seen from O. The net magnetic
+field at O is:
+(1) 3μ o I towards Q (2) μ o I towards Q
+4√2r 4√2r
+(3) 3μ 0 I towards P (4) μ o I towards P
+4√2r 4√2r
+#PaperPhodnaHai
+www.mathongo.com
+M agnetic Effects of Current JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q4. JEE Main 2026 (23 January Shift 2)
+The current passing through a conducting loop in the form of equilateral triangle of side 4√3 cm is 2 A. The
+magnetic field at its centroid is α×10−5 T. The value of α is ____.
+(Given : μ o = 4π×10−7 SI units)
+(1)
+2√3
+(2)
+√3
+(3)
+3√3
+(4)
+√3
+2
+Q5. JEE Main 2026 (21 January Shift 1)
+A current carrying solenoid is placed vertically and a particle of mass m with charge Q is released from rest. The
+particle moves along the axis of solenoid. If g is acceleration due to gravity then the acceleration (a) of the charged
+particle will satisfy :
+(1) a > g (2) 0 < a < g
+(3) a = 0 (4) a = g
+Q6. JEE Main 2026 (28 January Shift 1)
+Three long straight wires carrying current are arranged mutually parallel as shown in the figure. The force
+experienced by 15 cm length of wire Q is ____.
+(μ
+o
+= 4π×10−7 T.m/A)
+(1) 6×10−6 N towards P (2) 6×10−7 N towards P
+(3) 6×10−7 N towards R (4) 6×10−6 N towards R
+Q7. JEE Main 2026 (28 January Shift 1)
+The magnetic field at the centre of a current carrying circular loop of radius R is 16μ T. The magnetic field at a
+distance x = √3R on its axis from the centre is ____ μT.
+(1) 4 (2) 2 (3)
+2√2
+(4) 8
+Q8. JEE Main 2026 (24 January Shift 1)
+A short bar magnet placed with its axis at
+30∘
+with an external field of 800 Gauss, experiences a torque of
+0.016 N.m. The work done in moving it from most stable to most unstable position is α×10−3 J. The value of α is
+____.
+#PaperPhodnaHai
+www.mathongo.com
+Magnetic Effects of Current JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+ANSWERS AND SOLUTIONS
+1. (1) 2. (2) 3. (1) 4. (3) 5. (4) 6. (4) 7. (2) 8. 64
+1.
+(1)
+→ → → →
+B = B + B + B
+0 AB DE BCD
+=
+μ
+0
+i^i
++
+μ
+0
+i^i
+−
+μ
+0
+i^i
+4πr 4πr 2r
+=
+μ
+0
+i^i
+−
+μ
+0
+i^i
+2πr 2r
+= μ0i (1−π)^i
+2πr
+= − μ 0 i (π−1)^i
+2πr
+2. (2) For a long cylindrical conductor with uniform current distribution, apply Ampere's law to find the magnetic
+field.
+At distance r from the axis (inside the conductor, r < R): B(r) = μ 0 Ir (proportional to r)
+2πR2
+At the axis (r = 0): B = 0 (minimum)
+μ I
+At the surface (r = R): B = 0 (maximum)
+2πR
+Analyzing the statements:
+A. Maximum at ends and minimum at midpoint - FALSE. This describes behavior along the axis, but the magnetic
+field depends on radial distance, not axial position.
+B. Maximum at the axis of the conductor - FALSE. The field is zero at the axis.
+C. Minimum at the surface of the conductor - FALSE. The field is maximum at the surface.
+D. Minimum at the axis of the conductor - TRUE. The field is zero at r = 0, making it the minimum.
+E. Same at all points in the cross-section - FALSE. The field varies from 0 at the axis to maximum at the surface.
+Only D is correct.
+3. (1) Two identical circular loops P and Q, each of radius r, are separated by distance r along their common axis.
+Current in P is I and in Q is 4I (both clockwise as seen from O).
+Point O is at the midpoint. The magnetic fields from each loop at O:
+μ IR2
+B 1 = 0 (from P, pointing toward Q)
+2(R2+R2)3/2
+4μ IR2
+B 2 = 0 (from Q, pointing toward P)
+2(R2+R2)3/2
+B = B −B = 3μ 0 IR2 = 3μ 0 I
+net 2 1
+2(2R2)3/2 4√2R
+Direction: towards Q.
+#PaperPhodnaHai
+www.mathongo.com
+Magnetic Effects of Current JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+4. (3) For an equilateral triangle of side a, the distance of the centroid from any side is r = a .
+2√3
+Given side a = 4√3 cm = 4√3×10−2 m.
+So, r = 4√3×10−2 = 2×10−2 m.
+2√3
+μ I
+The magnetic field at the centroid due to one side of the triangle is B 1 = 4π 0 r (sinθ 1 +sinθ 2 ).
+For an equilateral triangle, θ 1 = θ 2 = 60∘ .
+B 1 = 1 2 0 × − 1 7 0 × − 2 2 (sin60∘ +sin60∘) = 10−5 ×( √ 2 3 + √ 2 3 ) = √3×10−5 T.
+The total magnetic field at the centroid due to all three sides is B = 3B 1 = 3√3×10−5 T.
+Comparing with B = α×10−5 T, we get α = 3√3.
+→
+5. (4) Inside a solenoid, magnetic field B is uniform and parallel to the axis.
+Particle moves along the axis, so velocity v→ is parallel to B → .
+Magnetic force F → = Q(v→×B → ) = 0 (since v→ ∥ B → )
+Only gravity acts on the particle.
+Acceleration a = g
+μ I I
+6. (4) The force per unit length between parallel wires is F/L = 0 1 2.
+2πd
+Force on Q from P (opposite currents, repulsive towards R): F QP = 4π×10−7×3×1 = 2×10−5 N/m.
+L 2π×0.03
+Force on Q from R (same currents, attractive towards R): F QR = 4π×10−7×1×2 = 2×10−5 N/m.
+L 2π×0.02
+Total force per unit length towards R:
+4×10−5
+N/m.
+For 0.15 m length: F = 4×10−5 ×0.15 = 6×10−6 N towards R.
+7. (2) The magnetic field at the center of a circular loop is B center = μ0I = 16μ T.
+2R
+μ IR2
+On the axis at distance x from center: B(x) = 0 .
+2(R2+x2)3/2
+At x = √3R: B(√3R) = μ0IR2 = μ0IR2 = μ 0 I .
+2(R2+3R2)3/2 2(4R2)3/2 16R
+The ratio: B(√3R) = 1/16R = 1 .
+Bcenter 1/2R 8
+Therefore: B(√3R) = 1 ×16μ = 2μ T.
+8
+8. (64) For a magnetic dipole in an external field, torque is τ = mBsinθ
+At 30°: 0.016 = m×0.08×sin30°
+0.016 = m×0.08×0.5
+m = 0.4 A·m 2
+Work done from most stable (aligned, 0°) to most unstable (anti-aligned, 180°) position equals the change in
+potential energy:
+W = U °−U = −mBcos0°−(−mBcos180°) = −mB−mB = 2mB
+0 180°
+W = 2×0.4×0.08 = 0.064 J = 64×10−3 J
+Therefore, α = 64
+#PaperPhodnaHai
+www.mathongo.com

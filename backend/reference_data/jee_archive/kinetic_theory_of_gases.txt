@@ -1,0 +1,187 @@
+# JEE Mains 2025/2026 Reference — Kinetic Theory of Gases
+# Source: MathonGo Chapter Archive
+# Characters: 4617
+
+K inetic Theory of Gases JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q1. JEE Main 2026 (21 January Shift 2)
+The r.m.s. speed of oxygen molecules at 47∘C is equal to that of the hydrogen molecules kept at ____ ∘C. (Mass of
+oxygen molecule/mass of hydrogen molecule = 32/2)
+(1) -235 (2) -253 (3) -100 (4) -20
+Q2. JEE Main 2026 (28 January Shift 2)
+The mean free path of a molecule of diameter 5×10−10 m at the temperature 41∘C and pressure 1.38×105 Pa, is
+given as ____ m. (Given k B = 1.38×10−23 J/K).
+(1)
+10√2×10−8
+(2)
+2√2×10−8
+(3)
+2√2×10−10
+(4)
+2×10−8
+Q3. JEE Main 2026 (22 January Shift 2)
+Consider two boxes containing ideal gases A and B such that their temperatures, pressures and number densities are
+same. The molecular size of A is half of that of B and mass of molecule A is four times that of B. If the collision
+frequency in gas B is 32×1018/s then collision frequency in gas A is ____ /s.
+(1)
+2×108
+(2)
+8×108
+(3)
+4×108
+(4)
+32×108
+Q4. JEE Main 2026 (22 January Shift 1)
+The volume of an ideal gas increases 8 times and temperature becomes
+(1/4)th
+of initial temperature during a
+reversible change. If there is no exchange of heat in this process (ΔQ = 0) then identify the gas from the following
+options (Assuming the gases given in the options are ideal gases):
+(1) O 2 (2) NH 3 (3) CO 2 (4) He
+Q5. JEE Main 2026 (22 January Shift 1)
+A cylindrical tube AB of length l, closed at both ends contains an ideal gas of 1 mol having molecular weight M.
+The tube is rotated in a horizontal plane with constant angular velocity ω about an axis perpendicular to AB and
+passing through the edge at end A, as shown in the figure. If P A and P B are the pressures at A and B respectively,
+then (Consider the temperature is same at all points in the tube)
+(1) P B = P A
+(2) P B = P A exp(Mω2l2/3RT)
+(3) P B = P A exp(Mω2l2/RT)
+(4) P B = P A exp(Mω2l2/2RT)
+#PaperPhodnaHai
+www.mathongo.com
+K inetic Theory of Gases JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q6. JEE Main 2026 (24 January Shift 1)
+A gas of certain mass filled in a closed cylinder at a pressure of 3.23 kPa has temperature
+50∘C.
+The gas is now
+heated to double its temperature. The modified pressure is ____ Pa. Note: Volume is constant.
+#PaperPhodnaHai
+www.mathongo.com
+Kinetic Theory of Gases JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+ANSWERS AND SOLUTIONS
+1. (2) 2. (2) 3. (3) 4. (4) 5. (4) 6. 3730
+1. (2) The root-mean-square speed of gas molecules is: v rms = √3RT , where T is absolute temperature and M is
+M
+molar mass.
+For oxygen at T = 47°C = 320 K with M = 32 g/mol:
+1 O
+2
+v =
+√3R(320)
+rms,O 2 32
+For hydrogen with M H = 2 g/mol at temperature T 2:
+2
+v = √3RT 2
+rms,H 2 2
+Equating the RMS speeds:
+√3R(320) = √3RT 2
+32 2
+320 = T 2
+32 2
+T 2 = 2×10 = 20 K
+Converting to Celsius: t 2 = 20−273 = −253°C, which is option (2).
+2. (2) Mean free path is calculated using λ = k B T
+√2πd2P
+Given: d = 5×10−10 m, T = 41°C = 314 K, P = 1.38×105 Pa, k B = 1.38×10−23 J/K
+λ =
+1.38×10−23×314
+√2×π×(5×10−10)2×1.38×105
+=
+1.38×10−23×314
+√2×π×25×10−20×1.38×105
+Numerator:
+433.32×10−23
+Denominator: 1.414×3.14159×34.5×10−15 = 153.18×10−15
+λ = 433.32×10−23 = 2.83×10−8 m = 2√2×10−8 m
+153.18×10−15
+3. (3) Collision frequency (z) = √2πd2N√ 8RT
+πM
+Temp, N are same
+d2
+Z ∝
+√M
+d
+d = B
+A 2
+M = 4M
+A B
+#PaperPhodnaHai
+www.mathongo.com
+Kinetic Theory of Gases JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Z d2 √M M d 2
+A = A × B = (√ B)( A)
+Z d2 √M M d
+B B A A B
+1 1 2
+= (√ )( )
+4 2
+Z 1 1 1
+A = × =
+Z 2 4 8
+B
+32×108
+⇒ Z = = 4×108/s
+A 8
+4. (4) For an adiabatic process (ΔQ = 0) with an ideal gas: TV γ−1 = constant
+Given: V f = 8V i and T f = 1 4 T i
+Applying the adiabatic relation:
+T V γ−1 = T V γ−1
+i i f f
+T V γ−1 = T i(8V )γ−1
+i i 4 i
+1 = 1 ⋅8γ−1
+4
+4 = 8γ−1
+22 = 23(γ−1)
+2 = 3(γ−1)
+γ = 5 = 1.67
+3
+This value corresponds to a monatomic gas. Among the options, only He is monatomic (γ = 5/3 for monatomic
+ideal gases). O₂ and N₂ are diatomic (γ = 7/5), CO₂ is polyatomic (γ ≈ 1.30), and NH₃ is polyatomic.
+5.
+(4)
+A[(P +dP)−P] = (dm)(ω2x)
+(dm)
+dP = ω2x
+A
+(ρ)(A)(dx)ω2x
+dP =
+A
+also [PM = ρRT]
+PM
+ρ =
+RT
+PM
+dP = ( )ω2xdx
+RT
+dP ω2M
+∫ P B = ∫ℓxdx
+P A P RT 0
+P ω2ℓ2M
+ln( B) =
+P 2RT
+A
+Mω2ℓ2
+P = P e 2RT
+B A
+#PaperPhodnaHai
+www.mathongo.com
+Kinetic Theory of Gases JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+6. (3730) Since its given that volume is constant, P ∝ T.
+T i = 50°C = 323 K
+T = 2×50 = 100°C = 373 K
+f
+P T
+f = f
+P T
+i i
+P f = 373
+3.23 kPa 323
+P = 3.23× 373 = 3.73 kPa = 3730 Pa
+f 323
+#PaperPhodnaHai
+www.mathongo.com

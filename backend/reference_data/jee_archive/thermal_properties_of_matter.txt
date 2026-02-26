@@ -1,0 +1,150 @@
+# JEE Mains 2025/2026 Reference — Thermal Properties of Matter
+# Source: MathonGo Chapter Archive
+# Characters: 4246
+
+T hermal Properties of Matter JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q1. JEE Main 2026 (22 January Shift 1)
+Rods x and y of equal dimensions but of different materials are joined as shown in figure. Temperatures of end
+points A and F are maintained at 100∘C and 40∘C respectively. Given the thermal conductivity of rodx is three
+times of that of rody, the temperature at junction points B and E are (close to):
+(1)
+80∘C
+and
+70∘C
+respectively
+(2)
+80∘C
+and
+60∘C
+respectively
+(3)
+60∘C
+and
+45∘C
+respectively
+(4)
+89∘C
+and
+73∘C
+respectively
+Q2. JEE Main 2026 (21 January Shift 1)
+An aluminium and steel rods having same lengths and cross-sections are joined to make total length of 120 cm at
+30∘C.
+The coefficient of linear expansion of aluminium and steel are
+24×10−6/∘C
+and
+1.2×10−5/∘C,
+respectively. The length of this composite rod when its temperature is raised to 100∘C, is ____ cm.
+(1) 120.20 (2) 120.15 (3) 120.06 (4) 120.03
+Q3. JEE Main 2026 (21 January Shift 1)
+A gas based geyser heats water flowing at the rate of 5.0 litres per minute from
+27∘C
+to
+87∘C.
+The rate of
+consumption of the gas is ____ g/s.
+(Take heat of combustion of gas = 5.0×104 J/g) specific heat capacity of water = 4200 J/kg⋅∘C
+(1) 0.42 (2) 2.1 (3) 0.21 (4) 4.2
+Q4. JEE Main 2026 (28 January Shift 1)
+Which of the following best represents the temperature versus heat supplied graph for water, in the range of
+−20∘C
+to
+120∘C
+?
+(1) (2)
+(3) (4)
+#PaperPhodnaHai
+www.mathongo.com
+T hermal Properties of Matter JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q5. JEE Main 2026 (28 January Shift 1)
+10 kg of ice at
+−10∘C
+is added to 100 kg of water to lower its temperature from 25
+∘C.
+Consider no heat exchange
+to surroundings. The decrement to the temperature of water is ____ ∘C.
+(specific heat of ice = 2100 J/Kg.∘C, specific heat of water = 4200 J/Kg.∘C, latent heat of fusion of ice
+= 3.36×105 J/Kg)
+(1) 6.67 (2) 11.6 (3) 15 (4) 10
+Q6. JEE Main 2026 (24 January Shift 1)
+A brass wire of length 2 m and radius 1 mm at
+27∘C
+is held taut between two rigid supports. Initially it was cooled
+to a temperature of −43∘C creating a tension T in the wire. The temperature to which the wire has to be cooled in
+order to increase the tension in it to 1.4T, is ____ ∘C.
+(1) -86 (2) -65 (3) -71 (4) -80
+#PaperPhodnaHai
+www.mathongo.com
+Thermal Properties of Matter JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+ANSWERS AND SOLUTIONS
+1. (4) 2. (2) 3. (1) 4. (4) 5. (4) 6. (3)
+ℓ
+1. (4) Let [R = ]
+3KA
+⎡ ⎤
+100−40
+⎢ ⎥
+⎢ ⎢ H = ⎥ ⎥ ...(1)
+11R
+⎣ ⎦
+2
+100−T
+H = B .....(2)
+R
+T −40
+H = E .....(3)
+3R
+using (1) and (2)
+120 = 1100−11T
+A
+T = 89°C
+B
+using (1) and (3)
+T = 73°C
+E
+2. (2) Total length at 30°C = 120 cm, each rod = 60 cm
+α = 24×10−6 /°C, α = 1.2×10−5 /°C
+Al Steel
+ΔT = 100−30 = 70°C
+ΔL = 60×24×10−6 ×70 = 0.1008 cm
+Al
+ΔL Steel = 60×1.2×10−5 ×70 = 0.0504 cm
+Total expansion = 0.1008+0.0504 = 0.1512 cm
+Final length = 120+0.1512 = 120.15 cm
+3. (1) Flow rate = 5.0 L/min = 5.0 kg/min, ΔT = 87−27 = 60°C
+Heat required per minute: Q = mcΔT = 5.0×4200×60 = 1.26×106 J/min
+If m grams of gas consumed per minute:
+m×5.0×104 = 1.26×106
+m =
+1.26×106
+= 25.2 g/min
+5.0×104
+Rate = 25.2 = 0.42 g/s
+60
+4. (4) No solution.
+#PaperPhodnaHai
+www.mathongo.com
+Thermal Properties of Matter JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+5. (4) Heat available from water cooling 25°C to 0°C: Q available = 100×4200×25 = 10.5×106 J.
+Heat to warm ice from -10°C to 0°C: Q = 10×2100×10 = 0.21×106 J.
+1
+Heat to melt ice at 0°C: Q 2 = 10×3.36×105 = 3.36×106 J.
+Total needed: 0.21+3.36 = 3.57×106 J.
+Since available heat exceeds required heat, all ice melts. Remaining heat: 10.5−3.57 = 6.93×106 J
+warms 110 kg water: ΔT =
+6.93×106
+= 15 °C.
+110×4200
+Final temperature: 15°C.
+Decrement in water temperature: 25−15 = 10 °C.
+6. (3) Thermal stress in the wire is caused by contraction.
+At -43°C, the temperature drop from 27°C is ΔT 1 = 70°C
+It creates tension T = YAαΔT 1 where Y is Young's modulus and α is linear expansion coefficient.
+For tension to increase to 1.4T, the new temperature drop must be: ΔT 2 = 1.4×70 = 98°C.
+Required temperature: T 3 = 27−98 = −71°C
+#PaperPhodnaHai
+www.mathongo.com

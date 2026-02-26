@@ -1,0 +1,183 @@
+# JEE Mains 2025/2026 Reference — Thermodynamics
+# Source: MathonGo Chapter Archive
+# Characters: 7103
+
+T hermodynamics JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q1. JEE Main 2026 (21 January Shift 2)
+A diatomic gas (γ = 1.4) does 100 J of work when it is expanded isobarically. Then the heat given to the gas ____
+J.
+Q2. JEE Main 2026 (28 January Shift 2)
+A thermodynamic system is taken through the cyclic process ABC as shown in the figure. The total work done by
+the system during the cycle ABC is ____ J.
+Q3. JEE Main 2026 (24 January Shift 2)
+10 mole of an ideal gas is undergoing the process shown in the figure. The heat involved in the process from P 1 to
+P 2 is α Joule (P 1 = 21.7 Pa and P 2 = 30 Pa,C v = 21 J/K.mol,R = 8.3 J/mol.K). The value of α is ____.
+(1) 21 (2) 15 (3) 28 (4) 24
+Q4. JEE Main 2026 (24 January Shift 2)
+When 300 J of heat given to an ideal gas with C p = 7 2 R its temperature raises from 20∘C to 50∘C keeping its
+volume constant. If n is the number of moles of the gas, then what is the value of 100n? (R = 8.314 J/mol.K)
+Q5. JEE Main 2026 (22 January Shift 2)
+An insulated cylinder of volume 60 cm3 is filled with a gas at 27∘C and 2 atmospheric pressure. Then the gas is
+compressed making the final volume as 20 cm3 while allowing the temperature to rise to 77∘C. The final pressure is
+____ atmospheric pressure.
+#PaperPhodnaHai
+www.mathongo.com
+T hermodynamics JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q6. JEE Main 2026 (23 January Shift 2)
+One mole of an ideal diatomic gas expands from volume V to 2 V isothermally at a temperature 27∘C and does W
+joule of work. If the gas undergoes same magnitude of expansion adiabatically from
+27∘C
+doing the same amount of
+work W, then its final temperature will be (close to) ____ ∘C.
+(log 2 = 0.693)
+e
+(1) -30 (2) -189 (3) -117 (4) -56
+Q7. JEE Main 2026 (23 January Shift 2)
+The internal energy of a monoatomic gas is 3 nRT. One mole of helium is kept in a cylinder having internal cross
+section area of 17 cm2 and fitted with a light movable frictionless piston. The gas is heated slowly by suppling 126 J
+heat. If the temperature rises by 4∘C, then the piston will move ____ cm.
+(atmospheric pressure = 105 Pa)
+(1) 1.45 (2) 15.5 (3) 1.55 (4) 14.5
+Q8. JEE Main 2026 (21 January Shift 1)
+10 mole of oxygen is heated at constant volume from
+30∘C
+to
+40∘C.
+The change in the internal energy of the gas is
+____ cal. (The molecular specific heat of oxygen at constant pressure, C P = 7cal/mol.∘C and R = 2cal/mol.∘C.)
+Q9. JEE Main 2026 (28 January Shift 1)
+In the following p−V diagram the equation of state along the curved path is given by (V −2)2 = 4ap where a is a
+constant. The total work done in the closed path is
+(1) + 1 (2) − 1 (3) 1 (4) −1
+3a 3a 2a a
+Q10. JEE Main 2026 (24 January Shift 1)
+Density of water at 4∘C and 20∘C are 1000 kg/m3 and 998 kg/m3 respectively. The increase in internal energy of 4
+kg of water when it is heated from 4∘C to 20∘C is ____ J.
+(specific heat capacity of water = 4.2 J/kg. and 1 atmospheric pressure = 105 Pa)
+(1) 234699.2 (2) 315826.2
+(3) 258700.8 (4) 268799.2
+#PaperPhodnaHai
+www.mathongo.com
+Thermodynamics JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+ANSWERS AND SOLUTIONS
+1. 350 2. 300 3. (1) 4. 481 5. 7 6. (4) 7. (2) 8. 500
+9. (2) 10. (4)
+1. (350) For an isobaric process, the first law gives: Q = ΔU +W.
+For a diatomic gas with γ = 1.4, we have C V = 5 2 R and C P = 7 2 R.
+Since W = nRΔT = 100 J for isobaric expansion, the change in internal energy is:
+ΔU = nC V ΔT = 5 2 nRΔT = 5 2 ×100 = 250 J.
+Therefore, Q = 250+100 = 350 J.
+2. (300) From the P-V diagram: A(2,100), B(5,300), C(5,100) in Pa and m³ units.
+Process A→B is linear. Equation: P = 100+ 200(V −2)
+3
+W AB = ∫ 2 5 200V 3 −100dV = 1 3 [100V 2 −100V]5 2 = 18 3 00 = 600 J
+Process B→C is isobaric: W = 300(5−5) = 0 J
+BC
+Process C→A is isobaric: W CA = 100(2−5) = −300 J
+Total work done by system: W = 600+0−300 = 300 J
+3. (1) From the given P −V diagram, the process from P 1 to P 2 is an isochoric process because the volume remains
+constant at V = 1 m3.
+For an isochoric process, the work done W = 0.
+According to the first law of thermodynamics, the heat involved is Q = ΔU +W = ΔU.
+The change in internal energy is given by ΔU = nC ΔT.
+v
+Using the ideal gas equation PV = nRT, we have nΔT = VΔP .
+R
+Substituting this into the expression for Q:
+V(P −P )
+Q = C ( 2 1 )
+v
+R
+Given values: n = 10 moles, V = 1 m3, P 1 = 21.7 Pa, P 2 = 30 Pa, C v = 21 J/mol⋅K, and R = 8.3 J/mol⋅K.
+1×(30−21.7)
+Q = 21×
+8.3
+Q = 21× 8.3 = 21 J.
+8.3
+Thus, the value of α is 21.
+4. (481) Given: C P = 7 2 R, so C V = C P −R = 5 2 R
+ΔQ = nC ΔT (constant volume)
+V
+300 = n× 5 ×8.314×30
+2
+n = 0.48 mol
+100n = 48
+5. (7) PV = nRT
+P V P V
+1 1 = 2 2
+RT RT
+1 2
+#PaperPhodnaHai
+www.mathongo.com
+Thermodynamics JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+2×105 ×60 P ×20
+= 2
+300 350
+2×105 ×7×3
+P =
+2 6
+P = 7×105 = 7 atm
+2
+6. (4) For isothermal expansion of 1 mole diatomic gas from V to 2V at 300 K:
+W = RT ln2 = R(300)ln2
+For adiabatic expansion with same volume change and same work output:
+W = nC ΔT = C (T −T )
+V V i f
+For diatomic gas, C V = 5 2 R. Setting work equal:
+R(300)ln2 = 5R(300−T )
+2 f
+Simplifying:
+300ln2 = 2.5(300−T f ), so 300(0.693) = 2.5(300−T f )
+207.9 = 750−2.5T , giving T = 216.84 K ≈ -56°C.
+f f
+7. (2) The question states the internal energy of the gas is U = 3nRT.
+The change in internal energy is ΔU = 3nRΔT.
+Given: n = 1 mole, ΔT = 4∘C = 4 K, and R ≈ 8.314 J/mol·K.
+ΔU = 3×1×8.314×4 = 99.768 J.
+According to the first law of thermodynamics, ΔQ = ΔU +W.
+Given heat supplied ΔQ = 126 J.
+Work done by the gas W = ΔQ−ΔU = 126−99.768 = 26.232 J.
+Since the piston is light and movable, the process occurs at constant atmospheric pressure P = 105 Pa.
+Work done W = PΔV = P(A×d), where A is the cross-section area and d is the displacement of the piston.
+A = 17 cm2 = 17×10−4 m2 .
+26.232 = 105 ×(17×10−4)×d.
+26.232 = 170×d.
+d = 26.232 ≈ 0.1543 m.
+170
+Converting to cm: d ≈ 15.43 cm.
+Rounding to the nearest option, we get 15.5 cm.
+8. (500) Given: n = 10 mol,
+ΔT = 40−30 = 10°C,
+C P = 7 cal/mol·°C,
+R = 2 cal/mol·°C
+For ideal gas: C V = C P −R = 7−2 = 5 cal/mol·°C
+Change in internal energy: ΔU = nC V ΔT = 10×5×10 = 500 cal
+(V−2)2
+9. (2) From the equation of state (V −2)2 = 4ap, we get p = .
+4a
+At V = 1: p = 1 and at V = 3: p = 1 .
+4a 4a
+#PaperPhodnaHai
+www.mathongo.com
+Thermodynamics JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+The curved path A→B→C follows the given equation, while C→A is a straight line at constant pressure.
+Work along the curved path:
+3
+W ABC = ∫ 1 3 (V 4 − a 2)2 dV = 4 1 a [ (V− 3 2)3 ] = 4 1 a ⋅ 2 3 = 6 1 a .
+1
+Work along C→A at constant pressure:
+W = 1 (1−3) = − 1 .
+CA 4a 2a
+Total work: W total = 6 1 a − 2 1 a = − 3 1 a .
+10. (4) Heat absorbed by water: Q = mcΔT = 4×4200×16 = 268800 J.
+Volume change: V = 4/1000 = 0.004 m³ at 4°C, V = 4/998 ≈ 0.00401 m³ at 20°C.
+1 2
+Work done by water at constant pressure: W = P atm ΔV = 105 ×0.00001 = 0.8 J.
+By first law of thermodynamics: ΔU = Q−W = 268800−0.8 = 268799.2 J
+#PaperPhodnaHai
+www.mathongo.com

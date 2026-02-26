@@ -1,0 +1,184 @@
+# JEE Mains 2025/2026 Reference — Semiconductors
+# Source: MathonGo Chapter Archive
+# Characters: 6929
+
+S emiconductors JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q1. JEE Main 2026 (23 January Shift 1)
+The following diagram shows a Zener diode as a voltage regulator. The Zener diode is rated at V z = 5 V and the
+desired current in load is 5 mA. The unregulated voltage source can supply upto 25 V. Considering the Zener diode
+can withstand four times of the load current, the value of resistor R S (shown in circuit) should be ____ Ω.
+(1) 100 (2) 1000
+(3) 10 (4) None of the above
+Q2. JEE Main 2026 (28 January Shift 2)
+Two p-n junction diodes D 1 and D 2 are connected as shown in figure. A and B are input signals and C is the output.
+The given circuit will function as a ____.
+(1) NOR Gate (2) NAND Gate
+(3) OR Gate (4) AND Gate
+Q3. JEE Main 2026 (24 January Shift 2)
+Identify the correct truth table of the given logic circuit.
+(1) A B Y (2) A B Y (3) A B Y (4) A B Y
+0 0 1 0 0 1 0 0 0 0 0 0
+0 1 0 0 1 1 0 1 1 0 1 0
+1 0 1 1 0 1 1 0 1 1 0 1
+1 1 0 1 1 0 1 1 0 1 1 0
+#PaperPhodnaHai
+www.mathongo.com
+S emiconductors JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q4. JEE Main 2026 (22 January Shift 2)
+The correct truth table for the given input data of the following logic gate is :
+Inputs
+(1) A B C D Y (2) A B C D Y
+1 1 0 1 0 1 1 0 1 0
+0 0 1 1 0 0 0 1 1 1
+1 0 1 0 1 1 0 1 0 1
+1 1 1 1 1 1 1 1 1 1
+(3) A B C D Y (4) A B C D Y
+1 1 0 1 1 1 1 0 1 1
+0 0 1 1 0 0 0 1 1 0
+1 0 1 0 0 1 0 1 0 1
+1 1 1 1 1 1 1 1 1 0
+Q5. JEE Main 2026 (22 January Shift 1)
+Find the correct combination of A,B,C and D inputs which can cause the LED to glow.
+(1) 1101 (2) 0011 (3) 1000 (4) 0100
+Q6. JEE Main 2026 (23 January Shift 2)
+For the given logic gate circuit, which of the following is the correct truth table?
+n m z n m z n m z n m z
+(1) (2) (3) (4)
+0 0 0 0 0 1 0 0 1 0 0 1
+0 1 1 0 1 0 0 1 0 0 1 1
+1 1 0 1 1 1 1 1 0 1 1 0
+1 0 1 1 0 0 1 0 0 1 0 0
+#PaperPhodnaHai
+www.mathongo.com
+S emiconductors JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q7. JEE Main 2026 (21 January Shift 1)
+The given circuit works as :
+(1) AND gate (2) NAND gate
+(3) NOR gate (4) OR gate
+Q8. JEE Main 2026 (28 January Shift 1)
+Assuming in forward bias condition there is a voltage drop of 0.7 V across a silicon diode, the current through diode
+D 1 in the circuit is ____ mA.
+(Assume all diodes in the given circuit are identical)
+(1) 17.6 (2) 18.8 (3) 11.7 (4) 20.15
+Q9. JEE Main 2026 (24 January Shift 1)
+A voltage regulating circuit consisting of Zener diode, having break-down voltage of 10 V and maximum power
+dissipation of 0.4 W, is operated at 15 V. The approximate value of protective resistance in this circuit is ____ Ω.
+#PaperPhodnaHai
+www.mathongo.com
+Semiconductors JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+ANSWERS AND SOLUTIONS
+1. (4) 2. (4) 3. (4) 4. (3) 5. (1) 6. (4) 7. (2) 8. (2)
+9. 125
+1. (4) This question has been dropped by NTA.
+2. (4) If A = 0 and B = 0: Both diodes are forward biased. The potential at C is pulled down to approximately 0V
+(logic 0).
+If A = 0 and B = 1: Diode D 1 is forward biased, pulling the potential at C down to 0V (logic 0). Diode D 2 is
+reverse biased.
+If A = 1 and B = 0: Diode D 2 is forward biased, pulling the potential at C down to 0V (logic 0). Diode D 1 is
+reverse biased.
+If A = 1 and B = 1: Both diodes are reverse biased. No current flows through the resistor R, so the potential at C
+remains at V dc = 5V (logic 1).
+The truth table is:
+A B C
+0 0 0
+0 1 0
+1 0 0
+1 1 1
+This truth table corresponds to the AND gate logic operation C = A⋅B.
+Therefore, the circuit functions as an AND gate.
+3. (4) Analysing the logic circuit:
+¯¯¯¯¯¯¯¯¯¯¯¯
+The output is Y = A⋅A⋅B
+¯ ¯
+= A⋅(A+B)
+¯ ¯ ¯ ¯
+= AA+AB = 0+AB = AB
+Truth table:
+A = 0,B = 0 ⇒ Y = 0
+A = 0,B = 1 ⇒ Y = 0
+A = 1,B = 0 ⇒ Y = 1
+A = 1,B = 1 ⇒ Y = 0
+#PaperPhodnaHai
+www.mathongo.com
+Semiconductors JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+4.
+(3)
+5. (1) The LED will glow if it is forward biased, which means the potential at the p-side must be higher than the
+potential at the n-side.
+Let Y 1 be the output of the upper NAND gate (p-side) and Y 2 be the output of the lower NOR gate (n-side).
+For the LED to glow, we need Y 1 = 1 and Y 2 = 0.
+The upper circuit consists of two NOT gates (NOR gates with shorted inputs) followed by a NAND gate.
+¯ ¯
+Output of first NOT gate is A, and second is B.
+¯¯¯¯¯¯¯¯¯¯¯¯¯¯ ¯¯¯¯¯ ¯¯¯¯¯
+Y = A⋅B = A+B = A+B
+1 (using De Morgan's Law).
+The lower circuit is a NOR gate with inputs C and D.
+¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
+Y
+2
+= C+D.
+Condition 1: Y = 1 ⟹ A+B = 1. This means at least one of A or B must be 1.
+1
+¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
+Condition 2: Y 2 = 0 ⟹ C+D = 0 ⟹ C+D = 1. This means at least one of C or D must be 1.
+Checking the options:
+(1) A = 1,B = 1,C = 0,D = 1: Y 1 = 1+1 = 1 and Y 2 =¯0¯¯¯¯+¯¯¯¯¯1¯¯= 0. (Satisfied)
+(2) A = 0,B = 0,C = 1,D = 1: Y 1 = 0+0 = 0. (Not satisfied)
+(3) A = 1,B = 0,C = 0,D = 0: Y 2 =¯0¯¯¯¯+¯¯¯¯¯0¯¯= 1. (Not satisfied)
+(4) A = 0,B = 1,C = 0,D = 0: Y 2 =¯0¯¯¯¯+¯¯¯¯¯0¯¯= 1. (Not satisfied)
+Thus, the correct combination is 1101.
+6. (4) The given logic circuit consists of an OR gate and a NAND gate.
+The output of the OR gate is y = n+m.
+The inputs to the NAND gate are n and y.
+The final output z is given by z =¯n¯¯¯¯¯⋅¯¯y¯¯= ¯ n ¯¯¯¯ ⋅ ¯¯¯ ( ¯¯ n ¯¯¯¯¯ + ¯¯¯¯¯ m ¯¯¯¯¯ ) ¯ .
+Using Boolean algebra: n⋅(n+m) = n⋅n+n⋅m = n+n⋅m = n(1+m) = n.
+Therefore, z =¯n¯¯.
+Let's verify this with the truth table:
+n m y = n + m z = NAND(n, y)
+0 0 0 1
+0 1 1 1
+1 1 1 0
+#PaperPhodnaHai
+www.mathongo.com
+Semiconductors JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+1 0 1 0
+Comparing this with the given options, option (4) matches the calculated truth table.
+7. (2) Let the inputs be A and B. The circuit is composed of NOR gates.
+A NOR gate with its inputs tied together acts as a NOT gate.
+¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯ ¯
+The output of the first NOR gate (input A) is Y 1 = A+A = A.
+¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯ ¯
+The output of the second NOR gate (input B) is Y 2 = B+B = B.
+¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯ ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
+These outputs are fed into a third NOR gate. Its output is Y 3 = Y 1 +Y 2 = A+B.
+¯¯¯¯¯ ¯¯¯¯¯
+Using De Morgan's theorem, Y 3 = (A)⋅(B) = A⋅B.
+This output Y 3 is the input to the fourth NOR gate, which is configured as a NOT gate.
+¯¯¯¯¯ ¯¯¯¯¯¯¯¯¯¯¯¯
+The final output is Y out = Y 3 = A⋅B.
+¯¯¯¯¯¯¯¯¯¯¯¯
+The expression A⋅B represents a NAND gate.
+8. (2) 12−0.3×103I −0.7 = 0
+11.3
+= I
+0.3×103
+37.66×10−3 A = I
+Current through diode D 1, I 1 = I/2
+I = 18.83 mA
+1
+9. (125) The maximum current through the Zener diode is determined by its maximum power dissipation:
+I Z,max = P V max = 0 1 . 0 4 = 0.04 A.
+Z
+The protective series resistance must limit the current such that the Zener operates safely. Using Ohm's law across
+the series resistance and Zener when the Zener carries maximum current:
+R s = V I in−V Z = 15 0 − .04 10 = 0. 5 04 = 125 Ω
+Z,max
+#PaperPhodnaHai
+www.mathongo.com

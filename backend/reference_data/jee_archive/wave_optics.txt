@@ -1,0 +1,247 @@
+# JEE Mains 2025/2026 Reference — Wave Optics
+# Source: MathonGo Chapter Archive
+# Characters: 9530
+
+W ave Optics JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q1. JEE Main 2026 (21 January Shift 2)
+Given below are two statements :
+Statement I : In a Young's double slit experiment, the angular separation of fringes will increase as the screen is
+moved away from the plane of the slits
+Statement II: In a Young's double slit experiment, the angular separation of fringes will increase when
+monochromatic source is replaced by another monochromatic source of higher wavelength.
+In the light of the above statements, choose the correct answer from the options given below :
+(1) Both Statement I and Statement II are false
+(2) Statement I is false but Statement II is true
+(3) Both Statement I and Statement II are true
+(4) Statement I is true but Statement II is false
+Q2. JEE Main 2026 (21 January Shift 2)
+In a Young's double slit experiment set up, the two slits are kept 0.4 mm apart and screen is placed at 1 m from slits.
+If a thin transparent sheet of thickness 20μ m is introduced in front of one of the slits then center bright fringe shifts
+by 20 mm on the screen. The refractive index of transparent sheet is given by α , where α is ____.
+10
+Q3. JEE Main 2026 (23 January Shift 1)
+In two separate Young's double-slit experimental set-ups and two monochromatic light sources of different
+wavelengths are used to get fringes of equal width. The ratios of the slits separations and that of the wavelengths of
+light used are 2 : 1 and 1 : 2 respectively. The corresponding ratio of the distances between the slits and the
+respective screens (D 1 /D 2) is ____.
+Q4. JEE Main 2026 (28 January Shift 2)
+A beam of light consisting of wavelengths 650 nm and 550 nm illuminates the Young's double slits with separation
+of 2 mm such that the interference fringes are formed on a screen, placed at a distance of 1.2 m from the slits. The
+least distance of a point from the central maximum, where the bright fringes due to both the wavelengths coincide,
+is ____ ×10−5 m.
+Q5. JEE Main 2026 (24 January Shift 2)
+In the Young's double slit experiment the intensity produced by each one of the individual slits is I 0. The distance
+between two slits is 2 mm. The distance of screen from slits is 10 m. The wavelength of light is 6000 A∘ . The
+intensity of light on the screen in front of one of the slits is ____.
+(1) I 2 o (2) 2I o (3) 4I o (4) I o
+#PaperPhodnaHai
+www.mathongo.com
+W ave Optics JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q6. JEE Main 2026 (22 January Shift 2)
+Which of the following are true for a single slit diffraction?
+A. Width of central maxima increases with increase in wavelength keeping slit width constant.
+B. Width of central maxima increases with decrease in wavelength keeping slit width constant.
+C. Width of central maxima increases with decrease in slit width at constant wavelength.
+D. Width of central maxima increases with increase in slit width at constant wavelength.
+E. Brightness of central maxima increases for decrease in wavelength at constant slit width.
+(1) A, C, E only (2) A, D only
+(3) B, D only (4) B, C only
+Q7. JEE Main 2026 (23 January Shift 2)
+When an unpolarized light falls at a particular angle on a glass plate (placed in air), it is observed that the reflected
+beam is linearly polarized. The angle of refracted beam with respect to the normal is ____.
+(tan−1(1.52) = 57.7∘ , refractive indices of air and glass are 1.00 and 1.52, respectively.)
+(1)
+39.6∘
+(2)
+32.3∘
+(3)
+36.3∘
+(4)
+42.6∘
+Q8. JEE Main 2026 (21 January Shift 1)
+In a double slit experiment the distance between the slits is 0.1 cm and the screen is placed at 50 cm from the slits
+plane. When one slit is covered with a transparent sheet having thickness t and refractive index n(= 1.5), the
+central fringe shifts by 0.2 cm. The value of t is ____ cm.
+(1)
+5.0×10−3
+(2)
+6.0×10−3
+(3)
+8×10−4
+(4)
+5.6×10−4
+Q9. JEE Main 2026 (28 January Shift 1)
+Given below are two statements:
+Statement I: A plane wave after passing through prism remains as plane wave but passing through small pin hole
+may become spherical wave.
+Statement II: The curvature of a spherical wave emerging from a slit will increase for increasing slit width.
+In the light of the above statements, choose the correct answer from the options given below
+(1) Both Statement I and Statement II are true
+(2) Statement I is false but Statement II is true
+(3) Both Statement I and Statement II are false
+(4) Statement I is true but Statement II is false
+Q10. JEE Main 2026 (24 January Shift 1)
+An unpolarised light is incident at an interface of two dielectric media having refractive indices of 2 (incident
+medium) and
+2√3
+(medium) respectively. To satisfy the condition that reflected and refracted rays are perpendicular
+to each other, the angle of incidence is ____.
+(1)
+45∘
+(2)
+60∘
+(3)
+10∘
+(4)
+30∘
+#PaperPhodnaHai
+www.mathongo.com
+W ave Optics JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+#PaperPhodnaHai
+www.mathongo.com
+Wave Optics JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+ANSWERS AND SOLUTIONS
+1. (2) 2. 14 3. 4 4. 429 5. (4) 6. (1) 7. (2) 8. (3)
+9. (4) 10. (2)
+1. (2) In Young's double slit experiment, angular separation of fringes is β = λ where λ is wavelength and d is slit
+d
+separation.
+Statement I is false because angular separation is independent of screen distance; it depends only on the slit
+separation and wavelength.
+Statement II is true because increasing the wavelength directly increases the angular separation β.
+Therefore, Statement I is false but Statement II is true.
+2. (14) In Young's Double Slit Experiment, when a thin transparent sheet of thickness t and refractive index μ is
+introduced in front of one slit, the central bright fringe shifts by a distance Δy.
+The formula for the shift is given by Δy = D(μ−1)t.
+d
+Given values:
+Distance between slits d = 0.4 mm = 0.4×10−3 m
+Distance to screen D = 1 m
+Thickness of sheet t = 20μm = 20×10−6 m
+Shift Δy = 20 mm = 20×10−3 m
+Substituting the values into the formula:
+20×10−3 = 1 ×(μ−1)×20×10−6
+0.4×10−3
+20×10−3 = 20×10−6 ×(μ−1)
+0.4×10−3
+20×10−3 = 50×10−3 ×(μ−1)
+μ−1 = 20 = 0.4
+50
+μ = 1.4
+α
+The refractive index is given as .
+10
+So, 1.4 = α
+10
+α = 14
+3. (4) Fringe width in double slit: β = λD
+d
+Given: d1 = 2 : 1 and λ1 = 1 : 2, with equal fringe widths
+d λ
+2 2
+For equal fringe widths: λ1D1 = λ2D2
+d d
+1 2
+λ1 × D 1 = d1
+λ D d
+2 2 2
+1 × D1 = 2
+2 D
+2
+D
+1 = 4
+D2
+#PaperPhodnaHai
+www.mathongo.com
+Wave Optics JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+4. (429) Given wavelengths are λ 1 = 650 nm and λ 2 = 550 nm.
+Slit separation d = 2 mm = 2×10−3 m.
+Distance to screen D = 1.2 m.
+For the bright fringes of both wavelengths to coincide at a distance y from the central maximum, we have:
+y = n λ 1 D = n λ 2 D
+1 2
+d d
+where n 1 and n 2 are integers representing the order of the fringes.
+This simplifies to n 1 λ 1 = n 2 λ 2.
+n 1 = λ 2 = 550 = 11
+n 2 λ1 650 13
+The least values for coincidence are n 1 = 11 and n 2 = 13.
+The least distance y is given by:
+y = n λ 1 D = 11× 650×10−9×1.2
+1
+d 2×10−3
+y = 11×650×0.6×10−6 m
+y = 11×390×10−6 m
+y = 4290×10−6 m
+y = 429×10−5 m.
+5. (4) In Young's double slit experiment:
+d = 2 mm, D = 10 m, λ = 6000 Å
+The point in front of one slit is at y = d from the central axis.
+2
+I = 4I cos2( πdy )
+0
+λD
+= 4I
+cos2(π×2×10−3×1×10−3
+)
+0
+6000×10−10×10
+= 4I cos2(π) = 4I × 1 = I
+0 3 0 4 0
+6. (1) For single slit diffraction, linear width of central maximum is W = 2λD .
+a
+A: Width increases with wavelength (keeping a constant) - TRUE since W ∝ λ.
+B: Width increases with decreasing wavelength - FALSE, opposite of A.
+C: Width increases with decreasing slit width (keeping λ constant) - TRUE since W ∝ 1 .
+a
+D: Width increases with increasing slit width - FALSE, opposite of C.
+E: Brightness increases with decreasing wavelength at constant slit width - TRUE since less wavelength means
+less diffraction spreading and more concentrated intensity.
+Statements A, C, and E are true.
+#PaperPhodnaHai
+www.mathongo.com
+Wave Optics JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+7.
+(2)
+μ μ
+2 g
+tani = =
+μ μ
+1 a
+tani = 1.52
+i = 57.7°
+r = 90°−i
+r = 32.3°
+8. (3) Given: d = 0.1 cm, D = 50 cm, n = 1.5, Shift = 0.2 cm
+Optical path difference by sheet: Δ = (n−1)t
+(n−1)t×D
+Shift of central fringe: Shift =
+d
+0.2 = (1.5−1)×t×50 = 0.5×50×t = 250t
+0.1 0.1
+t = 0.2 = 8×10−4 cm
+250
+9. (4) Statement I: A plane wave passing through a prism remains a plane wave due to refraction at parallel surfaces.
+However, when passing through a small pin hole comparable to the wavelength, Huygens' principle applies where
+each point on the wavefront acts as a source of secondary wavelets, creating a spherical wavefront. Statement I is
+TRUE.
+Statement II: When a spherical wave emerges from a slit, the diffraction effect depends on slit width. A narrower
+slit causes stronger diffraction and greater curvature of the emerging wavefront. As slit width increases, diffraction
+effects decrease and the wavefront becomes flatter with reduced curvature. Therefore, the curvature decreases
+with increasing slit width. Statement II is FALSE.
+The correct answer identifies that Statement I is true but Statement II is false.
+10. (2) For reflected and refracted rays to be perpendicular, if i is the angle of incidence and r is the angle of
+refraction, then i+r = 90°, giving r = 90°−i.
+Applying Snell's law: n 1 sini = n 2 sinr
+2sini = 2√3sin(90°−i)
+2sini = 2√3cosi
+tani = √3
+i = 60°
+#PaperPhodnaHai
+www.mathongo.com

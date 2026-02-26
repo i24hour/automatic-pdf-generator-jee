@@ -1,0 +1,207 @@
+# JEE Mains 2025/2026 Reference — Laws of Motion
+# Source: MathonGo Chapter Archive
+# Characters: 7190
+
+L aws of Motion JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q1. JEE Main 2026 (21 January Shift 2)
+A large drum having radius R is spinning around its axis with angular velocity ω, as shown in figure. The minimum
+value of ω so that a body of mass M remains stuck to the inner wall of the drum, taking the coefficient of friction
+between the drum surface and mass M as μ, is :
+(1) √μg (2) √ g (3) √ 2g (4) √ g
+R 2μR μR μR
+Q2. JEE Main 2026 (28 January Shift 2)
+A small block of mass m slides down from the top of a frictionless inclined surface, while the inclined plane is
+moving towards left with constant acceleration a 0. The angle between the inclined plane and ground is θ and its base
+length is L. Assuming that initially the small block is at the top of the inclined plane, the time it takes to reach the
+lowest point of the inclined plane is ____.
+(1) √ 2L (2) √ 4L
+gsinθ−a 0 cosθ gcos2θ−a 0 sinθcosθ
+(3) √ 2L (4) √ 4L
+gsin2θ−a(1+cos2θ) gsin2θ−a(1+cos2θ)
+0 0
+Q3. JEE Main 2026 (24 January Shift 2)
+A flexible chain of mass m hangs between two fixed points at the same level. The inclination of the chain with the
+horizontal at the two points of support is
+30∘
+. Considering the equilibrium of each half of the chain, the tension of
+the chain at the lowest point is ____.
+(1) √3mg (2) mg (3) 1m g (4) √3mg
+2 2
+#PaperPhodnaHai
+www.mathongo.com
+L aws of Motion JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q4. JEE Main 2026 (23 January Shift 2)
+A block is sliding down on an inclined plane of slope θ and at an instant t = 0 this block is given an upward
+momentum so that it starts moving up on the inclined surface with velocity u. The distance (S) travelled by the
+block before its velocity become zero, is ____.
+(g = gravitational acceleration)
+2u2 u2 u2 u2
+(1) (2) (3) (4)
+cosθ 2gsinθ 2gcosθ √2gcosθ
+Q5. JEE Main 2026 (21 January Shift 1)
+A 4 kg mass moves under the influence of a force F→ = (4t3^i−3t^j)N where t is the time in second. If mass starts
+from origin at t = 0, the velocity and position after t = 2 s will be:
+(1) v→= 4^i− 3^j r→= 6^i−^j
+2 5
+(2)
+v→= 3^i+ 3^j r→= 6^i+^j
+2 5
+(3) v→= 4^i− 3^j r→= 8^i−^j
+2 5
+(4)
+v→= 4^i+ 5^j r→= 8^i+2^j
+2 5
+Q6. JEE Main 2026 (28 January Shift 1)
+A particle of mass m falls from rest through a resistive medium having resistive force, F = −kv, where v is the
+velocity of the particle and k is a constant. Which of the following graphs represents velocity (v) versus time (t)?
+(1) (2)
+(3) (4)
+Q7. JEE Main 2026 (28 January Shift 1)
+A block of mass 5 kg is moving on an inclined plane which makes an angle of
+30∘
+with the horizontal. Friction
+√3
+coefficient between the block and inclined plane surface is . The force to be applied on the block so that the
+2
+block will move down without acceleration is ____ N.
+(g = 10 m/s2).
+(1) 25 (2) 7.5 (3) 12.5 (4) 15
+#PaperPhodnaHai
+www.mathongo.com
+L aws of Motion JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q8. JEE Main 2026 (24 January Shift 1)
+A spring of force constant 15 N/m is cut into two pieces. If the ratio of their length is 1 : 3, then the force constant
+of smaller piece is ____ N/m.
+(1) 60 (2) 15 (3) 20 (4) 45
+Q9. JEE Main 2026 (24 January Shift 1)
+In the given figure the blocks A,B and C weigh 4 kg,6 kg and 8 kg respectively. The co-efficient of sliding friction
+between any two surfaces is 0.5. The force F→ required to slide the block C with constant speed is ____ N.
+(Use g = 10 m/s2 )
+#PaperPhodnaHai
+www.mathongo.com
+Laws of Motion JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+ANSWERS AND SOLUTIONS
+1. (4) 2. (4) 3. (1) 4. (2) 5. (3) 6. (1) 7. (3) 8. (1)
+9. 210
+1. (4) Consider the mass M in the frame of the rotating drum. The forces acting on the mass are:
+1. Weight Mg acting vertically downwards.
+2. Normal reaction N from the wall acting towards the center, which provides the centripetal force: N = Mω2R.
+3. Frictional force f acting vertically upwards to balance the weight.
+For the mass to remain stuck to the wall, the frictional force must balance the weight: f = Mg.
+The maximum available static friction is f max = μN = μMω2R.
+To prevent slipping, we must have f max ≥ Mg.
+μMω2R ≥ Mg
+ω2 ≥ g
+μR
+ω ≥ √ g
+μR
+g
+The minimum value of ω is √ .
+μR
+2.
+(4)
+mgsinθ−ma cosθ = ma
+0
+a = gsinθ−a cosθ
+0
+Now using,
+1
+S = ut+ a t2
+2 down
+L 1
+= (gsinθ−a cosθ)t2
+cosθ 2 0
+2L
+t = √
+gsinθcosθ−a cos2θ
+0
+4L
+t = √
+gsin2θ−a (1+cos2θ)
+0
+3. (1) A chain of mass m hangs between two fixed points at the same level with inclination 30° at support points.
+Consider equilibrium of one half of the chain (mass m/2):
+Horizontal equilibrium: T 0 = T 1 cos(30°) = T 1 ⋅ √ 2 3
+Vertical equilibrium: T 1 sin(30°) = m 2 g
+#PaperPhodnaHai
+www.mathongo.com
+Laws of Motion JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+From vertical equation: T 1 ⋅ 1 2 = m 2 g , giving T 1 = mg
+Substituting into horizontal equation: T 0 = mg⋅ √ 2 3 = √ 2 3mg
+4. (2) a = −gsinθ
+V 2 = U2 +2as
+0 = u2 −2gsinθ⋅s
+u2
+s =
+2gsinθ
+5. (3) Given F → = (4t3^i −3t^j) N, m = 4 kg
+a→ = F → = t3^i − 3t^j
+m 4
+Integrating with v→(0) = 0:
+v→ =
+t4^i
+−
+3t2^j
+4 8
+At t = 2: v→ = 16^i − 12^j = 4^i − 3^j
+4 8 2
+Integrating with r→(0) = 0:
+r→ = t5 ^i − t3^j
+20 8
+At t = 2: r→ = 32^i − 8^j = 8^i −^j
+20 8 5
+6. (1) The particle experiences downward gravitational force (mg) and upward resistive force (-kv).
+The equation of motion is mdv = mg−kv.
+dt
+Initially at t = 0, v = 0 gives maximum acceleration a 0 = g.
+As velocity increases, the resistive force increases, reducing the net acceleration.
+mg
+Eventually the particle reaches terminal velocity v t = when acceleration becomes zero.
+k
+The velocity-time graph shows an increasing curve starting from origin with decreasing slope, asymptotically
+approaching the terminal velocity.
+This behavior matches option (1), which displays a curve starting at (0,0) with steep initial slope that gradually
+flattens.
+7. (3) For motion without acceleration, net force = 0.
+Component of weight along incline: mgsin(30°) = 5×10×0.5 = 25 N (down).
+Normal force: N = mgcos(30°) = 50× √3 = 25√3 N.
+2
+Friction force opposing downward motion:
+f = μN = √3 ×25√3 = 37.5 N (up).
+2
+For equilibrium along the incline, applying force F down the incline:
+mgsinθ+F = f, so 25+F = 37.5, giving F = 12.5 N.
+8. (1) Spring force constant is inversely proportional to length: k ∝ 1
+L
+So kL = constant for a given spring material and structure.
+Original spring: k = 15 N/m, length = L.
+L 1
+Smaller piece has length (since length ratio is 1:3, smaller is of total).
+4 4
+#PaperPhodnaHai
+www.mathongo.com
+Laws of Motion JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+For smaller piece: k 1 × L 4 = 15×L
+k 1 = 15×4 = 60 N/m
+9. (210) For the 8 kg block (C) to move with constant velocity, F = 0.
+net
+Friction forces acting:
+- Between C and ground: f = μ(m A +m B +m C )g = 0.5×(4+6+8)×10 = 90 N
+- Between C and B: f = μ(m A +m B )g = 0.5×(4+6)×10 = 50 N
+For the 6 kg block (B):
+T = f +f
+B on ground A on B
+T = μ(m +m )g⋅ mB +μ⋅m ⋅g
+A B m +m A
+A B
+T = 20+50 = 70 N
+For the 8 kg block (C):
+F = 90+T +50 = 90+70+50 = 210 N
+#PaperPhodnaHai
+www.mathongo.com

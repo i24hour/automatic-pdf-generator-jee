@@ -1,0 +1,37 @@
+# JEE Mains 2025/2026 Reference — Magnetic Properties of Matter
+# Source: MathonGo Chapter Archive
+# Characters: 2172
+
+M agnetic Properties of Matter JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q1. JEE Main 2026 (23 January Shift 1)
+Given below are two statements: one is labelled as Assertion (A) and the other is labelled as Reason (R).
+Consider a ferromagnetic material :
+Assertion (A) : The individual atoms in a ferromagnetic material possess a magnetic dipole moment and interact
+with one another in such a way that they spontaneously align themselves forming domains.
+Reason (R): At high enough temperature, the domain structure of ferromagnetic material disintegrates. Thus,
+magnetization will disappear at high enough temperature known as Curie temperature.
+In the light of the above statements, choose the correct answer from the options given below :
+(1) (A) is true but (R) is false
+(2) Both (A) and (R) are true but (R) is not the correct explanation of (A)
+(3) (A) is false but (R) is true
+(4) Both (A) and (R) are true and (R) is the correct explanation of (A)
+#PaperPhodnaHai
+www.mathongo.com
+Magnetic Properties of Matter JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+ANSWERS AND SOLUTIONS
+1. (2)
+1. (2) Assertion (A) states that individual atoms in a ferromagnetic material possess a magnetic dipole moment and
+interact to form domains. This is a correct description of the domain theory of ferromagnetism, where exchange
+interactions lead to spontaneous alignment of moments within small regions called domains.
+Reason (R) states that at high temperatures (above the Curie temperature T ), the domain structure disintegrates
+C
+due to thermal agitation, and the material becomes paramagnetic. This is also a correct statement regarding the
+temperature dependence of ferromagnetic materials.
+However, Reason (R) describes the effect of temperature on the domain structure, whereas Assertion (A) describes
+the fundamental nature and formation of domains in the ferromagnetic state. The disintegration of domains at high
+temperature is not the reason why they form spontaneously at lower temperatures. Therefore, both statements are
+true, but (R) is not the correct explanation of (A).
+#PaperPhodnaHai
+www.mathongo.com

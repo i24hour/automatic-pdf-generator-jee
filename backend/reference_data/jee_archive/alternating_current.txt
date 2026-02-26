@@ -1,0 +1,95 @@
+# JEE Mains 2025/2026 Reference — Alternating Current
+# Source: MathonGo Chapter Archive
+# Characters: 3143
+
+A lternating Current JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q1. JEE Main 2026 (21 January Shift 2)
+A capacitor C is first charged fully with potential difference of V 0 and disconnected from the battery. The charged
+capacitor is connected across an inductor having inductance L. In t s 25% of the initial energy in the capacitor is
+transferred to the inductor. The value of t is ____ s.
+(1)
+π√LC
+(2)
+π√LC
+(3)
+π√LC
+(4) π√LC
+3 6 2 2
+Q2. JEE Main 2026 (23 January Shift 1)
+Using a variable frequency a.c. voltage source the maximum current measured in the given LCR circuit is 50 mA for
+V = 5sin(100t) The values of L and R are shown in the figure. The capacitance of the capacitor (C) used is ____
+μF.
+Q3. JEE Main 2026 (28 January Shift 2)
+An inductor stores 16 J of magnetic field energy and dissipates 32 W of thermal energy due to its resistance when an
+a.c. current of 2 A (rms) and frequency 50 Hz flows through it. The ratio of inductive reactance to its resistance is
+____. (π = 3.14)
+Q4. JEE Main 2026 (28 January Shift 1)
+The electric current in the circuit is given as i = i o (t/T). The r.m.s current for the period t = 0 to t = T is ____.
+(1) i o (2) √ io 6 (3) √ io 3 (4) √ io 2
+Q5. JEE Main 2026 (24 January Shift 1)
+For the series LCR circuit connected with 220 V,50 Hz a.c source as shown in the figure, the power factor is α .
+10
+The value of α is ____.
+(1) 10 (2) 4 (3) 6 (4) 8
+#PaperPhodnaHai
+www.mathongo.com
+Alternating Current JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+ANSWERS AND SOLUTIONS
+1. (2) 2. 50 3. 314 4. (3) 5. (3)
+1. (2) In an LC circuit, energy oscillates sinusoidally.
+Initial energy in capacitor is E 0 = 1 2 CV 0 2 .
+When 25% is transferred to the inductor, 75% remains in the capacitor.
+Since energy in capacitor varies as E (t) = E cos2(ωt), we need cos2(ωt) = 0.75.
+C 0
+This gives sin2(ωt) = 0.25, so sin(ωt) = 0.5, yielding ωt = π .
+6
+With ω = 1 , we get t = π√LC seconds.
+√LC 6
+2. (50) From V = 5sin(100t), angular frequency ω = 100 rad/s
+At resonance in LCR circuit: X L = X C, so ωL = 1
+ωC
+Maximum current occurs at resonance: I max = Vrms
+R
+50×10−3 = 5/√2 (verified at resonance)
+100
+From resonance condition: 100×2 = 1
+100×C
+200 = 1
+100C
+C = 1 = 5×10−5 F = 50 μF
+20000
+3. (314) Given: Magnetic field energy = 16 J, Thermal power dissipated = 32 W, I rms = 2 A, f = 50 Hz.
+From energy stored in inductor:
+1LI2 = 16
+2 rms
+1 ⋅L⋅4 = 16
+2
+L = 8 H
+From thermal power dissipated:
+I2 R = 32
+rms
+4R = 32
+R = 8 Ω
+Inductive reactance:
+X = ωL = 2πfL = 2×3.14×50×8 = 2512 Ω
+L
+X L = 2512 = 314
+R 8
+4. (3) The RMS current is calculated using I rms = √ T 1 ∫ 0 T i2dt.
+Given i = i 0 (t/T):
+I = √1 ∫T i2( t ) 2 dt = √ i2 0 ∫T t2dt = √ i2 0 ⋅ T3
+rms T 0 0 T T3 0 T3 3
+= √i2 0 = i 0 .
+3 √3
+#PaperPhodnaHai
+www.mathongo.com
+Alternating Current JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+5. (3) Net reactance: X = X C −X L = 150−70 = 80Ω.
+Impedance: Z = √R2 +X2 = √602 +802 = √10000 = 100Ω.
+Power factor: cosϕ = R/Z = 60/100 = 0.6.
+Since power factor is α/10, we have 0.6 = α/10, so α = 6
+#PaperPhodnaHai
+www.mathongo.com

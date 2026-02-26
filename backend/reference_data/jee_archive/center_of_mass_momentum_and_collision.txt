@@ -1,0 +1,69 @@
+# JEE Mains 2025/2026 Reference — Center of Mass Momentum and Collision
+# Source: MathonGo Chapter Archive
+# Characters: 3154
+
+C enter of Mass Momentum and Collision JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q1. JEE Main 2026 (23 January Shift 1)
+In a perfectly inelastic collision, two spheres made of the same material with masses 15 kg and 25 kg, moving in
+opposite directions with speeds of 10 m/s and 30 m/s, respectively, strike each other and stick together. The rise in
+temperature (in
+∘C),
+if all the heat produced during the collision is retained by these spheres, is : (specific heat of
+sphere material 31cal/kg.∘C and 1cal = 4.2 J)
+(1) 1.15 (2) 1.75 (3) 1.44 (4) 1.95
+Q2. JEE Main 2026 (22 January Shift 2)
+Given below are two statements :
+Statement I: For a mechanical system of many particles total kinetic energy is the sum of kinetic energies of all the
+particles.
+Statement II: The total kinetic energy can be the sum of kinetic energy of the center of mass w.r.t to the origin and
+the kinetic energy of all the particles w.r.t. the center of mass as the reference.
+In the light of the above statements, choose the correct answer from the options given below :
+(1) Statement I is true but Statement II is false
+(2) Both Statement I and Statement II are false
+(3) Statement I is false but Statement II is true
+(4) Both Statement I and Statement II are true
+Q3. JEE Main 2026 (23 January Shift 2)
+A body of mass 14 kg initially at rest explodes and breaks into three fragments of masses in the ratio 2 : 2 : 3. The
+two pieces of equal masses fly off perpendicular to each other with a speed of 18 m/s each. The velocity of the
+heavier fragment is ____ m/s.
+(1) 12 (2)
+10√2
+(3)
+24√2
+(4)
+12√2
+#PaperPhodnaHai
+www.mathongo.com
+Center of Mass Momentum and Collision JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+ANSWERS AND SOLUTIONS
+1. (3) 2. (4) 3. (4)
+1. (3) Using conservation of momentum:
+m 1 v 1 +m 2 v 2 = (m 1 +m 2 )v f where v 2 = −30 m/s (opposite direction).
+15(10)+25(−30) = 40v f ⇒ v f = −15 m/s
+Initial kinetic energy:
+KE i = 1 2 (15)(10)2 + 1 2 (25)(30)2 = 750+11250 = 12000 J
+Final kinetic energy:
+KE f = 1 2 (40)(15)2 = 4500 J
+Heat produced:
+Q = 12000−4500 = 7500 J = 7500 = 1785.71 cal
+4.2
+Temperature rise:
+ΔT = Q = 1785.71 = 1.44°C
+m total ⋅c 40×31
+2. (4) Statement I: Total kinetic energy of a system equals ∑ 1m v2. This is TRUE by definition.
+i 2 i i
+Statement II: Total KE can be decomposed as KE total = 1 2 Mv2 cm +∑ i 1 2 m i v′ i 2 , where the first term is kinetic
+energy of center of mass motion and the second is kinetic energy of particles relative to the center of mass. This is
+TRUE by the energy decomposition theorem (Koenig's theorem).
+Both statements are true.
+3. (4) From mass ratio 2:2:3 with total mass 14 kg: individual masses are 4 kg, 4 kg, and 6 kg.
+Setting coordinate axes along the motion directions of the two equal fragments: fragment 1 has momentum
+p→ 1 = 4×18^i = 72^i kg⋅m/s, and fragment 2 has p→ 2 = 4×18^j = 72^j kg⋅m/s.
+By momentum conservation, initially at rest: p→ 1 +p→ 2 +p→ 3 = 0, so p→ 3 = −72^i −72^j kg⋅m/s.
+Velocity of 6 kg fragment: v→ 3 = p→ 3 = −12^i −12^j m/s.
+6
+Speed: |v→ 3 | = √144+144 = √288 = 12√2 m/s.
+#PaperPhodnaHai
+www.mathongo.com

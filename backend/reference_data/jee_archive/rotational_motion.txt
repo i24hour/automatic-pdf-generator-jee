@@ -1,0 +1,415 @@
+# JEE Mains 2025/2026 Reference — Rotational Motion
+# Source: MathonGo Chapter Archive
+# Characters: 15000
+
+R otational Motion JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q1. JEE Main 2026 (21 January Shift 2)
+The pulley shown in figure is made using a thin rim and two rods of length equal to diameter of the rim. The rim
+and each rod have a mass of M. Two blocks of mass of M and m are attached to two ends of a light string passing
+over the pulley, which is hinged to rotate freely in vertical plane about its center. The magnitudes of the acceleration
+experienced by the blocks is ____ (assume no slipping of string on pulley).
+(M−m)g (M−m)g (M−m)g (M−m)g
+(1) (2) (3) (4)
+[(13)M+m] [(8)M+m] 2M+m M+m
+6 3
+Q2. JEE Main 2026 (21 January Shift 2)
+Two cars A and B each of mass 103 kg are moving on parallel tracks separated by a distance of 10 m, in same
+direction with speeds 72 km/h and 36 km/h. The magnitude of angular momentum of carA with respect to carB
+is ____ J.s.
+(1)
+2×105
+(2)
+105
+(3)
+3.6×105
+(4)
+3×105
+Q3. JEE Main 2026 (23 January Shift 1)
+Two small balls with masses m and 2 m are attached to both ends of a rigid rod of length d and negligible mass. If
+angular momentum of this system is L about an axis (A) passing through its centre of mass and perpendicular to the
+rod then angular velocity of the system about A is :
+2L 4 L 3 L 2L
+(1) (2) (3) (4)
+5md2 3 md2 2 md2 md2
+Q4. JEE Main 2026 (23 January Shift 1)
+The moment of inertia of a square loop made of four uniform solid cylinders, each having radius R and length
+L(R < L) about an axis passing through the mid points of opposite sides, is (Take the mass of the entire loop as M)
+:
+(1)
+3MR2+ 7 ML2
+(2)
+3MR2+ 1ML2
+4 12 8 6
+(3)
+3MR2+ 1ML2
+(4)
+3MR2+ 7 ML2
+4 6 8 12
+#PaperPhodnaHai
+www.mathongo.com
+R otational Motion JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q5. JEE Main 2026 (28 January Shift 2)
+When the position vector
+r→= x^i+y^j+zk^
+changes sign as
+−r→
+, which one of the following vector will not flip
+under sign change ?
+(1) Angular momentum (2) Velocity
+(3) Acceleration (4) Linear momentum
+Q6. JEE Main 2026 (28 January Shift 2)
+A fly wheel having mass 3 kg and radius 5 m is free to rotate about a horizontal axis. A string having negligible
+mass is wound around the wheel and the loose end of the string is connected to 3 kg mass. The mass is kept at rest
+initially and released. Kinetic energy of the wheel when the mass descends by 3 m is ____ J.(g = 10 m/s2)
+Q7. JEE Main 2026 (24 January Shift 2)
+A thin uniform rod (X) of mass M and length L is pivoted at a height (L) as shown in the figure. The rod is
+3
+allowed to fall from a vertical position and lie horizontally on the table. The angular velocity of this rod when it hits
+the table top, is ____. (g = gravitational acceleration)
+(1) 3 √ g (2) 1 √ g (3) √3 g (4) √3g
+√2 L √2 L 2 L L
+Q8. JEE Main 2026 (24 January Shift 2)
+A uniform solid cylinder of length L and radius R has moment of inertia about its axis equal to I 1. A small co-
+centric cylinder of length L/2 and radius R/3 carved from this cylinder has moment of inertia about its axis equals
+to I 2. The ratio I 1 /I 2 is ____.
+#PaperPhodnaHai
+www.mathongo.com
+R otational Motion JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q9. JEE Main 2026 (22 January Shift 2)
+A uniform bar of length 12 cm and mass 20m lies on a smooth horizontal table. Two point masses m and 2m are
+moving in opposite directions with same speed of v and in the same plane as the bar, as shown in figure. These
+masses strike the bar simultaneously and get stuck to it. After collision the entire system is rotating with angular
+frequency ω. The ratio of v and ω is :
+(1) 66 (2) 33 (3) 32 (4)
+2√88
+Q10. JEE Main 2026 (22 January Shift 2)
+Two masses m and 2 m are connected by a light string going over a pulley (disc) of mass 30 m with radius
+r = 0.1 m. The pulley is mounted in a vertical plane and it is free to rotate about its axis. The 2 m mass is released
+from rest and its speed when it has descended through a height of 3.6 m is ____ m/s. (Assume string does not slip
+and g = 10 m/s2 )
+Q11. JEE Main 2026 (22 January Shift 1)
+A solid sphere of mass 5 kg and radius 10 cm is kept in contact with another solid sphere of mass 10 kg and radius
+20 cm. The moment of inertia of this pair of spheres about the tangent passing through the point of contact is ____
+kg.m2
+.
+(1) 0.72 (2) 0.36 (3) 0.18 (4) 0.63
+Q12. JEE Main 2026 (22 January Shift 1)
+A circular disc has radius R 1 and thickness T 1. Another circular disc made of the same material has radius R 2 and
+thickness T 2. If the moment of inertia of both discs are same and R
+R
+1 = 2 then T
+T
+1 =
+α
+1 . The value of α is ____.
+2 2
+#PaperPhodnaHai
+www.mathongo.com
+R otational Motion JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q13. JEE Main 2026 (23 January Shift 2)
+Suppose there is a uniform circular disc of mass M kg and radius r m shown in figure. The shaded regions are cut
+out from the disc. The moment of inertia of the remainder about the axis A of the disc is given by x Mr2 . The
+256
+value of x is ____.
+Q14. JEE Main 2026 (21 January Shift 1)
+A uniform rod of mass m and length l suspended by means of two identical inextensible light strings as shown in
+figure. Tension in one string immediately after the other string is cut, is ____. (g acceleration due to gravity)
+(1) mg/4 (2) mg/2 (3) mg/3 (4) mg
+Q15. JEE Main 2026 (21 January Shift 1)
+Two identical thin rods of mass M kg and length L m are connected as shown in figure. Moment of inertia of the
+combined rod system about an axis passing through point P and perpendicular to the plane of the rods is
+x ML2 kg m2 . The value of x is ____.
+12
+#PaperPhodnaHai
+www.mathongo.com
+R otational Motion JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q16. JEE Main 2026 (28 January Shift 1)
+Two circular discs of radius each 10 cm are joined at their centres by a rod of length 30 cm and mass 600 gm as
+shown in figure. If the mass of each disc is 600 gm and applied torque between two discs is
+43×105
+dyne. cm, the
+angular acceleration of the discs about the given axis AB is ____ rad/s2 .
+(1) 11 (2) 22 (3) 100 (4) 27
+Q17. JEE Main 2026 (28 January Shift 1)
+A solid sphere of radius 10 cm is rotating about an axis which is at a distance 15 cm from its centre. The radius of
+gyration about this axis is √n cm. The value of n is
+Q18. JEE Main 2026 (24 January Shift 1)
+Two masses 400 g and 350 g are suspended from the ends of a light string passing over a heavy pulley of radius 2
+cm. When released from rest the heavier mass is observed to fall 81 cm in 9 s. The rotational inertia of the pulley is
+____ kg⋅m2 . (g = 9.8 m/s2)
+(1)
+4.75×10−3
+(2)
+9.5×10−3
+(3)
+1.86×10−2
+(4)
+8.3×10−3
+#PaperPhodnaHai
+www.mathongo.com
+Rotational Motion JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+ANSWERS AND SOLUTIONS
+1. (2) 2. (2) 3. (3) 4. (2) 5. (1) 6. 30 7. (4) 8. 162
+9. (2) 10. 2 11. (4) 12. 16 13. 109 14. (1) 15. 17 16. (1)
+17. 265 18. (2)
+1. (2) The pulley consists of a rim (mass M) and two rods (each mass M) forming a diameter structure.
+The moment of inertia is: I = I rim +I rods = MR2 +2× M 3 R2 = 5M 3 R2 .
+For the Atwood pulley system, applying Newton's second law:
+Mass m (upward): T 1 = m(g−a)
+Mass M (downward): T 2 = M(g+a)
+Pulley rotation: T 2 R−T 1 R = Iα = 5M 3 R2 ⋅ R a
+Thus: T 2 −T 1 = 5M 3 a
+Substituting: M(g+a)−m(g−a) = 5Ma
+3
+(M −m)g+(M +m)a = 5Ma
+3
+(M −m)g = a(5M −M −m) = a(2M −m)
+3 3
+(M−m)g 3(M−m)g
+a = = , which is option (2).
+2M−3m 2M+3m
+3
+2. (2) Mass of each car m = 103 kg.
+Speed of car A, v A = 72 km/h = 72× 1 5 8 = 20 m/s.
+Speed of car B, v B = 36 km/h = 36× 1 5 8 = 10 m/s.
+Relative velocity of car A with respect to car B is v AB = v A −v B = 20−10 = 10 m/s.
+The cars are moving on parallel tracks separated by a perpendicular distance d = 10 m.
+The magnitude of angular momentum of car A with respect to car B is given by L = m×v AB ×d.
+Substituting the values: L = 103 ×10×10 = 105 J.s.
+Thus, the correct option is (2).
+3. (3) CM from mass m: x cm = 2 3 m m d = 2 3 d .
+Distances: m is 2d/3 from CM, 2m is d/3 from CM.
+I cm = m(2d/3)2 +2m(d/3)2 = 4m 9 d2 + 2m 9 d2 = 2m 3 d2 .
+L = Iω ⇒ ω = L = 3L .
+I 2md2
+4. (2) Each cylinder has mass M/4, radius R, length L.
+Axis through midpoints of top and bottom sides (along y-direction).
+Top/bottom cylinders (perpendicular to axis, axis through midpoint):
+MR2 ML2
+I = c + c each.
+4 12
+Left/right cylinders (parallel to axis, distance L/2 from it):
+I =
+McR2
++M (L/2)2
+2 c each.
+#PaperPhodnaHai
+www.mathongo.com
+Rotational Motion JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+MR2 ML2 MR2 ML2
+Total = 2( c + c )+2( c + c )
+4 12 2 4
+=
+M(3R2
++
+L2
+) =
+3MR2
++
+ML2
+.
+2 4 3 8 6
+5. (1) The transformation r→ → −r→ is known as a parity transformation (inversion through the origin).
+Vectors that change sign under parity are called polar vectors, while those that do not change sign are called axial
+vectors (or pseudovectors).
+Velocity is defined as v→ = dr→ . Since r→ → −r→, we have v→ → −v→.
+dt
+Acceleration is defined as a→ = dv→ . Since v→ → −v→ , we have a→ → −a→ .
+dt
+Linear momentum is defined as p→ = mv→ . Since v→ → −v→ , we have p→ → −p→ .
+Angular momentum is defined as L → = r→×p→.
+Under the transformation r→ → −r→ and p→ → −p→, the cross product becomes:
+L →′ = (−r→)×(−p→) = r→×p→ = L → .
+Thus, angular momentum does not flip its sign under the transformation r→ → −r→.
+6. (30) Let the mass of the flywheel be M = 3 kg and its radius be R = 5 m.
+Let the hanging mass be m = 3 kg and the distance descended be h = 3 m.
+The flywheel is a disk, so its moment of inertia is I = 1MR2 .
+2
+By conservation of energy, the loss in potential energy of the hanging mass equals the gain in kinetic energy of the
+system.
+mgh = 1mv2 + 1Iω2
+2 2
+Since the string does not slip, v = Rω, so ω = v .
+R
+mgh = 1mv2 + 1(1MR2)( v )2
+2 2 2 R
+mgh = 1mv2 + 1Mv2
+2 4
+Substituting the values: 3×10×3 = 1(3)v2 + 1(3)v2
+2 4
+90 = 3v2 + 3v2 = 9v2
+2 4 4
+v2 = 90×4 = 40 m 2 /s 2 .
+9
+The kinetic energy of the wheel is K wheel = 1 2 Iω2 = 1 4 Mv2 .
+K wheel = 1 4 ×3×40 = 30 J.
+L L
+7. (4) The rod is pivoted at a distance from one end. The centre of mass is at a distance from the pivot.
+3 6
+Using energy conservation:
+mgℓ = 1Iω2
+6 2
+Moment of inertia about the pivot (using parallel axis theorem):
+2
+I = mℓ2 +m(ℓ) = mℓ2 + mℓ2 = mℓ2
+12 6 12 36 9
+mgℓ = 1 ⋅ mℓ2 ⋅ω2
+6 2 9
+ω2 = 9g = 3g
+6⋅ℓ ℓ
+2
+ω =
+√3g
+ℓ
+#PaperPhodnaHai
+www.mathongo.com
+Rotational Motion JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+8. (162) For solid cylinder: I = 1mR2
+2
+Large cylinder: mass m 1 = ρπR2L, so I 1 = 1 2 ρπR2L×R2 = ρπR 2 4L
+Small cylinder (carved out): length L/2, radius R/3, mass m 2 = ρπ(R/3)2(L/2) = ρπ 1 R 8 2L
+I = 1 × ρπR2L ×(R/3)2 = 1 × ρπR2L × R2 = ρπR4L
+2 2 18 2 18 9 324
+I 1 = ρπR4L/2 = 324 = 162
+I 2 ρπR4L/324 2
+9. (2) Linear momentum conservation: mv−2mv = 23m⋅v cm, giving v cm = − 2 v 3 .
+Angular momentum about center of mass from the collision geometry:
+Taking collision points 2 cm and 4 cm from the 12 cm bar's center at different positions, the angular momentum is
+L = m⋅v⋅r 1 +(−2m)⋅v⋅r 2.
+Calculating moment of inertia: I = 1 (20m)(0.12)2 +m(0.02)2 +2m(0.04)2 = 0.0276m
+12
+The angular frequency ω is obtained from ω = L , giving ratio v = 33.
+I ω
+10. (2) Let the speed of the masses be v and the angular velocity of the pulley be ω = v/r since the string does not
+slip.
+The pulley is a disc of mass M = 30m and radius r. Its moment of inertia is I = 1Mr2 = 1(30m)r2 = 15mr2 .
+2 2
+Using the principle of conservation of mechanical energy, the loss in potential energy of the system equals the
+gain in kinetic energy.
+When the mass 2m descends by h = 3.6 m, the mass m ascends by h = 3.6 m.
+Loss in potential energy ΔU = (2m)gh−(m)gh = mgh.
+Gain in kinetic energy ΔK = 1(2m)v2 + 1(m)v2 + 1Iω2.
+2 2 2
+Substituting I and ω: ΔK = 3mv2 + 1(15mr2)(v)2 = 3mv2 + 15mv2 = 9mv2.
+2 2 r 2 2
+Equating ΔU = ΔK: mgh = 9mv2.
+v2 = gh .
+9
+Given g = 10 m/s2 and h = 3.6 m:
+v2 = 10×3.6 = 36 = 4.
+9 9
+v = √4 = 2 m/s.
+11. (4) For two solid spheres in contact with the tangent line at the contact point.
+Sphere 1: m = 5 kg, r = 0.1 m
+1 1
+Sphere 2: m 2 = 10 kg, r 2 = 0.2 m
+For a solid sphere, I cm = 2mr2
+5
+The tangent at contact is perpendicular to the line joining centers. The perpendicular distance from each sphere's
+center to this tangent line equals its radius.
+Using parallel axis theorem: I total = I cm +md2
+For sphere 1: I 1 = 2 5 (5)(0.1)2 +5(0.1)2 = 0.02+0.05 = 0.07 kg·m²
+For sphere 2: I 2 = 2 5 (10)(0.2)2 +10(0.2)2 = 0.16+0.4 = 0.56 kg·m²
+Total: I = 0.07+0.56 = 0.63 kg·m²
+#PaperPhodnaHai
+www.mathongo.com
+Rotational Motion JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+12. (16) For a circular disc made of material with density ρ, moment of inertia is
+I = 1MR2 = 1ρπR2T ⋅R2 = 1ρπR4T.
+2 2 2
+For disc 1: I 1 = 1 2 ρπR4 1 T 1
+For disc 2: I 2 = 1 2 ρπR4 2 T 2
+Given I 1 = I 2:
+R4T = R4T
+1 1 2 2
+With R1 = 2:
+R
+2
+(2R )4T = R4T
+2 1 2 2
+16R4T = R4T
+2 1 2 2
+T 1 = 1
+T 2 16
+Therefore α = 16.
+13. (109) The moment of inertia of the complete disc about axis A is
+I disc = 1 2 Mr2 = 12 2 8 5 M 6 r2 .
+Each removed circular region has radius r/4 and mass m = M/(r2/16r2) = M/16.
+i
+For each removed disc at distance 3r/4 from axis A, using the parallel axis theorem:
+I removed = 1 2 m i (r/4)2 +m i (3r/4)2 = M 51 r 2 2 + 9 2 M 56 r2 = 19 5 M 12 r2 .
+For two removed discs:
+I 2removed = 38 5 M 12 r2 = 19 2 M 56 r2 .
+Therefore:
+I remainder = 12 2 8 5 M 6 r2 − 19 2 M 56 r2 = 10 2 9 5 M 6 r2 , so x = 109.
+14. (1) When string at B is cut, rod rotates about A.
+Torque about A: τ = mg× l
+2
+Moment of inertia about A: I A = m 3 l2
+mg⋅l/2 3g
+Angular acceleration: α = =
+ml2/3 2l
+Acceleration of COM: a cm = α× 2 l = 3 4 g
+Newton's second law: mg−T = ma
+cm
+3mg mg
+T = mg− =
+4 4
+15. (17) For vertical rod with axis at end P: I 1 =
+ML2
+3
+For horizontal rod centered at distance L from P:
+L/2
+I = ∫L/2 M(x2 +L2)dx = M[x3 +L2x]
+2 −L/2 L L 3 −L/2
+= M[L3 +L3] = 13ML2
+L 12 12
+Total: I =
+ML2
++
+13ML2
+=
+4ML2+13ML2
+=
+17ML2
+3 12 12 12
+x = 17
+#PaperPhodnaHai
+www.mathongo.com
+Rotational Motion JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+τ
+16. (1) α =
+I
+1 1 m(3R)2 R 2
+I = mR2 +mR2 + mR2 +m(2R)2 + +m( )
+4 4 12 2
+3 13 13
+= ( +4+1)mR2 = mR2 = ×600×102 = 39×104
+2 2 2
+43×105 430
+α = rad/s2 = rad/s2 ≈ 11 rad/s2
+39×104 39
+17. (265) Using the parallel axis theorem for radius of gyration:
+k2 = k2 cm +d2 where k cm is the radius of gyration about the center of mass and d is the distance from the center.
+For a solid sphere:
+I = 2MR2, so k2 = 2R2
+center 5 cm 5
+With R = 10 cm and d = 15 cm:
+k2 = 2(10)2 +(15)2 = 40+225 = 265
+5
+Since k = √n, we have n = 265.
+18. (2) From kinematics with s = 0.81 m and t = 9 s: a = 2s/t2 = 0.02 m/s².
+For the pulley system, applying Newton's second law to both masses and torque equation:
+(m −m )g−(m +m )a = Ia/R2.
+1 2 1 2
+Substituting values: 0.05×9.8−0.75×0.02 = I ×50 gives 0.49−0.015 = 50I.

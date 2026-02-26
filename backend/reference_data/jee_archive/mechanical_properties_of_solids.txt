@@ -1,0 +1,45 @@
+# JEE Mains 2025/2026 Reference — Mechanical Properties of Solids
+# Source: MathonGo Chapter Archive
+# Characters: 1726
+
+M echanical Properties of Solids JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q1. JEE Main 2026 (23 January Shift 1)
+The strain-stress plot for materials A,B,C and D is shown in the figure. Which material has the largest Young's
+modulus ?
+(1) D (2) B (3) C (4) A
+Q2. JEE Main 2026 (28 January Shift 1)
+Two wires A and B made of different materials of lengths 6.0 cm and 5.4 cm, respectively and area of cross sections
+3.0×10−5 m2
+and
+4.5×10−5 m2
+, respectively are stretched by the same magnitude under a given load. The ratio of
+the Young's modulus of A to that of B is x : 3. The value of x is ____.
+(1) 2 (2) 1 (3) 4 (4) 5
+#PaperPhodnaHai
+www.mathongo.com
+Mechanical Properties of Solids JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+ANSWERS AND SOLUTIONS
+1. (3) 2. (4)
+1. (3) Young's modulus (Y) is defined as the ratio of stress to strain: Y = stress .
+strain
+In the given graph, the y-axis represents strain and the x-axis represents stress.
+The slope of the line in a strain-stress graph is given by m = strain .
+stress
+Therefore, Y = 1 .
+slope
+To have the largest Young's modulus, the material must have the smallest slope in the strain-stress plot.
+From the figure, line C has the smallest angle with the stress axis (x-axis), meaning it has the minimum slope.
+Since Y ∝ 1 , material C has the largest Young's modulus.
+slope
+2. (4) Young's modulus: Y = σ = F/A .
+ϵ ΔL/L
+When the same force is applied and both wires stretch by the same extension ΔL, the ratio of Young's moduli is:
+Y A = F/A A × ΔL/L B = A B × L A
+Y B ΔL/L A F/AB A A L B
+= 4.5×10−5 × 6.0 = 1.5× 10 = 5 .
+3.0×10−5 5.4 9 3
+Therefore x : 3 = 5 : 3, giving x = 5.
+#PaperPhodnaHai
+www.mathongo.com

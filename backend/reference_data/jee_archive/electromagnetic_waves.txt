@@ -1,0 +1,216 @@
+# JEE Mains 2025/2026 Reference — Electromagnetic Waves
+# Source: MathonGo Chapter Archive
+# Characters: 7738
+
+E lectromagnetic Waves JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q1. JEE Main 2026 (21 January Shift 2)
+An electromagnetic wave of frequency 100 MHz propagates through a medium of conductivity, σ = 10mho/m. The
+ratio of maximum conduction current density to maximum displacement current density is ____.
+[Take 1 = 9×109Nm2/C2]
+4πϵ
+o
+Q2. JEE Main 2026 (23 January Shift 1)
+Match List - I with List - II.
+List-I List-II
+Relation Law
+−→ →
+A. ∮ E→⋅dl = − d ∮ B→⋅da I.Ampere'scircuitallaw
+dt
+→
+B. ∮ B→⋅dl = μ (I +ϵ dϕ E) II.Faraday'slawsof
+0 0 dt
+electromagneticinduction
+−→
+C. ∮ E→⋅da = 1 ∫ ρdv III.Ampere-Maxwelllaw
+ϵ V
+0
+→
+D. ∮ B→⋅dl = μ I IV.Gauss'slawof electrostatics
+0
+Choose the correct answer from the options given below :
+(1) A-II, B-III, C-I, D-IV
+(2) A-II, B-III, C-IV, D-I
+(3) A-I, B-IV, C-III, D-II
+(4) A-IV, B-I, C-II, D-III
+Q3. JEE Main 2026 (23 January Shift 1)
+The equation of the electric field of an electromagnetic wave propagating through free space is given by :
+E = √377sin(6.27×103t−2.09×10−5x)N/C
+The average power of the electromagnetic wave is (1)W/m2 . The value of α is ____
+α
+(Take √μ0 = 377 in SI units)
+ε
+o
+Q4. JEE Main 2026 (28 January Shift 2)
+A plane electromagnetic wave is moving in free space with velocity c = 3×108 m/s and its electric field is given
+as E→ = 54sin(kz−ωt)^j V/m, where ^j is the unit vector along y-axis. The magnetic field vector B→ of the wave is:
+(1) +1.8×10−7sin(kz−ωt)^i T
+(2) 1.4×10−7sin(kz−ωt)k^ T
+(3) −1.8×10−7sin(kz−ωt)^i T
+(4) 1.4×10−7sin(kz−ωt)^i T
+#PaperPhodnaHai
+www.mathongo.com
+E lectromagnetic Waves JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q5. JEE Main 2026 (22 January Shift 2)
+A laser beam has intensity of 4.0×1014 W/m2 . The amplitude of magnetic field associated with beam is ____ T.
+(Take ϵ o = 8.85×10−12C2/Nm2 and c = 3×108 m/s)
+(1) 18.3 (2) 1.83 (3) 5.5 (4) 2.0
+Q6. JEE Main 2026 (22 January Shift 1)
+The electric field of a plane electromagnetic wave, travelling in an unknown nonmagnetic medium is given by,
+E y = 20sin(3×106x−4.5×1014t)V/m (where x,t and other values have S.I. units). The dielectric constant of
+the medium is ____ (speed of light in free space is 3×108 m/s)
+Q7. JEE Main 2026 (23 January Shift 2)
+The ratio of speeds of electromagnetic waves in vacuum and a medium, having dielectric constant k = 3 and
+permeability of μ = 2μ 0, is
+(μ 0 = permeability of vacuum)
+(1) 36 : 1 (2) 3 : 2 (3) 6 : 1 (4) √6 : 1
+Q8. JEE Main 2026 (21 January Shift 1)
+The electric field in a plane electromagnetic wave is given by :
+E
+y
+= 69sin[0.6×103x−1.8×1011t]V/m.
+The expression for magnetic field associated with this electromagnetic wave is ____ T.
+(1) B z = 2.3×10−7sin[0.6×103x−1.8×1011t]
+(2) B z = 2.3×10−7sin[0.6×103x+1.8×1011t]
+(3) B y = 69sin[0.6×103x+1.8×1011t]
+(4) B y = 2.3×10−7sin[0.6×103x−1.8×1011t]
+Q9. JEE Main 2026 (28 January Shift 1)
+The electric field of an electromagnetic wave travelling through a medium is given by
+E→(x,t) = 25sin(2.0×1015t−107x)n^
+then the refractive index of the medium is ____.
+(All given measurement are in SI units)
+(1) 1.5 (2) 1.2 (3) 1.7 (4) 2
+#PaperPhodnaHai
+www.mathongo.com
+E lectromagnetic Waves JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q10. JEE Main 2026 (24 January Shift 1)
+Match the LIST-I with LIST-II
+List-I List-II
+A. Radio-wave I. isproducedbyMagnetronvalve
+B. Micro-wave II. duetochangeinthevibrationalmodesof atoms
+C. Infrared-wave III. duetoinnershellelectronsmovingfromhighertolowerenergylevel
+D. X-ray IV. duetorapidaccelerationof electrons
+Choose the correct answer from the options given below:
+(1) A-IV, B-II, C-I, D-III
+(2) A-IV, B-I, C-II, D-III
+(3) A-IV, B-III, C-I, D-II
+(4) A-II, B-IV, C-III, D-I
+#PaperPhodnaHai
+www.mathongo.com
+Electromagnetic Waves JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+ANSWERS AND SOLUTIONS
+1. 1800 2. (2) 3. 2 4. (3) 5. (2) 6. 4 7. (4) 8. (1)
+9. (1) 10. (2)
+1. (1800) For an electromagnetic wave in a conducting medium, the maximum conduction current density is
+J c,max = σE 0 and maximum displacement current density is J d,max = ϵ 0 ωE 0.
+The ratio is: J c,max = σ .
+J d,max ϵ 0 ω
+With σ = 10 mho/m, f = 100 MHz
+So ω = 2π×108 rad/s, and ϵ 0 = 1 3 0 6 − π 9 F/m: J J d c, , m m a a x x = 10− 1 9 0 × × 2 3 π 6 × π 108 = 2 1 × 0× 10 3 − 6 1 = 1800.
+2. (2) Theoretical
+A-II, B-III, C-IV, D-I
+A. ∮ E→⋅d→l = − d ∮ B→⋅da→ → Faraday's law of electromagnetic induction (II)
+dt
+→ → dΦ
+B. ∮ B⋅dl = μ 0 (I +ϵ 0 E) → Ampere-Maxwell law (III)
+dt
+C. ∮ E→⋅da→ = 1 ∫ ρdv → Gauss's law of electrostatics (IV)
+ϵ
+0
+D. ∮ B→⋅d→l = μ 0 I → Ampere's circuital law (I)
+3. (2) From the electric field equation, amplitude:
+E 0 = √377 N/C
+Average intensity of EM wave:
+E2
+I avg = 2Z 0 where Z 0 = √μ 0 /ε 0 = 377 Ω
+0
+I avg = ( 2 √ × 3 3 7 7 7 7 )2 = 2× 37 3 7 77 = 1 2 W/m²
+Given I = 1 W/m², we have 1 = 1
+avg α α 2
+Therefore, α = 2
+4. (3) For an electromagnetic wave, the relationship between electric and magnetic field amplitudes is B 0 = E c 0.
+Here E 0 = 54 V/m and c = 3×108 m/s.
+So, B 0 = 54 = 1.8×10−7 T.
+3×108
+The electric field is along the
+^j
+direction.
+Since the wave travels in the +z direction, the magnetic field direction is determined by E→×B→ pointing in the +z
+direction.
+Using the right-hand rule: ^j×(−^i) = k ^ (positive z direction), confirming the magnetic field is in the −^i
+direction.
+Therefore, B → = −1.8×10−7sin(kz−ωt)^i T.
+5. (2) The intensity of an electromagnetic wave is
+I = 1 2 ϵ 0 cE 0 2 .
+#PaperPhodnaHai
+www.mathongo.com
+Electromagnetic Waves JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+From the relation E 0 = cB 0, we get I = 1 2 ϵ 0 c3B2 0 .
+Solving for magnetic field amplitude:
+B = √ 2I = √ 2×4.0×1014 = √ 8.0×1014
+0
+ϵ0c3 8.85×10−12×(3×108)3 2.39×1014
+= √3.347 = 1.83 T.
+6. (4) From the wave equation E y = 20sin(3×106x−4.5×1014t):
+Wave number: k = 3×106 m⁻¹
+Angular frequency: ω = 4.5×1014 rad/s
+Speed of wave in medium: v = ω = 4.5×1014 = 1.5×108 m/s
+k 3×106
+Speed of light in vacuum: c = 3×108 m/s
+Refractive index: n = c = 3×108 = 2
+v 1.5×108
+For a nonmagnetic medium: n = √ϵ r
+Dielectric constant: ϵ = n2 = 4
+r
+7. (4) Speed of electromagnetic wave in vacuum: c = 1
+√μ
+0
+ϵ
+0
+Speed in a medium with permeability μ = 2μ 0 and dielectric constant k = 3:
+v = 1 = 1 = 1
+√μϵ √2μ ×3ϵ √6μ ϵ
+0 0 0 0
+v = 1 × 1 = c
+√6 √μ 0 ϵ 0 √6
+Ratio of speeds: c = √6
+v
+Therefore: c : v = √6 : 1
+8. (1) Given E y = 69sin[0.6×103x−1.8×1011t] V/m
+→
+Wave propagates along +x (form kx−ωt), E is along y.
+For EM wave:
+E→×B→
+= direction of propagation
+^j×k ^ = ^i, so B→ is along z-direction.
+B 0 = E c 0 = 3× 6 1 9 08 = 2.3×10−7 T
+E and B are in phase for plane EM wave.
+B z = 2.3×10−7sin[0.6×103x−1.8×1011t] T
+9. (1) The electric field is E(x,t) = 25sin(2.0×1015t−107x) V/m.
+This is in the standard form E = E 0 sin(ωt−kx) where angular frequency ω = 2.0×1015 rad/s and wave
+number k = 107 rad/m.
+v = ω = 2.0×1015 = 2.0×108
+The speed of the wave in the medium is m/s.
+k 107
+The refractive index is defined as n = c where c = 3.0×108 m/s is the speed of light in vacuum.
+v
+Therefore, n =
+3.0×108
+= 1.5
+2.0×108
+10. (2) Matching electromagnetic wave sources:
+Radio-wave (A) - produced by rapid acceleration of electrons in antennas and transmitters, matches IV.
+Micro-wave (B) - produced by Magnetron valve, matches I.
+#PaperPhodnaHai
+www.mathongo.com
+Electromagnetic Waves JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Infrared-wave (C) - due to change in vibrational modes of atoms and molecules, matches II.
+X-ray (D) - due to inner shell electrons moving from higher to lower energy levels, matches III.
+Correct pairing: A-IV, B-I, C-II, D-III
+#PaperPhodnaHai
+www.mathongo.com

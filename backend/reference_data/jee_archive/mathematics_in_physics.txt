@@ -1,0 +1,36 @@
+# JEE Mains 2025/2026 Reference — Mathematics in Physics
+# Source: MathonGo Chapter Archive
+# Characters: 1309
+
+M athematics in Physics JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q1. JEE Main 2026 (23 January Shift 1)
+Four persons measure the length of a rod as 20.00 cm,19.75 cm,17.01 cm and 18.25 cm. The relative error in the
+measurement of average length of the rod is :
+(1) 0.08 (2) 0.06 (3) 0.18 (4) 0.24
+Q2. JEE Main 2026 (21 January Shift 1)
+In an experiment the values of two spring constants were measured as k 1 = (10±0.2)N/m and
+k 2 = (20±0.3)N/m. If these springs are connected in parallel, then the percentage error in equivalent spring
+constant is :
+(1) 1.33% (2) 1.67% (3) 2.67% (4) 2.33%
+#PaperPhodnaHai
+www.mathongo.com
+Mathematics in Physics JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+ANSWERS AND SOLUTIONS
+1. (2) 2. (2)
+1. (2) Mean = 20.00+19.75+17.01+18.25 = 75.01 = 18.7525 cm.
+4 4
+Absolute errors: |20.00−18.7525| = 1.2475, |19.75−18.7525| = 0.9975, |17.01−18.7525| = 1.7425,
+|18.25−18.7525| = 0.5025.
+Mean absolute error = 1.2475+0.9975+1.7425+0.5025 = 4.49 = 1.1225.
+4 4
+Relative error = 1.1225 ≈ 0.06.
+18.7525
+2. (2) For parallel combination: k eq = k 1 +k 2 = 10+20 = 30 N/m
+For sum, absolute errors add:
+Δk eq = Δk 1 +Δk 2 = 0.2+0.3 = 0.5 N/m
+Percentage error = Δk eq ×100 = 0.5 ×100 = 1.67%
+keq 30
+#PaperPhodnaHai
+www.mathongo.com

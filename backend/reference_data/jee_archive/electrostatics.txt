@@ -1,0 +1,432 @@
+# JEE Mains 2025/2026 Reference — Electrostatics
+# Source: MathonGo Chapter Archive
+# Characters: 14977
+
+E lectrostatics JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q1. JEE Main 2026 (21 January Shift 2)
+Consider two identical metallic spheres of radius R each having charge Q and mass m. Their centers have an initial
+separation of 4R. Both the spheres are given an initial speed of u towards each other. The minimum value of u, so
+that they can just touch each other is :
+(Take k = 1 and assume kQ2 > Gm2 where G is the Gravitational constant)
+4πϵ
+0
+(1) √ kQ2 (1− Gm2) (2) √ kQ2 (1− Gm2)
+2mR kQ2 4mR kQ2
+(3) √ kQ2 (1− Gm2 ) (4) √ kQ2 (1+ Gm2)
+2mR 2kQ2 4mR kQ2
+Q2. JEE Main 2026 (23 January Shift 1)
+Two point charges 2q and q are placed at vertex A and centre of face CDEF of the cube as shown in figure. The
+electric flux passing through the cube is :
+3q 3q q 3q
+(1) (2) (3) (4)
+2ϵ0 4ϵ0 ϵ0 ϵ0
+Q3. JEE Main 2026 (28 January Shift 2)
+Identify the correct statements :
+A. Electrostatic field lines form closed loops.
+B. The electric field lines point radially outward when charge is greater than zero.
+C. The Gauss - Law is valid only for inverse - square force.
+D. The workdone in moving a charged particle in a static electric field around a closed path is zero.
+E. The motion of a particle under Coulomb's force must take place in a plane.
+Choose the correct answer from the options given below :
+(1) A, B, D, E Only (2) A, C, E Only
+(3) A, B, C, D Only (4) B, C, D, E Only
+#PaperPhodnaHai
+www.mathongo.com
+E lectrostatics JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q4. JEE Main 2026 (24 January Shift 2)
+A point charge q = 1μC is located at a distance 2 cm from one end of a thin insulating wire of length 10 cm having
+a charge Q = 24μC, distributed uniformly along its length, as shown in figure. Force between q and wire is ____ N.
+(Use : 1 = 9×109 N.m2/C2 )
+4πϵ
+o
+Q5. JEE Main 2026 (22 January Shift 2)
+Five positive charges each having charge q are placed at the vertices of a pentagon as shown in the figure. The
+electric potential (V) and the electric field (E→) at the center O of the pentagon due to these five positive charges are:
+(1) V = 5q and E→ = 5√3q r^
+4πεor 8πεor2
+(2) V = 5q and E→ = 0
+4πεr
+o
+(3) V = 0 and E→ = 0
+(4) V = 5q and E→ = 5q r^
+4πε o r 4πε o r2
+Q6. JEE Main 2026 (22 January Shift 2)
+Three small identical bubbles of water having same charge on each coalesce to form a bigger bubble. Then the ratio
+of the potentials on one initial bubble and that on the resultant bigger bubble is :
+(1) 32/3 : 1 (2) 1 : 22/3 (3) 1 : 32/3 (4) 1 : 31/3
+#PaperPhodnaHai
+www.mathongo.com
+E lectrostatics JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q7. JEE Main 2026 (22 January Shift 1)
+Six point charges are kept 60∘ apart from each other on the circumference of a circle of radius R as shown in figure.
+The net electric field at the center of the circle is ____. (ϵ 0 is permittivity of free space)
+(1) Q (√3^i−^j) (2) − 5Q (^i+√3^j)
+4π∈R2 8πϵR2
+o o
+(3) −( 5Q )(^i−3^j) (4) − Q (√3^i−^j)
+8πϵoR2 4πϵoR2
+Q8. JEE Main 2026 (22 January Shift 1)
+A simple pendulum has a bob with mass m and charge q. The pendulum string has negligible mass. When a uniform
+and horizontal electric field
+E→
+is applied, the tension in the string changes. The final tension in the string, when
+pendulum attains an equilibrium position is ____. (g: acceleration due to gravity)
+(1) √m2g2+q2E2 (2) m g+qE
+(3) mg−qE (4) √m2g2−q2E2
+Q9. JEE Main 2026 (22 January Shift 1)
+Electric field in a region is given by E→ = Ax^i+By^j, where A = 10 V/m2 and B = 5 V/m2 . If the electric
+potential at a point (10,20) is 500 V, then the electric potential at origin is ____ V.
+(1) 0 (2) 2000 (3) 500 (4) 1000
+Q10. JEE Main 2026 (23 January Shift 2)
+Two shorts dipoles (A,B),A having charges ±2μC and length 1 cm and B having charges ±4μC and length 1 cm
+are placed with their centres 80 cm apart as shown in the figure. The electric field at a point P, equi-distant from the
+centres of both dipoles is ____ N/C.
+(1)
+9 √2×104
+(2)
+9√2×104
+16
+(3)
+4.5√2×104
+(4)
+9 √2×105
+16
+#PaperPhodnaHai
+www.mathongo.com
+E lectrostatics JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q11. JEE Main 2026 (23 January Shift 2)
+Two charges 7μC and −2μC are placed at (−9,0,0)cm and (9,0,0)cm respectively in an external field E = Ar^,
+r2
+where A = 9×105 N/C.m2 . Considering the potential at infinity is 0, the electrostatic energy of the configuration
+is ____ J.
+(1) 49.3 (2) -90.7 (3) 24.3 (4) 1.4
+Q12. JEE Main 2026 (21 January Shift 1)
+A point charge of 10−8C is placed at origin. The work done in moving a point charge 2μC from point A(4,4,2)m to
+B(2,2,1)m is ____ J. ( 1 = 9×109 in SI units )
+4πϵ
+o
+(1)
+45×10−6
+(2)
+15×10−6
+(3) 0 (4)
+30×10−6
+Q13. JEE Main 2026 (28 January Shift 1)
+Two point charges of 1 nC and 2 nC are placed at the two corners of equilateral triangle of side 3 cm. The work
+done in bringing a charge of 3 nC from infinity to the third corner of the triangle is ____ μJ.
+1 = 9×109 N.m2/C2
+4πϵ0
+(1) 27 (2) 5.4 (3) 2.7 (4) 3.3
+Q14. JEE Main 2026 (24 January Shift 1)
+There are three co-centric conducting spherical shells A,B and C of radii a,b and c respectively (c > b > a) and
+they are charged with charge q 1 ,q 2 and q 3 respectively. The potentials of the spheres A,B and C respectively, are :
+(1) 1 (q 1 +q 2 +q 3), 1 (q 1 +q 2 +q 3), 1 (q 1 +q 2 +q 3)
+4πϵ a 4πϵ b 4πϵ c
+o o o
+(2) 1 (q1 + q2 + q3), 1 (q1+q2+q3), 1 (q1+q2+q3)
+4πϵ a b c 4πϵ b 4πϵ c
+o o o
+(3) 1 (q 1 + q 2 + q 3), 1 (q 1 +q 2 + q 3), 1 (q 1 +q 2 +q 3)
+4πϵo a b c 4πϵo b c 4πϵo c
+(4) 1 (q 1 +q 2 +q 3), 1 (q 1 +q 2 + q 3), 1 (q 1 + q 2 + q 3)
+4πϵ a 4πϵ b c 4πϵ a b c
+o o o
+Q15. JEE Main 2026 (24 January Shift 1)
+Three charges +2q,+3q and −4q are situated at (0,−3a),(2a,0) and (−2a,0) respectively in the xy plane. The
+resultant dipole moment about origin is ____.
+(1)
+2qa(7^i−3^j)
+(2)
+2qa(3^j−^i)
+(3)
+2qa(3^i−7^j)
+(4)
+2qa(3^j−7^i)
+Q16. JEE Main 2026 (24 January Shift 1)
+The electrostatic potential in a charged spherical region of radius r varies as V = ar3+b, where a and b are
+constants. The total charge in the sphere of unit radius is α×πa ∈ o. The value of α is ____.
+(permittivity of vacuum is ϵ 0)
+(1) −9 (2) -12 (3) -8 (4) -6
+#PaperPhodnaHai
+www.mathongo.com
+Electrostatics JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+#PaperPhodnaHai
+www.mathongo.com
+Electrostatics JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+ANSWERS AND SOLUTIONS
+1. (2) 2. (2) 3. (4) 4. 90 5. (2) 6. (3) 7. (4) 8. (1)
+9. (2) 10. (1) 11. (1) 12. (4) 13. (3) 14. (3) 15. (1) 16. (2)
+1. (2) Using energy conservation, the system's kinetic energy must overcome the increase in electrostatic potential
+energy as the spheres approach.
+Initial state: separation 4R, speed u each.
+Final state: touching (separation 2R), speed zero.
+Q2 Q2 Q2
+Change in potential energy: ΔU = k −k = k .
+2R 4R 4R
+Initial kinetic energy: KE i = mu2 .
+Energy equation: mu2 = k Q2 (1− Gm2 ).
+4R kQ2
+Therefore, u = √ kQ2 (1− Gm2).
+4mR kQ2
+2. (2) Using Gauss's law:
+Q
+ϕ = in
+ϵ
+0
+Charge 2q is at vertex A of the cube. A vertex is shared by 8 cubes, so the flux contribution from 2q through this
+cube is 2q = q .
+8ϵ0 4ϵ
+0
+Charge q is at the centre of face CDEF. A face center is shared by 2 cubes, so the flux contribution from q through
+q
+this cube is .
+2ϵ
+0
+Total flux:
+ϕ = q/4+q/2 = 3q
+ϵ 0 4ϵ 0
+3. (4) Statement A: Electrostatic field lines originate from positive charges and terminate on negative charges. They
+do not form closed loops because the electrostatic field is conservative. Thus, A is incorrect.
+Statement B: For a positive point charge (q > 0), the electric field lines are directed radially outwards. Thus, B is
+correct.
+Statement C: Gauss's Law is a consequence of the inverse-square nature of Coulomb's law (F ∝ 1/r2). If the
+force law were different, Gauss's Law would not hold in its standard form. Thus, C is correct.
+Statement D: The electrostatic field is conservative, meaning the work done in moving a charge along any closed
+path is zero (∮ E→⋅d→l = 0). Thus, D is correct.
+Statement E: Coulomb's force is a central force. The motion of a particle under a central force always takes place
+in a plane because the torque about the center is zero, keeping angular momentum constant in direction. Thus, E is
+#PaperPhodnaHai
+www.mathongo.com
+Electrostatics JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+correct.
+Since B, C, D, and E are correct, the correct option is (4).
+4. (90) Consider a small element of length dx on the wire at a distance x from the point charge q.
+The linear charge density of the wire is λ = Q = 24×10−6 = 240×10−6 C/m.
+L 0.1
+The charge on the small element is dQ = λdx.
+The electrostatic force between the point charge q and the element dQ is dF = kqdQ = kqλdx .
+x2 x2
+The total force F is obtained by integrating dF from x = a to x = a+L, where a = 2 cm and L = 10 cm.
+0.12
+F = ∫ 0.12 kqλ dx = kqλ[−1]
+0.02 x2 x 0.02
+F = kqλ( 1 − 1 ) = kq Q (0.12−0.02)
+0.02 0.12 L 0.02×0.12
+F = kqQ L = kqQ
+L a(a+L) a(a+L)
+Substituting the given values: k = 9×109 N.m 2 /C 2 , q = 1×10−6 C, Q = 24×10−6 C, a = 0.02 m, and
+a+L = 0.12 m.
+F =
+9×109×1×10−6×24×10−6
+0.02×0.12
+F =
+9×24×10−3
+=
+216×10−3
+0.0024 2.4×10−3
+F = 216 = 90 N.
+2.4
+5. (2) The electric potential at center O is the scalar sum of contributions from all 5 charges.
+Each charge is equidistant from center, so V = 5cdotkq = 5q .
+r 4πϵ0r
+The electric field is a vector sum of field vectors from all 5 charges.
+Due to 5-fold rotational symmetry of a regular pentagon, the 5 field vectors point radially outward from center,
+equally spaced at 72° angles.
+The vector sum of 5 equally spaced unit vectors is zero, so E→ = 0.
+6. (3) For three identical conducting bubbles with charge q and radius r,
+Initial potential on each: V i = k r q
+When three bubbles coalesce,
+Total charge Q = 3q and new radius from volume: 4πR3 = 3× 4πr3
+3 3
+So R = 31/3r
+Final potential: V f = k(3q) = 3kq = V i ⋅32/3
+31/3r 31/3r
+Ratio: V i : V f = 1 : 32/3
+7. (4) Six point charges equally spaced 60° apart on a circle of radius R, with alternating arrangement creating a
+dipole-like configuration.
+Q
+Each charge creates an electric field at the center of magnitude E 0 = pointing radially (outward for +Q,
+4πε R2
+0
+inward for -Q).
+By vector addition of field contributions from all six charges with proper angle consideration:
+The charges at specific positions create a net field with components that depend on their arrangement.
+#PaperPhodnaHai
+www.mathongo.com
+Electrostatics JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+For the given symmetric configuration, the net electric field is: E → = Q (√3^i −^j)
+4πε R2
+0
+This corresponds to magnitude 2E 0 at angle of −30° from the positive x-axis.
+8. (1) The charged bob experiences two forces at equilibrium:
+Gravitational force: F g = mg (downward)
+Electric force: F E = qE (horizontal, in direction of field)
+These forces are perpendicular to each other. The string tension must balance their resultant.
+At equilibrium, the string makes angle θ with vertical such that:
+Vertical: T cosθ = mg
+Horizontal: T sinθ = qE
+The net force from gravity and electric field is √(mg)2 +(qE)2
+Therefore, the tension in the string is: T = √m2g2 +q2E2
+→
+9. (2) The electric field is related to potential by E = −∇V.
+Given: E → = Ax^i +By^j with A = 10 V/m² and B = 5 V/m²
+This means:
+∂V = −Ax and ∂V = −By
+∂x ∂y
+Integrating:
+V(x,y) = −Ax2 − By2 +C = −5x2 − 5y2 +C
+2 2 2
+Using the boundary condition at (10,20) where V = 500 V:
+5(400)
+500 = −5(100)− +C
+2
+500 = −500−1000+C
+C = 2000 V
+At the origin (0,0):
+5(0)
+V(0,0) = −5(0)− +2000 = 2000 V
+2
+10.
+(1)
+KP 2KP
+E → 2 = − 2 ; E → 1 = − 1
+r3 r3
+P = 2×10−6 ×10−2 = 2×10−8
+1
+P = 4×10−6 ×10−2 = 4×10−8
+2
+2×9×109 ×2×10−8 9×109 ×4×10−8
+E→ = ^i − ^j
+net (0.4)3 (0.4)3
+#PaperPhodnaHai
+www.mathongo.com
+Electrostatics JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+9×109 ×4×10−8
+E→ = [^i −^j]
+net (0.4)3
+9×104
+|E → | = (√2)
+net 16
+11. (1) The total electrostatic energy U of a system of two charges q 1 and q 2 in an external field is given by
+U = q
+1
+V(r
+1
+)+q
+2
+V(r
+2
+)+ k
+r
+q1q2.
+12
+Given external electric field E = Ar^ , the potential V(r) is found by V(r) = −∫r E⋅dr = −∫r Adr = A .
+r2 ∞ ∞ r2 r
+Parameters given:
+q 1 = 7μC = 7×10−6C at r 1 = 9cm = 0.09m.
+q = −2μC = −2×10−6C at r = 9cm = 0.09m.
+2 2
+Distance between charges r 12 = 9−(−9) = 18cm = 0.18m.
+A = 9×105N/C⋅m2.
+Calculating individual terms:
+q
+1
+V(r
+1
+) = q
+1r
+A
+1
+= (7×10−6)9
+0
+×
+.0
+1
+9
+05 = 7×10−6 ×107 = 70J.
+q
+2
+V(r
+2
+) = q
+2r
+A
+2
+= (−2×10−6)9
+0
+×
+.0
+1
+9
+05 = −2×10−6 ×107 = −20J.
+Interaction energy kq 1 q 2 = 9×109×(7×10−6)×(−2×10−6) = −126×10−3 = −0.7J.
+r 12 0.18 0.18
+Total energy U = 70−20−0.7 = 49.3J.
+12. (4) Distance from origin to A: r A = √42 +42 +22 = 6 m
+Distance from origin to B: r B = √22 +22 +12 = 3 m
+Work done: W = q 2 (V B −V A ) = q 2 × 4π q 1 ε 0 ( r 1 B − r 1 A )
+= 2×10−6 ×9×109 ×10−8 ×(1 − 1)
+3 6
+= 18×10−5 × 1 = 30×10−6 J
+6
+13. (3) Two point charges of 1 nC and 2 nC are placed at two corners of an equilateral triangle with side 3 cm. The
+work done in bringing a 3 nC charge from infinity to the third corner equals the charge times the potential at that
+point.
+Both source charges are at distance 0.03 m from the third corner.
+The potential due to the 1 nC charge is V 1 =
+9×109×1×10−9
+= 300 V
+0.03
+and due to the 2 nC charge is V 2 = 9×109 0 × .0 2 3 ×10−9 = 600 V.
+Total potential: V total = 300+600 = 900 V
+Work done: W = 3×10−9 ×900 = 2.7×10−6 J = 2.7 μJ
+14. (3) The potential at any point due to a charged spherical shell of radius R and charge Q is V = 1 Q for points
+4πϵ o R
+inside or on the surface (r ≤ R), and V = 1 Q for points outside (r > R).
+4πϵ r
+o
+Let k = 1 . The potentials of the three shells A,B,C with radii a < b < c and charges q 1 ,q 2 ,q 3 are calculated
+4πϵo
+by superposition.
+For shell A (r = a):
+#PaperPhodnaHai
+www.mathongo.com
+Electrostatics JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Shell A is on its own surface, while it is inside shells B and C.
+V = k q 1 +k q 2 +k q 3 = 1 ( q 1 + q 2 + q 3)
+A a b c 4πϵ o a b c
+For shell B (r = b):
+Shell B is outside shell A, on its own surface, and inside shell C.
+V = k q 1 +k q 2 +k q 3 = 1 ( q 1 +q 2 + q 3)
+B b b c 4πϵ o b c
+For shell C (r = c):
+Shell C is outside shells A and B, and on its own surface.
+V = k q 1 +k q 2 +k q 3 = 1 ( q 1 +q 2 +q 3)
+C c c c 4πϵ c
+o
+Comparing these expressions with the given options, option (3) matches correctly.
+15. (1) The dipole moment is given by:
+p→ = q r→ +q r→ +q r→
+1 1 2 2 3 3
+p→ = (2q)(−3a)^j+(3q)(2a)^i +(−4q)(−2a)^i
+p→ = −6qa^j+6qa^i +8qa^i
+p→ = 14qa^i −6qa^j
+p→ = 2qa(7^i −3^j)
+16. (2) From V = ar3 +b, the electric field is E = −dV/dr = −3ar2 .
+By Gauss's law:
+E(r)⋅4πr2 = Q(r)/ϵ 0, so −3ar2 ×4πr2 = Q(r)/ϵ 0.
+This gives Q(r) = −12πar4ϵ 0.
+At r = 1: Q(1) = −12πaϵ 0.
+Since Q(1) = α×πaϵ 0, we have α = −12
+#PaperPhodnaHai
+www.mathongo.com

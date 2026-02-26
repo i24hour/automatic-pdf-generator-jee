@@ -1,0 +1,139 @@
+# JEE Mains 2025/2026 Reference — Dual Nature of Matter
+# Source: MathonGo Chapter Archive
+# Characters: 4561
+
+D ual Nature of Matter JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q1. JEE Main 2026 (21 January Shift 2)
+A particle having electric charge 3×10−19C and mass 6×10−27 kg is accelerated by applying an electric potential
+of 1.21 V. Wavelength of the matter wave associated with the particle is α×10−12 m. The value of α is ____ -
+(Take Planck's constant = 6.6×10−34 J.s)
+Q2. JEE Main 2026 (23 January Shift 1)
+The de Broglie wavelength of an oxygen molecule at 27∘C is x×10−12 m. The value of x is (take Planck's constant
+= 6.63×10−34 J.s, Boltzmann constant = 1.38×10−23 J/K, mass of oxygen molecule = 5.31×10−26 kg)
+(1) 24 (2) 26 (3) 30 (4) 20
+Q3. JEE Main 2026 (28 January Shift 2)
+Number of photons of equal energy emitted per second by a 6 mW laser source operating at 663 nm is ____.
+(Given : h = 6.63×10−34 J.s and c = 3×108 m/s)
+(1)
+2×1016
+(2)
+10×1015
+(3)
+5×1015
+(4)
+5×1016
+Q4. JEE Main 2026 (24 January Shift 2)
+When a light of a given wavelength falls on a metallic surface the stopping potential for photoelectrons is 3.2 V. If a
+second light having wavelength twice of first light is used, the stopping potential drops to 0.7 V. The wavelength of
+first light is ____ m. (h = 6.63×10−34 J.s,e = 1.6×10−19C,c = 3×108 m/s)
+(1)
+2.5×10−7
+(2)
+2.2×10−8
+(3)
+3.1×10−7
+(4)
+2.9×10−8
+Q5. JEE Main 2026 (22 January Shift 2)
+Light is incident on a metallic plate having work function 110×10−20 J. If the produced photoelectrons have zero
+kinetic energy then the angular frequency of the incident light is ____ rad/s. (h = 6.63×10−34 J.s).
+(1)
+1.04×1013
+(2)
+1.04×1016
+(3)
+1.66×1016
+(4)
+1.66×1015
+Q6. JEE Main 2026 (21 January Shift 1)
+A light wave described by E = 60[sin(3×1015)t+sin(12×1015)t] (in SI units) falls on a metal surface of work
+function 2.8 eV. The maximum kinetic energy of ejected photoelectron is (approximately) ____ eV.
+(h = 6.6×10−34 J. s. and e = 1.6×10−19C)
+(1) 7.8 (2) 6.0 (3) 5.1 (4) 3.8
+#PaperPhodnaHai
+www.mathongo.com
+D ual Nature of Matter JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+Q7. JEE Main 2026 (28 January Shift 1)
+The ratio of de Broglie wavelength of a deutron with kinetic energy E to that of an alpha particle with kinetic
+energy 2E, is n : 1. The value of n is ____.
+(Assume mass of proton = mass of neutron) :
+#PaperPhodnaHai
+www.mathongo.com
+Dual Nature of Matter JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+ANSWERS AND SOLUTIONS
+1. 10 2. (2) 3. (1) 4. (1) 5. (2) 6. (3) 7. 2
+1. (10) The de Broglie wavelength is λ = h where v is found from energy conservation.
+mv
+From qV = 1mv2: v = √2qV = √2×3×10−19×1.21 = √1.21×108 = 1.1×104 m/s.
+2 m 6×10−27
+Therefore: λ = 6.6×10−34 = 6.6×10−34 = 10−11 m = 10×10−12 m.
+6×10−27×1.1×104 6.6×10−23
+Thus α = 10.
+2. (2) The de Broglie wavelength is λ = m h v . For an ideal gas, v rms = √3 m kT
+Therefore: λ = h
+√3mkT
+Substituting values: λ =
+6.63×10−34
+√3×5.31×10−26×1.38×10−23×300
+λ =
+6.63×10−34
+=
+6.63×10−34
+√6.62×10−46 2.57×10−23
+λ = 2.58×10−11 m = 25.8×10−12 m, so x ≈ 26
+3. (1) Power of laser: P = 6 mW = 6×10−3 J/s
+Energy of a single photon at wavelength λ = 663 nm:
+E = hν = hc = 6.63×10−34×3×108
+λ 663×10−9
+E = 6.63×3 ×10−34+8+9 = 19.89 ×10−17 = 3×10−19 J
+663 663
+Number of photons emitted per second:
+N = Total Energy per second = 6×10−3 = 2×1016
+Energy per photon 3×10−19
+4. (1) Using Einstein's photoelectric equation with stopping potentials:
+For first light, hν 1 = ϕ+eV s1.
+For second light with λ = 2λ (so ν = ν /2): hν /2 = ϕ+eV .
+2 1 2 1 1 s2
+From given values: hν 1 −3.2e = hν 1 /2−0.7e gives hν 1 /2 = 2.5e.
+Thus λ 1 = hc = 6.63×10−34×3×108 ≈ 2.5×10−7 m.
+5e 5×1.6×10−19
+5. (2) From Einstein's photoelectric equation, hν = W +KE.
+With zero kinetic energy, hν = W.
+ν = W = 110×10−20 = 16.59×1014
+The frequency is Hz.
+h 6.63×10−34
+The angular frequency is ω = 2πν = 2π×16.59×1014
+= 104.25×1014 = 1.04×1016 rad/s.
+6. (3) Light contains two frequencies: ω 1 = 3×1015 rad/s and ω 2 = 12×1015 rad/s
+For maximum KE, use higher frequency ω .
+2
+Energy: E 2 =
+h
+2
+ω
+π 2 =
+6.6×10−3
+2
+4
+π
+×12×1015
+#PaperPhodnaHai
+www.mathongo.com
+Dual Nature of Matter JEE Main 2026 (January) Question Bank
+Questions with Answer Keys MathonGo
+= 79.2×10−19 = 12.6×10−19 J = 7.9 eV
+6.28
+KE max = E 2 −ϕ = 7.9−2.8 = 5.1 eV
+7. (2) The de Broglie wavelength is λ = h .
+√2mE
+For a deuteron (mass m d = 2m p) with energy E: λ d = h = h
+√2⋅2mp⋅E √4mpE
+For an alpha particle (mass m α = 4m p) with energy 2E: λ α = h = h
+√2⋅4mp⋅2E √16mpE
+The ratio: λ d = √16m p E = √4 = 2
+λ α √4m p E
+#PaperPhodnaHai
+www.mathongo.com
