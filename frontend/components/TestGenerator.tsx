@@ -1099,6 +1099,14 @@ export default function TestGenerator() {
     const [isPartialPdfLoading, setIsPartialPdfLoading] = useState(false);
     const [expandedQuestion, setExpandedQuestion] = useState<number | null>(null);
     const [shownAnswers, setShownAnswers] = useState<Set<number>>(new Set());
+    const questionsRef = useRef<HTMLDivElement>(null);
+
+    // Auto-scroll to questions when they first appear
+    useEffect(() => {
+        if (partialQuestions.length > 0 && questionsRef.current) {
+            questionsRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
+    }, [partialQuestions.length]);
 
     const handleSaveToLibrary = async (visibility: 'private' | 'unlisted' = 'private') => {
         if (!result || !result.pdf_filename) return false;
@@ -2229,79 +2237,12 @@ export default function TestGenerator() {
                             )}
                     </button >
 
-                    {/* Progress Bar */}
-                    {/* Detailed Loading Steps */}
-                    {
-                        isLoading && (
-                            <div className="mb-6 bg-indigo-50 dark:bg-indigo-900/10 rounded-xl p-5 border border-indigo-100 dark:border-indigo-900/30">
-                                <div className="flex items-center justify-between mb-4">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-2 h-2 rounded-full bg-indigo-600 animate-pulse"></div>
-                                        <span className="font-semibold text-indigo-900 dark:text-indigo-300">Working...</span>
-                                    </div>
-                                    <div className="flex items-center gap-1 text-indigo-600 dark:text-indigo-400 bg-white dark:bg-black px-2 py-1 rounded-lg border border-indigo-100 dark:border-indigo-900/30 text-xs font-mono">
-                                        <Clock className="w-3 h-3" />
-                                        <span>{Math.floor(elapsedTime / 60)}:{String(elapsedTime % 60).padStart(2, '0')}</span>
-                                    </div>
-                                </div>
-
-                                <div className="space-y-3">
-                                    {[
-                                        { text: "Analyzing topic and difficulty...", start: 0, end: 5 },
-                                        { text: "Researching question patterns...", start: 5, end: 12 },
-                                        ...(numMCQs > 0 ? [{ text: "Creating MCQ questions...", start: 12, end: 25 }] : []),
-                                        ...(numNumericals > 0 ? [{ text: "Generating numerical problems...", start: 25, end: 35 }] : []),
-                                        { text: "Verifying answers...", start: 35, end: 42 },
-                                        { text: "Formatting PDF document...", start: 42, end: 1000 }
-                                    ].map((step, index) => {
-                                        const isCompleted = elapsedTime > step.end;
-                                        const isCurrent = elapsedTime >= step.start && elapsedTime <= step.end;
-                                        const isPending = elapsedTime < step.start;
-
-                                        return (
-                                            <div key={index} className={`flex items-center gap-3 text-sm transition-all duration-300 ${isPending ? 'opacity-50' : 'opacity-100'}`}>
-                                                {isCompleted ? (
-                                                    <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
-                                                ) : isCurrent ? (
-                                                    <Loader2 className="w-5 h-5 text-indigo-600 animate-spin flex-shrink-0" />
-                                                ) : (
-                                                    <div className="w-5 h-5 rounded-full border-2 border-gray-300 dark:border-gray-600 flex-shrink-0" />
-                                                )}
-                                                <span className={`${isCompleted ? 'text-green-700 dark:text-green-400' : isCurrent ? 'text-indigo-700 dark:text-indigo-300 font-medium' : 'text-gray-500 dark:text-gray-400'}`}>
-                                                    {step.text}
-                                                </span>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-
-                                <button
-                                    onClick={handleCancelGeneration}
-                                    className="w-full mt-6 py-2.5 bg-white dark:bg-black border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:text-red-600 hover:border-red-200 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2"
-                                >
-                                    <X className="w-4 h-4" />
-                                    Cancel Generation
-                                </button>
-                            </div>
-                        )
-                    }
-
-                    {/* Error Message */}
-                    {
-                        (genError || validationError) && (
-                            <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3 text-red-700 animate-in fade-in slide-in-from-top-2">
-                                <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                                <p>{genError || validationError}</p>
-                            </div>
-                        )
-                    }
-
                     {/* ── PROGRESSIVE QUESTION DISPLAY ─────────────────────────────────────
                          Appears as soon as questions are generated (while PDF is still
                          compiling). Download PDF is always available here.
                     ──────────────────────────────────────────────────────────────────── */}
                     {partialQuestions.length > 0 && (
-                        <div className="mt-5">
+                        <div ref={questionsRef} className="mt-4">
                             {/* Header row */}
                             <div className="flex items-center justify-between mb-3">
                                 <div className="flex items-center gap-2">
@@ -2421,6 +2362,91 @@ export default function TestGenerator() {
                             </div>
                         </div>
                     )}
+
+                    {/* Progress Bar */}
+                    {/* Detailed Loading Steps */}
+                    {
+                        isLoading && (
+                            <div className={`bg-indigo-50 dark:bg-indigo-900/10 rounded-xl border border-indigo-100 dark:border-indigo-900/30 mt-4 ${partialQuestions.length > 0 ? "p-3" : "mb-6 p-5"}`}>
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-2 h-2 rounded-full bg-indigo-600 animate-pulse"></div>
+                                        <span className="font-semibold text-indigo-900 dark:text-indigo-300 text-sm">
+                                            {partialQuestions.length > 0 ? "Compiling PDF in background..." : "Working..."}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-1 text-indigo-600 dark:text-indigo-400 bg-white dark:bg-black px-2 py-1 rounded-lg border border-indigo-100 dark:border-indigo-900/30 text-xs font-mono">
+                                            <Clock className="w-3 h-3" />
+                                            <span>{Math.floor(elapsedTime / 60)}:{String(elapsedTime % 60).padStart(2, '0')}</span>
+                                        </div>
+                                        {partialQuestions.length > 0 && (
+                                            <button
+                                                onClick={handleCancelGeneration}
+                                                className="px-3 py-1 bg-white dark:bg-black border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:text-red-600 hover:border-red-200 rounded-lg text-xs font-medium transition-all flex items-center gap-1"
+                                            >
+                                                <X className="w-3 h-3" />
+                                                Cancel
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Full step list — only when questions not yet ready */}
+                                {partialQuestions.length === 0 && (
+                                    <>
+                                        <div className="space-y-3 mt-4">
+                                            {[
+                                                { text: "Analyzing topic and difficulty...", start: 0, end: 5 },
+                                                { text: "Researching question patterns...", start: 5, end: 12 },
+                                                ...(numMCQs > 0 ? [{ text: "Creating MCQ questions...", start: 12, end: 25 }] : []),
+                                                ...(numNumericals > 0 ? [{ text: "Generating numerical problems...", start: 25, end: 35 }] : []),
+                                                { text: "Verifying answers...", start: 35, end: 42 },
+                                                { text: "Formatting PDF document...", start: 42, end: 1000 }
+                                            ].map((step, index) => {
+                                                const isCompleted = elapsedTime > step.end;
+                                                const isCurrent = elapsedTime >= step.start && elapsedTime <= step.end;
+                                                const isPending = elapsedTime < step.start;
+
+                                                return (
+                                                    <div key={index} className={`flex items-center gap-3 text-sm transition-all duration-300 ${isPending ? 'opacity-50' : 'opacity-100'}`}>
+                                                        {isCompleted ? (
+                                                            <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
+                                                        ) : isCurrent ? (
+                                                            <Loader2 className="w-5 h-5 text-indigo-600 animate-spin flex-shrink-0" />
+                                                        ) : (
+                                                            <div className="w-5 h-5 rounded-full border-2 border-gray-300 dark:border-gray-600 flex-shrink-0" />
+                                                        )}
+                                                        <span className={`${isCompleted ? 'text-green-700 dark:text-green-400' : isCurrent ? 'text-indigo-700 dark:text-indigo-300 font-medium' : 'text-gray-500 dark:text-gray-400'}`}>
+                                                            {step.text}
+                                                        </span>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+
+                                        <button
+                                            onClick={handleCancelGeneration}
+                                            className="w-full mt-6 py-2.5 bg-white dark:bg-black border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:text-red-600 hover:border-red-200 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2"
+                                        >
+                                            <X className="w-4 h-4" />
+                                            Cancel Generation
+                                        </button>
+                                    </>
+                                )}
+                            </div>
+                        )
+                    }
+
+                    {/* Error Message */}
+                    {
+                        (genError || validationError) && (
+                            <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3 text-red-700 animate-in fade-in slide-in-from-top-2">
+                                <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                                <p>{genError || validationError}</p>
+                            </div>
+                        )
+                    }
 
                     {/* Success Message */}
                     {
