@@ -1100,47 +1100,13 @@ export default function TestGenerator() {
     const [expandedQuestion, setExpandedQuestion] = useState<number | null>(null);
     const [shownAnswers, setShownAnswers] = useState<Set<number>>(new Set());
     const questionsRef = useRef<HTMLDivElement>(null);
-    const [displayedQuestions, setDisplayedQuestions] = useState<any[]>([]);
-    const revealTimersRef = useRef<NodeJS.Timeout[]>([]);
-
-    // Progressive reveal: stream questions in one-by-one (ChatGPT style)
-    useEffect(() => {
-        // Clear any ongoing reveal timers
-        revealTimersRef.current.forEach(t => clearTimeout(t));
-        revealTimersRef.current = [];
-
-        if (partialQuestions.length === 0) {
-            setDisplayedQuestions([]);
-            return;
-        }
-
-        // Figure out how many are already shown so we only animate newly arrived ones
-        setDisplayedQuestions(prev => {
-            const alreadyShown = prev.length;
-            if (alreadyShown >= partialQuestions.length) return prev; // nothing new
-            // Start with what's already shown
-            return prev;
-        });
-
-        // Animate each new question in with a 120ms stagger
-        partialQuestions.forEach((q, idx) => {
-            const t = setTimeout(() => {
-                setDisplayedQuestions(partialQuestions.slice(0, idx + 1));
-            }, idx * 120);
-            revealTimersRef.current.push(t);
-        });
-
-        return () => {
-            revealTimersRef.current.forEach(t => clearTimeout(t));
-        };
-    }, [partialQuestions]);
 
     // Auto-scroll to questions when they first appear
     useEffect(() => {
-        if (displayedQuestions.length === 1 && questionsRef.current) {
+        if (partialQuestions.length > 0 && questionsRef.current) {
             questionsRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
         }
-    }, [displayedQuestions.length]);
+    }, [partialQuestions.length]);
 
     const handleSaveToLibrary = async (visibility: 'private' | 'unlisted' = 'private') => {
         if (!result || !result.pdf_filename) return false;
@@ -2275,22 +2241,18 @@ export default function TestGenerator() {
                          Appears as soon as questions are generated (while PDF is still
                          compiling). Download PDF is always available here.
                     ──────────────────────────────────────────────────────────────────── */}
-                    {displayedQuestions.length > 0 && (
+                    {partialQuestions.length > 0 && (
                         <div ref={questionsRef} className="mt-4">
                             {/* Header row */}
                             <div className="flex items-center justify-between mb-3">
                                 <div className="flex items-center gap-2">
                                     <CheckCircle2 className="w-4 h-4 text-green-500" />
                                     <span className="font-semibold text-gray-900 dark:text-white text-sm">
-                                        {displayedQuestions.length}
-                                        {partialQuestions.length > displayedQuestions.length && (
-                                            <span className="text-gray-400 font-normal"> / {partialQuestions.length}</span>
-                                        )}
-                                        {" "}Questions
+                                        {partialQuestions.length} Questions
                                     </span>
                                     {isLoading && (
                                         <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 animate-pulse">
-                                            {displayedQuestions.length < partialQuestions.length ? "Streaming…" : "Compiling PDF…"}
+                                            Compiling PDF…
                                         </span>
                                     )}
                                 </div>
@@ -2306,13 +2268,13 @@ export default function TestGenerator() {
                                         ? "Download PDF"
                                         : isPartialPdfLoading
                                             ? "Preparing…"
-                                            : `Download PDF (${displayedQuestions.length})`}
+                                            : `Download PDF (${partialQuestions.length})`}
                                 </button>
                             </div>
 
                             {/* Question cards */}
                             <div className="space-y-2 max-h-[480px] overflow-y-auto pr-0.5">
-                                {displayedQuestions.map((q: any, idx: number) => {
+                                {partialQuestions.map((q: any, idx: number) => {
                                     const isExp = expandedQuestion === idx;
                                     const showAns = shownAnswers.has(idx);
                                     const qType: string = q.type || "mcq";
@@ -2322,7 +2284,15 @@ export default function TestGenerator() {
                                     const sol: string = q.solution || q.explanation || "";
 
                                     return (
-                                        <div key={idx} className="border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-[#0d0f12] overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                        <div
+                                            key={idx}
+                                            className="border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-[#0d0f12] overflow-hidden"
+                                            style={{
+                                                animation: `fadeSlideIn 0.35s ease forwards`,
+                                                animationDelay: `${idx * 80}ms`,
+                                                opacity: 0,
+                                            }}
+                                        >
                                             {/* Collapsed header */}
                                             <button
                                                 className="w-full flex items-start gap-2.5 p-3 text-left hover:bg-gray-50 dark:hover:bg-white/[0.03] transition-colors"
