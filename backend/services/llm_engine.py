@@ -1934,6 +1934,51 @@ WHAT MEDIUM MEANS — follow these rules strictly:
         else:
             num_ans_inst = "NUMERICAL ANSWERS: Must be integers or decimals. NO formulas."
 
+        # ---- NTA-STYLE DIAGRAM INSTRUCTION ----
+        # Chapters that commonly need diagrams (used to decide when to add SVG)
+        DIAGRAM_CHAPTERS = [
+            # Physics
+            "optics", "lens", "mirror", "prism", "refraction", "reflection",
+            "circuit", "resistor", "capacitor", "current", "kirchhoff",
+            "mechanics", "block", "pulley", "incline", "projectile", "free body",
+            "wave", "interference", "diffraction", "em wave", "field line",
+            "magnetic", "lorentz", "ray", "snell",
+            # Maths
+            "parabola", "ellipse", "hyperbola", "circle", "graph", "coordinate",
+            "triangle", "polygon", "vector", "angle", "area",
+            # Chemistry
+            "apparatus", "distillation", "titration", "cell", "electrolysis",
+            "organic", "structural", "benzene", "reaction vessel",
+            # Biology
+            "cell", "organelle", "heart", "kidney", "neuron", "plant", "anatomy",
+        ]
+        topic_lower = topic.lower()
+        subject_lower = subject.lower()
+        needs_diagrams = any(kw in topic_lower or kw in subject_lower for kw in DIAGRAM_CHAPTERS)
+
+        if needs_diagrams:
+            diagram_instruction = """
+
+DIAGRAM RULES (IMPORTANT):
+- If a question cannot be understood without a figure, add a "diagram_svg" field with a compact NTA-style SVG.
+- NTA Style: black strokes only (#000), white background, no CSS classes, no external fonts.
+- Use only: <line>, <circle>, <rect>, <path>, <text>, <arrow>, <polyline>. viewBox="0 0 400 280".
+- Label key parts with <text font-family="Arial" font-size="12">.
+- Keep SVG under 2500 characters. Start SVG with: <svg viewBox="0 0 400 280" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#000" stroke-width="1.5">
+- For questions that need NO diagram (pure calculation, theory), OMIT the "diagram_svg" field entirely.
+
+EXAMPLE 1 (Convex Lens Ray Diagram):
+"diagram_svg": "<svg viewBox='0 0 400 280' xmlns='http://www.w3.org/2000/svg' fill='none' stroke='#000' stroke-width='1.5'><line x1='200' y1='20' x2='200' y2='260'/><ellipse cx='200' cy='140' rx='15' ry='90' fill='#eef'/><line x1='20' y1='140' x2='380' y2='140'/><line x1='60' y1='80' x2='60' y2='180' stroke-width='2'/><text x='62' y='78' font-family='Arial' font-size='11' fill='#000'>O</text><line x1='60' y1='80' x2='240' y2='210' stroke='#c00'/><line x1='60' y1='80' x2='380' y2='80' stroke='#090'/><text x='185' y='18' font-family='Arial' font-size='11'>Principal Axis</text><text x='120' y='135' font-family='Arial' font-size='11'>F</text><text x='275' y='135' font-family='Arial' font-size='11'>F</text></svg>"
+
+EXAMPLE 2 (Simple Resistor Circuit):
+"diagram_svg": "<svg viewBox='0 0 400 280' xmlns='http://www.w3.org/2000/svg' fill='none' stroke='#000' stroke-width='1.5'><rect x='50' y='110' width='300' height='60' rx='4'/><line x1='50' y1='140' x2='20' y2='140'/><line x1='350' y1='140' x2='380' y2='140'/><rect x='155' y='120' width='90' height='40' fill='white'/><text x='185' y='145' font-family='Arial' font-size='12' fill='#000'>R</text><text x='15' y='155' font-family='Arial' font-size='11'>+</text><text x='370' y='155' font-family='Arial' font-size='11'>-</text><text x='180' y='105' font-family='Arial' font-size='11'>Battery</text></svg>"
+
+EXAMPLE 3 (Parabola Graph):
+"diagram_svg": "<svg viewBox='0 0 400 280' xmlns='http://www.w3.org/2000/svg' fill='none' stroke='#000' stroke-width='1.5'><line x1='40' y1='140' x2='360' y2='140'/><line x1='200' y1='260' x2='200' y2='20'/><path d='M 80 240 Q 200 40 320 240' stroke='#00c' fill='none' stroke-width='2'/><text x='355' y='145' font-family='Arial' font-size='12'>x</text><text x='205' y='18' font-family='Arial' font-size='12'>y</text><text x='200' y='155' font-family='Arial' font-size='11'>O</text><text x='130' y='110' font-family='Arial' font-size='11' fill='#00c'>y=ax&#178;</text></svg>"
+"""
+        else:
+            diagram_instruction = ""
+
         # Single strict prompt
         prompt = f"""You are an expert question paper setter for competitive exams like FIITJEE, Allen, Resonance.
 
@@ -1945,7 +1990,7 @@ GENERATE EXACTLY:
 SUBJECT: {subject}
 TOPIC: {topic}
 EXAM LEVEL: {level_prompt}
-
+{diagram_instruction}
 STRICT REQUIREMENTS:
 1. You MUST generate EXACTLY {request_total} questions. Do NOT stop early.
 2. Every question MUST be {difficulty_label.upper()} difficulty as defined above.
@@ -1961,6 +2006,7 @@ STRICT REQUIREMENTS:
 Return EXACTLY this JSON format:
 {{"questions": [
   {{"type": "mcq", "text": "...", "options": ["A","B","C","D"], "answer": "A", "difficulty": "{difficulty_label.lower()}", "solution": "..."}},
+  {{"type": "mcq", "text": "A convex lens of focal length 20 cm...", "options": ["A","B","C","D"], "answer": "B", "difficulty": "{difficulty_label.lower()}", "solution": "...", "diagram_svg": "<svg viewBox='0 0 400 280' ...>...</svg>"}},
   {{"type": "numerical", "text": "...", "answer": "42", "difficulty": "{difficulty_label.lower()}", "solution": "..."}}
 ]}}
 """

@@ -27,7 +27,8 @@ interface QuestionData {
     user_answer: string | null;
     is_marked_for_review: boolean;
     time_remaining_seconds: number;
-    diagram_json?: string;
+    diagram_json?: string;   // Legacy TikZ format
+    diagram_svg?: string;    // New: inline NTA-style SVG
 }
 
 interface TestState {
@@ -410,11 +411,12 @@ export default function TestInterfacePage() {
                             <MathText content={question.question_text} />
                         </div>
 
-                        {/* Diagram Display */}
-                        {question.diagram_json && (
-                            <div className="mb-6">
-                                <DiagramRenderer diagramJson={question.diagram_json} />
-                            </div>
+                        {/* Diagram — shown above options, NTA style */}
+                        {(question.diagram_svg || question.diagram_json) && (
+                            <DiagramRenderer
+                                svgContent={question.diagram_svg}
+                                diagramJson={question.diagram_json}
+                            />
                         )}
 
                         {/* Options or Numerical Input */}

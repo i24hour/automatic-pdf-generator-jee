@@ -76,12 +76,20 @@
 
         \item\relax \VAR{q.text}
         
-        % Check if diagram exists
+        % Check if new PNG diagram (from LLM SVG) exists
+        \BLOCK{ if q.diagram_png_path }
+        \begin{center}
+            \includegraphics[width=0.55\textwidth]{\VAR{q.diagram_png_path}}
+        \end{center}
+        \BLOCK{ endif }
+
+        % Check if legacy TikZ diagram exists
         \BLOCK{ if q.diagram_tikz }
         \begin{center}
             \VAR{q.diagram_tikz}
         \end{center}
         \BLOCK{ endif }
+
 
         % Check if MCQ (single or multi), Numerical, or CBSE types
         \BLOCK{ if q.type == 'mcq_multi' }

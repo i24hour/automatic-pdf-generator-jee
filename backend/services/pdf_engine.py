@@ -547,17 +547,36 @@ class PDFEngine:
                 else:
                     sanitized_q[key] = value
             
-            # 2. Generate Diagram TikZ if metadata exists
+            # 2a. NEW: Convert diagram_svg → PNG for embedding in PDF
+            diagram_svg = q.get("diagram_svg")
+            if diagram_svg and diagram_svg.strip().startswith("<svg"):
+                try:
+                    import cairosvg
+                    png_bytes = cairosvg.svg2png(
+                        bytestring=diagram_svg.encode("utf-8"),
+                        output_width=350,
+                        background_color="white",
+                    )
+                    # Write PNG to a persistent temp file (cleaned up after compile)
+                    import tempfile as _tf
+                    png_file = _tf.NamedTemporaryFile(suffix=".png", delete=False)
+                    png_file.write(png_bytes)
+                    png_file.flush()
+                    png_file.close()
+                    sanitized_q["diagram_png_path"] = png_file.name
+                except Exception as e:
+                    print(f"[Diagram SVG→PNG] Skipped for PDF (cairosvg error): {e}")
+                    sanitized_q["diagram_png_path"] = None
+
+            # 2b. LEGACY: Generate diagram TikZ via diagram_engine if params exist
             diagram_type = q.get("diagram_type")
             diagram_params = q.get("diagram_params")
-            
             if diagram_type and isinstance(diagram_params, dict):
                 try:
-                    # Generate the TikZ snippet
                     tikz_code = self.diagram_generator.generate(diagram_type, diagram_params)
                     sanitized_q["diagram_tikz"] = tikz_code
                 except Exception as e:
-                    print(f"Error generating diagram for PDF: {e}")
+                    print(f"Error generating TikZ diagram for PDF: {e}")
                     sanitized_q["diagram_tikz"] = None
             
 

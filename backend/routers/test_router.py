@@ -55,7 +55,8 @@ class QuestionData(BaseModel):
     difficulty: str
     question_type: str
     question_text: str
-    diagram_json: Optional[str] = None
+    diagram_json: Optional[str] = None   # Legacy TikZ format
+    diagram_svg: Optional[str] = None    # New: inline SVG string
     options: Optional[dict] = None
     status: str
     user_answer: Optional[str] = None
@@ -239,10 +240,13 @@ def launch_test_attempt(
                 marks_correct=q_data.get("marks", 4),
                 marks_wrong=-1,
                 status="NOT_VISITED",
-                diagram_json=json.dumps({
-                    "type": q_data.get("diagram_type"),
-                    "params": q_data.get("diagram_params")
-                }) if q_data.get("diagram_type") else None
+                # Store diagram_svg directly if available (new format), else legacy TikZ dict
+                diagram_json=q_data.get("diagram_svg") or (
+                    json.dumps({
+                        "type": q_data.get("diagram_type"),
+                        "params": q_data.get("diagram_params")
+                    }) if q_data.get("diagram_type") else None
+                )
             )
             db.add(response)
             
@@ -382,7 +386,17 @@ async def get_question(
     db.commit()
     
     options = json.loads(response.options_json) if response.options_json else None
-    
+
+    # Detect new inline SVG format vs legacy TikZ JSON
+    diagram_svg = None
+    diagram_json = None
+    raw_diagram = response.diagram_json
+    if raw_diagram:
+        if raw_diagram.strip().startswith("<svg"):
+            diagram_svg = raw_diagram   # New: pass SVG directly to frontend
+        else:
+            diagram_json = raw_diagram  # Legacy: TikZ JSON for old renderer
+
     return QuestionData(
         question_index=response.question_index,
         total_questions=test.total_questions,
@@ -392,11 +406,12 @@ async def get_question(
         question_type=response.question_type,
         question_text=response.question_text,
         options=options,
+        diagram_json=diagram_json,
+        diagram_svg=diagram_svg,
         status=get_question_status(response),
         user_answer=response.user_answer,
         is_marked_for_review=response.is_marked_for_review,
         time_remaining_seconds=calculate_time_remaining(test),
-        diagram_json=response.diagram_json
     )
 
 
