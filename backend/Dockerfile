@@ -7,7 +7,21 @@ WORKDIR /app
 # Ensure logs are flushed immediately
 ENV PYTHONUNBUFFERED=1
 
-# (System dependencies are already installed in base image)
+# Install build tools and system deps needed to compile pycairo & manimpango (Manim deps)
+# This is needed until the base image is rebuilt with these tools included
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    gcc \
+    g++ \
+    meson \
+    ninja-build \
+    pkg-config \
+    python3-dev \
+    libcairo2-dev \
+    libpango1.0-dev \
+    libgdk-pixbuf2.0-dev \
+    ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better caching
 COPY requirements.txt .

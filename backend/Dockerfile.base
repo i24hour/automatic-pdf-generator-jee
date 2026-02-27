@@ -6,7 +6,16 @@ WORKDIR /app
 # Ensure logs are flushed immediately
 ENV PYTHONUNBUFFERED=1
 
-# Install system dependencies for LaTeX (Heavy layer - ~500MB)
+# Install C compiler and build tools first (needed to compile pycairo, manimpango, etc.)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    gcc \
+    g++ \
+    meson \
+    ninja-build \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install system dependencies for LaTeX and video generation
 RUN apt-get update && apt-get install -y --no-install-recommends \
     texlive-latex-base \
     texlive-fonts-recommended \
