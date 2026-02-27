@@ -87,9 +87,9 @@ app.include_router(payments_router.router)
 from routers.diagram_router import router as diagram_router
 app.include_router(diagram_router)
 
-# Video Generator (Disabled for stability)
-# from routers.video_router import router as video_router
-# app.include_router(video_router)
+# Video Generator (enabled - uses direct background tasks, no SQS)
+from routers.video_router import router as video_router
+app.include_router(video_router)
 
 
 def _init_db_background():

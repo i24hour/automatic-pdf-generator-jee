@@ -18,6 +18,7 @@ import {
 import DesktopSidebar from "@/components/layout/DesktopSidebar";
 import MobileNav from "@/components/layout/MobileNav";
 import { useAuth } from "@/lib/auth-context";
+import { API_BASE_URL as API_URL } from "@/lib/config";
 
 const TOPICS = [
     "Algebra",
@@ -98,7 +99,6 @@ export default function VideoGeneratorPage() {
         setGenerationProgress(0);
         setCurrentStep("Initializing...");
 
-        const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://mentors-mantra-api-87253755436.us-central1.run.app";
         const token = localStorage.getItem("auth_token");
 
         try {

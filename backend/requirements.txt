@@ -35,6 +35,7 @@ google-cloud-storage==2.14.0
 reportlab==4.0.9
 cairosvg==2.7.1
 
-
-# Video Generator deps are on EC2 worker only (see docker/Dockerfile.manim)
-# API just sends jobs to SQS
+# Video Generator (runs directly on Cloud Run)
+manim>=0.18.0
+edge-tts>=6.1.9
+python-dotenv==1.0.0

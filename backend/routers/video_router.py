@@ -1,9 +1,17 @@
 """
 Video Router - API endpoints for video generation.
+
+Pipeline (direct, no SQS):
+  1. LLM generates Manim code + narration script
+  2. Manim renders animation to .mp4 (subprocess)
+  3. edge-tts generates audio narration to .mp3
+  4. FFmpeg merges video + audio
+  5. Uploads final .mp4 to GCS
+  6. Frontend polls /status/{job_id} via SSE
 """
 
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Query
-from fastapi.responses import StreamingResponse, JSONResponse
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field
 from typing import Optional, List
@@ -11,78 +19,226 @@ from datetime import datetime
 import uuid
 import asyncio
 import json
+import os
+import tempfile
+import subprocess
 
 from database import get_db
 from models import User
 from auth import get_current_user_required as get_current_user
 from services.tts_engine import get_tts_engine
 from services.manim_generator import get_manim_generator
-
-
+from services.gcs_storage import gcs_storage
 
 
 router = APIRouter(prefix="/api/video", tags=["Video Generation"])
 
 
-# In-memory job store (replace with Redis/DB in production)
-video_jobs = {}
+# In-memory job store (sufficient for Cloud Run's single instance mode)
+# For multi-instance deploys, replace with Redis or DB
+video_jobs: dict = {}
 
 
-# --- Pydantic Models ---
+# ─── Pydantic Models ───────────────────────────────────────────────────────────
 
 class VideoGenerateRequest(BaseModel):
-    """Request model for video generation."""
-    prompt: str = Field(..., min_length=5, max_length=1000, description="Math topic or question")
-    topic: str = Field(default="Geometry", description="Topic category")
-    language: str = Field(default="en", description="Language code (en/hi)")
-    tts_provider: str = Field(default="edge", description="TTS provider (edge/elevenlabs/openai)")
-    max_duration: int = Field(default=60, ge=30, le=300, description="Max video duration in seconds")
+    prompt: str = Field(..., min_length=5, max_length=1000)
+    topic: str = Field(default="Geometry")
+    language: str = Field(default="en")
+    tts_provider: str = Field(default="edge")
+    max_duration: int = Field(default=60, ge=30, le=300)
 
 
 class VideoJobStatus(BaseModel):
-    """Response model for job status."""
     job_id: str
-    status: str  # pending, generating_code, rendering, generating_audio, combining, completed, failed
-    progress: int  # 0-100
+    status: str   # pending | generating_code | rendering | generating_audio | combining | uploading | completed | failed
+    progress: int
     current_step: str
     video_url: Optional[str] = None
     error: Optional[str] = None
-    estimated_time_remaining: Optional[int] = None
     model_used: Optional[str] = None
     created_at: datetime
 
 
-class VideoInfo(BaseModel):
-    """Response model for video info."""
-    id: str
-    title: str
-    prompt: str
-    topic: str
-    language: str
-    duration_seconds: Optional[int]
-    video_url: str
-    thumbnail_url: Optional[str]
-    model_used: str
-    tts_provider: str
-    created_at: datetime
+# ─── Helpers ──────────────────────────────────────────────────────────────────
+
+def _update_job(job_id: str, **kwargs):
+    """Safely update job fields."""
+    if job_id in video_jobs:
+        video_jobs[job_id].update(kwargs)
 
 
-class TTSProviderInfo(BaseModel):
-    """TTS provider info."""
-    id: str
-    name: str
-    available: bool
-    premium: bool = False
+# ─── Background Pipeline ───────────────────────────────────────────────────────
+
+async def process_video_generation(job_id: str, request: VideoGenerateRequest, user_id: str):
+    """
+    Full video generation pipeline running as a FastAPI background task with a global timeout.
+    """
+    try:
+        # Enforce a strict 10-minute time limit for the entire process (prevents infinite hanging)
+        await asyncio.wait_for(
+            _run_video_pipeline(job_id, request, user_id),
+            timeout=600
+        )
+    except asyncio.TimeoutError:
+        _update_job(job_id, status="failed", error="Video generation timed out after 10 minutes.", current_step="Failed: Timeout exceeded")
+        print(f"✗ Video job {job_id} timed out after 10 minutes")
+
+async def _run_video_pipeline(job_id: str, request: VideoGenerateRequest, user_id: str):
+    """Actual pipeline logic"""
+    job = video_jobs[job_id]
+
+    try:
+        # ── Step 1: Generate Manim code via LLM ──────────────────────────────
+        _update_job(job_id, status="generating_code", progress=10,
+                    current_step="Generating animation code with AI...")
+
+        generator = get_manim_generator()
+        code_result = await generator.generate_animation(
+            topic=request.prompt,
+            language=request.language,
+            max_duration=request.max_duration
+        )
+
+        if not code_result.get("success"):
+            raise Exception(f"Code generation failed: {code_result.get('error')}")
+
+        _update_job(job_id,
+                    model_used=code_result.get("model_used"),
+                    title=code_result.get("title", request.prompt[:50]))
+
+        manim_code = code_result["manim_code"]
+        narration_script = code_result.get("narration_script", [])
+
+        # ── Step 2: Validate code syntax ─────────────────────────────────────
+        _update_job(job_id, progress=20, current_step="Validating animation code...")
+
+        validation = generator.validate_code(manim_code)
+        if not validation.get("valid", False):
+            raise Exception(f"Code validation failed: {validation.get('error')}")
+
+        # ── Step 3: Render Manim video ────────────────────────────────────────
+        _update_job(job_id, status="rendering", progress=30,
+                    current_step="Rendering mathematical animation (this takes 1-3 mins)...")
+
+        work_dir = tempfile.mkdtemp(prefix=f"video_{job_id}_")
+        render_result = await generator.render_video(
+            code=manim_code,
+            output_dir=work_dir,
+            quality="low"   # 480p for faster rendering on Cloud Run
+        )
+
+        if not render_result.get("success"):
+            raise Exception(f"Manim render failed: {render_result.get('error')}")
+
+        video_path = render_result["video_path"]
+        _update_job(job_id, progress=60, current_step="Animation rendered successfully!")
+
+        # ── Step 4: Generate TTS narration ───────────────────────────────────
+        _update_job(job_id, status="generating_audio", progress=65,
+                    current_step="Generating voice narration...")
+
+        tts = get_tts_engine()
+
+        full_narration = " ".join([
+            seg["text"] for seg in narration_script
+        ]) if narration_script else request.prompt
+
+        audio_result = await tts.generate_audio(
+            text=full_narration,
+            provider=request.tts_provider,
+            language=request.language
+        )
+
+        _update_job(job_id, progress=75, current_step="Voice narration generated!")
+
+        # ── Step 5: Merge video + audio via FFmpeg ────────────────────────────
+        _update_job(job_id, status="combining", progress=80,
+                    current_step="Combining video and audio...")
+
+        final_video_path = os.path.join(work_dir, "final_output.mp4")
+
+        if audio_result.get("success") and audio_result.get("audio_path"):
+            audio_path = audio_result["audio_path"]
+            # Mix: loop video if shorter than audio, truncate at shorter of the two
+            ffmpeg_cmd = [
+                "ffmpeg", "-y",
+                "-i", video_path,
+                "-i", audio_path,
+                "-c:v", "copy",
+                "-c:a", "aac",
+                "-shortest",
+                final_video_path
+            ]
+            try:
+                proc = await asyncio.create_subprocess_exec(
+                    *ffmpeg_cmd,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE
+                )
+                _, stderr = await asyncio.wait_for(proc.communicate(), timeout=120)
+                if proc.returncode != 0:
+                    print(f"FFmpeg warning (using silent video): {stderr.decode()[:500]}")
+                    final_video_path = video_path  # fallback: silent video
+            except (asyncio.TimeoutError, FileNotFoundError):
+                print("FFmpeg unavailable or timed out — using silent video.")
+                final_video_path = video_path
+        else:
+            # No audio — serve silent video
+            final_video_path = video_path
+
+        _update_job(job_id, progress=90, current_step="Video assembled!")
+
+        # ── Step 6: Upload to GCS ─────────────────────────────────────────────
+        _update_job(job_id, status="uploading", progress=92,
+                    current_step="Uploading video to cloud storage...")
+
+        video_url = None
+        if gcs_storage.is_configured():
+            object_key = f"videos/{user_id}/{job_id}.mp4"
+            video_url = await asyncio.to_thread(
+                gcs_storage.upload_video,
+                final_video_path,
+                object_key
+            )
+
+        if not video_url:
+            # Fallback: serve from local static directory
+            static_dir = os.path.join(os.path.dirname(__file__), "..", "static", "videos")
+            os.makedirs(static_dir, exist_ok=True)
+            local_name = f"{job_id}.mp4"
+            local_path = os.path.join(static_dir, local_name)
+            import shutil
+            shutil.copy2(final_video_path, local_path)
+            video_url = f"/static/videos/{local_name}"
+
+        # ── Done ──────────────────────────────────────────────────────────────
+        _update_job(job_id,
+                    status="completed",
+                    progress=100,
+                    current_step="Video ready!",
+                    video_url=video_url,
+                    duration_seconds=code_result.get("estimated_duration", 60))
+
+        print(f"✓ Video job {job_id} completed: {video_url}")
+
+    except Exception as e:
+        _update_job(job_id,
+                    status="failed",
+                    error=str(e),
+                    current_step=f"Failed: {str(e)[:200]}")
+        print(f"✗ Video job {job_id} failed: {e}")
+
+    finally:
+        # Clean up temp dir
+        try:
+            import shutil
+            shutil.rmtree(work_dir, ignore_errors=True)
+        except Exception:
+            pass
 
 
-class VoiceInfo(BaseModel):
-    """Voice info."""
-    id: str
-    name: str
-    gender: str
-
-
-# --- API Endpoints ---
+# ─── API Endpoints ─────────────────────────────────────────────────────────────
 
 @router.post("/generate")
 async def generate_video(
@@ -92,18 +248,17 @@ async def generate_video(
     current_user: User = Depends(get_current_user)
 ):
     """
-    Start video generation job.
-    Returns job_id for tracking progress.
+    Start a video generation job. Returns job_id for status polling.
+    Processing happens as a FastAPI background task (no SQS needed).
     """
     job_id = str(uuid.uuid4())
-    
-    # Create job entry
+
     video_jobs[job_id] = {
         "job_id": job_id,
         "user_id": current_user.id,
         "status": "pending",
         "progress": 0,
-        "current_step": "Initializing...",
+        "current_step": "Queued — starting shortly...",
         "prompt": request.prompt,
         "topic": request.topic,
         "language": request.language,
@@ -114,31 +269,16 @@ async def generate_video(
         "model_used": None,
         "created_at": datetime.utcnow()
     }
-    
-    # Push job to SQS
-    from services.aws_services import get_aws_services
-    aws = get_aws_services()
-    
-    job_data = {
-        "job_id": job_id,
-        "prompt": request.prompt,
-        "topic": request.topic,
-        "language": request.language,
-        "tts_provider": request.tts_provider,
-        "max_duration": request.max_duration,
-        "user_id": current_user.id
-    }
-    
-    success = await aws.send_job_to_queue(job_data)
-    
-    if success:
-        video_jobs[job_id]["status"] = "queued"
-        video_jobs[job_id]["current_step"] = "Queued for processing..."
-    else:
-        video_jobs[job_id]["status"] = "failed"
-        video_jobs[job_id]["error"] = "Failed to queue job"
-    
-    return {"job_id": job_id, "status": video_jobs[job_id]["status"]}
+
+    # Launch the pipeline as a non-blocking background task
+    background_tasks.add_task(
+        process_video_generation,
+        job_id,
+        request,
+        current_user.id
+    )
+
+    return {"job_id": job_id, "status": "pending"}
 
 
 @router.get("/status/{job_id}")
@@ -146,16 +286,15 @@ async def get_job_status(
     job_id: str,
     current_user: User = Depends(get_current_user)
 ):
-    """Get video generation job status."""
+    """Poll video generation job status."""
     if job_id not in video_jobs:
         raise HTTPException(status_code=404, detail="Job not found")
-    
+
     job = video_jobs[job_id]
-    
-    # Security check
+
     if job["user_id"] != current_user.id:
         raise HTTPException(status_code=403, detail="Not authorized")
-    
+
     return VideoJobStatus(
         job_id=job["job_id"],
         status=job["status"],
@@ -174,49 +313,43 @@ async def stream_job_status(
     current_user: User = Depends(get_current_user)
 ):
     """
-    Stream job status updates using Server-Sent Events (SSE).
+    Stream live status updates as Server-Sent Events (SSE).
+    Frontend can use EventSource for real-time progress.
     """
     if job_id not in video_jobs:
         raise HTTPException(status_code=404, detail="Job not found")
-    
-    job = video_jobs[job_id]
-    
-    if job["user_id"] != current_user.id:
+
+    if video_jobs[job_id]["user_id"] != current_user.id:
         raise HTTPException(status_code=403, detail="Not authorized")
-    
+
     async def event_generator():
         last_progress = -1
-        while True:
+        for _ in range(360):  # max 6 min (1s poll)
             if job_id not in video_jobs:
                 break
-                
+
             job = video_jobs[job_id]
-            
-            # Only send update if progress changed
+
             if job["progress"] != last_progress:
                 last_progress = job["progress"]
-                data = json.dumps({
+                payload = json.dumps({
                     "status": job["status"],
                     "progress": job["progress"],
                     "current_step": job["current_step"],
                     "video_url": job.get("video_url"),
                     "error": job.get("error")
                 })
-                yield f"data: {data}\n\n"
-            
-            # Stop if completed or failed
-            if job["status"] in ["completed", "failed"]:
+                yield f"data: {payload}\n\n"
+
+            if job["status"] in ("completed", "failed"):
                 break
-            
+
             await asyncio.sleep(1)
-    
+
     return StreamingResponse(
         event_generator(),
         media_type="text/event-stream",
-        headers={
-            "Cache-Control": "no-cache",
-            "Connection": "keep-alive",
-        }
+        headers={"Cache-Control": "no-cache", "Connection": "keep-alive"}
     )
 
 
@@ -224,72 +357,17 @@ async def stream_job_status(
 async def get_tts_providers():
     """Get available TTS providers."""
     tts = get_tts_engine()
-    providers = tts.get_available_providers()
-    return {"providers": providers}
+    return {"providers": tts.get_available_providers()}
 
 
 @router.get("/voices")
 async def get_voices(
-    provider: str = Query(default="edge", description="TTS provider"),
-    language: str = Query(default="en", description="Language code")
+    provider: str = Query(default="edge"),
+    language: str = Query(default="en")
 ):
-    """Get available voices for a provider and language."""
+    """Get available voices for a TTS provider."""
     tts = get_tts_engine()
-    voices = tts.get_voices(provider, language)
-    return {"voices": voices}
-
-
-@router.get("/{video_id}")
-async def get_video(
-    video_id: str,
-    current_user: User = Depends(get_current_user)
-):
-    """Get video details."""
-    # TODO: Implement with database
-    if video_id not in video_jobs:
-        raise HTTPException(status_code=404, detail="Video not found")
-    
-    job = video_jobs[video_id]
-    
-    if job["user_id"] != current_user.id:
-        raise HTTPException(status_code=403, detail="Not authorized")
-    
-    if job["status"] != "completed":
-        raise HTTPException(status_code=400, detail="Video not ready")
-    
-    return VideoInfo(
-        id=job["job_id"],
-        title=job.get("title", job["prompt"][:50]),
-        prompt=job["prompt"],
-        topic=job["topic"],
-        language=job["language"],
-        duration_seconds=job.get("duration_seconds"),
-        video_url=job["video_url"],
-        thumbnail_url=None,
-        model_used=job.get("model_used", "unknown"),
-        tts_provider=job["tts_provider"],
-        created_at=job["created_at"]
-    )
-
-
-@router.delete("/{video_id}")
-async def delete_video(
-    video_id: str,
-    current_user: User = Depends(get_current_user)
-):
-    """Delete a video."""
-    if video_id not in video_jobs:
-        raise HTTPException(status_code=404, detail="Video not found")
-    
-    job = video_jobs[video_id]
-    
-    if job["user_id"] != current_user.id:
-        raise HTTPException(status_code=403, detail="Not authorized")
-    
-    # TODO: Delete from S3
-    del video_jobs[video_id]
-    
-    return {"success": True, "message": "Video deleted"}
+    return {"voices": tts.get_voices(provider, language)}
 
 
 @router.get("/history/me")
@@ -298,129 +376,28 @@ async def get_my_videos(
     offset: int = Query(default=0, ge=0),
     current_user: User = Depends(get_current_user)
 ):
-    """Get user's video generation history."""
+    """Get video generation history for current user."""
     user_jobs = [
         job for job in video_jobs.values()
         if job["user_id"] == current_user.id and job["status"] == "completed"
     ]
-    
-    # Sort by created_at descending
     user_jobs.sort(key=lambda x: x["created_at"], reverse=True)
-    
-    # Paginate
     paginated = user_jobs[offset:offset + limit]
-    
-    return {
-        "videos": paginated,
-        "total": len(user_jobs),
-        "limit": limit,
-        "offset": offset
-    }
+
+    return {"videos": paginated, "total": len(user_jobs), "limit": limit, "offset": offset}
 
 
-# --- Background Task ---
-
-async def process_video_generation(
-    job_id: str,
-    request: VideoGenerateRequest,
-    user_id: str
+@router.delete("/{video_id}")
+async def delete_video(
+    video_id: str,
+    current_user: User = Depends(get_current_user)
 ):
-    """
-    Background task for video generation.
-    Steps:
-    1. Generate Manim code with LLM
-    2. Validate code
-    3. Render video with Manim
-    4. Generate TTS audio
-    5. Combine video + audio
-    6. Upload to S3
-    """
-    job = video_jobs[job_id]
-    
-    try:
-        # Step 1: Generate Manim code
-        job["status"] = "generating_code"
-        job["progress"] = 10
-        job["current_step"] = "Generating animation code..."
-        
-        generator = get_manim_generator()
-        code_result = await generator.generate_animation(
-            topic=request.prompt,
-            language=request.language,
-            max_duration=request.max_duration
-        )
-        
-        if not code_result.get("success"):
-            raise Exception(f"Code generation failed: {code_result.get('error')}")
-        
-        job["model_used"] = code_result.get("model_used")
-        job["title"] = code_result.get("title", request.prompt[:50])
-        
-        # Step 2: Validate code
-        job["progress"] = 20
-        job["current_step"] = "Validating animation code..."
-        
-        validation = generator.validate_code(code_result["manim_code"])
-        if not validation.get("valid", False):
-            raise Exception(f"Code validation failed: {validation.get('error')}")
-        
-        # Step 3: Render video (PLACEHOLDER - needs Docker setup)
-        job["status"] = "rendering"
-        job["progress"] = 30
-        job["current_step"] = "Rendering video animations..."
-        
-        # TODO: Implement actual rendering with Docker/EC2
-        # For now, simulate rendering
-        await asyncio.sleep(5)
-        job["progress"] = 60
-        
-        # Step 4: Generate TTS audio
-        job["status"] = "generating_audio"
-        job["progress"] = 70
-        job["current_step"] = "Generating voice narration..."
-        
-        tts = get_tts_engine()
-        
-        # Combine all narration scripts
-        full_narration = " ".join([
-            segment["text"] for segment in code_result["narration_script"]
-        ])
-        
-        audio_result = await tts.generate_audio(
-            text=full_narration,
-            provider=request.tts_provider,
-            language=request.language
-        )
-        
-        if not audio_result.get("success"):
-            raise Exception(f"TTS failed: {audio_result.get('error')}")
-        
-        job["progress"] = 85
-        
-        # Step 5: Combine video + audio (PLACEHOLDER)
-        job["status"] = "combining"
-        job["progress"] = 90
-        job["current_step"] = "Combining video and audio..."
-        
-        # TODO: Implement FFmpeg combining
-        await asyncio.sleep(2)
-        
-        # Step 6: Upload to S3 (PLACEHOLDER)
-        job["progress"] = 95
-        job["current_step"] = "Uploading video..."
-        
-        # TODO: Implement S3 upload
-        await asyncio.sleep(1)
-        
-        # Complete
-        job["status"] = "completed"
-        job["progress"] = 100
-        job["current_step"] = "Video ready!"
-        job["video_url"] = f"https://example.com/videos/{job_id}.mp4"  # Placeholder
-        job["duration_seconds"] = code_result.get("estimated_duration", 60)
-        
-    except Exception as e:
-        job["status"] = "failed"
-        job["error"] = str(e)
-        job["current_step"] = f"Failed: {str(e)}"
-        print(f"Video generation failed for {job_id}: {e}")
+    """Delete a video job."""
+    if video_id not in video_jobs:
+        raise HTTPException(status_code=404, detail="Video not found")
+
+    if video_jobs[video_id]["user_id"] != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+
+    del video_jobs[video_id]
+    return {"success": True}
