@@ -1102,12 +1102,44 @@ export default function TestGenerator() {
     const [shownAnswers, setShownAnswers] = useState<Set<number>>(new Set());
     const questionsRef = useRef<HTMLDivElement>(null);
 
-    // Auto-scroll to questions when they first appear
+    // Streaming reveal: drip questions one-by-one even though they all arrive at once
+    const [revealCount, setRevealCount] = useState(0);
+    const revealIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    // Always keep a ref to the latest questions so the interval closure sees fresh data
+    const latestQuestionsRef = useRef<any[]>([]);
+    latestQuestionsRef.current = partialQuestions;
+
     useEffect(() => {
-        if (partialQuestions.length > 0 && questionsRef.current) {
+        if (partialQuestions.length === 0) {
+            // Reset on new generation
+            if (revealIntervalRef.current) {
+                clearInterval(revealIntervalRef.current);
+                revealIntervalRef.current = null;
+            }
+            setRevealCount(0);
+            return;
+        }
+
+        // Questions just arrived — start drip reveal (only if not already running)
+        if (revealIntervalRef.current !== null) return;
+
+        let count = 0;
+        revealIntervalRef.current = setInterval(() => {
+            count += 1;
+            setRevealCount(count);
+            if (count >= latestQuestionsRef.current.length) {
+                clearInterval(revealIntervalRef.current!);
+                revealIntervalRef.current = null;
+            }
+        }, 180); // one question every 180 ms
+    }, [partialQuestions.length]); // only re-runs when count changes, not reference
+
+    // Auto-scroll when first question appears
+    useEffect(() => {
+        if (revealCount === 1 && questionsRef.current) {
             questionsRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
         }
-    }, [partialQuestions.length]);
+    }, [revealCount]);
 
     const handleSaveToLibrary = async (visibility: 'private' | 'unlisted' = 'private') => {
         if (!result || !result.pdf_filename) return false;
@@ -2242,20 +2274,28 @@ export default function TestGenerator() {
                          Appears as soon as questions are generated (while PDF is still
                          compiling). Download PDF is always available here.
                     ──────────────────────────────────────────────────────────────────── */}
-                    {partialQuestions.length > 0 && (
+                    {revealCount > 0 && (
                         <div ref={questionsRef} className="mt-4">
                             {/* Header row */}
                             <div className="flex items-center justify-between mb-3">
                                 <div className="flex items-center gap-2">
                                     <CheckCircle2 className="w-4 h-4 text-green-500" />
                                     <span className="font-semibold text-gray-900 dark:text-white text-sm">
-                                        {partialQuestions.length} Questions
+                                        {revealCount}
+                                        {revealCount < partialQuestions.length && (
+                                            <span className="text-gray-400 font-normal"> / {partialQuestions.length}</span>
+                                        )}
+                                        {" "}Questions
                                     </span>
-                                    {isLoading && (
+                                    {revealCount < partialQuestions.length ? (
                                         <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 animate-pulse">
+                                            Streaming…
+                                        </span>
+                                    ) : isLoading ? (
+                                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 animate-pulse">
                                             Compiling PDF…
                                         </span>
-                                    )}
+                                    ) : null}
                                 </div>
                                 <button
                                     onClick={handleDownloadCurrentQuestions}
@@ -2269,13 +2309,13 @@ export default function TestGenerator() {
                                         ? "Download PDF"
                                         : isPartialPdfLoading
                                             ? "Preparing…"
-                                            : `Download PDF (${partialQuestions.length})`}
+                                            : `Download PDF (${revealCount})`}
                                 </button>
                             </div>
 
                             {/* Question cards */}
                             <div className="space-y-2 max-h-[480px] overflow-y-auto pr-0.5">
-                                {partialQuestions.map((q: any, idx: number) => {
+                                {partialQuestions.slice(0, revealCount).map((q: any, idx: number) => {
                                     const isExp = expandedQuestion === idx;
                                     const showAns = shownAnswers.has(idx);
                                     const qType: string = q.type || "mcq";
@@ -2383,12 +2423,12 @@ export default function TestGenerator() {
                     {/* Detailed Loading Steps */}
                     {
                         isLoading && (
-                            <div className={`bg-indigo-50 dark:bg-indigo-900/10 rounded-xl border border-indigo-100 dark:border-indigo-900/30 mt-4 ${partialQuestions.length > 0 ? "p-3" : "mb-6 p-5"}`}>
+                            <div className={`bg-indigo-50 dark:bg-indigo-900/10 rounded-xl border border-indigo-100 dark:border-indigo-900/30 mt-4 ${revealCount > 0 ? "p-3" : "mb-6 p-5"}`}>
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-2">
                                         <div className="w-2 h-2 rounded-full bg-indigo-600 animate-pulse"></div>
                                         <span className="font-semibold text-indigo-900 dark:text-indigo-300 text-sm">
-                                            {partialQuestions.length > 0 ? "Compiling PDF in background..." : "Working..."}
+                                            {revealCount > 0 ? "Compiling PDF in background..." : "Working..."}
                                         </span>
                                     </div>
                                     <div className="flex items-center gap-2">
@@ -2396,7 +2436,7 @@ export default function TestGenerator() {
                                             <Clock className="w-3 h-3" />
                                             <span>{Math.floor(elapsedTime / 60)}:{String(elapsedTime % 60).padStart(2, '0')}</span>
                                         </div>
-                                        {partialQuestions.length > 0 && (
+                                        {revealCount > 0 && (
                                             <button
                                                 onClick={handleCancelGeneration}
                                                 className="px-3 py-1 bg-white dark:bg-black border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:text-red-600 hover:border-red-200 rounded-lg text-xs font-medium transition-all flex items-center gap-1"
@@ -2409,7 +2449,7 @@ export default function TestGenerator() {
                                 </div>
 
                                 {/* Full step list — only when questions not yet ready */}
-                                {partialQuestions.length === 0 && (
+                                {revealCount === 0 && (
                                     <>
                                         <div className="space-y-3 mt-4">
                                             {[
