@@ -1496,6 +1496,21 @@ async def run_generation_job(
                 print(f"Warning: Could not fetch question history: {e}")
                 past_questions = []
         
+        # ── Streaming callback: emit questions to frontend as each LLM chunk completes ──
+        total_expected = mcq_count + numerical_count
+
+        async def on_chunk_ready(questions_so_far):
+            """Called by generate_parallel each time a 10-question chunk finishes."""
+            progress = 15 + int(40 * len(questions_so_far) / max(total_expected, 1))
+            job_store.update_job(
+                job_id,
+                JobStatus.GENERATING_MCQS,
+                min(progress, 55),
+                f"Generated {len(questions_so_far)} of {total_expected} questions...",
+                extras={"partial_questions": questions_so_far},
+            )
+            print(f"[SSE Job {job_id}] Streamed {len(questions_so_far)} partial questions")
+
         # Generate questions WITH VERIFICATION
         llm_result = await llm_engine.generate_questions_with_verification_async(
             subject=request.subject,
@@ -1518,7 +1533,9 @@ async def run_generation_job(
             cbse_sa=request.cbse_sa,
             cbse_la=request.cbse_la,
             cbse_case=request.cbse_case,
-            user_id=user.id
+            user_id=user.id,
+            # Streaming — emit each chunk as it completes
+            on_chunk_ready=on_chunk_ready,
         )
 
         

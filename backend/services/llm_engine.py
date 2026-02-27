@@ -278,13 +278,26 @@ class LLMEngine:
         Generate questions in PARALLEL for faster performance.
         Splits the request into multiple smaller chunks and runs them concurrently.
         This can reduce generation time by 50-70%.
+
+        Supports an optional `on_chunk_ready` async callback in kwargs.
+        Called with the cumulative list of questions each time a chunk completes,
+        so the caller can stream partial results to the client in real-time.
         """
         import asyncio
+
+        # Pop the streaming callback before kwargs reach the LLM
+        on_chunk_ready = kwargs.pop('on_chunk_ready', None)
         
         # If small enough, just do single call
         total_requested = mcq_count + numerical_count
         if total_requested <= chunk_size:
-            return await self.generate_with_fallback_async(subject, topic, mcq_count, numerical_count, level, difficulty, **kwargs)
+            result = await self.generate_with_fallback_async(subject, topic, mcq_count, numerical_count, level, difficulty, **kwargs)
+            if on_chunk_ready and result.get("success") and result.get("questions"):
+                try:
+                    await on_chunk_ready(result["questions"])
+                except Exception as cb_err:
+                    print(f"on_chunk_ready callback error: {cb_err}")
+            return result
             
         # NOTE: GATE now uses same flow as other exams (no special parallel strategy)
         # This avoids rate limit issues from multiple simultaneous API calls
@@ -331,17 +344,22 @@ class LLMEngine:
         for i, num_chunk in enumerate(num_chunks):
             tasks.append(generate_chunk(f"N{i}", 0, num_chunk))
         
-        # Run all in parallel
-        results = await asyncio.gather(*tasks, return_exceptions=True)
-        
-        # Combine results
+        # ── STREAM chunks as they complete (instead of waiting for all) ──
         all_questions = []
-        for result in results:
-            if isinstance(result, BaseException):
-                print(f"Chunk failed: {result}")
-                continue
-            if isinstance(result, dict) and result.get("success") and result.get("questions"):
-                all_questions.extend(result["questions"])
+        for future in asyncio.as_completed(tasks):
+            try:
+                result = await future
+                if isinstance(result, dict) and result.get("success") and result.get("questions"):
+                    all_questions.extend(result["questions"])
+                    # Notify caller so it can push partial results to the client
+                    if on_chunk_ready:
+                        try:
+                            await on_chunk_ready(list(all_questions))
+                        except Exception as cb_err:
+                            print(f"on_chunk_ready callback error: {cb_err}")
+                    print(f"Streamed {len(all_questions)} questions so far")
+            except Exception as e:
+                print(f"Chunk failed: {e}")
         
         # Deduplicate
         all_questions = self._deduplicate_questions(all_questions)

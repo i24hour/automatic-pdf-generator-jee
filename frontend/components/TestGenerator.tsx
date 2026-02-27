@@ -1102,37 +1102,41 @@ export default function TestGenerator() {
     const [shownAnswers, setShownAnswers] = useState<Set<number>>(new Set());
     const questionsRef = useRef<HTMLDivElement>(null);
 
-    // Streaming reveal: drip questions one-by-one even though they all arrive at once
+    // Streaming reveal: drip questions one-by-one as chunks arrive from SSE
     const [revealCount, setRevealCount] = useState(0);
+    const revealCountRef = useRef(0);           // survives across interval restarts
     const revealIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-    // Always keep a ref to the latest questions so the interval closure sees fresh data
-    const latestQuestionsRef = useRef<any[]>([]);
+    const latestQuestionsRef = useRef<any[]>([]); // always-fresh ref for interval closure
     latestQuestionsRef.current = partialQuestions;
 
     useEffect(() => {
         if (partialQuestions.length === 0) {
-            // Reset on new generation
+            // Full reset on new generation
             if (revealIntervalRef.current) {
                 clearInterval(revealIntervalRef.current);
                 revealIntervalRef.current = null;
             }
+            revealCountRef.current = 0;
             setRevealCount(0);
             return;
         }
 
-        // Questions just arrived — start drip reveal (only if not already running)
+        // Already showing everything available? wait for next chunk
+        if (revealCountRef.current >= partialQuestions.length) return;
+
+        // Interval already running? It will pick up the new length via latestQuestionsRef
         if (revealIntervalRef.current !== null) return;
 
-        let count = 0;
+        // Start / resume drip from current position
         revealIntervalRef.current = setInterval(() => {
-            count += 1;
-            setRevealCount(count);
-            if (count >= latestQuestionsRef.current.length) {
+            revealCountRef.current += 1;
+            setRevealCount(revealCountRef.current);
+            if (revealCountRef.current >= latestQuestionsRef.current.length) {
                 clearInterval(revealIntervalRef.current!);
                 revealIntervalRef.current = null;
             }
-        }, 180); // one question every 180 ms
-    }, [partialQuestions.length]); // only re-runs when count changes, not reference
+        }, 150); // 150 ms per question
+    }, [partialQuestions.length]);
 
     // Auto-scroll when first question appears
     useEffect(() => {
