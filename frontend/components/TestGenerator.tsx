@@ -35,6 +35,7 @@ import { useGeneration } from "@/lib/generation-context";
 import { logError } from "@/lib/logger";
 import PostModal from "@/components/PostModal";
 import UsernameModal from "@/components/UsernameModal";
+import MathText from "@/components/MathText";
 import { searchChapters, getChaptersForSubject, searchMultipleSubjects, getChaptersForMultipleSubjects } from "@/lib/ncert-chapters";
 
 // API base URL
@@ -2279,7 +2280,11 @@ export default function TestGenerator() {
                                     const showAns = shownAnswers.has(idx);
                                     const qType: string = q.type || "mcq";
                                     const qText: string = q.text || q.question || "";
-                                    const opts: Record<string, string> = q.options || {};
+                                    // Options can be array ["...","..."] or dict {A:"...",B:"..."}
+                                    const LABELS = ["A", "B", "C", "D", "E"];
+                                    const optEntries: [string, string][] = Array.isArray(q.options)
+                                        ? q.options.map((v: string, i: number) => [LABELS[i] ?? String(i), String(v)])
+                                        : Object.entries(q.options || {});
                                     const ans: string = String(q.answer ?? q.correct_answer ?? "");
                                     const sol: string = q.solution || q.explanation || "";
 
@@ -2315,21 +2320,24 @@ export default function TestGenerator() {
                                             {/* Expanded content */}
                                             {isExp && (
                                                 <div className="px-3 pb-3 pt-2 border-t border-gray-100 dark:border-gray-800">
-                                                    <p className="text-sm text-gray-800 dark:text-gray-200 mb-3 leading-relaxed">{qText}</p>
+                                                    <MathText content={qText} className="text-sm mb-3 [&_p:last-child]:mb-0" />
 
                                                     {/* MCQ Options */}
-                                                    {qType !== "numerical" && Object.keys(opts).length > 0 && (
+                                                    {qType !== "numerical" && optEntries.length > 0 && (
                                                         <div className="grid grid-cols-1 gap-1 mb-3">
-                                                            {Object.entries(opts).map(([key, val]) => (
-                                                                <div key={key} className={`flex items-start gap-2 px-2.5 py-1.5 rounded-lg text-sm ${
-                                                                    showAns && ans.toUpperCase().includes(key)
-                                                                        ? "bg-green-50 dark:bg-green-900/20 border border-green-300 dark:border-green-700 text-green-800 dark:text-green-300"
-                                                                        : "bg-gray-50 dark:bg-white/[0.04] text-gray-700 dark:text-gray-300"
-                                                                }`}>
-                                                                    <span className="font-semibold shrink-0">{key}.</span>
-                                                                    <span>{String(val)}</span>
-                                                                </div>
-                                                            ))}
+                                                            {optEntries.map(([key, val]) => {
+                                                                const isCorrect = showAns && ans.toUpperCase().includes(key.toUpperCase());
+                                                                return (
+                                                                    <div key={key} className={`flex items-start gap-2 px-2.5 py-1.5 rounded-lg text-sm ${
+                                                                        isCorrect
+                                                                            ? "bg-green-50 dark:bg-green-900/20 border border-green-300 dark:border-green-700 text-green-800 dark:text-green-300"
+                                                                            : "bg-gray-50 dark:bg-white/[0.04] text-gray-700 dark:text-gray-300"
+                                                                    }`}>
+                                                                        <span className="font-semibold shrink-0 mt-0.5">{key}.</span>
+                                                                        <MathText content={val} className="text-sm flex-1 [&_p]:m-0 [&_p]:inline" />
+                                                                    </div>
+                                                                );
+                                                            })}
                                                         </div>
                                                     )}
 
@@ -2352,12 +2360,12 @@ export default function TestGenerator() {
                                                         <div className="mt-2 space-y-1">
                                                             <div className="px-3 py-2 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
                                                                 <span className="text-xs font-semibold text-green-700 dark:text-green-400">Answer: </span>
-                                                                <span className="text-sm text-green-800 dark:text-green-300">{ans}</span>
+                                                                <span className="text-sm text-green-800 dark:text-green-300 font-medium">{ans}</span>
                                                             </div>
                                                             {sol && (
                                                                 <div className="px-3 py-2 bg-blue-50 dark:bg-blue-900/10 rounded-lg border border-blue-100 dark:border-blue-900/30">
                                                                     <p className="text-[10px] font-semibold text-blue-700 dark:text-blue-400 mb-1">Solution:</p>
-                                                                    <p className="text-xs text-blue-800 dark:text-blue-300 leading-relaxed">{sol}</p>
+                                                                    <MathText content={sol} className="text-xs [&_p]:mb-1 [&_p:last-child]:mb-0" />
                                                                 </div>
                                                             )}
                                                         </div>
