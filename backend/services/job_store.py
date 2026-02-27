@@ -35,11 +35,12 @@ class GenerationJob:
     message: str = "Starting..."
     result: Optional[Dict[str, Any]] = None
     error: Optional[str] = None
+    partial_questions: list = field(default_factory=list)
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     
     def to_dict(self) -> Dict[str, Any]:
-        return {
+        d = {
             "job_id": self.job_id,
             "user_id": self.user_id,
             "status": self.status.value,
@@ -50,6 +51,11 @@ class GenerationJob:
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),
         }
+        # Always include partial_questions once they are available so every
+        # SSE event after generation carries them (guards against dropped events)
+        if self.partial_questions:
+            d["partial_questions"] = self.partial_questions
+        return d
 
 
 class JobStore:
@@ -115,8 +121,13 @@ class JobStore:
             
             job.updated_at = datetime.now(timezone.utc)
             
-            # Notify subscribers, merging any one-off extras into the broadcast
-            self._notify_subscribers(job_id, job, extras=extras)
+            # Persist partial_questions on the job so they are included in
+            # every future to_dict() broadcast (survives reconnects / missed events)
+            if extras and "partial_questions" in extras:
+                job.partial_questions = extras["partial_questions"]
+            
+            # Notify subscribers (extras already merged into job, no need to re-send)
+            self._notify_subscribers(job_id, job)
             
             print(f"[JobStore] Updated job {job_id}: {job.status.value} - {job.progress}%")
             return job

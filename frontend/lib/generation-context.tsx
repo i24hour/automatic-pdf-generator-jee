@@ -172,6 +172,10 @@ export function GenerationProvider({ children }: { children: ReactNode }) {
                     const statusRes = await authFetch(`${API_BASE_URL}/api/generate-sse/${streamJobId}/status`);
                     if (statusRes.ok) {
                         const statusData = await statusRes.json();
+                        // Pick up any questions that arrived before reconnect
+                        if (Array.isArray(statusData.partial_questions) && statusData.partial_questions.length > 0) {
+                            setPartialQuestions(statusData.partial_questions);
+                        }
                         if (statusData.status === "done" && statusData.result) {
                             setResult(statusData.result);
                             cleanupGeneration();
