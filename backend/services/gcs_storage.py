@@ -80,6 +80,24 @@ class GCSStorage:
             print(f"✗ GCS upload failed: {e}")
             return None
 
+    def upload_video(self, file_path: str, object_key: str) -> Optional[str]:
+        """Upload a video (mp4) file to GCS and return public URL."""
+        if not self.client:
+            print("✗ GCS client not initialized")
+            return None
+        try:
+            bucket = self.client.bucket(self.bucket_name)
+            blob = bucket.blob(object_key)
+            blob.cache_control = "public, max-age=3600"
+            print(f"Uploading video to GCS: gs://{self.bucket_name}/{object_key}")
+            blob.upload_from_filename(file_path, content_type="video/mp4")
+            public_url = f"https://storage.googleapis.com/{self.bucket_name}/{object_key}"
+            print(f"✓ GCS video upload successful: {public_url}")
+            return public_url
+        except Exception as e:
+            print(f"✗ GCS video upload failed: {e}")
+            return None
+
     def delete_pdf(self, object_key: str) -> bool:
         """Delete a PDF file from GCS."""
         if not self.client:
