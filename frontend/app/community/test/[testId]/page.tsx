@@ -43,13 +43,21 @@ export default function TestDetailedPage() {
     };
 
     const handleStartTest = async () => {
+        // If user is not logged in, redirect to login with return URL
+        if (!user) {
+            const returnUrl = `/community/test/${testId}`;
+            router.push(`/login?redirect=${encodeURIComponent(returnUrl)}`);
+            return;
+        }
+
         setStarting(true);
         try {
             const { redirect_url } = await api.startTest(testId as string);
             router.push(redirect_url);
         } catch (error: any) {
             console.error("Failed to start test", error);
-            alert(`Failed to start test: ${error.message || "An unknown error occurred."}`);
+            const msg = error.message || "An unknown error occurred.";
+            alert(`Failed to start test: ${msg}`);
             setStarting(false);
         }
     };

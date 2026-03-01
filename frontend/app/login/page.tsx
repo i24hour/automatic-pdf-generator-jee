@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Loader2, AlertCircle, Infinity as InfinityIcon, AlertTriangle } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
@@ -20,6 +20,8 @@ export default function LoginPage() {
 
     const { login, setTokens } = useAuth();
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const redirectUrl = searchParams.get("redirect") || "/";
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -34,7 +36,7 @@ export default function LoginPage() {
                 setNeedsVerification(true);
             }
 
-            router.push("/");
+            router.push(redirectUrl);
         } catch (err) {
             setError(err instanceof Error ? err.message : "Login failed");
         } finally {
@@ -66,7 +68,7 @@ export default function LoginPage() {
 
             // Set tokens and user in auth context
             setTokens(data.access_token, data.refresh_token, data.user);
-            router.push("/");
+            router.push(redirectUrl);
         } catch (err) {
             setError(err instanceof Error ? err.message : "Google login failed");
         } finally {
