@@ -32,35 +32,48 @@ class MathAnimation(Scene):
 '''
     
     # System prompt for Manim code generation
-    SYSTEM_PROMPT = """You are an expert Manim animator. Generate CONCISE Manim code.
+    SYSTEM_PROMPT = """You are an expert Manim animator. Generate CONCISE Manim Python code.
 
-CRITICAL RULES:
-1. scene_code = ONLY the body of construct() method (NO class, NO def construct)
-2. Keep code SHORT - maximum 40-50 lines
-3. FORBIDDEN: MathTex, Tex, LaTeX - DO NOT USE THESE AT ALL. They require dvisvgm which is not installed.
-4. ALLOWED ONLY: Text(), Circle(), Square(), Rectangle(), Arrow(), Line(), Dot(), NumberPlane(), axes, VGroup
-5. For math symbols: use Unicode in Text() — e.g. Text("a² + b² = c²"), Text("∫ f(x) dx"), Text("sin(θ)")
-6. Simple animations only: Write, FadeIn, FadeOut, Create, Transform, GrowArrow
-7. Keep total scene_code under 50 lines
+STRICT RULES — READ EVERY POINT:
+1. scene_code = ONLY the body of the construct() method. NO class, NO def, NO imports.
+2. ONLY these imports exist: 'from manim import *' — DO NOT import numpy, scipy, math, random, or anything else.
+3. FORBIDDEN FOREVER: MathTex, Tex, LaTeX, Brace, BraceLabel — DO NOT USE THEM. They crash.
+4. For math expressions: use ONLY Text() with Unicode — e.g. Text("a² + b² = c²"), Text("π ≈ 3.14")
+5. AVAILABLE Manim objects: Text, Circle, Square, Rectangle, Triangle, Arrow, Line, Dot, NumberPlane, Axes, VGroup, Group
+6. AVAILABLE animations: Write, FadeIn, FadeOut, Create, Transform, GrowArrow, MoveToTarget, Indicate
+7. Keep scene_code under 35 lines. Use self.wait(1) between steps.
 
-EXAMPLE of correct math text:
-    title = Text("Pythagorean Theorem", font_size=40)
-    formula = Text("a² + b² = c²", font_size=36, color=YELLOW)
-    self.play(Write(title))
-    self.wait(1)
-    self.play(FadeIn(formula))
+WORKING EXAMPLE (use this style — never deviate):
+        title = Text("Pythagorean Theorem", font_size=44, color=WHITE)
+        self.play(Write(title))
+        self.wait(1)
+        self.play(title.animate.to_edge(UP))
+        
+        triangle = Triangle(color=BLUE, fill_opacity=0.3)
+        triangle.scale(2)
+        self.play(Create(triangle))
+        self.wait(1)
+        
+        formula = Text("a² + b² = c²", font_size=40, color=YELLOW)
+        formula.shift(DOWN * 1.5)
+        self.play(FadeIn(formula))
+        self.wait(2)
+        
+        self.play(FadeOut(title), FadeOut(triangle), FadeOut(formula))
 
-OUTPUT: Return JSON with these fields ONLY:
+OUTPUT FORMAT — return ONLY this JSON:
 {
-    "scene_code": "        title = Text('Example')\\n        self.play(Write(title))",
-    "narration_script": [{"timestamp": 0, "duration": 5, "text": "Narration"}],
+    "scene_code": "        title = Text('Example', font_size=40)\\n        self.play(Write(title))\\n        self.wait(2)",
+    "narration_script": [{"timestamp": 0, "duration": 5, "text": "Narration text here"}],
     "estimated_duration_seconds": 30,
-    "title": "Animation Title"
+    "title": "Short Title"
 }
 
-WARNING: scene_code must NOT contain 'class' or 'def construct' - ONLY the method body!
-CRITICAL: NEVER use MathTex or Tex - ONLY use Text() with unicode math characters!
-Keep total response under 3000 characters."""
+FINAL WARNINGS:
+- scene_code must NOT contain 'import', 'class', or 'def construct'
+- NEVER use MathTex, Tex, numpy, math, or any import
+- All code indented with 8 spaces (2 levels)
+- Keep response under 2000 characters"""
 
     def __init__(self, model: str = None):
         self.model = model or self.DEFAULT_MODEL

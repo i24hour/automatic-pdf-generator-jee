@@ -13,7 +13,9 @@ import {
     Image as ImageIcon,
     Mic,
     Globe,
-    Zap
+    Zap,
+    Download,
+    CheckCircle
 } from "lucide-react";
 import DesktopSidebar from "@/components/layout/DesktopSidebar";
 import MobileNav from "@/components/layout/MobileNav";
@@ -65,6 +67,8 @@ export default function VideoGeneratorPage() {
     const [generationProgress, setGenerationProgress] = useState(0);
     const [currentStep, setCurrentStep] = useState("");
     const [jobId, setJobId] = useState<string | null>(null);
+    const [videoUrl, setVideoUrl] = useState<string | null>(null);
+    const [videoTitle, setVideoTitle] = useState<string>("");
 
     // Handle image upload
     const handleImageUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -98,6 +102,8 @@ export default function VideoGeneratorPage() {
         setIsGenerating(true);
         setGenerationProgress(0);
         setCurrentStep("Initializing...");
+        setVideoUrl(null);
+        setVideoTitle("");
 
         const token = localStorage.getItem("auth_token");
 
@@ -151,11 +157,10 @@ export default function VideoGeneratorPage() {
 
                 if (jobStatus.status === "completed") {
                     completed = true;
-                    // Show video or navigate to result
                     if (jobStatus.video_url) {
-                        // Open video in new tab for now
-                        window.open(jobStatus.video_url, "_blank");
-                        setCurrentStep("Video ready! Opening...");
+                        setVideoUrl(jobStatus.video_url);
+                        setVideoTitle(jobStatus.title || "Generated Video");
+                        setCurrentStep("✅ Video ready! You can watch and download below.");
                     }
                 } else if (jobStatus.status === "failed") {
                     throw new Error(jobStatus.error || "Video generation failed");
@@ -208,13 +213,31 @@ export default function VideoGeneratorPage() {
                         handleGenerate={handleGenerate}
                         handleExampleClick={handleExampleClick}
                     />
+                    {/* Video Result */}
+                    {videoUrl && (
+                        <div className="mt-6 rounded-2xl border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20 p-4">
+                            <div className="flex items-center gap-2 mb-3">
+                                <CheckCircle className="w-5 h-5 text-green-600" />
+                                <h3 className="font-semibold text-green-800 dark:text-green-300">{videoTitle || "Video Ready!"}</h3>
+                            </div>
+                            <video controls className="w-full rounded-xl mb-3" src={videoUrl} />
+                            <a
+                                href={videoUrl}
+                                download
+                                className="flex items-center justify-center gap-2 w-full py-3 px-6 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold transition-colors"
+                            >
+                                <Download className="w-4 h-4" />
+                                Download Video
+                            </a>
+                        </div>
+                    )}
                 </main>
             </div>
 
             {/* Desktop Layout */}
             <div className="hidden md:flex min-h-screen">
                 <DesktopSidebar />
-                <main className="flex-1 ml-[275px] flex items-center justify-center p-8">
+                <main className="flex-1 ml-[275px] flex items-start justify-center p-8">
                     <div className="w-full max-w-3xl">
                         <VideoGeneratorContent
                             prompt={prompt}
@@ -237,6 +260,24 @@ export default function VideoGeneratorPage() {
                             handleGenerate={handleGenerate}
                             handleExampleClick={handleExampleClick}
                         />
+                        {/* Video Result */}
+                        {videoUrl && (
+                            <div className="mt-8 rounded-2xl border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20 p-6">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <CheckCircle className="w-6 h-6 text-green-600" />
+                                    <h3 className="text-lg font-bold text-green-800 dark:text-green-300">{videoTitle || "Video Ready!"}</h3>
+                                </div>
+                                <video controls className="w-full rounded-xl mb-4 shadow-lg" src={videoUrl} />
+                                <a
+                                    href={videoUrl}
+                                    download
+                                    className="flex items-center justify-center gap-2 w-full py-3 px-6 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-base transition-colors shadow-md"
+                                >
+                                    <Download className="w-5 h-5" />
+                                    Download Video
+                                </a>
+                            </div>
+                        )}
                     </div>
                 </main>
             </div>
