@@ -21,6 +21,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpango1.0-dev \
     libgdk-pixbuf-xlib-2.0-dev \
     ffmpeg \
+    dvisvgm \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better caching

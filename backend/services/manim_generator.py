@@ -37,8 +37,18 @@ class MathAnimation(Scene):
 CRITICAL RULES:
 1. scene_code = ONLY the body of construct() method (NO class, NO def construct)
 2. Keep code SHORT - maximum 40-50 lines
-3. Use basic Manim elements: Text, MathTex, Create, Write, FadeIn, FadeOut
-4. Simple animations only - avoid complex geometry
+3. FORBIDDEN: MathTex, Tex, LaTeX - DO NOT USE THESE AT ALL. They require dvisvgm which is not installed.
+4. ALLOWED ONLY: Text(), Circle(), Square(), Rectangle(), Arrow(), Line(), Dot(), NumberPlane(), axes, VGroup
+5. For math symbols: use Unicode in Text() — e.g. Text("a² + b² = c²"), Text("∫ f(x) dx"), Text("sin(θ)")
+6. Simple animations only: Write, FadeIn, FadeOut, Create, Transform, GrowArrow
+7. Keep total scene_code under 50 lines
+
+EXAMPLE of correct math text:
+    title = Text("Pythagorean Theorem", font_size=40)
+    formula = Text("a² + b² = c²", font_size=36, color=YELLOW)
+    self.play(Write(title))
+    self.wait(1)
+    self.play(FadeIn(formula))
 
 OUTPUT: Return JSON with these fields ONLY:
 {
@@ -49,7 +59,8 @@ OUTPUT: Return JSON with these fields ONLY:
 }
 
 WARNING: scene_code must NOT contain 'class' or 'def construct' - ONLY the method body!
-Keep total response under 2000 characters."""
+CRITICAL: NEVER use MathTex or Tex - ONLY use Text() with unicode math characters!
+Keep total response under 3000 characters."""
 
     def __init__(self, model: str = None):
         self.model = model or self.DEFAULT_MODEL
