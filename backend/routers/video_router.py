@@ -110,12 +110,17 @@ async def _run_video_pipeline(job_id: str, request: VideoGenerateRequest, user_i
         manim_code = code_result["manim_code"]
         narration_script = code_result.get("narration_script", [])
 
-        # ── Step 2: Validate code syntax ─────────────────────────────────────
+        # ── Step 2: Validate & auto-fix code syntax ──────────────────────────
         _update_job(job_id, progress=20, current_step="Validating animation code...")
 
         validation = generator.validate_code(manim_code)
-        if not validation.get("valid", False):
-            raise Exception(f"Code validation failed: {validation.get('error')}")
+        if validation.get("valid", False):
+            # Use the (possibly auto-fixed) code
+            manim_code = validation.get("code", manim_code)
+        else:
+            # Validation failed even after auto-fix — log and proceed anyway
+            # (the render step will give the real error if code is truly broken)
+            print(f"⚠ Code validation warning (proceeding to render): {validation.get('error')}")
 
         # ── Step 3: Render Manim video ────────────────────────────────────────
         _update_job(job_id, status="rendering", progress=30,

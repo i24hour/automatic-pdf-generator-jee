@@ -165,31 +165,65 @@ Generate the animation code and synchronized narration script."""
                 "error": str(e)
             }
     
+    def auto_fix_code(self, code: str) -> str:
+        """
+        Attempt to auto-fix common LLM code generation errors.
+        Specifically handles: empty function/class bodies (missing 'pass').
+        """
+        import re
+        lines = code.split("\n")
+        fixed_lines = []
+        for i, line in enumerate(lines):
+            fixed_lines.append(line)
+            # If this line ends a def/class block with a colon, check if next non-empty line
+            # is less indented (empty body)
+            stripped = line.rstrip()
+            if stripped.endswith(":") and re.match(r'^\s*(def |class |if |else:|elif |for |while |try:|except|finally:)', stripped):
+                # Look ahead at the next non-empty line
+                next_code_line = None
+                for j in range(i + 1, len(lines)):
+                    if lines[j].strip():  # non-empty
+                        next_code_line = lines[j]
+                        break
+                
+                if next_code_line is not None:
+                    current_indent = len(line) - len(line.lstrip())
+                    next_indent = len(next_code_line) - len(next_code_line.lstrip())
+                    # If next line isn't indented more than current → empty body
+                    if next_indent <= current_indent:
+                        indent = " " * (current_indent + 8)  # 8 spaces indent (Manim convention)
+                        fixed_lines.append(f"{indent}pass")
+                elif i == len(lines) - 1:  # Last line of file ends with colon
+                    current_indent = len(line) - len(line.lstrip())
+                    indent = " " * (current_indent + 8)
+                    fixed_lines.append(f"{indent}pass")
+        return "\n".join(fixed_lines)
+
     def validate_code(self, code: str) -> Dict[str, Any]:
         """
-        Validate Manim code for syntax errors.
-        
-        Args:
-            code: Manim Python code
-            
-        Returns:
-            Dict with success status and any errors
+        Validate Manim code for syntax errors. Attempts auto-fix before reporting failure.
         """
+        # First attempt
         try:
             compile(code, "<string>", "exec")
-            return {"success": True, "valid": True}
+            return {"success": True, "valid": True, "code": code}
+        except SyntaxError:
+            pass
+
+        # Try auto-fixing and re-validating
+        try:
+            fixed = self.auto_fix_code(code)
+            compile(fixed, "<string>", "exec")
+            print("✓ Code auto-fixed successfully")
+            return {"success": True, "valid": True, "code": fixed}  # return fixed code
         except SyntaxError as e:
             return {
                 "success": True,
                 "valid": False,
+                "code": code,
                 "error": f"Syntax error at line {e.lineno}: {e.msg}"
             }
-        except Exception as e:
-            return {
-                "success": False,
-                "error": str(e)
-            }
-    
+
     async def render_video(
         self,
         code: str,
