@@ -82,7 +82,23 @@ CRITICAL: No imports in scene_code. No NumberPlane. No Axes. No set_points_by_en
 
     def __init__(self, model: str = None):
         self.model = model or self.DEFAULT_MODEL
-    
+
+    # Patterns that the LLM hallucinates but DON'T exist in Manim
+    BANNED_PATTERNS = [
+        ".hypotenuse", ".set_points_by_ends", ".coords_to_point",
+        "NumberPlane", "Axes(", "MathTex", "Tex(", "BraceLabel",
+        ".get_vertices", ".get_all_points", ".get_anchors",
+        "import numpy", "import math", "import scipy", "import random",
+        "from numpy", "from math", "from scipy",
+    ]
+
+    def check_banned_patterns(self, code: str) -> list:
+        """Return list of banned patterns found in the code."""
+        found = []
+        for pattern in self.BANNED_PATTERNS:
+            if pattern in code:
+                found.append(pattern)
+        return found
     async def generate_animation(
         self,
         topic: str,
@@ -119,64 +135,81 @@ Requirements:
 Generate the animation code and synchronized narration script."""
 
         try:
-            response = await asyncio.to_thread(
-                litellm.completion,
-                model=self.model,
-                messages=[
+            last_error = None
+            for attempt in range(3):  # Up to 3 attempts
+                messages = [
                     {"role": "system", "content": self.SYSTEM_PROMPT},
                     {"role": "user", "content": user_prompt}
-                ],
-                temperature=0.7,
-                max_tokens=16384,
-                response_format={"type": "json_object"}
-            )
-            
-            content = response.choices[0].message.content
-            
-            # Parse JSON response
-            try:
-                result = json.loads(content)
-            except json.JSONDecodeError:
-                # Try to extract JSON from response
-                import re
-                json_match = re.search(r'\{[\s\S]*\}', content)
-                if json_match:
-                    result = json.loads(json_match.group())
+                ]
+                # On retry, prepend the error so LLM knows what to fix
+                if last_error and attempt > 0:
+                    messages.append({
+                        "role": "assistant",
+                        "content": f"My previous code had an error: {last_error}. Let me regenerate using ONLY the allowed objects listed. No .hypotenuse, no custom attributes, no imports."
+                    })
+                    messages.append({
+                        "role": "user",
+                        "content": "Please regenerate. Use ONLY Text(), Circle(), Square(), Rectangle(), Triangle(), Arrow(), Line() — no other methods."
+                    })
+
+                response = await asyncio.to_thread(
+                    litellm.completion,
+                    model=self.model,
+                    messages=messages,
+                    temperature=0.3 if attempt > 0 else 0.7,  # Lower temp on retry
+                    max_tokens=16384,
+                    response_format={"type": "json_object"}
+                )
+
+                content = response.choices[0].message.content
+
+                # Parse JSON response
+                try:
+                    result = json.loads(content)
+                except json.JSONDecodeError:
+                    import re
+                    json_match = re.search(r'\{[\s\S]*\}', content)
+                    if json_match:
+                        result = json.loads(json_match.group())
+                    else:
+                        last_error = "Failed to parse LLM response as JSON"
+                        continue
+
+                # Validate required fields
+                required_fields = ["scene_code", "narration_script"]
+                for field in required_fields:
+                    if field not in result:
+                        last_error = f"Missing required field: {field}"
+                        continue
+
+                # Build complete Manim code
+                scene_code = result["scene_code"]
+
+                # Check for banned patterns — retry if found
+                banned_found = self.check_banned_patterns(scene_code)
+                if banned_found:
+                    last_error = f"Used banned patterns: {', '.join(banned_found)}. These do not exist in Manim."
+                    print(f"⚠ Attempt {attempt+1}: banned patterns found: {banned_found} — retrying")
+                    continue
+
+                # Check if LLM returned full class definition instead of just method body
+                if "class " in scene_code and "def construct" in scene_code:
+                    full_code = scene_code
                 else:
-                    return {
-                        "success": False,
-                        "error": "Failed to parse LLM response as JSON"
-                    }
-            
-            # Validate required fields
-            required_fields = ["scene_code", "narration_script"]
-            for field in required_fields:
-                if field not in result:
-                    return {
-                        "success": False,
-                        "error": f"Missing required field: {field}"
-                    }
-            
-            # Build complete Manim code
-            scene_code = result["scene_code"]
-            
-            # Check if LLM returned full class definition instead of just method body
-            if "class " in scene_code and "def construct" in scene_code:
-                # LLM returned complete code, use it directly
-                full_code = scene_code
-            else:
-                # LLM returned just method body, wrap in template
-                full_code = self.CODE_TEMPLATE.format(scene_code=scene_code)
-            
-            return {
-                "success": True,
-                "manim_code": full_code,
-                "narration_script": result["narration_script"],
-                "estimated_duration": result.get("estimated_duration_seconds", max_duration),
-                "title": result.get("title", topic),
-                "model_used": self.model
-            }
-            
+                    full_code = self.CODE_TEMPLATE.format(scene_code=scene_code)
+
+                return {
+                    "success": True,
+                    "manim_code": full_code,
+                    "narration_script": result["narration_script"],
+                    "estimated_duration": result.get("estimated_duration_seconds", max_duration),
+                    "title": result.get("title", topic),
+                    "model_used": self.model
+                }
+
+            # All attempts exhausted
+            return {"success": False, "error": f"Code generation failed after 3 attempts. Last error: {last_error}"}
+
         except Exception as e:
             return {
                 "success": False,
