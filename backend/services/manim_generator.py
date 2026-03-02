@@ -351,7 +351,9 @@ Generate the animation code and synchronized narration script."""
             "high": "-qh"      # 1080p60
         }
         
-        flag = quality_flags.get(quality, "-qm")
+        # Use low quality by default for fast cloud rendering (480p15)
+        # Users can always re-encode locally for higher quality
+        flag = quality_flags.get(quality, "-ql")
         
         # Write code to temp file
         code_path = os.path.join(output_dir, "scene.py")
@@ -364,10 +366,10 @@ Generate the animation code and synchronized narration script."""
             class_match = re.search(r'class\s+(\w+)\s*\([^)]*Scene[^)]*\)', code)
             scene_class = class_match.group(1) if class_match else "MathAnimation"
             
-            # Run manim command
+            # Run manim command (low quality for faster renders on cloud)
             process = await asyncio.create_subprocess_exec(
                 "manim", code_path, scene_class,
-                flag, "-o", "output.mp4",
+                flag, "--disable_caching", "-o", "output.mp4",
                 "--media_dir", output_dir,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
@@ -376,7 +378,7 @@ Generate the animation code and synchronized narration script."""
             
             stdout, stderr = await asyncio.wait_for(
                 process.communicate(),
-                timeout=300  # 5 minute timeout
+                timeout=900  # 15 minute timeout for longer educational videos
             )
             
             if process.returncode != 0:
@@ -410,7 +412,7 @@ Generate the animation code and synchronized narration script."""
         except asyncio.TimeoutError:
             return {
                 "success": False,
-                "error": "Render timeout exceeded (5 minutes)"
+                "error": "Render timeout exceeded (15 minutes)"
             }
         except Exception as e:
             return {
