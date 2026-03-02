@@ -93,7 +93,7 @@ async def _run_video_pipeline(job_id: str, request: VideoGenerateRequest, user_i
     try:
         # ── Step 1: Generate Manim code via LLM ──────────────────────────────
         _update_job(job_id, status="generating_code", progress=10,
-                    current_step="Generating animation code with AI...")
+                    current_step="Step 1/2: Analyzing your prompt and building a detailed storyboard...")
 
         generator = get_manim_generator()
         code_result = await generator.generate_animation(

@@ -148,6 +148,51 @@ CRITICAL CHECKLIST before responding:
             if pattern in code:
                 found.append(pattern)
         return found
+    async def enhance_prompt(self, topic: str, language: str = "en") -> str:
+        """
+        Step 1: Use LLM to expand a simple user prompt into a detailed
+        scene-by-scene storyboard. This richer storyboard is then used
+        by the Manim code generator for more accurate, longer animations.
+        """
+        language_instruction = "in English" if language == "en" else "in Hindi (Devanagari script)"
+
+        enhancement_prompt = f"""You are a math education director. A user wants a video about:
+"{topic}"
+
+Write a DETAILED scene-by-scene storyboard for a 60-second educational animation. Be VERY specific — describe exactly what shapes, colors, text, and animations should appear in each scene.
+
+Format your response as a detailed paragraph covering:
+SCENE 1 - TITLE (5s): [exact title text, colors]
+SCENE 2 - INTRO (8s): [what text appears, what concept is introduced]
+SCENE 3 - STEP 1 (12s): [specific shapes, e.g. "draw a right triangle with legs labeled 'a' and 'b' in RED, hypotenuse 'c' in YELLOW"]
+SCENE 4 - STEP 2 (12s): [next visual step, e.g. "draw three squares on each side of the triangle, label areas a², b², c²"]
+SCENE 5 - STEP 3 (12s): [calculation/example, e.g. "show 3-4-5 triangle, calculate 9+16=25"]
+SCENE 6 - CONCLUSION (8s): [summary text, colors]
+
+Be extremely specific about:
+- Exact text strings to display (with Unicode math symbols like ², ∫, π, ∑)
+- Which Manim objects to use (Circle, Square, Rectangle, Triangle, Arrow, Line, Dot, VGroup)
+- Colors (BLUE, RED, GREEN, YELLOW, WHITE, ORANGE, PURPLE, TEAL, GOLD)
+- Positioning (center, top, bottom, left, right)
+- Animation sequence and timing
+
+Narration {language_instruction}. Write the storyboard now:"""
+
+        try:
+            response = await asyncio.to_thread(
+                litellm.completion,
+                model=self.model,
+                messages=[{"role": "user", "content": enhancement_prompt}],
+                temperature=0.7,
+                max_tokens=2048
+            )
+            enhanced = response.choices[0].message.content.strip()
+            print(f"📝 Enhanced prompt ({len(enhanced)} chars):\n{enhanced[:500]}...")
+            return enhanced
+        except Exception as e:
+            print(f"⚠ Prompt enhancement failed: {e} — using original topic")
+            return topic  # Fallback to original if enhancement fails
+
     async def generate_animation(
         self,
         topic: str,
@@ -168,28 +213,23 @@ CRITICAL CHECKLIST before responding:
             Dict with scene_code, narration_script, etc.
         """
         
+        # Step 1: Enhance the user's simple prompt into a detailed storyboard
+        print(f"📝 Enhancing prompt for topic: {topic[:80]}")
+        enhanced_topic = await self.enhance_prompt(topic, language)
+
         language_instruction = "in English" if language == "en" else "in Hindi (Devanagari script)"
         
-        user_prompt = f"""Create a COMPLETE educational video explaining this topic step by step:
+        user_prompt = f"""Create a COMPLETE educational Manim animation based on this detailed storyboard:
 
-Topic: {topic}
-Language for narration: {language_instruction}
-Target duration: {max_duration} seconds (MINIMUM 30 seconds)
-Difficulty: {difficulty}
+{enhanced_topic}
 
-YOU MUST include ALL of these scenes:
-1. TITLE SCENE: Title text with Write animation + self.wait(2)
-2. INTRO SCENE: Introduction text + self.wait(3)
-3. STEP 1: First visual explanation with shapes/formulas + self.wait(3)
-4. STEP 2: Build on step 1 with more visuals + self.wait(3)  
-5. STEP 3: Final step, proof, or example + self.wait(3)
-6. CONCLUSION: Summary text + self.wait(4)
-
-MINIMUM REQUIREMENTS (scene will be REJECTED if not met):
+TECHNICAL REQUIREMENTS (scene will be REJECTED if not met):
 - At least 6 self.play() calls
-- At least 4 self.wait() calls  
+- At least 4 self.wait() calls
 - At least 40 lines of scene_code
-- Use shapes (Circle, Triangle, Rectangle, Arrow, Line) not just text
+- Use the shapes and colors described in the storyboard above
+- All text uses Text() with Unicode — e.g. Text("a² + b² = c²")
+- NO MathTex, NO imports, NO NumberPlane, NO Axes
 
 Generate the full JSON now."""
 
