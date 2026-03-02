@@ -55,6 +55,7 @@ class VideoJobStatus(BaseModel):
     progress: int
     current_step: str
     video_url: Optional[str] = None
+    title: Optional[str] = None
     error: Optional[str] = None
     model_used: Optional[str] = None
     created_at: datetime
@@ -223,6 +224,7 @@ async def _run_video_pipeline(job_id: str, request: VideoGenerateRequest, user_i
                     progress=100,
                     current_step="Video ready!",
                     video_url=video_url,
+                    title=code_result.get("title", request.prompt[:50]),
                     duration_seconds=code_result.get("estimated_duration", 60))
 
         print(f"✓ Video job {job_id} completed: {video_url}")
@@ -270,6 +272,7 @@ async def generate_video(
         "tts_provider": request.tts_provider,
         "max_duration": request.max_duration,
         "video_url": None,
+        "title": None,
         "error": None,
         "model_used": None,
         "created_at": datetime.utcnow()
@@ -306,6 +309,7 @@ async def get_job_status(
         progress=job["progress"],
         current_step=job["current_step"],
         video_url=job.get("video_url"),
+        title=job.get("title"),
         error=job.get("error"),
         model_used=job.get("model_used"),
         created_at=job["created_at"]

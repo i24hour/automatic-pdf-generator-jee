@@ -158,7 +158,10 @@ export default function VideoGeneratorPage() {
                 if (jobStatus.status === "completed") {
                     completed = true;
                     if (jobStatus.video_url) {
-                        setVideoUrl(jobStatus.video_url);
+                        // Ensure full URL (backend may return relative path if GCS not set)
+                        const rawUrl = jobStatus.video_url as string;
+                        const fullUrl = rawUrl.startsWith("http") ? rawUrl : `${API_URL}${rawUrl}`;
+                        setVideoUrl(fullUrl);
                         setVideoTitle(jobStatus.title || "Generated Video");
                         setCurrentStep("✅ Video ready! You can watch and download below.");
                     }
