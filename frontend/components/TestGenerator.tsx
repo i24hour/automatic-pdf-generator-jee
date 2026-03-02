@@ -2357,7 +2357,10 @@ export default function TestGenerator() {
                                                 }`}>
                                                     {qType === "numerical" ? "Num" : "MCQ"}
                                                 </span>
-                                                <span className="text-sm text-gray-800 dark:text-gray-200 flex-1 leading-snug line-clamp-2">{qText}</span>
+                                                <MathText
+                                                    content={qText}
+                                                    className="text-sm text-gray-800 dark:text-gray-200 flex-1 leading-snug [&_p]:m-0 [&_p]:line-clamp-2 [&_p]:leading-snug [&_.katex-display]:my-0 [&_.katex-display]:overflow-x-auto"
+                                                />
                                                 <ChevronDown className={`shrink-0 w-4 h-4 text-gray-400 mt-0.5 transition-transform duration-200 ${isExp ? "rotate-180" : ""}`} />
                                             </button>
 
