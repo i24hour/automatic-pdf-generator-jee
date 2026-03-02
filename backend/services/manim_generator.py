@@ -170,18 +170,28 @@ CRITICAL CHECKLIST before responding:
         
         language_instruction = "in English" if language == "en" else "in Hindi (Devanagari script)"
         
-        user_prompt = f"""Generate a Manim animation for this math topic:
+        user_prompt = f"""Create a COMPLETE educational video explaining this topic step by step:
 
 Topic: {topic}
+Language for narration: {language_instruction}
+Target duration: {max_duration} seconds (MINIMUM 30 seconds)
+Difficulty: {difficulty}
 
-Requirements:
-- Maximum duration: {max_duration} seconds
-- Difficulty level: {difficulty}
-- Narration language: {language_instruction}
-- Make it educational and visually engaging
-- Include step-by-step explanations
+YOU MUST include ALL of these scenes:
+1. TITLE SCENE: Title text with Write animation + self.wait(2)
+2. INTRO SCENE: Introduction text + self.wait(3)
+3. STEP 1: First visual explanation with shapes/formulas + self.wait(3)
+4. STEP 2: Build on step 1 with more visuals + self.wait(3)  
+5. STEP 3: Final step, proof, or example + self.wait(3)
+6. CONCLUSION: Summary text + self.wait(4)
 
-Generate the animation code and synchronized narration script."""
+MINIMUM REQUIREMENTS (scene will be REJECTED if not met):
+- At least 6 self.play() calls
+- At least 4 self.wait() calls  
+- At least 40 lines of scene_code
+- Use shapes (Circle, Triangle, Rectangle, Arrow, Line) not just text
+
+Generate the full JSON now."""
 
         try:
             last_error = None
@@ -234,6 +244,12 @@ Generate the animation code and synchronized narration script."""
                 # Build complete Manim code
                 scene_code = result["scene_code"]
 
+                # --- Logging ---
+                play_count = scene_code.count("self.play")
+                wait_count = scene_code.count("self.wait")
+                line_count = len([l for l in scene_code.split("\n") if l.strip()])
+                print(f"🎬 Attempt {attempt+1}: scene_code has {line_count} lines, {play_count} self.play(), {wait_count} self.wait()")
+
                 # Check for banned patterns — retry if found
                 banned_found = self.check_banned_patterns(scene_code)
                 if banned_found:
@@ -241,11 +257,19 @@ Generate the animation code and synchronized narration script."""
                     print(f"⚠ Attempt {attempt+1}: banned patterns found: {banned_found} — retrying")
                     continue
 
+                # Reject scenes that are too short (generates 2-sec videos)
+                if play_count < 5 or wait_count < 3:
+                    last_error = f"Scene too short: only {play_count} self.play() and {wait_count} self.wait(). Need at least 5 self.play() and 3 self.wait() for a proper educational video. Generate a FULL multi-scene explanation with title, multiple steps, and conclusion."
+                    print(f"⚠ Attempt {attempt+1}: scene too short ({play_count} plays, {wait_count} waits) — retrying")
+                    continue
+
                 # Check if LLM returned full class definition instead of just method body
                 if "class " in scene_code and "def construct" in scene_code:
                     full_code = scene_code
                 else:
                     full_code = self.CODE_TEMPLATE.format(scene_code=scene_code)
+
+                print(f"✅ Attempt {attempt+1}: scene accepted — {line_count} lines, {play_count} plays, {wait_count} waits")
 
                 return {
                     "success": True,
