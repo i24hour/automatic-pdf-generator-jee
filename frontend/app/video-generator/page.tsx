@@ -69,6 +69,8 @@ export default function VideoGeneratorPage() {
     const [jobId, setJobId] = useState<string | null>(null);
     const [videoUrl, setVideoUrl] = useState<string | null>(null);
     const [videoTitle, setVideoTitle] = useState<string>("");
+    const [manimCode, setManimCode] = useState<string | null>(null);
+    const [showCode, setShowCode] = useState(false);
 
     // Handle image upload
     const handleImageUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -158,11 +160,12 @@ export default function VideoGeneratorPage() {
                 if (jobStatus.status === "completed") {
                     completed = true;
                     if (jobStatus.video_url) {
-                        // Ensure full URL (backend may return relative path if GCS not set)
                         const rawUrl = jobStatus.video_url as string;
                         const fullUrl = rawUrl.startsWith("http") ? rawUrl : `${API_URL}${rawUrl}`;
                         setVideoUrl(fullUrl);
                         setVideoTitle(jobStatus.title || "Generated Video");
+                        setManimCode(jobStatus.manim_code || null);
+                        setShowCode(false);
                         setCurrentStep("✅ Video ready! You can watch and download below.");
                     }
                 } else if (jobStatus.status === "failed") {
@@ -216,7 +219,7 @@ export default function VideoGeneratorPage() {
                         handleGenerate={handleGenerate}
                         handleExampleClick={handleExampleClick}
                     />
-                    {/* Video Result */}
+                    {/* Video Result - Mobile */}
                     {videoUrl && (
                         <div className="mt-6 rounded-2xl border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20 p-4">
                             <div className="flex items-center gap-2 mb-3">
@@ -232,6 +235,22 @@ export default function VideoGeneratorPage() {
                                 <Download className="w-4 h-4" />
                                 Download Video
                             </a>
+                            {manimCode && (
+                                <div className="mt-3">
+                                    <button
+                                        onClick={() => setShowCode(!showCode)}
+                                        className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                                    >
+                                        <ChevronDown className={`w-4 h-4 transition-transform ${showCode ? 'rotate-180' : ''}`} />
+                                        {showCode ? 'Hide' : 'View'} Generated Manim Code
+                                    </button>
+                                    {showCode && (
+                                        <pre className="mt-2 p-3 bg-gray-900 text-green-400 rounded-xl text-xs overflow-x-auto max-h-64 overflow-y-auto">
+                                            <code>{manimCode}</code>
+                                        </pre>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     )}
                 </main>
@@ -263,7 +282,7 @@ export default function VideoGeneratorPage() {
                             handleGenerate={handleGenerate}
                             handleExampleClick={handleExampleClick}
                         />
-                        {/* Video Result */}
+                        {/* Video Result - Desktop */}
                         {videoUrl && (
                             <div className="mt-8 rounded-2xl border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20 p-6">
                                 <div className="flex items-center gap-3 mb-4">
@@ -279,6 +298,22 @@ export default function VideoGeneratorPage() {
                                     <Download className="w-5 h-5" />
                                     Download Video
                                 </a>
+                                {manimCode && (
+                                    <div className="mt-4">
+                                        <button
+                                            onClick={() => setShowCode(!showCode)}
+                                            className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                                        >
+                                            <ChevronDown className={`w-4 h-4 transition-transform ${showCode ? 'rotate-180' : ''}`} />
+                                            {showCode ? 'Hide' : 'View'} Generated Manim Code
+                                        </button>
+                                        {showCode && (
+                                            <pre className="mt-3 p-4 bg-gray-900 text-green-400 rounded-xl text-sm overflow-x-auto max-h-96 overflow-y-auto shadow-inner">
+                                                <code>{manimCode}</code>
+                                            </pre>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>

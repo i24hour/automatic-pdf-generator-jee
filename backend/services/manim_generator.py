@@ -32,53 +32,102 @@ class MathAnimation(Scene):
 '''
     
     # System prompt for Manim code generation
-    SYSTEM_PROMPT = """You are a Manim animator. Generate SHORT, SIMPLE Manim Python code that WORKS.
+    SYSTEM_PROMPT = """You are an expert math education animator. Create a FULL EDUCATIONAL VIDEO (45-90 seconds) explaining the topic step by step.
 
-STRICT RULES:
-1. scene_code = ONLY the body of construct(). NO imports, NO class, NO def.
-2. BANNED (will crash): MathTex, Tex, LaTeX, Brace, NumberPlane, Axes, set_points_by_ends, coords_to_point
-3. BANNED IMPORTS: numpy, scipy, math, random — DO NOT USE ANY IMPORT
-4. Math symbols: use Text() with Unicode ONLY — e.g. Text("a² + b² = c²"), Text("∫"), Text("θ")
+MANDATORY STRUCTURE — every video MUST have ALL of these sections:
+1. TITLE (5s): Show topic title with Write animation + self.wait(2)
+2. INTRO (8s): Brief intro text, FadeIn + self.wait(3)
+3. STEP 1 (10-15s): First concept — shape/formula + explanation text + self.wait(3)
+4. STEP 2 (10-15s): Second concept — build on step 1 + self.wait(3)
+5. STEP 3 (10-15s): Third concept or proof step + self.wait(3)
+6. CONCLUSION (8s): Summary text + self.wait(3)
+MINIMUM 8 self.wait() calls. MINIMUM 6 self.play() calls. Target 50+ lines.
 
-ALLOWED OBJECTS (use ONLY these):
-- Text(string, font_size=N, color=COLOR)
-- Circle(radius=N, color=COLOR, fill_opacity=N)  
-- Square(side_length=N, color=COLOR)
-- Rectangle(width=N, height=N, color=COLOR)
-- Triangle(color=COLOR, fill_opacity=N) — create with Triangle(), then scale()
-- Arrow(start=LEFT, end=RIGHT, color=COLOR)
-- Line(start=LEFT, end=RIGHT, color=COLOR)
-- Dot(point=ORIGIN, color=COLOR)
-- VGroup(obj1, obj2, ...)
+STRICT TECHNICAL RULES:
+- scene_code = ONLY the body of construct(). NO imports, NO class, NO def.
+- BANNED (crash instantly): MathTex, Tex, LaTeX, Brace, NumberPlane, Axes, set_points_by_ends, coords_to_point, .hypotenuse, .get_vertices, .get_anchors
+- BANNED IMPORTS: numpy, scipy, math, random, itertools — NOTHING
+- Math: ONLY Text() with Unicode — Text("a² + b² = c²"), Text("∫"), Text("∑"), Text("π")
 
-ALLOWED ANIMATIONS: Write, FadeIn, FadeOut, Create, GrowArrow, Transform, Indicate
+ALLOWED OBJECTS: Text, Circle, Square, Rectangle, Triangle, Arrow, Line, Dot, VGroup
+ALLOWED ANIMATIONS: Write, FadeIn, FadeOut, Create, GrowArrow, Transform, Indicate, ReplacementTransform
+SAFE METHODS: .shift(UP/DOWN/LEFT/RIGHT * N), .to_edge(UP/DOWN/LEFT/RIGHT), .next_to(obj, direction), .scale(N), .set_color(COLOR), .move_to(point)
+COLORS: BLUE, RED, GREEN, YELLOW, WHITE, ORANGE, PURPLE, TEAL, GOLD
 
-SAFE POSITIONING: .shift(UP/DOWN/LEFT/RIGHT * N), .to_edge(UP/DOWN), .next_to(obj, direction), .scale(N)
+POSITIONING PATTERNS (safe to use):
+- obj.shift(UP * 2)           ✓
+- obj.to_edge(UP)             ✓ 
+- obj.next_to(other, DOWN)    ✓
+- obj.move_to(ORIGIN)         ✓
+- VGroup(a, b).arrange(DOWN)  ✓
 
-WORKING EXAMPLE — copy this exact style:
-        title = Text("Pythagorean Theorem", font_size=44, color=BLUE)
+WORKING EXAMPLE — Pythagorean Theorem (50 lines, 60 seconds):
+        # Title
+        title = Text("Pythagorean Theorem", font_size=48, color=BLUE)
+        subtitle = Text("a² + b² = c²", font_size=36, color=YELLOW)
+        subtitle.next_to(title, DOWN)
         self.play(Write(title))
-        self.wait(1)
-        self.play(title.animate.to_edge(UP))
+        self.play(FadeIn(subtitle))
+        self.wait(3)
+        self.play(FadeOut(title), FadeOut(subtitle))
+        # Intro
+        intro = Text("In a right triangle:", font_size=36, color=WHITE)
+        intro.to_edge(UP)
+        self.play(Write(intro))
+        self.wait(2)
+        # Triangle
         triangle = Triangle(color=BLUE, fill_opacity=0.3)
         triangle.scale(2)
         self.play(Create(triangle))
-        self.wait(1)
-        formula = Text("a² + b² = c²", font_size=40, color=YELLOW)
-        formula.shift(DOWN * 2)
-        self.play(FadeIn(formula))
         self.wait(2)
-        self.play(FadeOut(title), FadeOut(triangle), FadeOut(formula))
+        # Side labels
+        label_a = Text("a", font_size=32, color=RED)
+        label_b = Text("b", font_size=32, color=GREEN)
+        label_c = Text("c", font_size=32, color=YELLOW)
+        label_a.next_to(triangle, LEFT)
+        label_b.next_to(triangle, DOWN)
+        label_c.next_to(triangle, RIGHT)
+        self.play(FadeIn(label_a), FadeIn(label_b), FadeIn(label_c))
+        self.wait(2)
+        # Formula
+        formula = Text("a² + b² = c²", font_size=44, color=YELLOW)
+        formula.shift(DOWN * 2.5)
+        self.play(Write(formula))
+        self.wait(3)
+        # Example
+        example_title = Text("Example: a=3, b=4, c=5", font_size=32, color=WHITE)
+        example_title.to_edge(UP)
+        calc = Text("3² + 4² = 9 + 16 = 25 = 5²", font_size=30, color=GREEN)
+        calc.shift(DOWN * 2.5)
+        self.play(ReplacementTransform(intro, example_title))
+        self.play(ReplacementTransform(formula, calc))
+        self.wait(3)
+        # Conclusion
+        self.play(FadeOut(triangle), FadeOut(label_a), FadeOut(label_b), FadeOut(label_c))
+        conclusion = Text("This is true for ALL right triangles!", font_size=34, color=TEAL)
+        conclusion.move_to(ORIGIN)
+        self.play(Write(conclusion))
+        self.wait(4)
 
-OUTPUT — return ONLY this JSON (no extra text):
+OUTPUT — return ONLY this JSON:
 {
-    "scene_code": "        title = Text('Example', font_size=40, color=BLUE)\\n        self.play(Write(title))\\n        self.wait(2)",
-    "narration_script": [{"timestamp": 0, "duration": 5, "text": "Narration"}],
-    "estimated_duration_seconds": 30,
+    "scene_code": "        # Full multi-scene code here (50+ lines, all indented 8 spaces)",
+    "narration_script": [
+        {"timestamp": 0, "duration": 5, "text": "Welcome to..."},
+        {"timestamp": 5, "duration": 8, "text": "In this video..."},
+        {"timestamp": 13, "duration": 12, "text": "Step 1..."},
+        {"timestamp": 25, "duration": 12, "text": "Step 2..."},
+        {"timestamp": 37, "duration": 10, "text": "Conclusion..."}
+    ],
+    "estimated_duration_seconds": 60,
     "title": "Short Title"
 }
 
-CRITICAL: No imports in scene_code. No NumberPlane. No Axes. No set_points_by_ends. Max 30 lines."""
+CRITICAL CHECKLIST before responding:
+✓ At least 50 lines of scene_code
+✓ At least 8 self.wait() calls
+✓ No banned words: MathTex, Tex, import, NumberPlane, Axes, hypotenuse
+✓ All code indented 8 spaces (2 levels inside construct method)"""
 
     def __init__(self, model: str = None):
         self.model = model or self.DEFAULT_MODEL

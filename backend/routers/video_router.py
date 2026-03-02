@@ -51,11 +51,12 @@ class VideoGenerateRequest(BaseModel):
 
 class VideoJobStatus(BaseModel):
     job_id: str
-    status: str   # pending | generating_code | rendering | generating_audio | combining | uploading | completed | failed
+    status: str
     progress: int
     current_step: str
     video_url: Optional[str] = None
     title: Optional[str] = None
+    manim_code: Optional[str] = None
     error: Optional[str] = None
     model_used: Optional[str] = None
     created_at: datetime
@@ -106,7 +107,8 @@ async def _run_video_pipeline(job_id: str, request: VideoGenerateRequest, user_i
 
         _update_job(job_id,
                     model_used=code_result.get("model_used"),
-                    title=code_result.get("title", request.prompt[:50]))
+                    title=code_result.get("title", request.prompt[:50]),
+                    manim_code=code_result.get("manim_code", ""))
 
         manim_code = code_result["manim_code"]
         narration_script = code_result.get("narration_script", [])
@@ -273,6 +275,7 @@ async def generate_video(
         "max_duration": request.max_duration,
         "video_url": None,
         "title": None,
+        "manim_code": None,
         "error": None,
         "model_used": None,
         "created_at": datetime.utcnow()
@@ -310,6 +313,7 @@ async def get_job_status(
         current_step=job["current_step"],
         video_url=job.get("video_url"),
         title=job.get("title"),
+        manim_code=job.get("manim_code"),
         error=job.get("error"),
         model_used=job.get("model_used"),
         created_at=job["created_at"]
