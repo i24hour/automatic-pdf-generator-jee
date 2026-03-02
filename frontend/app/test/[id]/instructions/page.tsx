@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 
@@ -13,12 +13,24 @@ export default function TestInstructionsPage() {
 
     const [accepted, setAccepted] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null); // null = checking
+
+    useEffect(() => {
+        const token = localStorage.getItem('auth_token');
+        setIsAuthenticated(!!token);
+    }, []);
 
     const handleStart = async () => {
         if (!accepted) return;
 
-        setLoading(true);
+        // Guard: redirect to login if not authenticated
         const token = localStorage.getItem('auth_token');
+        if (!token) {
+            router.push(`/signup?redirect=/test/${testId}/instructions`);
+            return;
+        }
+
+        setLoading(true);
 
         try {
             const response = await fetch(`${API_BASE}/test/${testId}/start`, {
@@ -39,6 +51,47 @@ export default function TestInstructionsPage() {
             setLoading(false);
         }
     };
+
+    // Still checking auth
+    if (isAuthenticated === null) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-[#0a0b0d] dark:via-[#0d0f12] dark:to-[#0a0b0d] flex items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+            </div>
+        );
+    }
+
+    // Not logged in — show friendly login prompt
+    if (!isAuthenticated) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-[#0a0b0d] dark:via-[#0d0f12] dark:to-[#0a0b0d] flex items-center justify-center px-4">
+                <div className="bg-white dark:bg-[#16181c] rounded-2xl shadow-xl border border-gray-200 dark:border-gray-800 p-8 max-w-sm w-full text-center">
+                    <div className="w-16 h-16 bg-indigo-100 dark:bg-indigo-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span className="text-3xl">🎯</span>
+                    </div>
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                        Login to Attempt This Test
+                    </h2>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+                        Create a free account or login to start this test and track your score.
+                    </p>
+                    <Link
+                        href={`/signup?redirect=/test/${testId}/instructions`}
+                        className="block w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition-colors mb-3"
+                    >
+                        Sign Up Free
+                    </Link>
+                    <Link
+                        href={`/login?redirect=/test/${testId}/instructions`}
+                        className="block w-full py-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 font-semibold rounded-xl transition-colors"
+                    >
+                        Already have an account? Login
+                    </Link>
+                </div>
+            </div>
+        );
+    }
+
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-[#0a0b0d] dark:via-[#0d0f12] dark:to-[#0a0b0d]">

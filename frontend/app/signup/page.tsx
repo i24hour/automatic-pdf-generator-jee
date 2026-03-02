@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Loader2, AlertCircle, BookOpen } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
@@ -22,6 +22,8 @@ export default function SignupPage() {
 
     const { register, setTokens } = useAuth();
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const redirectUrl = searchParams.get("redirect") || "/";
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -41,7 +43,7 @@ export default function SignupPage() {
 
         try {
             await register(email, password, name || undefined, phone || undefined);
-            router.push("/");
+            router.push(redirectUrl);
         } catch (err) {
             setError(err instanceof Error ? err.message : "Registration failed");
         } finally {
@@ -73,7 +75,7 @@ export default function SignupPage() {
 
             // Set tokens and user in auth context
             setTokens(data.access_token, data.refresh_token, data.user);
-            router.push("/");
+            router.push(redirectUrl);
         } catch (err) {
             setError(err instanceof Error ? err.message : "Google signup failed");
         } finally {
