@@ -29,17 +29,30 @@ export default function TestDetailedPage() {
     const loadData = async () => {
         setLoading(true);
         try {
-            const [testData, leaderboardData] = await Promise.all([
-                api.getTestDetails(testId as string),
-                api.getLeaderboard(testId as string)
-            ]);
+            // Test details are public — use plain fetch (no auth needed)
+            const testRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://mentors-mantra-api-87253755436.us-central1.run.app'}/api/community/tests/${testId}`);
+            if (!testRes.ok) {
+                console.error("Failed to load test:", testRes.status);
+                setLoading(false);
+                return;
+            }
+            const testData = await testRes.json();
             setTest(testData);
-            setLeaderboard(leaderboardData);
         } catch (error) {
             console.error("Failed to load test data", error);
-        } finally {
             setLoading(false);
+            return;
         }
+
+        // Leaderboard is optional — don't let it block the page
+        try {
+            const leaderboardData = await api.getLeaderboard(testId as string);
+            setLeaderboard(leaderboardData);
+        } catch (error) {
+            console.error("Failed to load leaderboard (non-fatal)", error);
+        }
+
+        setLoading(false);
     };
 
     const handleStartTest = async () => {
