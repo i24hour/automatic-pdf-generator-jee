@@ -66,9 +66,9 @@ export function useCommunityApi() {
             return await res.json();
         },
 
-        // Get test details (pre-attempt)
+        // Get test details (pre-attempt) — public endpoint, no auth needed
         getTestDetails: async (testId: string): Promise<TestDetail> => {
-            const res = await authFetch(`${API_BASE_URL}/api/community/tests/${testId}`);
+            const res = await fetch(`${API_BASE_URL}/api/community/tests/${testId}`);
             if (!res.ok) throw new Error("Failed to get test details");
             return await res.json();
         },
@@ -84,11 +84,15 @@ export function useCommunityApi() {
             return await res.json();
         },
 
-        // Get leaderboard
+        // Get leaderboard — public endpoint, return empty array on any error
         getLeaderboard: async (testId: string): Promise<LeaderboardEntry[]> => {
-            const res = await authFetch(`${API_BASE_URL}/api/community/tests/${testId}/leaderboard`);
-            if (!res.ok) throw new Error("Failed to get leaderboard");
-            return await res.json();
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/community/tests/${testId}/leaderboard`);
+                if (!res.ok) return [];
+                return await res.json();
+            } catch {
+                return [];
+            }
         }
     };
 }
