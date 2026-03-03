@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Loader2, AlertCircle, Infinity as InfinityIcon, AlertTriangle } from "lucide-react";
@@ -10,7 +10,7 @@ import { GoogleLogin } from "@react-oauth/google";
 
 import { API_BASE_URL as API_URL } from "@/lib/config";
 
-export default function LoginPage() {
+function LoginPageContent() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState<string | null>(null);
@@ -199,5 +199,13 @@ export default function LoginPage() {
                 </div>
             </div>
         </main>
+    );
+}
+
+export default function LoginPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#0a0b0d]"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" /></div>}>
+            <LoginPageContent />
+        </Suspense>
     );
 }
