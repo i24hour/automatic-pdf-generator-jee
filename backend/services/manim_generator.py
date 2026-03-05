@@ -456,11 +456,22 @@ Generate the full JSON now."""
             
             # Alternative path patterns
             if not os.path.exists(video_path):
+                largest_size = -1
+                found_path = None
                 for root, dirs, files in os.walk(output_dir):
+                    # Skip partial movie files directory which contains 1s clips
+                    if "partial_movie_files" in root:
+                        continue
                     for f in files:
                         if f.endswith(".mp4"):
-                            video_path = os.path.join(root, f)
-                            break
+                            p = os.path.join(root, f)
+                            size = os.path.getsize(p)
+                            if size > largest_size:
+                                largest_size = size
+                                found_path = p
+                
+                if found_path:
+                    video_path = found_path
             
             if os.path.exists(video_path):
                 return {
