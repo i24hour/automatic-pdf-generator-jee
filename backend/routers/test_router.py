@@ -297,6 +297,79 @@ async def get_test_state(
     # Get unique subjects
     subjects = list(dict.fromkeys([r.subject for r in responses]))
     
+    time_remaining = calculate_time_remaining(test)
+
+    # ── Auto-submit if timer has expired ──────────────────────────────────────
+    if time_remaining == 0 and test.status == "IN_PROGRESS":
+        try:
+            # Score all responses
+            total_score = 0
+            max_score = 0
+            correct_count = 0
+            wrong_count = 0
+            unattempted_count = 0
+
+            for r in responses:
+                max_score += r.marks_correct
+                if r.user_answer is None or r.user_answer == "":
+                    unattempted_count += 1
+                elif r.user_answer == r.correct_answer:
+                    correct_count += 1
+                    total_score += r.marks_correct
+                    r.is_correct = True
+                    r.marks_obtained = r.marks_correct
+                else:
+                    wrong_count += 1
+                    total_score += r.marks_wrong
+                    r.is_correct = False
+                    r.marks_obtained = r.marks_wrong
+
+            test.status = "SUBMITTED"
+            test.submitted_at = datetime.now(timezone.utc)
+            test.total_score = total_score
+            test.max_score = max_score
+            test.correct_count = correct_count
+            test.wrong_count = wrong_count
+            test.unattempted_count = unattempted_count
+            db.commit()
+
+            # Update leaderboard if this is a community test
+            if test.test_id:
+                total_attempted = correct_count + wrong_count
+                accuracy = (correct_count / total_attempted * 100) if total_attempted > 0 else 0
+                time_taken = int((test.submitted_at - test.started_at).total_seconds()) if test.started_at else test.duration_minutes * 60
+
+                existing_entry = db.query(TestLeaderboard).filter(
+                    TestLeaderboard.test_id == test.test_id,
+                    TestLeaderboard.user_id == current_user.id
+                ).first()
+
+                if not existing_entry:
+                    db.add(TestLeaderboard(
+                        test_id=test.test_id,
+                        user_id=current_user.id,
+                        score=total_score,
+                        time_taken_seconds=time_taken,
+                        accuracy=accuracy,
+                        submitted_at=datetime.now(timezone.utc)
+                    ))
+                elif total_score > existing_entry.score or (
+                    total_score == existing_entry.score and time_taken < existing_entry.time_taken_seconds
+                ):
+                    existing_entry.score = total_score
+                    existing_entry.time_taken_seconds = time_taken
+                    existing_entry.accuracy = accuracy
+                    existing_entry.submitted_at = datetime.now(timezone.utc)
+
+                db.commit()
+
+            print(f"⏰ Auto-submitted timed-out test {test_id} (score: {total_score}/{max_score})")
+
+        except Exception as e:
+            db.rollback()
+            print(f"⚠ Auto-submit failed for test {test_id}: {e}")
+    # ──────────────────────────────────────────────────────────────────────────
+
     return TestStateResponse(
         test_id=test.id,
         exam_type=test.exam_type,
@@ -304,7 +377,7 @@ async def get_test_state(
         current_question_index=test.current_question_index,
         total_questions=test.total_questions,
         duration_minutes=test.duration_minutes,
-        time_remaining_seconds=calculate_time_remaining(test),
+        time_remaining_seconds=time_remaining,
         palette=palette,
         subjects=subjects
     )
