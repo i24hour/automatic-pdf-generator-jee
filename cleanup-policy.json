@@ -1,0 +1,24 @@
+[
+    {
+        "name": "keep-recent-5",
+        "action": {
+            "type": "Keep"
+        },
+        "mostRecentVersions": {
+            "packageNamePrefixes": [
+                "mentors-mantra-api"
+            ],
+            "keepCount": 5
+        }
+    },
+    {
+        "name": "delete-older",
+        "action": {
+            "type": "Delete"
+        },
+        "condition": {
+            "tagState": "ANY",
+            "newerThan": "30d"
+        }
+    }
+]
