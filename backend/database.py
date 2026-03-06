@@ -67,7 +67,14 @@ def init_db():
     # Create all tables
     Base.metadata.create_all(bind=engine)
     
-    # Run migrations for new columns (safe to run multiple times)
+    # Run migrations for new columns only if explicitly asked
+    # Running ALTER TABLE on every Serverless cold start causes Postgres lock queues
+    # which block all incoming SELECT requests and result in 504 timeouts.
+    if os.getenv("RUN_MIGRATIONS") != "true":
+        print("DEBUG: Skipping ALTER TABLE migrations to prevent DB locks. Set RUN_MIGRATIONS=true to run them.")
+        return
+        
+    print("DEBUG: Running ALTER TABLE migrations...")
     try:
         from sqlalchemy import text
         with engine.connect() as conn:
