@@ -6,7 +6,8 @@
         },
         "mostRecentVersions": {
             "packageNamePrefixes": [
-                "mentors-mantra-api"
+                "mentors-mantra-api",
+                "mentors-mantra-base"
             ],
             "keepCount": 5
         }
