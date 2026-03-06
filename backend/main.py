@@ -105,15 +105,11 @@ def _init_db_background():
 # Initialize database on startup
 @app.on_event("startup")
 async def startup_event():
-    print("DEBUG: Startup event started. Running DB migrations synchronously...", flush=True)
-    # Run DB init in a thread so it doesn't block the asyncio loop, but await it 
-    # so Uvicorn doesn't open port 8080 until the DB is ready to accept requests.
-    # This prevents the thread from being frozen by Cloud Run's CPU throttling.
-    try:
-        await asyncio.to_thread(_init_db_background)
-        print("DEBUG: Startup event completed successfully", flush=True)
-    except Exception as e:
-        print(f"ERROR: DB Initialization failed during startup: {e}", flush=True)
+    print("DEBUG: Startup event started", flush=True)
+    # Run DB init in a thread so it doesn't block uvicorn from opening port 8080
+    loop = asyncio.get_event_loop()
+    loop.run_in_executor(None, _init_db_background)
+    print("DEBUG: Startup event completed (DB init running in background)", flush=True)
 
 
 # Request/Response Models
