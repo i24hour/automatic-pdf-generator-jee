@@ -31,7 +31,7 @@ interface GenerationContextType {
     elapsedTime: number;
     jobId: string | null;
     partialQuestions: any[];
-    startGeneration: (params: any) => Promise<void>;
+    startGeneration: (params: any, isInstitute?: boolean) => Promise<void>;
     cancelGeneration: () => void;
     clearResult: () => void;
     downloadPDF: (res?: GenerateResponse) => void;
@@ -200,7 +200,7 @@ export function GenerationProvider({ children }: { children: ReactNode }) {
         });
     };
 
-    const startGeneration = async (params: any) => {
+    const startGeneration = async (params: any, isInstitute: boolean = false) => {
         setIsGenerating(true);
         setError(null);
         setResult(null);
@@ -211,7 +211,11 @@ export function GenerationProvider({ children }: { children: ReactNode }) {
         startTimer();
 
         try {
-            const startResponse = await authFetch(`${API_BASE_URL}/api/generate-sse/start`, {
+            const startUrl = isInstitute
+                ? `${API_BASE_URL}/api/institute/generate-sse/start`
+                : `${API_BASE_URL}/api/generate-sse/start`;
+
+            const startResponse = await authFetch(startUrl, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(params),

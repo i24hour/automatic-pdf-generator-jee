@@ -7,7 +7,7 @@ import json
 import base64
 from datetime import datetime, timedelta, timezone
 from typing import Optional, List
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
@@ -20,6 +20,7 @@ from auth import (
 )
 from services.llm_engine import llm_engine
 from services.pdf_engine import pdf_engine
+from services.job_store import job_store, JobStatus
 
 router = APIRouter(prefix="/api/institute", tags=["institute"])
 
@@ -72,15 +73,21 @@ class InstituteGenerateResponse(BaseModel):
     success: bool
     message: str
     pdf_filename: Optional[str] = None
-    pdf_base64: Optional[str] = None  # Base64-encoded PDF for immediate download
-    chapters_classified: List[ChapterClassification]
-    verification_stats: Optional[dict] = None
+    pdf_base64: Optional[str] = None
+    institute_remaining: Optional[int] = None
+    chapters_classified: Optional[List[ChapterClassification]] = None
+    verification_stats: Optional[Dict[str, int]] = None
+    total_mcq: int = 0
+    total_numerical: int = 0
 
 
 class CreateInstituteRequest(BaseModel):
     email: str
     password: str
 
+class InstituteSSEStartResponse(BaseModel):
+    job_id: str
+    message: str
 
 # ============ Auth Helpers ============
 
@@ -341,6 +348,250 @@ async def detect_subjects(
             classifications.append(ChapterClassification(chapter=chapter, subject=subject))
     
     return DetectSubjectsResponse(classifications=classifications)
+
+
+async def run_institute_generation_job(
+    job_id: str,
+    request: InstituteGenerateRequest,
+    current_user: InstituteUser,
+    db: Session
+):
+    try:
+        job_store.update_job(job_id, status=JobStatus.ANALYZING, progress=1, message="Planning institute test structure...")
+        
+        # Define exam limits
+        EXAM_LIMITS = {
+            "Mains": {"Physics": 25, "Chemistry": 25, "Maths": 25},
+            "NEET": {"Physics": 45, "Chemistry": 45, "Zoology": 45, "Botany": 45},
+            "Advanced": {"Physics": 18, "Chemistry": 18, "Maths": 18}
+        }
+        
+        if request.exam_type not in EXAM_LIMITS:
+            raise ValueError(f"Invalid exam type: {request.exam_type}")
+            
+        limits = EXAM_LIMITS[request.exam_type]
+        
+        # Step 1: Classify each chapter by subject concurrently
+        import asyncio
+        chapters_classified = []
+        chapters_by_subject = {"Physics": [], "Chemistry": [], "Maths": [], "Zoology": [], "Botany": []}
+        
+        detect_tasks = []
+        valid_chapters = [c.strip() for c in request.chapters if c.strip()]
+        for chapter in valid_chapters:
+            detect_tasks.append(asyncio.to_thread(llm_engine.detect_subject, chapter))
+            
+        detect_results = await asyncio.gather(*detect_tasks)
+        
+        for chapter, result in zip(valid_chapters, detect_results):
+            subject = result.get("subject", "Physics")
+            is_multi = result.get("is_multi", False)
+            
+            # Handle PCM/PCMB/PCB abbreviations - expand to all subjects
+            if is_multi:
+                if subject == "PCM":
+                    chapters_by_subject["Physics"].append(chapter)
+                    chapters_by_subject["Chemistry"].append(chapter)
+                    chapters_by_subject["Maths"].append(chapter)
+                    chapters_classified.append(ChapterClassification(chapter=chapter, subject="Physics"))
+                    chapters_classified.append(ChapterClassification(chapter=f"{chapter} (Chemistry)", subject="Chemistry"))
+                    chapters_classified.append(ChapterClassification(chapter=f"{chapter} (Maths)", subject="Maths"))
+                elif subject == "PCMB":
+                    chapters_by_subject["Physics"].append(chapter)
+                    chapters_by_subject["Chemistry"].append(chapter)
+                    chapters_by_subject["Maths"].append(chapter)
+                    chapters_by_subject["Zoology"].append(chapter)
+                    chapters_by_subject["Botany"].append(chapter)
+                    chapters_classified.append(ChapterClassification(chapter=chapter, subject="Physics"))
+                    chapters_classified.append(ChapterClassification(chapter=f"{chapter} (Chemistry)", subject="Chemistry"))
+                    chapters_classified.append(ChapterClassification(chapter=f"{chapter} (Maths)", subject="Maths"))
+                    chapters_classified.append(ChapterClassification(chapter=f"{chapter} (Zoology)", subject="Zoology"))
+                    chapters_classified.append(ChapterClassification(chapter=f"{chapter} (Botany)", subject="Botany"))
+                elif subject == "PCB":
+                    chapters_by_subject["Physics"].append(chapter)
+                    chapters_by_subject["Chemistry"].append(chapter)
+                    chapters_by_subject["Zoology"].append(chapter)
+                    chapters_classified.append(ChapterClassification(chapter=chapter, subject="Physics"))
+                    chapters_classified.append(ChapterClassification(chapter=f"{chapter} (Chemistry)", subject="Chemistry"))
+                    chapters_classified.append(ChapterClassification(chapter=f"{chapter} (Zoology)", subject="Zoology"))
+            else:
+                chapters_classified.append(ChapterClassification(chapter=chapter, subject=subject))
+                if subject in chapters_by_subject:
+                    chapters_by_subject[subject].append(chapter)
+        
+        job_store.update_job(job_id, status=JobStatus.GENERATING_MCQS, progress=2, message="Generating questions for all subjects...")
+        
+        # Step 2: Determine question counts
+        if request.exam_type == "NEET":
+            phy_count = min(request.physics_count or limits["Physics"], limits["Physics"])
+            chem_count = min(request.chemistry_count or limits["Chemistry"], limits["Chemistry"])
+            zoo_count = min(request.zoology_count or limits["Zoology"], limits["Zoology"])
+            bot_count = min(request.botany_count or limits["Botany"], limits["Botany"])
+            maths_count = 0
+        else:
+            phy_count = min(request.physics_count or limits["Physics"], limits["Physics"])
+            chem_count = min(request.chemistry_count or limits["Chemistry"], limits["Chemistry"])
+            maths_count = min(request.maths_count or limits["Maths"], limits["Maths"])
+            zoo_count = 0
+            bot_count = 0
+        
+        all_questions = []
+        verification_stats = {"total_numerical": 0, "verified": 0, "corrected": 0}
+        
+        async def generate_for_subject(subject, chapters, count, exam_type, difficulty):
+            if count == 0 or not chapters:
+                return []
+            
+            topic = ", ".join(chapters)
+            if exam_type == "NEET":
+                mcq_count = count
+                num_count = 0
+            else:
+                mcq_count = int(count * 0.8)
+                num_count = count - mcq_count
+            
+            result = await llm_engine.generate_questions_async(
+                subject=subject,
+                topic=topic,
+                mcq_count=mcq_count,
+                numerical_count=num_count,
+                level=exam_type,
+                difficulty=difficulty
+            )
+            
+            if result.get("success"):
+                questions = result.get("questions", [])
+                for q in questions:
+                    q["subject"] = subject
+                    
+                # Add to partials for streaming
+                current = job_store.get_job(job_id)
+                if current:
+                    new_partials = current.partial_questions + questions
+                    job_store.update_job(job_id, extras={"partial_questions": new_partials})
+                    
+                return questions
+            return {"error": result.get("error", "Unknown error"), "subject": subject}
+        
+        tasks = []
+        if phy_count > 0 and chapters_by_subject["Physics"]:
+            tasks.append(generate_for_subject("Physics", chapters_by_subject["Physics"], phy_count, request.exam_type, request.difficulty))
+        if chem_count > 0 and chapters_by_subject["Chemistry"]:
+            tasks.append(generate_for_subject("Chemistry", chapters_by_subject["Chemistry"], chem_count, request.exam_type, request.difficulty))
+        if maths_count > 0 and chapters_by_subject["Maths"]:
+            tasks.append(generate_for_subject("Maths", chapters_by_subject["Maths"], maths_count, request.exam_type, request.difficulty))
+        if zoo_count > 0 and chapters_by_subject["Zoology"]:
+            tasks.append(generate_for_subject("Zoology", chapters_by_subject["Zoology"], zoo_count, request.exam_type, request.difficulty))
+        if bot_count > 0 and chapters_by_subject["Botany"]:
+            tasks.append(generate_for_subject("Botany", chapters_by_subject["Botany"], bot_count, request.exam_type, request.difficulty))
+        
+        if not tasks:
+            raise ValueError("No valid chapters to generate questions from")
+        
+        results = await asyncio.gather(*tasks)
+        errors = []
+        for res in results:
+            if isinstance(res, list):
+                all_questions.extend(res)
+            elif isinstance(res, dict) and "error" in res:
+                errors.append(f"{res['subject']}: {res['error']}")
+        
+        if not all_questions:
+            error_msg = "; ".join(errors)
+            raise ValueError(f"Failed to generate questions. Errors: {error_msg}")
+            
+        job_store.update_job(job_id, status=JobStatus.COMPILING_PDF, progress=5, message="Compiling final PDF document...")
+        
+        # Step 4: Generate PDF
+        topic_str = ", ".join(request.chapters[:3])
+        if len(request.chapters) > 3:
+            topic_str += f" +{len(request.chapters) - 3} more"
+        
+        safe_topic = topic_str.replace("&", "and").replace("/", "-").replace("\\", "-").replace(" ", "_")[:50]
+        filename = f"Institute_{request.exam_type}_{request.difficulty}_{safe_topic}"
+        
+        pdf_data = {
+            "subject": "Multi-Subject",
+            "topic": ", ".join(request.chapters),
+            "level": request.exam_type,
+            "difficulty": request.difficulty,
+            "questions": all_questions,
+            "institute_name": current_user.institute_name or "",
+            "institute_contact": current_user.contact_number or "",
+            "institute_email": current_user.institute_email or "",
+            "is_institute": True
+        }
+        
+        pdf_path = await asyncio.to_thread(pdf_engine.generate_pdf, pdf_data, filename)
+        if not pdf_path:
+            raise ValueError("PDF generation returned None")
+            
+        # Record generation
+        generation = InstituteGeneration(
+            institute_user_id=current_user.id,
+            chapters=json.dumps(request.chapters),
+            exam_type=request.exam_type,
+            difficulty=request.difficulty,
+            physics_count=phy_count,
+            chemistry_count=chem_count,
+            maths_count=maths_count,
+            biology_count=zoo_count + bot_count,
+            pdf_filename=os.path.basename(pdf_path)
+        )
+        db.add(generation)
+        db.commit()
+        
+        pdf_base64_str = None
+        try:
+            with open(pdf_path, 'rb') as pdf_file:
+                pdf_base64_str = base64.b64encode(pdf_file.read()).decode('utf-8')
+        except Exception as e:
+            print(f"Warning: Could not encode PDF to base64: {e}")
+            
+        final_result = InstituteGenerateResponse(
+            success=True,
+            message=f"Test paper generated with {len(all_questions)} questions",
+            pdf_filename=os.path.basename(pdf_path),
+            pdf_base64=pdf_base64_str,
+            chapters_classified=chapters_classified,
+            verification_stats=verification_stats,
+            total_mcq=sum(1 for q in all_questions if q.get("type", "mcq") != "numerical"),
+            total_numerical=sum(1 for q in all_questions if q.get("type") == "numerical")
+        ).dict()
+        
+        job_store.update_job(job_id, status=JobStatus.DONE, progress=6, message="PDF Ready!", result=final_result)
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        job_store.update_job(job_id, status=JobStatus.FAILED, message=str(e), error=str(e))
+
+
+@router.post("/generate-sse/start", response_model=InstituteSSEStartResponse)
+async def start_institute_sse_generation(
+    request: InstituteGenerateRequest,
+    background_tasks: BackgroundTasks,
+    current_user: InstituteUser = Depends(get_institute_user),
+    db: Session = Depends(get_db)
+):
+    """Start an institute PDF generation job and return job_id for SSE streaming."""
+    
+    # Create job
+    job = job_store.create_job(str(current_user.id))
+    
+    # Start generation in background
+    background_tasks.add_task(
+        run_institute_generation_job,
+        job.job_id,
+        request,
+        current_user,
+        db
+    )
+    
+    return InstituteSSEStartResponse(
+        job_id=job.job_id,
+        message="Generation started. Connect to SSE stream for progress."
+    )
 
 
 @router.post("/generate", response_model=InstituteGenerateResponse)

@@ -106,10 +106,9 @@ function InstituteSection({
     instituteError, setInstituteError,
     institutePdfUrl, setInstitutePdfUrl
 }: InstituteSectionProps) {
+    const { startGeneration, isGenerating, cancelGeneration } = useGeneration();
     const [examType, setExamType] = React.useState("Mains");
     const [difficulty, setDifficulty] = React.useState("Medium");
-    const [pdfBase64, setPdfBase64] = React.useState<string | null>(null);
-    const [pdfFilename, setPdfFilename] = React.useState<string | null>(null);
     const [instituteRemaining, setInstituteRemaining] = React.useState<number | null>(null);
     const abortControllerRef = React.useRef<AbortController | null>(null);
 
@@ -168,19 +167,11 @@ function InstituteSection({
     }, []);
 
     const handleCancel = () => {
-        if (abortControllerRef.current) {
-            abortControllerRef.current.abort();
-            abortControllerRef.current = null;
-        }
-        setInstituteGenerating(false);
-        setInstituteError("Generation cancelled.");
+        cancelGeneration();
     };
 
     const handleGenerate = async () => {
         setInstituteError(null);
-        setInstitutePdfUrl(null);
-        setPdfBase64(null);
-        setPdfFilename(null);
 
         if (!instituteName.trim()) {
             setInstituteError("Please enter your institute name.");
@@ -191,62 +182,27 @@ function InstituteSection({
             return;
         }
 
-        const controller = new AbortController();
-        abortControllerRef.current = controller;
+        const payload = {
+            institute_name: instituteName,
+            contact_number: instituteContact,
+            institute_email: instituteEmail,
+            chapters: instSelectedChapters,
+            exam_type: examType,
+            difficulty,
+            physics_count: subjectCounts["Physics"] ?? undefined,
+            chemistry_count: subjectCounts["Chemistry"] ?? undefined,
+            maths_count: subjectCounts["Maths"] ?? undefined,
+            zoology_count: subjectCounts["Zoology"] ?? undefined,
+            botany_count: subjectCounts["Botany"] ?? undefined,
+        };
 
-        setInstituteGenerating(true);
         try {
-            const res = await authFetch(`${API_BASE_URL}/api/generate-institute`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                signal: controller.signal,
-                body: JSON.stringify({
-                    institute_name: instituteName,
-                    contact_number: instituteContact,
-                    institute_email: instituteEmail,
-                    chapters: instSelectedChapters,
-                    exam_type: examType,
-                    difficulty,
-                    physics_count: subjectCounts["Physics"] ?? undefined,
-                    chemistry_count: subjectCounts["Chemistry"] ?? undefined,
-                    maths_count: subjectCounts["Maths"] ?? undefined,
-                    zoology_count: subjectCounts["Zoology"] ?? undefined,
-                    botany_count: subjectCounts["Botany"] ?? undefined,
-                }),
-            });
-            const data = await res.json();
-            if (!res.ok) {
-                throw new Error(data.detail || data.message || "Generation failed");
-            }
-            if (data.pdf_base64) {
-                setPdfBase64(data.pdf_base64);
-                setPdfFilename(data.pdf_filename || "institute_test.pdf");
-            }
-            if (typeof data.institute_remaining === "number") {
-                setInstituteRemaining(data.institute_remaining);
-            }
+            await startGeneration(payload, true);
         } catch (err: any) {
-            if (err.name === "AbortError") return; // silently ignore — cancel already set state
             setInstituteError(err.message || "Something went wrong. Please try again.");
-        } finally {
-            abortControllerRef.current = null;
-            setInstituteGenerating(false);
         }
     };
 
-    const handleDownload = () => {
-        if (!pdfBase64 || !pdfFilename) return;
-        const byteChars = atob(pdfBase64);
-        const byteArr = new Uint8Array(byteChars.length);
-        for (let i = 0; i < byteChars.length; i++) byteArr[i] = byteChars.charCodeAt(i);
-        const blob = new Blob([byteArr], { type: "application/pdf" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = pdfFilename;
-        a.click();
-        URL.revokeObjectURL(url);
-    };
 
     return (
         <div className="bg-white dark:bg-[#16181c] border border-gray-200 dark:border-[#2f3336] rounded-2xl p-4 md:p-6 shadow-lg">
@@ -554,55 +510,27 @@ function InstituteSection({
                 </div>
             )}
 
-            {/* Success / Download */}
-            {pdfBase64 && pdfFilename && (
-                <div className="mb-4 flex flex-col items-center gap-3 px-4 py-4 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
-                    <div className="flex items-center gap-2 text-green-700 dark:text-green-400 text-sm font-medium">
-                        <CheckCircle2 className="w-5 h-5" />
-                        Institute test paper ready!
-                    </div>
-                    {instituteRemaining !== null && (
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                            {instituteRemaining} institute PDF{instituteRemaining !== 1 ? "s" : ""} remaining this month
-                        </p>
-                    )}
-                    <button
-                        onClick={handleDownload}
-                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-green-600 hover:bg-green-700 text-white text-sm font-semibold transition-colors shadow-sm"
-                    >
-                        <Download className="w-4 h-4" />
-                        Download PDF
-                    </button>
-                </div>
-            )}
-
-            {/* Generate / Cancel Buttons */}
-            {instituteGenerating ? (
-                <div className="flex gap-3">
-                    <button
-                        disabled
-                        className="flex-1 py-3 px-6 rounded-xl bg-indigo-600 opacity-70 cursor-not-allowed text-white font-semibold text-sm flex items-center justify-center gap-2"
-                    >
+            {/* Generate Button */}
+            <button
+                onClick={handleGenerate}
+                disabled={isGenerating || !instituteName.trim() || instSelectedChapters.length === 0}
+                className={`w-full py-3 px-6 rounded-xl text-white font-semibold text-sm transition-colors shadow-sm flex items-center justify-center gap-2 ${isGenerating || !instituteName.trim() || instSelectedChapters.length === 0
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-indigo-600 hover:bg-indigo-700"
+                    }`}
+            >
+                {isGenerating ? (
+                    <>
                         <Loader2 className="w-4 h-4 animate-spin" />
                         Generating…
-                    </button>
-                    <button
-                        onClick={handleCancel}
-                        className="py-3 px-5 rounded-xl bg-red-500 hover:bg-red-600 text-white font-semibold text-sm transition-colors shadow-sm flex items-center justify-center gap-2"
-                    >
-                        <X className="w-4 h-4" />
-                        Cancel
-                    </button>
-                </div>
-            ) : (
-                <button
-                    onClick={handleGenerate}
-                    className="w-full py-3 px-6 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm transition-colors shadow-sm flex items-center justify-center gap-2"
-                >
-                    <Sparkles className="w-4 h-4" />
-                    Generate Institute Test
-                </button>
-            )}
+                    </>
+                ) : (
+                    <>
+                        <Sparkles className="w-4 h-4" />
+                        Generate Institute Test Paper
+                    </>
+                )}
+            </button>
 
             {/* Plan info */}
             <p className="mt-3 text-center text-xs text-gray-400 dark:text-gray-500">
@@ -1343,8 +1271,8 @@ export default function TestGenerator() {
                     <button
                         onClick={() => setPageMode("student")}
                         className={`px-6 py-2 rounded-full text-sm font-semibold transition-all duration-200 ${pageMode === "student"
-                                ? "bg-white dark:bg-[#16181c] text-gray-900 dark:text-white shadow-sm"
-                                : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+                            ? "bg-white dark:bg-[#16181c] text-gray-900 dark:text-white shadow-sm"
+                            : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
                             }`}
                     >
                         Student
@@ -1363,8 +1291,8 @@ export default function TestGenerator() {
                             setPageMode("institute");
                         }}
                         className={`px-6 py-2 rounded-full text-sm font-semibold transition-all duration-200 ${pageMode === "institute"
-                                ? "bg-white dark:bg-[#16181c] text-gray-900 dark:text-white shadow-sm"
-                                : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+                            ? "bg-white dark:bg-[#16181c] text-gray-900 dark:text-white shadow-sm"
+                            : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
                             }`}
                     >
                         Institute
@@ -1385,8 +1313,8 @@ export default function TestGenerator() {
                     ) : (
                         <div className="flex flex-col items-center mb-3 md:mb-6 gap-2">
                             <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm ${!rateLimit || rateLimit.remaining > 0
-                                    ? "bg-green-100 text-green-700 border border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800"
-                                    : "bg-red-100 text-red-700 border border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800"
+                                ? "bg-green-100 text-green-700 border border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800"
+                                : "bg-red-100 text-red-700 border border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800"
                                 }`}>
                                 <Clock className="w-4 h-4" />
                                 <span>
@@ -2274,379 +2202,384 @@ export default function TestGenerator() {
                             )}
                     </button >
 
-                    {/* ── PROGRESSIVE QUESTION DISPLAY ─────────────────────────────────────
-                         Appears as soon as questions are generated (while PDF is still
-                         compiling). Download PDF is always available here.
-                    ──────────────────────────────────────────────────────────────────── */}
-                    {revealCount > 0 && (
-                        <div ref={questionsRef} className="mt-4">
-                            {/* Header row */}
-                            <div className="flex items-center justify-between mb-3">
-                                <div className="flex items-center gap-2">
-                                    <CheckCircle2 className="w-4 h-4 text-green-500" />
-                                    <span className="font-semibold text-gray-900 dark:text-white text-sm">
-                                        {revealCount}
-                                        {revealCount < partialQuestions.length && (
-                                            <span className="text-gray-400 font-normal"> / {partialQuestions.length}</span>
-                                        )}
-                                        {" "}Questions
-                                    </span>
-                                    {revealCount < partialQuestions.length ? (
-                                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 animate-pulse">
-                                            Streaming…
-                                        </span>
-                                    ) : isLoading ? (
-                                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 animate-pulse">
-                                            Compiling PDF…
-                                        </span>
-                                    ) : null}
-                                </div>
-                                <button
-                                    onClick={handleDownloadCurrentQuestions}
-                                    disabled={isPartialPdfLoading}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold transition-colors disabled:opacity-60 shrink-0"
-                                >
-                                    {isPartialPdfLoading
-                                        ? <Loader2 className="w-3 h-3 animate-spin" />
-                                        : <Download className="w-3 h-3" />}
-                                    {result?.pdf_base64
-                                        ? "Download PDF"
-                                        : isPartialPdfLoading
-                                            ? "Preparing…"
-                                            : `Download PDF (${revealCount})`}
-                                </button>
-                            </div>
-
-                            {/* Question cards */}
-                            <div className="space-y-2 max-h-[480px] overflow-y-auto pr-0.5">
-                                {partialQuestions.slice(0, revealCount).map((q: any, idx: number) => {
-                                    const isExp = expandedQuestion === idx;
-                                    const showAns = shownAnswers.has(idx);
-                                    const qType: string = q.type || "mcq";
-                                    const qText: string = q.text || q.question || "";
-                                    // Options can be array ["...","..."] or dict {A:"...",B:"..."}
-                                    const LABELS = ["A", "B", "C", "D", "E"];
-                                    const optEntries: [string, string][] = Array.isArray(q.options)
-                                        ? q.options.map((v: string, i: number) => [LABELS[i] ?? String(i), String(v)])
-                                        : Object.entries(q.options || {});
-                                    const ans: string = String(q.answer ?? q.correct_answer ?? "");
-                                    const sol: string = q.solution || q.explanation || "";
-
-                                    return (
-                                        <div
-                                            key={idx}
-                                            className="border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-[#0d0f12] overflow-hidden"
-                                            style={{
-                                                animation: `fadeSlideIn 0.35s ease forwards`,
-                                                animationDelay: `${idx * 80}ms`,
-                                                opacity: 0,
-                                            }}
-                                        >
-                                            {/* Collapsed header */}
-                                            <button
-                                                className="w-full flex items-start gap-2.5 p-3 text-left hover:bg-gray-50 dark:hover:bg-white/[0.03] transition-colors"
-                                                onClick={() => setExpandedQuestion(isExp ? null : idx)}
-                                            >
-                                                <span className="shrink-0 w-5 h-5 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 text-[10px] font-bold flex items-center justify-center mt-0.5">
-                                                    {idx + 1}
-                                                </span>
-                                                <span className={`shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded mt-0.5 uppercase tracking-wide ${
-                                                    qType === "numerical"
-                                                        ? "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400"
-                                                        : "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400"
-                                                }`}>
-                                                    {qType === "numerical" ? "Num" : "MCQ"}
-                                                </span>
-                                                <MathText
-                                                    content={qText}
-                                                    className="text-sm text-gray-800 dark:text-gray-200 flex-1 leading-snug [&_p]:m-0 [&_p]:line-clamp-2 [&_p]:leading-snug [&_.katex-display]:my-0 [&_.katex-display]:overflow-x-auto"
-                                                />
-                                                <ChevronDown className={`shrink-0 w-4 h-4 text-gray-400 mt-0.5 transition-transform duration-200 ${isExp ? "rotate-180" : ""}`} />
-                                            </button>
-
-                                            {/* Expanded content */}
-                                            {isExp && (
-                                                <div className="px-3 pb-3 pt-2 border-t border-gray-100 dark:border-gray-800">
-                                                    <MathText content={qText} className="text-sm mb-3 [&_p:last-child]:mb-0" />
-
-                                                    {/* MCQ Options */}
-                                                    {qType !== "numerical" && optEntries.length > 0 && (
-                                                        <div className="grid grid-cols-1 gap-1 mb-3">
-                                                            {optEntries.map(([key, val]) => {
-                                                                const isCorrect = showAns && ans.toUpperCase().includes(key.toUpperCase());
-                                                                return (
-                                                                    <div key={key} className={`flex items-start gap-2 px-2.5 py-1.5 rounded-lg text-sm ${
-                                                                        isCorrect
-                                                                            ? "bg-green-50 dark:bg-green-900/20 border border-green-300 dark:border-green-700 text-green-800 dark:text-green-300"
-                                                                            : "bg-gray-50 dark:bg-white/[0.04] text-gray-700 dark:text-gray-300"
-                                                                    }`}>
-                                                                        <span className="font-semibold shrink-0 mt-0.5">{key}.</span>
-                                                                        <MathText content={val} className="text-sm flex-1 [&_p]:m-0 [&_p]:inline" />
-                                                                    </div>
-                                                                );
-                                                            })}
-                                                        </div>
-                                                    )}
-
-                                                    {/* Show/Hide Answer */}
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            setShownAnswers(prev => {
-                                                                const next = new Set(prev);
-                                                                next.has(idx) ? next.delete(idx) : next.add(idx);
-                                                                return next;
-                                                            });
-                                                        }}
-                                                        className="text-xs px-3 py-1.5 rounded-lg border border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors font-medium"
-                                                    >
-                                                        {showAns ? "Hide Answer" : "Show Answer"}
-                                                    </button>
-
-                                                    {showAns && (
-                                                        <div className="mt-2 space-y-1">
-                                                            <div className="px-3 py-2 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
-                                                                <span className="text-xs font-semibold text-green-700 dark:text-green-400">Answer: </span>
-                                                                <span className="text-sm text-green-800 dark:text-green-300 font-medium">{ans}</span>
-                                                            </div>
-                                                            {sol && (
-                                                                <div className="px-3 py-2 bg-blue-50 dark:bg-blue-900/10 rounded-lg border border-blue-100 dark:border-blue-900/30">
-                                                                    <p className="text-[10px] font-semibold text-blue-700 dark:text-blue-400 mb-1">Solution:</p>
-                                                                    <MathText content={sol} className="text-xs [&_p]:mb-1 [&_p:last-child]:mb-0" />
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            )}
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Progress Bar */}
-                    {/* Detailed Loading Steps */}
-                    {
-                        isLoading && (
-                            <div className={`bg-indigo-50 dark:bg-indigo-900/10 rounded-xl border border-indigo-100 dark:border-indigo-900/30 mt-4 ${revealCount > 0 ? "p-3" : "mb-6 p-5"}`}>
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-2 h-2 rounded-full bg-indigo-600 animate-pulse"></div>
-                                        <span className="font-semibold text-indigo-900 dark:text-indigo-300 text-sm">
-                                            {revealCount > 0 ? "Compiling PDF in background..." : "Working..."}
-                                        </span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <div className="flex items-center gap-1 text-indigo-600 dark:text-indigo-400 bg-white dark:bg-black px-2 py-1 rounded-lg border border-indigo-100 dark:border-indigo-900/30 text-xs font-mono">
-                                            <Clock className="w-3 h-3" />
-                                            <span>{Math.floor(elapsedTime / 60)}:{String(elapsedTime % 60).padStart(2, '0')}</span>
-                                        </div>
-                                        {revealCount > 0 && (
-                                            <button
-                                                onClick={handleCancelGeneration}
-                                                className="px-3 py-1 bg-white dark:bg-black border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:text-red-600 hover:border-red-200 rounded-lg text-xs font-medium transition-all flex items-center gap-1"
-                                            >
-                                                <X className="w-3 h-3" />
-                                                Cancel
-                                            </button>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* Full step list — only when questions not yet ready */}
-                                {revealCount === 0 && (
-                                    <>
-                                        <div className="space-y-3 mt-4">
-                                            {[
-                                                { text: "Analyzing topic and difficulty...", start: 0, end: 5 },
-                                                { text: "Researching question patterns...", start: 5, end: 12 },
-                                                ...(numMCQs > 0 ? [{ text: "Creating MCQ questions...", start: 12, end: 25 }] : []),
-                                                ...(numNumericals > 0 ? [{ text: "Generating numerical problems...", start: 25, end: 35 }] : []),
-                                                { text: "Verifying answers...", start: 35, end: 42 },
-                                                { text: "Formatting PDF document...", start: 42, end: 1000 }
-                                            ].map((step, index) => {
-                                                const isCompleted = elapsedTime > step.end;
-                                                const isCurrent = elapsedTime >= step.start && elapsedTime <= step.end;
-                                                const isPending = elapsedTime < step.start;
-
-                                                return (
-                                                    <div key={index} className={`flex items-center gap-3 text-sm transition-all duration-300 ${isPending ? 'opacity-50' : 'opacity-100'}`}>
-                                                        {isCompleted ? (
-                                                            <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
-                                                        ) : isCurrent ? (
-                                                            <Loader2 className="w-5 h-5 text-indigo-600 animate-spin flex-shrink-0" />
-                                                        ) : (
-                                                            <div className="w-5 h-5 rounded-full border-2 border-gray-300 dark:border-gray-600 flex-shrink-0" />
-                                                        )}
-                                                        <span className={`${isCompleted ? 'text-green-700 dark:text-green-400' : isCurrent ? 'text-indigo-700 dark:text-indigo-300 font-medium' : 'text-gray-500 dark:text-gray-400'}`}>
-                                                            {step.text}
-                                                        </span>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-
-                                        <button
-                                            onClick={handleCancelGeneration}
-                                            className="w-full mt-6 py-2.5 bg-white dark:bg-black border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:text-red-600 hover:border-red-200 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2"
-                                        >
-                                            <X className="w-4 h-4" />
-                                            Cancel Generation
-                                        </button>
-                                    </>
-                                )}
-                            </div>
-                        )
-                    }
-
-                    {/* Error Message */}
-                    {
-                        (genError || validationError) && (
-                            <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3 text-red-700 animate-in fade-in slide-in-from-top-2">
-                                <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                                <p>{genError || validationError}</p>
-                            </div>
-                        )
-                    }
-
-                    {/* Success Message */}
-                    {
-                        result?.success && (
-                            <div className="mt-4 space-y-3">
-                                <div className="flex items-start gap-3 text-green-700 bg-green-50 border border-green-200 rounded-lg px-4 py-3">
-                                    <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                                    <div>
-                                        <p className="font-medium">{result.message}</p>
-                                        <p className="text-sm text-green-600">
-                                            {level === "CBSE Board" ? (
-                                                `${cbseVeryShort + cbseShort + cbseLong + cbseCaseBased} Theory + ${cbseNumericals} Numerical Questions`
-                                            ) : (
-                                                `${result.total_mcq} MCQs + ${result.total_numerical} Numerical Questions`
-                                            )}
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <div className="flex gap-3">
-                                    <button
-                                        onClick={handleDownload}
-                                        className="flex-1 py-3 bg-white dark:bg-black border border-indigo-600 text-indigo-600 font-medium rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/10 transition-colors flex items-center justify-center gap-2"
-                                    >
-                                        <Download className="w-5 h-5" />
-                                        Download PDF
-                                    </button>
-                                    <button
-                                        onClick={handlePostClick}
-                                        disabled={isPostingLoading}
-                                        className="flex-1 py-3 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2 shadow-sm disabled:opacity-70"
-                                    >
-                                        {isPostingLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Share2 className="w-5 h-5" />}
-                                        Post
-                                    </button>
-                                </div>
-
-                                {/* Hidden error message for save failure if any */}
-                                {saveError && (
-                                    <p className="text-sm text-red-600 text-center mt-2">{saveError}</p>
-                                )}
-                            </div>
-                        )
-                    }
-
-                    {/* Recent Tests History */}
-                    {history.length > 0 && (
-                        <div className="mt-8 p-5 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-700">
-                            <div className="flex items-center gap-2 mb-4">
-                                <Clock className="w-5 h-5 text-indigo-500" />
-                                <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200">Recent Tests</h3>
-                            </div>
-                            <div className="space-y-3">
-                                {history.slice(0, 3).map((item) => (
-                                    <div
-                                        key={item.id}
-                                        onClick={() => {
-                                            if (item.status === 'COMPLETED' && item.pdf_filename) {
-                                                const url = `${API_BASE_URL}/api/download/${item.pdf_filename}`;
-                                                window.open(url, "_blank");
-                                            }
-                                        }}
-                                        className={`flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 transition-all ${item.status === 'COMPLETED'
-                                            ? 'cursor-pointer hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-800'
-                                            : ''
-                                            }`}
-                                    >
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex items-center gap-2">
-                                                <p className="font-medium text-gray-800 dark:text-gray-200 truncate">
-                                                    {item.topic}
-                                                </p>
-                                                {item.status === 'COMPLETED' && (
-                                                    <Download className="w-3 h-3 text-gray-400" />
-                                                )}
-                                            </div>
-                                            <p className="text-sm text-gray-500 dark:text-gray-400">
-                                                {item.subject} • {item.level} • {item.question_count} Qs
-                                            </p>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            {item.status === 'COMPLETED' && item.pdf_filename ? (
-                                                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                                                    <CheckCircle2 className="w-3 h-3 mr-1" />
-                                                    Ready
-                                                </span>
-                                            ) : item.status === 'PENDING' || item.status === 'PROCESSING' ? (
-                                                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">
-                                                    <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                                                    In Progress
-                                                </span>
-                                            ) : (
-                                                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
-                                                    <AlertCircle className="w-3 h-3 mr-1" />
-                                                    Failed
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Footer */}
-                    <div className="text-center mt-8 text-gray-500 dark:text-gray-400 text-sm pb-4">
-                        <div className="flex flex-col items-center justify-center gap-1">
-                            <a href="https://www.mentorsmantra.co.in" target="_blank" rel="noopener noreferrer" className="hover:text-indigo-600 transition-colors font-medium">
-                                www.mentorsmantra.co.in
-                            </a>
-                            <p>Contact: 9821040290 / 7982387231</p>
-                            <p className="text-gray-400 dark:text-gray-500 mt-2 italic">A Mentors Mantra Product</p>
-                        </div>
-                    </div>
-                </div >
+                </div>
             )} {/* end pageMode === "student" */}
 
             {/* Institute Mode Section */}
             {pageMode === "institute" && (
-                <InstituteSection
-                    user={user}
-                    token={token}
-                    authFetch={authFetch}
-                    instituteName={instituteName}
-                    setInstituteName={setInstituteName}
-                    instituteContact={instituteContact}
-                    setInstituteContact={setInstituteContact}
-                    instituteEmail={instituteEmail}
-                    setInstituteEmail={setInstituteEmail}
-                    instituteGenerating={instituteGenerating}
-                    setInstituteGenerating={setInstituteGenerating}
-                    instituteError={instituteError}
-                    setInstituteError={setInstituteError}
-                    institutePdfUrl={institutePdfUrl}
-                    setInstitutePdfUrl={setInstitutePdfUrl}
-                />
+                <div className="max-w-4xl mx-auto space-y-6">
+                    <InstituteSection
+                        user={user}
+                        token={token}
+                        authFetch={authFetch}
+                        instituteName={instituteName}
+                        setInstituteName={setInstituteName}
+                        instituteContact={instituteContact}
+                        setInstituteContact={setInstituteContact}
+                        instituteEmail={instituteEmail}
+                        setInstituteEmail={setInstituteEmail}
+                        instituteGenerating={isLoading}
+                        setInstituteGenerating={() => { }}
+                        instituteError={genError}
+                        setInstituteError={() => { }}
+                        institutePdfUrl={null}
+                        setInstitutePdfUrl={() => { }}
+                    />
+                </div>
             )}
+
+            {/* Shared Generation Progress & Results UI */}
+            <div className="max-w-4xl mx-auto space-y-6 mt-6">
+
+                {/* ── PROGRESSIVE QUESTION DISPLAY ─────────────────────────────────────
+                         Appears as soon as questions are generated (while PDF is still
+                         compiling). Download PDF is always available here.
+                    ──────────────────────────────────────────────────────────────────── */}
+                {revealCount > 0 && (
+                    <div ref={questionsRef} className="mt-4">
+                        {/* Header row */}
+                        <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-2">
+                                <CheckCircle2 className="w-4 h-4 text-green-500" />
+                                <span className="font-semibold text-gray-900 dark:text-white text-sm">
+                                    {revealCount}
+                                    {revealCount < partialQuestions.length && (
+                                        <span className="text-gray-400 font-normal"> / {partialQuestions.length}</span>
+                                    )}
+                                    {" "}Questions
+                                </span>
+                                {revealCount < partialQuestions.length ? (
+                                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 animate-pulse">
+                                        Streaming…
+                                    </span>
+                                ) : isLoading ? (
+                                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 animate-pulse">
+                                        Compiling PDF…
+                                    </span>
+                                ) : null}
+                            </div>
+                            <button
+                                onClick={handleDownloadCurrentQuestions}
+                                disabled={isPartialPdfLoading}
+                                className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold transition-colors disabled:opacity-60 shrink-0"
+                            >
+                                {isPartialPdfLoading
+                                    ? <Loader2 className="w-3 h-3 animate-spin" />
+                                    : <Download className="w-3 h-3" />}
+                                {result?.pdf_base64
+                                    ? "Download PDF"
+                                    : isPartialPdfLoading
+                                        ? "Preparing…"
+                                        : `Download PDF (${revealCount})`}
+                            </button>
+                        </div>
+
+                        {/* Question cards */}
+                        <div className="space-y-2 max-h-[480px] overflow-y-auto pr-0.5">
+                            {partialQuestions.slice(0, revealCount).map((q: any, idx: number) => {
+                                const isExp = expandedQuestion === idx;
+                                const showAns = shownAnswers.has(idx);
+                                const qType: string = q.type || "mcq";
+                                const qText: string = q.text || q.question || "";
+                                // Options can be array ["...","..."] or dict {A:"...",B:"..."}
+                                const LABELS = ["A", "B", "C", "D", "E"];
+                                const optEntries: [string, string][] = Array.isArray(q.options)
+                                    ? q.options.map((v: string, i: number) => [LABELS[i] ?? String(i), String(v)])
+                                    : Object.entries(q.options || {});
+                                const ans: string = String(q.answer ?? q.correct_answer ?? "");
+                                const sol: string = q.solution || q.explanation || "";
+
+                                return (
+                                    <div
+                                        key={idx}
+                                        className="border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-[#0d0f12] overflow-hidden"
+                                        style={{
+                                            animation: `fadeSlideIn 0.35s ease forwards`,
+                                            animationDelay: `${idx * 80}ms`,
+                                            opacity: 0,
+                                        }}
+                                    >
+                                        {/* Collapsed header */}
+                                        <button
+                                            className="w-full flex items-start gap-2.5 p-3 text-left hover:bg-gray-50 dark:hover:bg-white/[0.03] transition-colors"
+                                            onClick={() => setExpandedQuestion(isExp ? null : idx)}
+                                        >
+                                            <span className="shrink-0 w-5 h-5 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 text-[10px] font-bold flex items-center justify-center mt-0.5">
+                                                {idx + 1}
+                                            </span>
+                                            <span className={`shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded mt-0.5 uppercase tracking-wide ${qType === "numerical"
+                                                ? "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400"
+                                                : "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400"
+                                                }`}>
+                                                {qType === "numerical" ? "Num" : "MCQ"}
+                                            </span>
+                                            <MathText
+                                                content={qText}
+                                                className="text-sm text-gray-800 dark:text-gray-200 flex-1 leading-snug [&_p]:m-0 [&_p]:line-clamp-2 [&_p]:leading-snug [&_.katex-display]:my-0 [&_.katex-display]:overflow-x-auto"
+                                            />
+                                            <ChevronDown className={`shrink-0 w-4 h-4 text-gray-400 mt-0.5 transition-transform duration-200 ${isExp ? "rotate-180" : ""}`} />
+                                        </button>
+
+                                        {/* Expanded content */}
+                                        {isExp && (
+                                            <div className="px-3 pb-3 pt-2 border-t border-gray-100 dark:border-gray-800">
+                                                <MathText content={qText} className="text-sm mb-3 [&_p:last-child]:mb-0" />
+
+                                                {/* MCQ Options */}
+                                                {qType !== "numerical" && optEntries.length > 0 && (
+                                                    <div className="grid grid-cols-1 gap-1 mb-3">
+                                                        {optEntries.map(([key, val]) => {
+                                                            const isCorrect = showAns && ans.toUpperCase().includes(key.toUpperCase());
+                                                            return (
+                                                                <div key={key} className={`flex items-start gap-2 px-2.5 py-1.5 rounded-lg text-sm ${isCorrect
+                                                                    ? "bg-green-50 dark:bg-green-900/20 border border-green-300 dark:border-green-700 text-green-800 dark:text-green-300"
+                                                                    : "bg-gray-50 dark:bg-white/[0.04] text-gray-700 dark:text-gray-300"
+                                                                    }`}>
+                                                                    <span className="font-semibold shrink-0 mt-0.5">{key}.</span>
+                                                                    <MathText content={val} className="text-sm flex-1 [&_p]:m-0 [&_p]:inline" />
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                )}
+
+                                                {/* Show/Hide Answer */}
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setShownAnswers(prev => {
+                                                            const next = new Set(prev);
+                                                            next.has(idx) ? next.delete(idx) : next.add(idx);
+                                                            return next;
+                                                        });
+                                                    }}
+                                                    className="text-xs px-3 py-1.5 rounded-lg border border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors font-medium"
+                                                >
+                                                    {showAns ? "Hide Answer" : "Show Answer"}
+                                                </button>
+
+                                                {showAns && (
+                                                    <div className="mt-2 space-y-1">
+                                                        <div className="px-3 py-2 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                                                            <span className="text-xs font-semibold text-green-700 dark:text-green-400">Answer: </span>
+                                                            <span className="text-sm text-green-800 dark:text-green-300 font-medium">{ans}</span>
+                                                        </div>
+                                                        {sol && (
+                                                            <div className="px-3 py-2 bg-blue-50 dark:bg-blue-900/10 rounded-lg border border-blue-100 dark:border-blue-900/30">
+                                                                <p className="text-[10px] font-semibold text-blue-700 dark:text-blue-400 mb-1">Solution:</p>
+                                                                <MathText content={sol} className="text-xs [&_p]:mb-1 [&_p:last-child]:mb-0" />
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
+
+                {/* Progress Bar */}
+                {/* Detailed Loading Steps */}
+                {
+                    isLoading && (
+                        <div className={`bg-indigo-50 dark:bg-indigo-900/10 rounded-xl border border-indigo-100 dark:border-indigo-900/30 mt-4 ${revealCount > 0 ? "p-3" : "mb-6 p-5"}`}>
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-2 h-2 rounded-full bg-indigo-600 animate-pulse"></div>
+                                    <span className="font-semibold text-indigo-900 dark:text-indigo-300 text-sm">
+                                        {revealCount > 0 ? "Compiling PDF in background..." : "Working..."}
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-1 text-indigo-600 dark:text-indigo-400 bg-white dark:bg-black px-2 py-1 rounded-lg border border-indigo-100 dark:border-indigo-900/30 text-xs font-mono">
+                                        <Clock className="w-3 h-3" />
+                                        <span>{Math.floor(elapsedTime / 60)}:{String(elapsedTime % 60).padStart(2, '0')}</span>
+                                    </div>
+                                    {revealCount > 0 && (
+                                        <button
+                                            onClick={handleCancelGeneration}
+                                            className="px-3 py-1 bg-white dark:bg-black border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:text-red-600 hover:border-red-200 rounded-lg text-xs font-medium transition-all flex items-center gap-1"
+                                        >
+                                            <X className="w-3 h-3" />
+                                            Cancel
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Full step list — only when questions not yet ready */}
+                            {revealCount === 0 && (
+                                <>
+                                    <div className="space-y-3 mt-4">
+                                        {[
+                                            { text: "Analyzing topic and difficulty...", start: 0, end: 5 },
+                                            { text: "Researching question patterns...", start: 5, end: 12 },
+                                            ...(numMCQs > 0 ? [{ text: "Creating MCQ questions...", start: 12, end: 25 }] : []),
+                                            ...(numNumericals > 0 ? [{ text: "Generating numerical problems...", start: 25, end: 35 }] : []),
+                                            { text: "Verifying answers...", start: 35, end: 42 },
+                                            { text: "Formatting PDF document...", start: 42, end: 1000 }
+                                        ].map((step, index) => {
+                                            const isCompleted = elapsedTime > step.end;
+                                            const isCurrent = elapsedTime >= step.start && elapsedTime <= step.end;
+                                            const isPending = elapsedTime < step.start;
+
+                                            return (
+                                                <div key={index} className={`flex items-center gap-3 text-sm transition-all duration-300 ${isPending ? 'opacity-50' : 'opacity-100'}`}>
+                                                    {isCompleted ? (
+                                                        <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
+                                                    ) : isCurrent ? (
+                                                        <Loader2 className="w-5 h-5 text-indigo-600 animate-spin flex-shrink-0" />
+                                                    ) : (
+                                                        <div className="w-5 h-5 rounded-full border-2 border-gray-300 dark:border-gray-600 flex-shrink-0" />
+                                                    )}
+                                                    <span className={`${isCompleted ? 'text-green-700 dark:text-green-400' : isCurrent ? 'text-indigo-700 dark:text-indigo-300 font-medium' : 'text-gray-500 dark:text-gray-400'}`}>
+                                                        {step.text}
+                                                    </span>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+
+                                    <button
+                                        onClick={handleCancelGeneration}
+                                        className="w-full mt-6 py-2.5 bg-white dark:bg-black border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:text-red-600 hover:border-red-200 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2"
+                                    >
+                                        <X className="w-4 h-4" />
+                                        Cancel Generation
+                                    </button>
+                                </>
+                            )}
+                        </div>
+                    )
+                }
+
+                {/* Error Message */}
+                {
+                    (genError || validationError) && (
+                        <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3 text-red-700 animate-in fade-in slide-in-from-top-2">
+                            <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                            <p>{genError || validationError}</p>
+                        </div>
+                    )
+                }
+
+                {/* Success Message */}
+                {
+                    result?.success && (
+                        <div className="mt-4 space-y-3">
+                            <div className="flex items-start gap-3 text-green-700 bg-green-50 border border-green-200 rounded-lg px-4 py-3">
+                                <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                                <div>
+                                    <p className="font-medium">{result.message}</p>
+                                    <p className="text-sm text-green-600">
+                                        {level === "CBSE Board" ? (
+                                            `${cbseVeryShort + cbseShort + cbseLong + cbseCaseBased} Theory + ${cbseNumericals} Numerical Questions`
+                                        ) : (
+                                            `${result.total_mcq} MCQs + ${result.total_numerical} Numerical Questions`
+                                        )}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={handleDownload}
+                                    className="flex-1 py-3 bg-white dark:bg-black border border-indigo-600 text-indigo-600 font-medium rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/10 transition-colors flex items-center justify-center gap-2"
+                                >
+                                    <Download className="w-5 h-5" />
+                                    Download PDF
+                                </button>
+                                <button
+                                    onClick={handlePostClick}
+                                    disabled={isPostingLoading}
+                                    className="flex-1 py-3 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2 shadow-sm disabled:opacity-70"
+                                >
+                                    {isPostingLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Share2 className="w-5 h-5" />}
+                                    Post
+                                </button>
+                            </div>
+
+                            {/* Hidden error message for save failure if any */}
+                            {saveError && (
+                                <p className="text-sm text-red-600 text-center mt-2">{saveError}</p>
+                            )}
+                        </div>
+                    )
+                }
+
+                {/* Recent Tests History */}
+                {history.length > 0 && (
+                    <div className="mt-8 p-5 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-700">
+                        <div className="flex items-center gap-2 mb-4">
+                            <Clock className="w-5 h-5 text-indigo-500" />
+                            <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200">Recent Tests</h3>
+                        </div>
+                        <div className="space-y-3">
+                            {history.slice(0, 3).map((item) => (
+                                <div
+                                    key={item.id}
+                                    onClick={() => {
+                                        if (item.status === 'COMPLETED' && item.pdf_filename) {
+                                            const url = `${API_BASE_URL}/api/download/${item.pdf_filename}`;
+                                            window.open(url, "_blank");
+                                        }
+                                    }}
+                                    className={`flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 transition-all ${item.status === 'COMPLETED'
+                                        ? 'cursor-pointer hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-800'
+                                        : ''
+                                        }`}
+                                >
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2">
+                                            <p className="font-medium text-gray-800 dark:text-gray-200 truncate">
+                                                {item.topic}
+                                            </p>
+                                            {item.status === 'COMPLETED' && (
+                                                <Download className="w-3 h-3 text-gray-400" />
+                                            )}
+                                        </div>
+                                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                                            {item.subject} • {item.level} • {item.question_count} Qs
+                                        </p>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        {item.status === 'COMPLETED' && item.pdf_filename ? (
+                                            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                                                <CheckCircle2 className="w-3 h-3 mr-1" />
+                                                Ready
+                                            </span>
+                                        ) : item.status === 'PENDING' || item.status === 'PROCESSING' ? (
+                                            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">
+                                                <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                                                In Progress
+                                            </span>
+                                        ) : (
+                                            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
+                                                <AlertCircle className="w-3 h-3 mr-1" />
+                                                Failed
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Footer */}
+                <div className="text-center mt-8 text-gray-500 dark:text-gray-400 text-sm pb-4">
+                    <div className="flex flex-col items-center justify-center gap-1">
+                        <a href="https://www.mentorsmantra.co.in" target="_blank" rel="noopener noreferrer" className="hover:text-indigo-600 transition-colors font-medium">
+                            www.mentorsmantra.co.in
+                        </a>
+                        <p>Contact: 9821040290 / 7982387231</p>
+                        <p className="text-gray-400 dark:text-gray-500 mt-2 italic">A Mentors Mantra Product</p>
+                    </div>
+                </div>
+            </div >
 
             {/* Post Modal */}
             {

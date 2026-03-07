@@ -1738,7 +1738,15 @@ async def stream_job_progress(
         raise HTTPException(status_code=401, detail="Invalid token")
     
     user_id = payload.get("sub")
-    current_user = db.query(User).filter(User.id == user_id).first()
+    
+    # Handle both normal users and institute users
+    user_type = payload.get("user_type", "student")
+    if user_type == "institute":
+        from models import InstituteUser
+        current_user = db.query(InstituteUser).filter(InstituteUser.id == user_id).first()
+    else:
+        current_user = db.query(User).filter(User.id == user_id).first()
+        
     if not current_user:
         raise HTTPException(status_code=401, detail="User not found")
     
@@ -1796,11 +1804,42 @@ async def stream_job_progress(
 
 
 @app.get("/api/generate-sse/{job_id}/status")
-async def get_job_status(job_id: str, current_user: User = Depends(get_current_user_required)):
+async def get_job_status(
+    job_id: str, 
+    request: Request,
+    db: Session = Depends(get_db)
+):
     """
     Poll endpoint to get current job status.
     Useful for reconnection after network drops.
     """
+    from auth import decode_token
+    
+    # Try getting token from Auth header
+    auth_header = request.headers.get("Authorization")
+    token = None
+    if auth_header and auth_header.startswith("Bearer "):
+        token = auth_header.split(" ")[1]
+        
+    if not token:
+        raise HTTPException(status_code=401, detail="Token required")
+        
+    payload = decode_token(token)
+    if not payload or payload.get("type") != "access":
+        raise HTTPException(status_code=401, detail="Invalid token")
+        
+    user_id = payload.get("sub")
+    user_type = payload.get("user_type", "student")
+    
+    if user_type == "institute":
+        from models import InstituteUser
+        current_user = db.query(InstituteUser).filter(InstituteUser.id == user_id).first()
+    else:
+        current_user = db.query(User).filter(User.id == user_id).first()
+        
+    if not current_user:
+        raise HTTPException(status_code=401, detail="User not found")
+
     job = job_store.get_job(job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found or expired")
