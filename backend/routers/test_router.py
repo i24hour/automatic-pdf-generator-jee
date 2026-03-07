@@ -102,6 +102,15 @@ class ExamSummary(BaseModel):
     not_visited: int
 
 
+class SecurityLogInput(BaseModel):
+    """Security violations log sent upon force submission."""
+    tabSwitchCount: int
+    fullscreenExitCount: int
+    devtoolsAttempts: int
+    copyAttempts: int
+    totalWarnings: int
+
+
 
 
 
@@ -777,6 +786,19 @@ async def submit_test(
         unattempted_count=unattempted_count,
         redirect_url=f"/test/{test_id}/result"
     )
+
+@router.post("/{test_id}/violation-submit", response_model=SubmitResponse)
+async def violation_submit_test(
+    test_id: str,
+    log: SecurityLogInput,
+    current_user: User = Depends(get_current_user_required),
+    db: Session = Depends(get_db)
+):
+    """Force submit test due to security violations."""
+    print(f"🚨 SECURITY VIOLATION SUBMIT for user {current_user.email} on test {test_id}: {log.dict()}")
+    # We can just reuse the exact same scoring logic as regular submit.
+    # In a full production system, we might save `log.dict()` to a dedicated SecurityViolations database table.
+    return await submit_test(test_id=test_id, current_user=current_user, db=db)
 
 
 @router.get("/{test_id}/result")
