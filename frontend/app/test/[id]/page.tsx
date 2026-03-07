@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { ChevronLeft, ChevronRight, Menu, X } from 'lucide-react';
 import MathText from '@/components/MathText';
 import DiagramRenderer from '@/components/test/DiagramRenderer';
+import { useExamSecurity } from '@/hooks/useExamSecurity';
 
 import { API_BASE_URL as API_BASE } from '@/lib/config';
 
@@ -55,6 +56,7 @@ export default function TestInterfacePage() {
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState(false);
     const [showSubmitModal, setShowSubmitModal] = useState(false);
+    const [isForceSubmitted, setIsForceSubmitted] = useState(false);
     const [examSummary, setExamSummary] = useState<{
         total: number;
         answered: number;
@@ -68,6 +70,22 @@ export default function TestInterfacePage() {
     const [showPalette, setShowPalette] = useState(false); // Mobile palette toggle
 
     const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+
+    // Use the comprehensive exam security hook
+    const isExamActive = testState?.status === 'IN_PROGRESS' && !showSubmitModal && !loading && !isForceSubmitted;
+    const {
+        warningMessage,
+        clearWarning,
+        isFullscreen,
+        enterFullscreen,
+        securityLog
+    } = useExamSecurity({
+        isExamActive,
+        onSubmitExam: () => {
+            setIsForceSubmitted(true);
+            handleSubmit(true); // Call the violation submit route
+        }
+    });
 
     // Fetch test state
     const fetchTestState = useCallback(async () => {
@@ -121,9 +139,27 @@ export default function TestInterfacePage() {
             await fetchTestState();
             await fetchQuestion(0);
             setLoading(false);
+
+            // Auto enter fullscreen after loading if possible
+            setTimeout(() => {
+                enterFullscreen();
+            }, 1000);
         };
         load();
     }, [fetchTestState, fetchQuestion]);
+
+    // Many browsers require a user gesture to enter fullscreen.
+    // So we also add a global click listener that will trigger fullscreen on their first click anywhere in the test portal.
+    useEffect(() => {
+        const handleFirstClick = () => {
+            if (!isFullscreen && !loading) {
+                enterFullscreen();
+            }
+        };
+
+        document.addEventListener('click', handleFirstClick);
+        return () => document.removeEventListener('click', handleFirstClick);
+    }, [isFullscreen, loading]);
 
     // Timer countdown
     useEffect(() => {
@@ -139,8 +175,23 @@ export default function TestInterfacePage() {
             setTimeRemaining(prev => Math.max(0, prev - 1));
         }, 1000);
 
-        return () => clearInterval(interval);
-    }, [timeRemaining, testState?.status, actionLoading]);
+        // Security Hook already handles beforeunload and popstate equivalents
+        // but we still want to trap Next.js back button soft routing if needed, 
+        // though `popstate` inside the hook often handles it for raw history.
+        const handlePopState = (e: PopStateEvent) => {
+            if (testState?.status === 'IN_PROGRESS' && !showSubmitModal) {
+                window.history.pushState(null, '', window.location.href);
+            }
+        };
+
+        window.history.pushState(null, '', window.location.href);
+        window.addEventListener('popstate', handlePopState);
+
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener('popstate', handlePopState);
+        };
+    }, [timeRemaining, testState?.status, actionLoading, showSubmitModal]);
 
     // Calculate time spent on current question
     const getTimeSpent = () => Math.floor((Date.now() - questionStartTime) / 1000);
@@ -216,17 +267,34 @@ export default function TestInterfacePage() {
     };
 
     // Handle submit
-    const handleSubmit = async () => {
+    const handleSubmit = async (isViolation: boolean = false) => {
         if (actionLoading) return;
         setActionLoading(true);
+
         try {
-            const response = await fetch(`${API_BASE}/test/${testId}/submit`, {
+            const endpoint = isViolation ? `/test/${testId}/violation-submit` : `/test/${testId}/submit`;
+
+            const options: RequestInit = {
                 method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            };
+
+            // If it's a security violation submission, we append the log
+            if (isViolation) {
+                options.body = JSON.stringify(securityLog);
+            }
+
+            const response = await fetch(`${API_BASE}${endpoint}`, options);
             if (response.ok) {
                 const data = await response.json();
-                router.push(data.redirect_url);
+
+                // For violations, we intentionally don't redirect them immediately. Let them read the "Forced Submission" screen.
+                if (!isViolation) {
+                    router.push(data.redirect_url);
+                }
             } else {
                 setActionLoading(false);
             }
@@ -635,7 +703,7 @@ export default function TestInterfacePage() {
 
                         <div className="flex justify-center gap-4">
                             <button
-                                onClick={handleSubmit}
+                                onClick={() => handleSubmit(false)}
                                 className="px-8 py-2 bg-green-600 text-white font-bold rounded hover:bg-green-700"
                             >
                                 YES
@@ -650,6 +718,70 @@ export default function TestInterfacePage() {
                     </div>
                 </div>
             )}
+
+            {/* Warning Message Modal */}
+            {warningMessage && (
+                <div className="fixed inset-0 bg-red-900/90 flex flex-col items-center justify-center z-[100] p-6 backdrop-blur-md">
+                    <div className="bg-white dark:bg-[#16181c] rounded-2xl max-w-xl w-full p-8 shadow-2xl border-2 border-red-500 transform transition-all scale-100">
+                        <div className="flex justify-center mb-6">
+                            <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center animate-pulse">
+                                <span className="text-4xl">⚠️</span>
+                            </div>
+                        </div>
+                        <h2 className="text-2xl font-bold text-center text-red-600 dark:text-red-500 mb-4 uppercase tracking-wider">
+                            Rule Violation Detected
+                        </h2>
+                        <p className="text-center text-gray-800 dark:text-gray-200 text-lg mb-8 leading-relaxed font-medium">
+                            {warningMessage}
+                        </p>
+                        <div className="flex justify-center">
+                            <button
+                                onClick={clearWarning}
+                                className="px-8 py-3 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 transition-colors shadow-lg shadow-red-600/30 text-lg w-full sm:w-auto"
+                            >
+                                I Understand, Return to Test
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Forced Submission UI */}
+            {isForceSubmitted && (
+                <div className="fixed inset-0 bg-black flex flex-col items-center justify-center z-[200] p-6 backdrop-blur-md">
+                    <div className="bg-[#1a0f0f] border-2 border-red-700 rounded-3xl max-w-2xl w-full p-10 text-center shadow-[0_0_50px_rgba(220,38,38,0.5)]">
+                        <div className="mb-6 flex justify-center">
+                            <div className="w-24 h-24 rounded-full bg-red-900/30 flex items-center justify-center border-4 border-red-600 animate-pulse">
+                                <span className="text-5xl">🛑</span>
+                            </div>
+                        </div>
+                        <h1 className="text-4xl font-extrabold text-red-500 mb-6 uppercase tracking-widest drop-shadow-md">
+                            Exam Terminated
+                        </h1>
+                        <p className="text-xl text-red-200 mb-8 leading-relaxed">
+                            Your exam has been automatically submitted and terminated due to multiple security violations.
+                            This event has been logged and reported.
+                        </p>
+                        <div className="bg-black/50 p-6 rounded-xl border border-red-900/50 mb-8 text-left max-w-md mx-auto">
+                            <h3 className="text-red-400 font-bold mb-4 border-b border-red-900/50 pb-2">Violation Summary Record</h3>
+                            <ul className="space-y-2 text-red-200/80 font-mono text-sm">
+                                <li className="flex justify-between"><span>Tab navigations:</span> <span>{securityLog.tabSwitchCount}</span></li>
+                                <li className="flex justify-between"><span>Fullscreen exits:</span> <span>{securityLog.fullscreenExitCount}</span></li>
+                                <li className="flex justify-between"><span>DevTools checks:</span> <span>{securityLog.devtoolsAttempts}</span></li>
+                                <li className="flex justify-between"><span>Clipboard events:</span> <span>{securityLog.copyAttempts}</span></li>
+                            </ul>
+                        </div>
+                        <button
+                            onClick={() => router.push(`/test/${testId}/result`)}
+                            className="px-10 py-4 bg-red-700 text-white font-bold rounded-xl hover:bg-red-600 transition-colors"
+                        >
+                            Proceed to Results
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Enforce Fullscreen overlay removed in favor of auto-fullscreen and click-to-fullscreen */}
         </div>
     );
 }
