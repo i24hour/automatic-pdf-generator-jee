@@ -11,7 +11,7 @@ import json
 import asyncio
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, List, Any
-from fastapi import FastAPI, HTTPException, Depends, status, BackgroundTasks
+from fastapi import FastAPI, HTTPException, Depends, status, BackgroundTasks, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel, Field
@@ -1872,7 +1872,7 @@ async def generate_partial_pdf(
 
     safe_topic = str(topic).replace("&", "and").replace("/", "-").replace(" ", "_")[:40]
     safe_level = str(level).replace(" ", "_")
-    filename   = f"Partial{len(questions)}_{safe_topic}_{safe_level}_{difficulty}"
+    filename   = f"{len(questions)}_{safe_topic}_{safe_level}_{difficulty}"
 
     llm_result = {
         "success": True,

@@ -42,7 +42,7 @@ video_jobs: dict = {}
 # ─── Pydantic Models ───────────────────────────────────────────────────────────
 
 class VideoGenerateRequest(BaseModel):
-    prompt: str = Field(..., min_length=5, max_length=1000)
+    prompt: str = Field(..., min_length=5, max_length=6000)
     topic: str = Field(default="Geometry")
     language: str = Field(default="en")
     tts_provider: str = Field(default="edge")
