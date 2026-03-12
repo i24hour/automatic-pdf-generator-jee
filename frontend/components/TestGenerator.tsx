@@ -1482,8 +1482,8 @@ export default function TestGenerator() {
                                                     setTopic(newSel.join(', '));
                                                 }}
                                                 className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-all ${filteredChapters.length > 0 && filteredChapters.every(c => selectedChapters.includes(c.matchedTopic || c.name))
-                                                        ? 'bg-orange-600 text-white border-orange-600'
-                                                        : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-orange-50 dark:hover:bg-orange-900/20'
+                                                    ? 'bg-orange-600 text-white border-orange-600'
+                                                    : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-orange-50 dark:hover:bg-orange-900/20'
                                                     }`}
                                             >
                                                 🎓 Select All GATE Topics
@@ -1991,6 +1991,84 @@ export default function TestGenerator() {
                                     />
                                     <label className="absolute left-3 top-1 text-[10px] text-indigo-600 font-medium">
                                         Numericals (3-5M)
+                                    </label>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* GATE Pattern */}
+                        {level === "GATE" && (
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="relative">
+                                    <input
+                                        type="number"
+                                        min={0}
+                                        max={50}
+                                        value={numGA}
+                                        onChange={(e) => {
+                                            const val = parseInt(e.target.value) || 0;
+                                            if (val >= 0 && val + numMCQs + numMSQ + numNAT <= 50) setNumGA(val);
+                                        }}
+                                        disabled={isLoading}
+                                        className="peer w-full px-3 pt-5 pb-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 bg-white dark:bg-black text-gray-900 dark:text-white"
+                                        placeholder=" "
+                                    />
+                                    <label className="absolute left-3 top-1 text-[10px] text-orange-600 font-medium">
+                                        GA (General Aptitude)
+                                    </label>
+                                </div>
+                                <div className="relative">
+                                    <input
+                                        type="number"
+                                        min={0}
+                                        max={50}
+                                        value={numMCQs}
+                                        onChange={(e) => {
+                                            const val = parseInt(e.target.value) || 0;
+                                            if (val >= 0 && numGA + val + numMSQ + numNAT <= 50) setNumMCQs(val);
+                                        }}
+                                        disabled={isLoading}
+                                        className="peer w-full px-3 pt-5 pb-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 bg-white dark:bg-black text-gray-900 dark:text-white"
+                                        placeholder=" "
+                                    />
+                                    <label className="absolute left-3 top-1 text-[10px] text-orange-600 font-medium">
+                                        MCQ (Single Correct)
+                                    </label>
+                                </div>
+                                <div className="relative">
+                                    <input
+                                        type="number"
+                                        min={0}
+                                        max={50}
+                                        value={numMSQ}
+                                        onChange={(e) => {
+                                            const val = parseInt(e.target.value) || 0;
+                                            if (val >= 0 && numGA + numMCQs + val + numNAT <= 50) setNumMSQ(val);
+                                        }}
+                                        disabled={isLoading}
+                                        className="peer w-full px-3 pt-5 pb-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 bg-white dark:bg-black text-gray-900 dark:text-white"
+                                        placeholder=" "
+                                    />
+                                    <label className="absolute left-3 top-1 text-[10px] text-orange-600 font-medium">
+                                        MSQ (Multiple Select)
+                                    </label>
+                                </div>
+                                <div className="relative">
+                                    <input
+                                        type="number"
+                                        min={0}
+                                        max={50}
+                                        value={numNAT}
+                                        onChange={(e) => {
+                                            const val = parseInt(e.target.value) || 0;
+                                            if (val >= 0 && numGA + numMCQs + numMSQ + val <= 50) setNumNAT(val);
+                                        }}
+                                        disabled={isLoading}
+                                        className="peer w-full px-3 pt-5 pb-2 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 bg-white dark:bg-black text-gray-900 dark:text-white"
+                                        placeholder=" "
+                                    />
+                                    <label className="absolute left-3 top-1 text-[10px] text-orange-600 font-medium">
+                                        NAT (Numerical Answer)
                                     </label>
                                 </div>
                             </div>
