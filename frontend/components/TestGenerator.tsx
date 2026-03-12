@@ -37,6 +37,7 @@ import PostModal from "@/components/PostModal";
 import UsernameModal from "@/components/UsernameModal";
 import MathText from "@/components/MathText";
 import { searchChapters, getChaptersForSubject, searchMultipleSubjects, getChaptersForMultipleSubjects } from "@/lib/ncert-chapters";
+import { getGateChapters, searchGateChapters } from "@/lib/gate-chapters";
 
 // API base URL
 import { API_BASE_URL } from "@/lib/config";
@@ -844,13 +845,20 @@ export default function TestGenerator() {
         };
     }, [topic]);
 
-    // Update filtered chapters when searchQuery or subject changes (NOT topic)
+    // Update filtered chapters when searchQuery, subject, level, or gatePaper changes (NOT topic)
     useEffect(() => {
-        const chapters = searchQuery.trim()
-            ? searchMultipleSubjects(subject, searchQuery.trim())
-            : getChaptersForMultipleSubjects(subject);
-        setFilteredChapters(chapters);
-    }, [searchQuery, subject]);
+        if (level === "GATE") {
+            const chapters = searchQuery.trim()
+                ? searchGateChapters(gatePaper, searchQuery.trim())
+                : getGateChapters(gatePaper);
+            setFilteredChapters(chapters.map(ch => ({ class: "", name: ch.name })));
+        } else {
+            const chapters = searchQuery.trim()
+                ? searchMultipleSubjects(subject, searchQuery.trim())
+                : getChaptersForMultipleSubjects(subject);
+            setFilteredChapters(chapters);
+        }
+    }, [searchQuery, subject, level, gatePaper]);
 
     // Check for existing tests when topic/subject/level changes
     useEffect(() => {
@@ -1393,10 +1401,17 @@ export default function TestGenerator() {
                                 onFocus={() => {
                                     setIsDropdownOpen(true);
                                     // Initialize chapters list on focus
-                                    const chapters = searchQuery.trim()
-                                        ? searchMultipleSubjects(subject, searchQuery.trim())
-                                        : getChaptersForMultipleSubjects(subject);
-                                    setFilteredChapters(chapters);
+                                    if (level === "GATE") {
+                                        const chapters = searchQuery.trim()
+                                            ? searchGateChapters(gatePaper, searchQuery.trim())
+                                            : getGateChapters(gatePaper);
+                                        setFilteredChapters(chapters.map(ch => ({ class: "", name: ch.name })));
+                                    } else {
+                                        const chapters = searchQuery.trim()
+                                            ? searchMultipleSubjects(subject, searchQuery.trim())
+                                            : getChaptersForMultipleSubjects(subject);
+                                        setFilteredChapters(chapters);
+                                    }
                                 }}
                                 placeholder={selectedChapters.length > 0 ? "Search for more chapters..." : "Select chapters or type a custom topic..."}
                                 className="w-full px-4 py-3 pr-4 bg-white dark:bg-black border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900"
