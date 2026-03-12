@@ -675,6 +675,7 @@ export default function TestGenerator() {
         { name: "JEE Advanced", icon: Award, color: "text-purple-400", bgColor: "bg-purple-500/20", borderColor: "border-purple-500" },
         { name: "Olympiad", icon: Trophy, color: "text-yellow-400", bgColor: "bg-yellow-500/20", borderColor: "border-yellow-500" },
         { name: "NEET", icon: Stethoscope, color: "text-pink-400", bgColor: "bg-pink-500/20", borderColor: "border-pink-500" },
+        { name: "GATE", icon: BookOpen, color: "text-orange-400", bgColor: "bg-orange-500/20", borderColor: "border-orange-500" },
     ];
 
     // Difficulty levels (kept for reference, now using percentage inputs)
