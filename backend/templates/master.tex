@@ -42,10 +42,10 @@
 % Custom Option List (vertical line-by-line for long statements)
 \newcommand{\fourchoices}[4]{%
     \vspace{2pt}%
-    \par\noindent (a) #1%
-    \par\noindent (b) #2%
-    \par\noindent (c) #3%
-    \par\noindent (d) #4%
+    \par\noindent\hspace{0.5cm}(a) #1%
+    \par\noindent\hspace{0.5cm}(b) #2%
+    \par\noindent\hspace{0.5cm}(c) #3%
+    \par\noindent\hspace{0.5cm}(d) #4%
     \vspace{4pt}%
 }
 
@@ -195,7 +195,8 @@
 \begin{table}[h]
 \centering
 \renewcommand{\arraystretch}{1.5}
-\begin{tabular}{|c|c||c|c||c|c|}
+% Wrap answer texts to prevent long sentences from pushing columns off the 21cm A4 page.
+\begin{tabular}{|c|>{\raggedright\arraybackslash}p{0.22\textwidth}||c|>{\raggedright\arraybackslash}p{0.22\textwidth}||c|>{\raggedright\arraybackslash}p{0.22\textwidth}|}
 \hline
 \textbf{Q.No} & \textbf{Ans} & \textbf{Q.No} & \textbf{Ans} & \textbf{Q.No} & \textbf{Ans} \\
 \hline
@@ -203,7 +204,11 @@
     \textbf{\VAR{loop.index}} & \VAR{q.answer} 
     \BLOCK{ if loop.index is divisibleby 3 } \\ \hline \BLOCK{ else } & \BLOCK{ endif }
 \BLOCK{ endfor }
-\\ \hline
+\BLOCK{ if not (questions|length is divisibleby 3) }
+    % Pad remaining columns if questions don't perfectly fill 3-column rows
+    \BLOCK{ if (questions|length % 3) == 1 } & & & \\ \hline \BLOCK{ endif }
+    \BLOCK{ if (questions|length % 3) == 2 } & \\ \hline \BLOCK{ endif }
+\BLOCK{ endif }
 \end{tabular}
 \end{table}
 \BLOCK{ endif }
