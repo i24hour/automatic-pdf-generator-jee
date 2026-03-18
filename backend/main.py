@@ -11,7 +11,7 @@ import json
 import asyncio
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, List, Any
-from fastapi import FastAPI, HTTPException, Depends, status, BackgroundTasks, Request
+from fastapi import FastAPI, HTTPException, Depends, status, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel, Field
@@ -1561,41 +1561,7 @@ async def run_generation_job(
         )
 
         # TRIM to exact requested counts — LLM/top-up can over-generate
-        if request.level == "GATE":
-            # GATE-specific trim: respect each question type's count independently
-            _num_ga  = request.num_ga  or 0
-            _num_mcq = request.num_mcqs or 0
-            _num_msq = request.num_msq or 0
-            _num_nat = request.num_nat or 0
-            _gate_total = _num_ga + _num_mcq + _num_msq + _num_nat
-            raw_questions = llm_result.get("questions", [])
-            if isinstance(raw_questions, list) and _gate_total > 0:
-                # Separate by type — GA questions don't have a unique type flag, so
-                # treat them as plain MCQs too; we just cap the total
-                ga_qs  = [q for q in raw_questions if q.get("ga") or q.get("question_category") == "GA"]
-                mcq_qs = [q for q in raw_questions if q.get("type") == "mcq" and q not in ga_qs]
-                msq_qs = [q for q in raw_questions if q.get("type") == "mcq_multi"]
-                nat_qs = [q for q in raw_questions if q.get("type") == "numerical"]
-
-                # If LLM didn't tag GA separately, fall back to trimming by total
-                if not ga_qs and _num_ga > 0:
-                    # Treat first _num_ga plain MCQs as GA
-                    ga_qs  = mcq_qs[:_num_ga]
-                    mcq_qs = mcq_qs[_num_ga:]
-
-                trimmed = (
-                    ga_qs[:_num_ga]
-                    + mcq_qs[:_num_mcq]
-                    + msq_qs[:_num_msq]
-                    + nat_qs[:_num_nat]
-                )
-                # Safety: if still over (e.g. all came back as plain MCQs), hard-cap
-                if len(trimmed) > _gate_total:
-                    trimmed = trimmed[:_gate_total]
-                llm_result["questions"] = trimmed
-                print(f"[TRIM-GATE] {len(raw_questions)} → {len(trimmed)} questions "
-                      f"(target GA={_num_ga}, MCQ={_num_mcq}, MSQ={_num_msq}, NAT={_num_nat})")
-        elif request.level not in ("CBSE Board", "JEE Advanced"):
+        if request.level not in ("GATE", "CBSE Board", "JEE Advanced"):
             raw_questions = llm_result.get("questions", [])
             if isinstance(raw_questions, list):
                 mcqs = [q for q in raw_questions if q.get("type") in ("mcq", "mcq_multi")]
@@ -1772,15 +1738,7 @@ async def stream_job_progress(
         raise HTTPException(status_code=401, detail="Invalid token")
     
     user_id = payload.get("sub")
-    
-    # Handle both normal users and institute users
-    user_type = payload.get("user_type", "student")
-    if user_type == "institute":
-        from models import InstituteUser
-        current_user = db.query(InstituteUser).filter(InstituteUser.id == user_id).first()
-    else:
-        current_user = db.query(User).filter(User.id == user_id).first()
-        
+    current_user = db.query(User).filter(User.id == user_id).first()
     if not current_user:
         raise HTTPException(status_code=401, detail="User not found")
     
@@ -1838,42 +1796,11 @@ async def stream_job_progress(
 
 
 @app.get("/api/generate-sse/{job_id}/status")
-async def get_job_status(
-    job_id: str, 
-    request: Request,
-    db: Session = Depends(get_db)
-):
+async def get_job_status(job_id: str, current_user: User = Depends(get_current_user_required)):
     """
     Poll endpoint to get current job status.
     Useful for reconnection after network drops.
     """
-    from auth import decode_token
-    
-    # Try getting token from Auth header
-    auth_header = request.headers.get("Authorization")
-    token = None
-    if auth_header and auth_header.startswith("Bearer "):
-        token = auth_header.split(" ")[1]
-        
-    if not token:
-        raise HTTPException(status_code=401, detail="Token required")
-        
-    payload = decode_token(token)
-    if not payload or payload.get("type") != "access":
-        raise HTTPException(status_code=401, detail="Invalid token")
-        
-    user_id = payload.get("sub")
-    user_type = payload.get("user_type", "student")
-    
-    if user_type == "institute":
-        from models import InstituteUser
-        current_user = db.query(InstituteUser).filter(InstituteUser.id == user_id).first()
-    else:
-        current_user = db.query(User).filter(User.id == user_id).first()
-        
-    if not current_user:
-        raise HTTPException(status_code=401, detail="User not found")
-
     job = job_store.get_job(job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found or expired")
@@ -1906,7 +1833,7 @@ async def generate_partial_pdf(
 
     safe_topic = str(topic).replace("&", "and").replace("/", "-").replace(" ", "_")[:40]
     safe_level = str(level).replace(" ", "_")
-    filename   = f"{len(questions)}_{safe_topic}_{safe_level}_{difficulty}"
+    filename   = f"Partial{len(questions)}_{safe_topic}_{safe_level}_{difficulty}"
 
     llm_result = {
         "success": True,

@@ -2305,34 +2305,19 @@ Return ONLY JSON:
                 total_q = num_mcq
             elif gate_subset == "MSQ":
                 prompt_type = f"{num_msq} MSQs (Multiple Select)"
-                req_list = (
-                    f"- {num_msq} MSQs (Multiple Select Questions) on Core Subject\n"
-                    f"  * type: \"mcq_multi\" with one or more correct options\n"
-                    f"  * NO negative marking for MSQ\n"
-                    f"  * Question stem MUST say 'One or more of the following options are correct.'"
-                )
+                req_list = f"- {num_msq} MSQs (Multiple Select) on Core Subject (type: \"mcq_multi\")"
                 total_q = num_msq
             elif gate_subset == "NAT":
                 prompt_type = f"{num_nat} NATs (Numerical Answer)"
-                req_list = (
-                    f"- {num_nat} NATs (Numerical Answer Type) on Core Subject\n"
-                    f"  * type: \"numerical\"; NO negative marking\n"
-                    f"  * Answer must be a decimal string with at most 3 decimal places\n"
-                    f"  * Examples: '1.414', '25', '-0.333', '100'\n"
-                    f"  * Do NOT round unless the problem inherently yields an integer"
-                )
+                req_list = f"- {num_nat} NATs (Numerical Answer) on Core Subject (type: \"numerical\")"
                 total_q = num_nat
             else:
                 # Default ALL
                 prompt_type = "GATE pattern questions"
-                req_list = (
-                    f"- {num_ga} General Aptitude (GA) Questions (Verbal/Quant)\n"
-                    f"- {num_mcq} MCQs (Single Correct) on Core Subject\n"
-                    f"- {num_msq} MSQs (Multiple Select, NO negative marking) on Core Subject\n"
-                    f"  * type: \"mcq_multi\"; stem must say 'One or more options may be correct.'\n"
-                    f"- {num_nat} NATs (Numerical Answer, NO negative marking) on Core Subject\n"
-                    f"  * type: \"numerical\"; answer: decimal string ≤ 3 decimal places (e.g. '1.414')"
-                )
+                req_list = f"""- {num_ga} General Aptitude (GA) Questions (Verbal/Quant)
+- {num_mcq} MCQs (Single Correct) on Core Subject
+- {num_msq} MSQs (Multiple Select) on Core Subject (type: "mcq_multi")
+- {num_nat} NATs (Numerical Answer) on Core Subject (type: "numerical")"""
                 total_q = num_ga + num_mcq + num_msq + num_nat
 
             prompt = f"""You are a GATE Exam Setter for {gate_paper}. Generate {prompt_type}.
