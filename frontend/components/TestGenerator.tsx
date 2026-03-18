@@ -61,6 +61,26 @@ interface GenerateResponse {
     };
 }
 
+interface InstituteGenerateResponse {
+    success: boolean;
+    message: string;
+    pdf_filename?: string;
+    pdf_base64?: string;
+    chapters_classified: { chapter: string; subject: string }[];
+    institute_remaining?: number | null;
+}
+
+interface GeneratedQuestion {
+    type?: string;
+    text?: string;
+    question?: string;
+    options?: string[] | Record<string, string>;
+    answer?: string;
+    correct_answer?: string;
+    solution?: string;
+    explanation?: string;
+}
+
 interface RateLimitInfo {
     limit: number;
     remaining: number;
@@ -81,8 +101,6 @@ interface HistoryItem {
 }
 
 interface InstituteSectionProps {
-    user: any;
-    token: string | null;
     authFetch: (url: string, options?: RequestInit) => Promise<Response>;
     instituteName: string;
     setInstituteName: (v: string) => void;
@@ -94,20 +112,19 @@ interface InstituteSectionProps {
     setInstituteGenerating: (v: boolean) => void;
     instituteError: string | null;
     setInstituteError: (v: string | null) => void;
-    institutePdfUrl: string | null;
-    setInstitutePdfUrl: (v: string | null) => void;
+    instituteResult: InstituteGenerateResponse | null;
+    setInstituteResult: (v: InstituteGenerateResponse | null) => void;
 }
 
 function InstituteSection({
-    user, authFetch,
+    authFetch,
     instituteName, setInstituteName,
     instituteContact, setInstituteContact,
     instituteEmail, setInstituteEmail,
     instituteGenerating, setInstituteGenerating,
     instituteError, setInstituteError,
-    institutePdfUrl, setInstitutePdfUrl
+    instituteResult, setInstituteResult
 }: InstituteSectionProps) {
-    const { startGeneration, isGenerating, cancelGeneration } = useGeneration();
     const [examType, setExamType] = React.useState("Mains");
     const [difficulty, setDifficulty] = React.useState("Medium");
     const [instituteRemaining, setInstituteRemaining] = React.useState<number | null>(null);
@@ -168,11 +185,17 @@ function InstituteSection({
     }, []);
 
     const handleCancel = () => {
-        cancelGeneration();
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+            abortControllerRef.current = null;
+        }
+        setInstituteGenerating(false);
     };
 
     const handleGenerate = async () => {
         setInstituteError(null);
+        setInstituteResult(null);
+        setInstituteRemaining(null);
 
         if (!instituteName.trim()) {
             setInstituteError("Please enter your institute name.");
@@ -197,10 +220,63 @@ function InstituteSection({
             botany_count: subjectCounts["Botany"] ?? undefined,
         };
 
+        const controller = new AbortController();
+        abortControllerRef.current = controller;
+        setInstituteGenerating(true);
+
         try {
-            await startGeneration(payload, true);
-        } catch (err: any) {
-            setInstituteError(err.message || "Something went wrong. Please try again.");
+            const response = await authFetch(`${API_BASE_URL}/api/generate-institute`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+                signal: controller.signal,
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.detail || "Failed to generate institute PDF");
+            }
+
+            const data: InstituteGenerateResponse = await response.json();
+            setInstituteResult(data);
+            setInstituteRemaining(data.institute_remaining ?? null);
+        } catch (err: unknown) {
+            if (err instanceof Error && err.name === "AbortError") {
+                setInstituteError("Generation cancelled.");
+            } else if (err instanceof Error) {
+                setInstituteError(err.message || "Something went wrong. Please try again.");
+            } else {
+                setInstituteError("Something went wrong. Please try again.");
+            }
+        } finally {
+            abortControllerRef.current = null;
+            setInstituteGenerating(false);
+        }
+    };
+
+    const handleDownloadInstitutePdf = () => {
+        if (!instituteResult) return;
+
+        if (instituteResult.pdf_base64) {
+            const binary = atob(instituteResult.pdf_base64);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) {
+                bytes[i] = binary.charCodeAt(i);
+            }
+            const blob = new Blob([bytes], { type: "application/pdf" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = instituteResult.pdf_filename || "institute_test_paper.pdf";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            return;
+        }
+
+        if (instituteResult.pdf_filename) {
+            window.open(`${API_BASE_URL}/api/download/${instituteResult.pdf_filename}`, "_blank");
         }
     };
 
@@ -514,13 +590,13 @@ function InstituteSection({
             {/* Generate Button */}
             <button
                 onClick={handleGenerate}
-                disabled={isGenerating || !instituteName.trim() || instSelectedChapters.length === 0}
-                className={`w-full py-3 px-6 rounded-xl text-white font-semibold text-sm transition-colors shadow-sm flex items-center justify-center gap-2 ${isGenerating || !instituteName.trim() || instSelectedChapters.length === 0
+                disabled={instituteGenerating || !instituteName.trim() || instSelectedChapters.length === 0}
+                className={`w-full py-3 px-6 rounded-xl text-white font-semibold text-sm transition-colors shadow-sm flex items-center justify-center gap-2 ${instituteGenerating || !instituteName.trim() || instSelectedChapters.length === 0
                     ? "bg-gray-400 cursor-not-allowed"
                     : "bg-indigo-600 hover:bg-indigo-700"
                     }`}
             >
-                {isGenerating ? (
+                {instituteGenerating ? (
                     <>
                         <Loader2 className="w-4 h-4 animate-spin" />
                         Generating…
@@ -533,10 +609,44 @@ function InstituteSection({
                 )}
             </button>
 
+            {instituteGenerating && (
+                <button
+                    onClick={handleCancel}
+                    className="w-full mt-3 py-2.5 bg-white dark:bg-black border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:text-red-600 hover:border-red-200 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2"
+                >
+                    <X className="w-4 h-4" />
+                    Cancel Generation
+                </button>
+            )}
+
             {/* Plan info */}
             <p className="mt-3 text-center text-xs text-gray-400 dark:text-gray-500">
                 Earth plan: 1 institute PDF/month · Universe plan: 4 institute PDFs/month
             </p>
+
+            {instituteResult?.success && (
+                <div className="mt-4 space-y-3">
+                    <div className="flex items-start gap-3 text-green-700 bg-green-50 border border-green-200 rounded-lg px-4 py-3">
+                        <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                        <div>
+                            <p className="font-medium">{instituteResult.message}</p>
+                            {instituteRemaining !== null && (
+                                <p className="text-sm text-green-600">
+                                    Institute PDFs remaining this month: {instituteRemaining}
+                                </p>
+                            )}
+                        </div>
+                    </div>
+
+                    <button
+                        onClick={handleDownloadInstitutePdf}
+                        className="w-full py-3 bg-white dark:bg-black border border-indigo-600 text-indigo-600 font-medium rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/10 transition-colors flex items-center justify-center gap-2"
+                    >
+                        <Download className="w-5 h-5" />
+                        Download Institute PDF
+                    </button>
+                </div>
+            )}
         </div>
     );
 }
@@ -614,7 +724,7 @@ export default function TestGenerator() {
     const [instituteEmail, setInstituteEmail] = useState("");
     const [instituteGenerating, setInstituteGenerating] = useState(false);
     const [instituteError, setInstituteError] = useState<string | null>(null);
-    const [institutePdfUrl, setInstitutePdfUrl] = useState<string | null>(null);
+    const [instituteResult, setInstituteResult] = useState<InstituteGenerateResponse | null>(null);
     const detectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     // Note: Removed local elapsedTime, progressStep, timerRef, eventSourceRef, jobId, progressMessage
@@ -1043,7 +1153,7 @@ export default function TestGenerator() {
     const [revealCount, setRevealCount] = useState(0);
     const revealCountRef = useRef(0);           // survives across interval restarts
     const revealIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-    const latestQuestionsRef = useRef<any[]>([]); // always-fresh ref for interval closure
+    const latestQuestionsRef = useRef<GeneratedQuestion[]>([]); // always-fresh ref for interval closure
     latestQuestionsRef.current = partialQuestions;
 
     useEffect(() => {
@@ -1292,7 +1402,7 @@ export default function TestGenerator() {
                                 router.push("/signup");
                                 return;
                             }
-                            const plan = (user as any)?.plan || "free";
+                            const plan = user?.plan || "free";
                             if (plan === "free") {
                                 router.push("/pricing");
                                 return;
@@ -2359,8 +2469,6 @@ export default function TestGenerator() {
             {pageMode === "institute" && (
                 <div className="max-w-4xl mx-auto space-y-6">
                     <InstituteSection
-                        user={user}
-                        token={token}
                         authFetch={authFetch}
                         instituteName={instituteName}
                         setInstituteName={setInstituteName}
@@ -2368,18 +2476,19 @@ export default function TestGenerator() {
                         setInstituteContact={setInstituteContact}
                         instituteEmail={instituteEmail}
                         setInstituteEmail={setInstituteEmail}
-                        instituteGenerating={isLoading}
-                        setInstituteGenerating={() => { }}
-                        instituteError={genError}
-                        setInstituteError={() => { }}
-                        institutePdfUrl={null}
-                        setInstitutePdfUrl={() => { }}
+                        instituteGenerating={instituteGenerating}
+                        setInstituteGenerating={setInstituteGenerating}
+                        instituteError={instituteError}
+                        setInstituteError={setInstituteError}
+                        instituteResult={instituteResult}
+                        setInstituteResult={setInstituteResult}
                     />
                 </div>
             )}
 
             {/* Shared Generation Progress & Results UI */}
-            <div className="max-w-4xl mx-auto space-y-6 mt-6">
+            {pageMode === "student" && (
+                <div className="max-w-4xl mx-auto space-y-6 mt-6">
 
                 {/* ── PROGRESSIVE QUESTION DISPLAY ─────────────────────────────────────
                          Appears as soon as questions are generated (while PDF is still
@@ -2426,7 +2535,7 @@ export default function TestGenerator() {
 
                         {/* Question cards */}
                         <div className="space-y-2 max-h-[480px] overflow-y-auto pr-0.5">
-                            {partialQuestions.slice(0, revealCount).map((q: any, idx: number) => {
+                            {partialQuestions.slice(0, revealCount).map((q: GeneratedQuestion, idx: number) => {
                                 const isExp = expandedQuestion === idx;
                                 const showAns = shownAnswers.has(idx);
                                 const qType: string = q.type || "mcq";
@@ -2729,7 +2838,8 @@ export default function TestGenerator() {
                         <p className="text-gray-400 dark:text-gray-500 mt-2 italic">A Mentors Mantra Product</p>
                     </div>
                 </div>
-            </div >
+                </div>
+            )}
 
             {/* Post Modal */}
             {
