@@ -871,11 +871,8 @@ export default function TestGenerator() {
 
     const fetchRateLimit = async () => {
         try {
-            const currentToken = localStorage.getItem("auth_token");
-            if (!currentToken) return;
-            const response = await fetch(`${API_BASE_URL}/api/rate-limit`, {
-                headers: { Authorization: `Bearer ${currentToken}` },
-            });
+            if (!isAuthenticated) return;
+            const response = await authFetch(`${API_BASE_URL}/api/rate-limit`);
             if (response.ok) {
                 const data = await response.json();
                 setRateLimit(data);
@@ -894,13 +891,10 @@ export default function TestGenerator() {
 
     // Fetch history (Last 3 PDFs)
     const fetchHistory = async () => {
-        const currentToken = localStorage.getItem("auth_token");
-        if (!currentToken) return;
+        if (!isAuthenticated) return;
         setHistoryLoading(true);
         try {
-            const response = await fetch(`${API_BASE_URL}/api/history`, {
-                headers: { Authorization: `Bearer ${currentToken}` },
-            });
+            const response = await authFetch(`${API_BASE_URL}/api/history`);
             if (response.ok) {
                 const data = await response.json();
                 setHistory(data.generations || []);
@@ -918,6 +912,14 @@ export default function TestGenerator() {
             fetchHistory();
         }
     }, [isAuthenticated]);
+
+    // Refresh history and counters after a successful generation.
+    useEffect(() => {
+        if (!isAuthenticated) return;
+        if (!result?.pdf_filename && !instituteResult?.pdf_filename) return;
+        fetchHistory();
+        fetchRateLimit();
+    }, [isAuthenticated, result?.pdf_filename, instituteResult?.pdf_filename]);
 
     // Auto-detect subject when topic changes (Local Detection)
     // Auto-detect subject when topic changes (Database Cache Only)

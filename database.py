@@ -6,7 +6,12 @@ Uses SQLite for local development, PostgreSQL for production.
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+from dotenv import load_dotenv
 import os
+
+# Load env files before reading DATABASE_URL so local/interview runs don't silently fall back to SQLite.
+load_dotenv()
+load_dotenv(".env.production", override=False)
 
 # Database URL - SQLite for local development, PostgreSQL for production
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./app.db")
