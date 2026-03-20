@@ -1,5 +1,5 @@
-// The LIVE backend is mentors-mantra-api in us-central1.
-// The asia-south1 backend was never successfully deployed.
+// Single source of truth for the backend API URL.
+// All components that hardcode a fallback URL should use this file instead.
 export const API_BASE_URL =
     process.env.NEXT_PUBLIC_API_URL ||
-    "https://mentors-mantra-api-7u7fjzfjhq-uc.a.run.app";
+    "https://mentors-mantra-api-87253755436.us-central1.run.app";
