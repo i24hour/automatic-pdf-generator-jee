@@ -1157,7 +1157,14 @@ IMPORTANT:
             numerical_answer_instruction = "7. NUMERICAL ANSWERS: Can be integers or decimals (e.g., 25, 3.14, -1.5). NO formulas, NO fractions."
         else:
             numerical_answer_instruction = "7. NUMERICAL ANSWERS: Must be ONLY integers or decimals (e.g., \"42\", \"3.14\", \"-5.5\"). NO formulas, NO fractions, NO symbols."
-        
+            
+        subject_constraint = f"""
+CRITICAL SUBJECT CONSTRAINT:
+You MUST ONLY generate questions for the subject: {subject.upper()}. 
+DO NOT generate any questions from other subjects like Physics or Maths if the subject is Chemistry.
+Even if the topic says 'Full Syllabus' or 'Mock Test', you must restrict all questions strictly to the {subject.upper()} syllabus.
+"""
+
         # JEE Advanced: first 20% of MCQs should be multi-correct
         mcq_instruction: str = ""  # default; overridden below for specific levels
         json_example: str = ""  # default
@@ -1332,6 +1339,8 @@ For EACH question, return a JSON object in this format:
 
 {difficulty_prompt}
 
+{subject_constraint}
+
 GENERATE EXACTLY:
 - {vsa_count} Very Short Answer (1-2 marks, type: "short_answer", marks: 1 or 2)
 - {sa_count} Short Answer (2-3 marks, type: "short_answer", marks: 2 or 3)  
@@ -1410,6 +1419,8 @@ Topic: "{topic}" for {subject}
 
 {difficulty_prompt}
 
+{subject_constraint}
+
 TOTAL: {total_jee} questions
 
 REQUIREMENTS:
@@ -1458,6 +1469,8 @@ Generate exactly {total_q} GATE-style questions on "{topic}".
 
 {difficulty_prompt}
 
+{subject_constraint}
+
 GENERATE EXACTLY:
 {req_list}
 
@@ -1500,6 +1513,8 @@ TASK: Generate fully detailed questions on "{topic}" for {subject}.
 {level_prompt}
 
 {difficulty_prompt}
+
+{subject_constraint}
 
 STRICT BREAKDOWN:
 {req_str}
