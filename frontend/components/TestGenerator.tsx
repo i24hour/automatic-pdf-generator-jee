@@ -940,10 +940,11 @@ export default function TestGenerator() {
 
                 if (response.ok) {
                     const data = await response.json();
-                    // Only process if cached/found. If not found (null), do nothing (User selects).
-                    if (data.subject) {
-                        setSubject([data.subject]); // Replace with found subject
-                    }
+                    // We REMOVED the auto-overwrite here.
+                    // Previously: setSubject([data.subject]);
+                    // This was causing a bug where typing "Full Syllabus" returned "PCMB",
+                    // which cleared the user's "Chemistry" selection and generated all subjects.
+                    // Now, we let the user manually pick the subject tab.
                 }
             } catch (error) {
                 console.error("Error detecting subject:", error);
