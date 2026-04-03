@@ -74,45 +74,42 @@ jobs:
         # Check if service exists
         SERVICE_ARN=$(aws apprunner list-services --region ${{ env.AWS_REGION }} --query "ServiceSummaryList[?ServiceName=='${{ env.SERVICE_NAME }}'].ServiceArn" --output text || echo "")
         
+        # Create full Service JSON Config
+        cat > apprunner-service.json << EOF
+        {
+          "ServiceName": "${{ env.SERVICE_NAME }}",
+          "SourceConfiguration": {
+            "ImageRepository": {
+              "ImageIdentifier": "$IMAGE_URI",
+              "ImageConfiguration": {
+                "Port": "8080",
+                "RuntimeEnvironmentVariables": $(cat apprunner-env.json)
+              },
+              "ImageRepositoryType": "ECR"
+            },
+            "AuthenticationConfiguration": {
+              "AccessRoleArn": "arn:aws:iam::061051260145:role/AppRunnerECRAccessRole"
+            }
+          },
+          "InstanceConfiguration": {
+            "Cpu": "0.25 vCPU",
+            "Memory": "0.5 GB",
+            "InstanceRoleArn": "arn:aws:iam::061051260145:role/AppRunnerECRAccessRole"
+          }
+        }
+        EOF
+        
         if [ "$SERVICE_ARN" == "" ] || [ "$SERVICE_ARN" == "None" ]; then
           echo "Creating new App Runner service..."
           aws apprunner create-service \
-            --service-name ${{ env.SERVICE_NAME }} \
-            --source-configuration '{
-              "ImageRepository": {
-                "ImageIdentifier": "'$IMAGE_URI'",
-                "ImageConfiguration": {
-                  "Port": "8080",
-                  "RuntimeEnvironmentVariables": '$(cat apprunner-env.json)'
-                },
-                "ImageRepositoryType": "ECR"
-              },
-              "AuthenticationConfiguration": {
-                "AccessRoleArn": "arn:aws:iam::061051260145:role/AppRunnerECRAccessRole"
-              }
-            }' \
-            --instance-configuration '{
-              "Cpu": "0.25 vCPU",
-              "Memory": "0.5 GB",
-              "InstanceRoleArn": "arn:aws:iam::061051260145:role/AppRunnerECRAccessRole"
-            }' \
+            --cli-input-json file://apprunner-service.json \
             --region ${{ env.AWS_REGION }}
         else
           echo "Updating existing App Runner service..."
+          # Update requires ServiceArn and cannot have ServiceName in the payload
+          jq --arg arn "$SERVICE_ARN" '. + {"ServiceArn": $arn} | del(.ServiceName)' apprunner-service.json > apprunner-update.json
+          
           aws apprunner update-service \
-            --service-arn $SERVICE_ARN \
-            --source-configuration '{
-              "ImageRepository": {
-                "ImageIdentifier": "'$IMAGE_URI'",
-                "ImageConfiguration": {
-                  "Port": "8080",
-                  "RuntimeEnvironmentVariables": '$(cat apprunner-env.json)'
-                },
-                "ImageRepositoryType": "ECR"
-              },
-              "AuthenticationConfiguration": {
-                "AccessRoleArn": "arn:aws:iam::061051260145:role/AppRunnerECRAccessRole"
-              }
-            }' \
+            --cli-input-json file://apprunner-update.json \
             --region ${{ env.AWS_REGION }}
         fi
