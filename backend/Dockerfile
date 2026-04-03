@@ -1,5 +1,4 @@
-# Use custom base image with pre-installed LaTeX
-FROM gcr.io/mentors-mantra-gen/mentors-mantra-base:latest
+FROM python:3.12-slim
 
 # Set working directory
 WORKDIR /app
@@ -8,7 +7,7 @@ WORKDIR /app
 ENV PYTHONUNBUFFERED=1
 
 # Install build tools and system deps needed to compile pycairo & manimpango (Manim deps)
-# This is needed until the base image is rebuilt with these tools included
+# and all LaTeX dependencies for PDF generation
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     gcc \
@@ -22,6 +21,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libgdk-pixbuf-xlib-2.0-dev \
     ffmpeg \
     dvisvgm \
+    texlive-latex-base \
+    texlive-fonts-recommended \
+    texlive-fonts-extra \
+    texlive-latex-extra \
+    texlive-science \
+    lmodern \
+    pdf2svg \
+    texlive-binaries \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better caching
