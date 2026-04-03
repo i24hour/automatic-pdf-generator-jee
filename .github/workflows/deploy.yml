@@ -1,0 +1,118 @@
+name: Deploy Backend to AWS App Runner
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+      - '.github/workflows/deploy.yml'
+
+env:
+  AWS_REGION: ap-south-1
+  ECR_REPOSITORY: mentors-mantra-api
+  SERVICE_NAME: infinitest-api
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+
+    - name: Build, tag, and push image to Amazon ECR
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
+        cd backend
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -t $ECR_REGISTRY/$ECR_REPOSITORY:latest -f Dockerfile .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+
+    - name: Write env to file and format for App Runner
+      env:
+        APP_ENV_VARS: ${{ secrets.APP_ENV_VARS }}
+      run: |
+        echo "$APP_ENV_VARS" > backend/.env
+        # Convert .env to JSON array syntax for AWS CLI
+        JSON_ENV="["
+        while IFS= read -r line; do
+          # Skip empty lines and comments
+          if [[ -z "$line" ]] || [[ "$line" == \#* ]]; then continue; fi
+          # Extract key and value (handling inline comments)
+          key=$(echo "$line" | cut -d '=' -f 1 | xargs)
+          value=$(echo "$line" | cut -d '=' -f 2- | sed "s/^[ \t]*['\"]*//; s/['\"]*[ \t]*\(#.*\)*$//" | xargs)
+          if [[ -n "$key" && -n "$value" ]]; then
+            # Format value for JSON by escaping quotes
+            SAFE_VAL=$(echo "$value" | sed 's/"/\\"/g')
+            JSON_ENV+="{\"Name\":\"$key\",\"Value\":\"$SAFE_VAL\"},"
+          fi
+        done < backend/.env
+        JSON_ENV="${JSON_ENV%,}]" # Remove last comma and close array
+        echo "$JSON_ENV" > apprunner-env.json
+
+    - name: Deploy to App Runner
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        AWS_ACCOUNT_ID: ${{ steps.login-ecr.outputs.registry }}
+      run: |
+        IMAGE_URI="$ECR_REGISTRY/$ECR_REPOSITORY:latest"
+        
+        # Check if service exists
+        SERVICE_ARN=$(aws apprunner list-services --region ${{ env.AWS_REGION }} --query "ServiceSummaryList[?ServiceName=='${{ env.SERVICE_NAME }}'].ServiceArn" --output text || echo "")
+        
+        if [ "$SERVICE_ARN" == "" ] || [ "$SERVICE_ARN" == "None" ]; then
+          echo "Creating new App Runner service..."
+          aws apprunner create-service \
+            --service-name ${{ env.SERVICE_NAME }} \
+            --source-configuration '{
+              "ImageRepository": {
+                "ImageIdentifier": "'$IMAGE_URI'",
+                "ImageConfiguration": {
+                  "Port": "8080",
+                  "RuntimeEnvironmentVariables": '$(cat apprunner-env.json)'
+                },
+                "ImageRepositoryType": "ECR"
+              },
+              "AuthenticationConfiguration": {
+                "AccessRoleArn": "arn:aws:iam::061051260145:role/AppRunnerECRAccessRole"
+              }
+            }' \
+            --instance-configuration '{
+              "Cpu": "0.25 vCPU",
+              "Memory": "0.5 GB",
+              "InstanceRoleArn": "arn:aws:iam::061051260145:role/AppRunnerECRAccessRole"
+            }' \
+            --region ${{ env.AWS_REGION }}
+        else
+          echo "Updating existing App Runner service..."
+          aws apprunner update-service \
+            --service-arn $SERVICE_ARN \
+            --source-configuration '{
+              "ImageRepository": {
+                "ImageIdentifier": "'$IMAGE_URI'",
+                "ImageConfiguration": {
+                  "Port": "8080",
+                  "RuntimeEnvironmentVariables": '$(cat apprunner-env.json)'
+                },
+                "ImageRepositoryType": "ECR"
+              },
+              "AuthenticationConfiguration": {
+                "AccessRoleArn": "arn:aws:iam::061051260145:role/AppRunnerECRAccessRole"
+              }
+            }' \
+            --region ${{ env.AWS_REGION }}
+        fi
