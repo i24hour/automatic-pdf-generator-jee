@@ -47,8 +47,8 @@ jobs:
         APP_ENV_VARS: ${{ secrets.APP_ENV_VARS }}
       run: |
         echo "$APP_ENV_VARS" > backend/.env
-        # Convert .env to JSON array syntax for AWS CLI
-        JSON_ENV="["
+        # Convert .env to JSON object syntax for AWS CLI
+        JSON_ENV="{"
         while IFS= read -r line; do
           # Skip empty lines and comments
           if [[ -z "$line" ]] || [[ "$line" == \#* ]]; then continue; fi
@@ -58,10 +58,10 @@ jobs:
           if [[ -n "$key" && -n "$value" ]]; then
             # Format value for JSON by escaping quotes
             SAFE_VAL=$(echo "$value" | sed 's/"/\\"/g')
-            JSON_ENV+="{\"Name\":\"$key\",\"Value\":\"$SAFE_VAL\"},"
+            JSON_ENV+="\"$key\":\"$SAFE_VAL\","
           fi
         done < backend/.env
-        JSON_ENV="${JSON_ENV%,}]" # Remove last comma and close array
+        JSON_ENV="${JSON_ENV%,}}" # Remove last comma and close object
         echo "$JSON_ENV" > apprunner-env.json
 
     - name: Deploy to App Runner
