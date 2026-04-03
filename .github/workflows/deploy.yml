@@ -11,7 +11,7 @@ on:
 env:
   AWS_REGION: ap-south-1
   ECR_REPOSITORY: mentors-mantra-api
-  SERVICE_NAME: infinitest-api
+  SERVICE_NAME: infinitest-api-v2
 
 jobs:
   deploy:
