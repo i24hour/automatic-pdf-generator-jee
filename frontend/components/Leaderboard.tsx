@@ -3,9 +3,8 @@
 import React, { useState, useEffect } from "react";
 import { Trophy, Award, Star, Crown, Medal, Loader2, User } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
+import { API_BASE_URL } from "@/lib/config";
 
-// API base URL
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://q3vgjfnybq.ap-south-1.awsapprunner.com";
 
 interface LeaderboardEntry {
     user_id: string;

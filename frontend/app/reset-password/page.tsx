@@ -5,8 +5,8 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Loader2, AlertCircle, CheckCircle2, BookOpen, ArrowRight } from "lucide-react";
 import { FloatingInput } from "@/components/FloatingInput";
+import { API_BASE_URL } from "@/lib/config";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://q3vgjfnybq.ap-south-1.awsapprunner.com";
 
 function ResetPasswordForm() {
     const searchParams = useSearchParams();

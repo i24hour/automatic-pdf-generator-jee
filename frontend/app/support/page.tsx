@@ -7,6 +7,7 @@ import VoiceRecorder from '@/components/VoiceRecorder';
 import DesktopSidebar from '@/components/layout/DesktopSidebar';
 import MobileNav from '@/components/layout/MobileNav';
 import TestGenerator from '@/components/TestGenerator';
+import { API_BASE_URL } from '@/lib/config';
 
 interface Ticket {
     id: string;
@@ -241,7 +242,7 @@ export default function SupportPage() {
         setLoading(true);
         try {
             const token = localStorage.getItem('auth_token');
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://q3vgjfnybq.ap-south-1.awsapprunner.com'}/support/my`, {
+            const res = await fetch(`${API_BASE_URL}/support/my`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (res.ok) {
@@ -268,7 +269,7 @@ export default function SupportPage() {
             if (screenshot) formData.append('screenshot', screenshot);
             if (voiceNote) formData.append('voice_note', voiceNote);
 
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://q3vgjfnybq.ap-south-1.awsapprunner.com'}/support/create`, {
+            const res = await fetch(`${API_BASE_URL}/support/create`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` },
                 body: formData

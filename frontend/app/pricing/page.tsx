@@ -14,8 +14,8 @@ import {
 import DesktopSidebar from "@/components/layout/DesktopSidebar";
 import MobileNav from "@/components/layout/MobileNav";
 import { useAuth } from "@/lib/auth-context";
+import { API_BASE } from "@/lib/config";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://q3vgjfnybq.ap-south-1.awsapprunner.com";
 
 // ---------------------------------------------------------
 // Plan data (mirrors backend PLANS dict)

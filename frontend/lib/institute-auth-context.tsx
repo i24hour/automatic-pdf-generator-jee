@@ -1,8 +1,8 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef } from "react";
+import { API_BASE_URL } from "@/lib/config";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://q3vgjfnybq.ap-south-1.awsapprunner.com";
 
 interface InstituteUser {
     id: string;

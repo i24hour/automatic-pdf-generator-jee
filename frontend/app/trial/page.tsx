@@ -27,9 +27,8 @@ import {
   X,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
+import { API_BASE_URL } from "@/lib/config";
 
-// API base URL
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://q3vgjfnybq.ap-south-1.awsapprunner.com";
 
 interface GenerateResponse {
   success: boolean;

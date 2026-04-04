@@ -24,6 +24,7 @@ from auth import (
     ACCESS_TOKEN_EXPIRE_MINUTES
 )
 from services.email_service import email_service
+from services.storage import storage
 
 load_dotenv()
 
@@ -553,7 +554,7 @@ async def get_user_pdfs(
     if visibility:
         query = query.filter(SharedPDF.visibility == visibility)
     
-    pdfs = query.order_by(SharedPDF.created_at.desc()).all()
+    pdfs = [pdf for pdf in query.order_by(SharedPDF.created_at.desc()).all() if storage.is_managed_url(pdf.pdf_url)]
     
     return {
         "success": True,

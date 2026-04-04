@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Filter, CheckCircle2, MessageSquare, ExternalLink, Loader2 } from 'lucide-react';
+import { API_BASE_URL } from '@/lib/config';
 
 interface Ticket {
     id: string;
@@ -35,7 +36,7 @@ export default function AdminTicketsPage() {
     const fetchTickets = async () => {
         try {
             const token = localStorage.getItem('auth_token');
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://q3vgjfnybq.ap-south-1.awsapprunner.com'}/support/admin/all`, {
+            const res = await fetch(`${API_BASE_URL}/support/admin/all`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (res.ok) {
@@ -58,7 +59,7 @@ export default function AdminTicketsPage() {
         setUpdating(true);
         try {
             const token = localStorage.getItem('auth_token');
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://q3vgjfnybq.ap-south-1.awsapprunner.com'}/support/${ticketId}/status`, {
+            const res = await fetch(`${API_BASE_URL}/support/${ticketId}/status`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',

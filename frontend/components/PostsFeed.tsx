@@ -5,7 +5,8 @@ import { useAuth } from '@/lib/auth-context';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://q3vgjfnybq.ap-south-1.awsapprunner.com';
+import { API_BASE_URL } from '@/lib/config';
+
 
 interface Post {
     id: string;
@@ -68,9 +69,9 @@ export default function PostsFeed() {
             const headers: Record<string, string> = {};
             if (token) headers['Authorization'] = `Bearer ${token}`;
 
-            let url = `${API_URL}/api/posts`;
+            let url = `${API_BASE_URL}/api/posts`;
             if (viewMode === 'my') {
-                url = `${API_URL}/api/posts/my`;
+                url = `${API_BASE_URL}/api/posts/my`;
                 // My posts endpoint might return list directly, not paginated struct?
                 // Checking backend: /api/posts/my returns List[PostResponse] directly.
                 // So we need to handle that.
@@ -159,7 +160,7 @@ export default function PostsFeed() {
 
         try {
             const method = isLiked ? 'DELETE' : 'POST';
-            const res = await fetch(`${API_URL}/api/posts/${postId}/like`, {
+            const res = await fetch(`${API_BASE_URL}/api/posts/${postId}/like`, {
                 method,
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -181,7 +182,7 @@ export default function PostsFeed() {
         if (!confirm("Are you sure you want to delete this post?")) return;
         setDeletingId(postId);
         try {
-            const res = await fetch(`${API_URL}/api/posts/${postId}`, {
+            const res = await fetch(`${API_BASE_URL}/api/posts/${postId}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -208,13 +209,13 @@ export default function PostsFeed() {
 
         // Track download
         try {
-            await fetch(`${API_URL}/api/posts/${post.id}/download`, { method: 'POST' });
+            await fetch(`${API_BASE_URL}/api/posts/${post.id}/download`, { method: 'POST' });
         } catch (err) {
             console.error('Track download failed:', err);
         }
 
         // Open PDF in new tab
-        window.open(post.pdf_url, '_blank');
+        window.open(`${API_BASE_URL}/api/download/${encodeURIComponent(post.pdf_filename)}`, '_blank');
     };
 
     const formatTimeAgo = (dateStr: string) => {

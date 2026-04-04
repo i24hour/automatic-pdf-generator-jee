@@ -35,7 +35,7 @@ from routers import (
     payments_router,
 )
 from services.email_service import email_service
-from services.storage import storage as gcs_storage
+from services.storage import storage
 from services.job_store import job_store, JobStatus
 
 # Load environment variables
@@ -595,13 +595,12 @@ async def generate_test(
         # Record this generation for rate limiting
         record_generation(current_user, request, os.path.basename(pdf_path), db)
         
-        # Upload to R2 and create SharedPDF record
+        # Upload to S3 and create SharedPDF record
         pdf_url = None
         shared_pdf_id = None
-        if gcs_storage.is_configured():
+        if storage.is_configured():
             try:
-                object_key = gcs_storage.get_object_key(current_user.id, os.path.basename(pdf_path))
-                pdf_url = gcs_storage.upload_pdf(pdf_path, object_key)
+                pdf_url = storage.upload_pdf(pdf_path, current_user.id, os.path.basename(pdf_path))
                 if pdf_url:
                     # Create SharedPDF record (default: private)
                     shared_pdf = SharedPDF(
@@ -619,9 +618,9 @@ async def generate_test(
                     db.add(shared_pdf)
                     db.commit()
                     shared_pdf_id = shared_pdf.id
-                    print(f"PDF uploaded to R2: {pdf_url}, SharedPDF ID: {shared_pdf_id}")
+                    print(f"PDF uploaded to S3: {pdf_url}, SharedPDF ID: {shared_pdf_id}")
             except Exception as e:
-                print(f"Warning: Failed to upload to R2: {e}")
+                print(f"Warning: Failed to upload to S3: {e}")
         
         # Get updated rate limit info
         _, new_remaining, new_reset_hours, _, _ = check_rate_limit(current_user, db)
@@ -876,8 +875,11 @@ async def download_pdf(filename: str, db: Session = Depends(get_db)):
     
     # First check if there's a SharedPDF in DB with this filename
     shared_pdf = db.query(SharedPDF).filter(SharedPDF.pdf_filename == filename).first()
-    if shared_pdf and shared_pdf.pdf_url and shared_pdf.pdf_url != "pending":
-        return RedirectResponse(url=shared_pdf.pdf_url)
+    if shared_pdf and storage.is_managed_url(shared_pdf.pdf_url):
+        object_key = storage.extract_object_key(shared_pdf.pdf_url)
+        if object_key:
+            signed_url = storage.get_signed_url(object_key, expiration_minutes=60)
+            return RedirectResponse(url=signed_url or storage.get_public_url(object_key))
     
     output_dir = os.path.join(os.path.dirname(__file__), "output")
     pdf_path = os.path.join(output_dir, filename)
@@ -1003,55 +1005,36 @@ async def generate_test_verified(
         # Record generation
         record_generation(current_user, request, os.path.basename(pdf_path), db)
         
-        # Upload to R2 in BACKGROUND (non-blocking) - don't wait for it
-        # This allows PDF to return immediately to user
+        # Upload to S3 and create the saved record immediately so no "pending"
+        # entries reach the community feed.
         shared_pdf_id = None
-        if gcs_storage.is_configured():
-            # Create placeholder SharedPDF record (will be updated when upload completes)
+        if storage.is_configured():
             try:
-                shared_pdf = SharedPDF(
-                    user_id=current_user.id,
-                    pdf_url="pending",  # Will be updated by background task
-                    pdf_filename=os.path.basename(pdf_path),
-                    subject=request.subject,
-                    topic=request.topic,
-                    level=request.level,
-                    difficulty=request.difficulty,
-                    question_count=mcq_count + numerical_count,
-                    has_solutions=request.include_solutions,
-                    visibility="private"
+                pdf_url = await asyncio.to_thread(
+                    storage.upload_pdf,
+                    pdf_path,
+                    current_user.id,
+                    os.path.basename(pdf_path),
                 )
-                db.add(shared_pdf)
-                db.commit()
-                shared_pdf_id = shared_pdf.id
-                
-                # Schedule background upload (non-blocking)
-                import asyncio
-                
-                async def upload_to_r2_background():
-                    try:
-                        object_key = gcs_storage.get_object_key(current_user.id, os.path.basename(pdf_path))
-                        pdf_url = await asyncio.to_thread(gcs_storage.upload_pdf, pdf_path, object_key)
-                        if pdf_url:
-                            # Update the SharedPDF record with the actual URL
-                            from database import SessionLocal
-                            db_session = SessionLocal()
-                            try:
-                                shared = db_session.query(SharedPDF).filter(SharedPDF.id == shared_pdf_id).first()
-                                if shared:
-                                    shared.pdf_url = pdf_url
-                                    db_session.commit()
-                                    print(f"✓ Background R2 upload complete: {pdf_url}")
-                            finally:
-                                db_session.close()
-                    except Exception as e:
-                        print(f"✗ Background R2 upload failed: {e}")
-                
-                # Fire and forget - don't await
-                asyncio.create_task(upload_to_r2_background())
-                print("R2 upload scheduled in background")
+                if pdf_url:
+                    shared_pdf = SharedPDF(
+                        user_id=current_user.id,
+                        pdf_url=pdf_url,
+                        pdf_filename=os.path.basename(pdf_path),
+                        subject=request.subject,
+                        topic=request.topic,
+                        level=request.level,
+                        difficulty=request.difficulty,
+                        question_count=mcq_count + numerical_count,
+                        has_solutions=request.include_solutions,
+                        visibility="private"
+                    )
+                    db.add(shared_pdf)
+                    db.commit()
+                    shared_pdf_id = shared_pdf.id
+                    print(f"PDF uploaded to S3: {pdf_url}, SharedPDF ID: {shared_pdf_id}")
             except Exception as e:
-                print(f"Warning: Failed to schedule R2 upload: {e}")
+                print(f"Warning: Failed to upload to S3: {e}")
         
         # Get updated rate limit info
         _, new_remaining, new_reset_hours, _, _ = check_rate_limit(current_user, db)
@@ -1653,7 +1636,7 @@ async def run_generation_job(
         
         # Get updated rate limit
         _, new_remaining, new_reset_hours, _, _ = check_rate_limit(user, db)
-        print(f"[SSE Job {job_id}] TRACE: Before R2 section, rate_limit={new_remaining}")
+        print(f"[SSE Job {job_id}] TRACE: Before S3 section, rate_limit={new_remaining}")
         
         # SharedPDF creation is now MANUAL via /api/pdf/save endpoint
         # This prevents auto-filling the private library (limit 10)

@@ -14,6 +14,7 @@ from pydantic import BaseModel
 from database import get_db
 from models import User, SharedPDF, PDFLike, UserBadge
 from auth import get_current_user_required, get_current_user
+from services.storage import storage
 
 router = APIRouter(prefix="/api/posts", tags=["Posts"])
 
@@ -93,6 +94,10 @@ class SetUsernameRequest(BaseModel):
 
 
 # ============== Helper Functions ==============
+
+def has_active_pdf(post: SharedPDF) -> bool:
+    """Only expose posts that still point at managed S3 storage."""
+    return storage.is_managed_url(post.pdf_url)
 
 def calculate_feed_score(post: SharedPDF) -> float:
     """
@@ -248,12 +253,19 @@ async def create_post(
     
     if not pdf:
         raise HTTPException(status_code=404, detail="PDF not found")
+
+    if not has_active_pdf(pdf):
+        raise HTTPException(
+            status_code=400,
+            detail="This PDF is no longer available. Generate it again to post it."
+        )
     
     # Check if already public (cannot change)
     if pdf.visibility == "public" and request.visibility != "public":
         raise HTTPException(status_code=400, detail="Public posts cannot be changed to private or unlisted")
     
     # Update post
+    old_visibility = pdf.visibility
     pdf.caption = request.caption
     pdf.visibility = request.visibility
     
@@ -261,7 +273,7 @@ async def create_post(
     enforce_visibility_limits(current_user, db)
     
     # Update user stats if making public
-    if request.visibility == "public" and pdf.visibility != "public":
+    if request.visibility == "public" and old_visibility != "public":
         current_user.total_posts += 1
         check_and_award_badges(current_user, db)
     
@@ -313,7 +325,7 @@ async def get_feed(
         query = query.filter(SharedPDF.level == level)
     
     # Get all matching posts (for scoring)
-    all_posts = query.all()
+    all_posts = [post for post in query.all() if has_active_pdf(post)]
     
     # Score and sort posts
     scored_posts = [(post, calculate_feed_score(post)) for post in all_posts]
@@ -375,7 +387,7 @@ async def get_my_posts(
     if visibility:
         query = query.filter(SharedPDF.visibility == visibility)
     
-    posts = query.order_by(desc(SharedPDF.created_at)).all()
+    posts = [post for post in query.order_by(desc(SharedPDF.created_at)).all() if has_active_pdf(post)]
     
     return [
         PostResponse(
@@ -424,7 +436,9 @@ async def check_existing_posts(
         SharedPDF.visibility == "public",
         SharedPDF.subject == subject,
         SharedPDF.level == level,
-        SharedPDF.topic.ilike(search_term)
+        SharedPDF.topic.ilike(search_term),
+        SharedPDF.pdf_url != "pending",
+        SharedPDF.pdf_url.ilike("%amazonaws.com/%")
     ).count()
     
     return {"count": count}
@@ -440,6 +454,9 @@ async def get_post(
     post = db.query(SharedPDF).filter(SharedPDF.id == post_id).first()
     
     if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+
+    if not has_active_pdf(post):
         raise HTTPException(status_code=404, detail="Post not found")
     
     # Check visibility
@@ -497,7 +514,7 @@ async def like_post(
         SharedPDF.visibility == "public"
     ).first()
     
-    if not post:
+    if not post or not has_active_pdf(post):
         raise HTTPException(status_code=404, detail="Post not found")
     
     # Check if already liked
@@ -567,7 +584,7 @@ async def track_download(
     """Track a download (called when user downloads PDF)."""
     post = db.query(SharedPDF).filter(SharedPDF.id == post_id).first()
     
-    if post and post.visibility in ["public", "unlisted"]:
+    if post and post.visibility in ["public", "unlisted"] and has_active_pdf(post):
         post.download_count += 1
         db.commit()
     
@@ -627,6 +644,12 @@ async def update_post_visibility(
     # Prevent downgrading public posts
     if post.visibility == "public" and request.visibility != "public":
         raise HTTPException(status_code=400, detail="Public posts cannot be changed to private or unlisted")
+
+    if request.visibility == "public" and not has_active_pdf(post):
+        raise HTTPException(
+            status_code=400,
+            detail="This PDF is no longer available. Generate it again before posting."
+        )
     
     old_visibility = post.visibility
     post.visibility = request.visibility
@@ -697,4 +720,3 @@ async def get_my_badges(
     """Get current user's badges."""
     badges = db.query(UserBadge).filter(UserBadge.user_id == current_user.id).all()
     return [BadgeResponse(badge_type=b.badge_type, earned_at=b.earned_at) for b in badges]
-

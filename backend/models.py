@@ -273,7 +273,7 @@ class SharedPDF(Base):
     user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     
     # PDF Info
-    pdf_url = Column(String, nullable=False)  # Cloudflare R2 URL
+    pdf_url = Column(String, nullable=False)  # S3 URL
     pdf_filename = Column(String, nullable=False)
     caption = Column(Text, nullable=True)  # User's post text
     

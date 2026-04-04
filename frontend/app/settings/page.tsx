@@ -29,8 +29,8 @@ import {
     Tag,
     Crown
 } from "lucide-react";
+import { API_URL } from "@/lib/config";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://q3vgjfnybq.ap-south-1.awsapprunner.com';
 
 interface PDF {
     id: string;
@@ -347,7 +347,7 @@ export default function SettingsPage() {
                         className="bg-gray-50 dark:bg-[#1a1d21] rounded-xl p-4 border border-gray-200 dark:border-[#2f3336]"
                     >
                         <div className="flex items-start justify-between">
-                            <div className="flex-1 cursor-pointer" onClick={() => window.open(pdf.pdf_url, '_blank')}>
+                            <div className="flex-1 cursor-pointer" onClick={() => window.open(`${API_URL}/api/download/${encodeURIComponent(pdf.pdf_filename)}`, '_blank')}>
                                 <h3 className="font-medium text-gray-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
                                     {pdf.topic}
                                 </h3>
@@ -362,7 +362,7 @@ export default function SettingsPage() {
                             <div className="flex gap-2 flex-wrap">
                                 {/* Download Button */}
                                 <button
-                                    onClick={() => window.open(pdf.pdf_url, '_blank')}
+                                    onClick={() => window.open(`${API_URL}/api/download/${encodeURIComponent(pdf.pdf_filename)}`, '_blank')}
                                     className="flex items-center gap-1 px-3 py-1.5 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-lg text-sm hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors"
                                     title="Download PDF"
                                 >

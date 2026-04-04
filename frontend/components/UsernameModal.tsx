@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { API_URL } from '@/lib/config';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://q3vgjfnybq.ap-south-1.awsapprunner.com';
 
 interface UsernameModalProps {
     isOpen: boolean;

@@ -13,7 +13,7 @@ from pydantic import BaseModel
 from database import get_db
 from models import User, SharedPDF, generate_uuid
 from auth import get_current_user_required, get_current_user
-from services.gcs_storage import gcs_storage
+from services.storage import storage
 
 router = APIRouter(prefix="/pdf", tags=["PDF"])
 
@@ -72,31 +72,21 @@ async def get_pdf_by_slug(
     pdf.view_count = (pdf.view_count or 0) + 1
     db.commit()
     
-    # Generate a signed URL (1 hour expiry) and redirect
+    object_key = storage.extract_object_key(pdf.pdf_url)
+    if not object_key:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="PDF no longer available"
+        )
+
     try:
-        # Extract the blob name from the GCS URL
-        # URL format: https://storage.googleapis.com/bucket-name/path/to/file.pdf
-        # or gs://bucket-name/path/to/file.pdf
-        pdf_url = pdf.pdf_url
-        
-        if pdf_url.startswith("gs://"):
-            blob_name = pdf_url.split("/", 3)[-1]
-        elif "storage.googleapis.com" in pdf_url:
-            # Extract path after bucket name
-            parts = pdf_url.split("/")
-            bucket_idx = parts.index("storage.googleapis.com") + 2  # Skip protocol and bucket
-            blob_name = "/".join(parts[bucket_idx:])
-        else:
-            # For R2 or other URLs, just redirect to the original URL
-            return RedirectResponse(url=pdf_url, status_code=302)
-        
-        signed_url = gcs_storage.get_signed_url(blob_name, expiration_minutes=60)
-        return RedirectResponse(url=signed_url, status_code=302)
-        
+        signed_url = storage.get_signed_url(object_key, expiration_minutes=60)
+        if signed_url:
+            return RedirectResponse(url=signed_url, status_code=302)
+        return RedirectResponse(url=storage.get_public_url(object_key), status_code=302)
     except Exception as e:
-        print(f"Error generating signed URL: {e}")
-        # Fallback to original URL
-        return RedirectResponse(url=pdf.pdf_url, status_code=302)
+        print(f"Error generating S3 signed URL: {e}")
+        return RedirectResponse(url=storage.get_public_url(object_key), status_code=302)
 
 
 @router.get("/{slug}/info")
@@ -107,7 +97,7 @@ async def get_pdf_info(
     """Get PDF metadata without downloading."""
     pdf = db.query(SharedPDF).filter(SharedPDF.slug == slug).first()
     
-    if not pdf or pdf.visibility == "private":
+    if not pdf or pdf.visibility == "private" or not storage.is_managed_url(pdf.pdf_url):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="PDF not found"
@@ -153,6 +143,12 @@ async def generate_unlisted_link(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="PDF not found or you don't have permission"
         )
+
+    if not storage.is_managed_url(pdf.pdf_url):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This PDF is no longer available. Please regenerate it."
+        )
     
     # Generate slug if not exists
     if not pdf.slug:
@@ -189,6 +185,12 @@ async def update_pdf_visibility(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="PDF not found or you don't have permission"
+        )
+
+    if visibility in ["public", "unlisted"] and not storage.is_managed_url(pdf.pdf_url):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This PDF is no longer available. Please regenerate it."
         )
     
     # Generate slug if setting to unlisted and no slug exists
@@ -271,25 +273,26 @@ async def save_pdf_to_library(
             "pdf_id": existing.id
         }
 
-    # 3. Upload to GCS (if configured)
+    # 3. Upload to S3
     pdf_path = os.path.join("output", request.pdf_filename)
     if not os.path.exists(pdf_path):
-         print(f"Warning: PDF file {pdf_path} not found locally during save.")
-         # Continue anyway to allow creating the record (phantom record)
-         # raise HTTPException(
-         #    status_code=status.HTTP_404_NOT_FOUND,
-         #    detail="PDF file no longer exists on server. Please regenerate."
-         # )
-    
-    pdf_url = "pending"
-    if os.path.exists(pdf_path) and gcs_storage.is_configured():
-        try:
-            object_key = gcs_storage.get_object_key(str(current_user.id), request.pdf_filename)
-            uploaded_url = gcs_storage.upload_pdf(pdf_path, object_key)
-            if uploaded_url:
-                pdf_url = uploaded_url
-        except Exception as e:
-            print(f"Failed to upload to GCS during save: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="PDF file no longer exists on server. Please regenerate."
+        )
+
+    if not storage.is_configured():
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="PDF storage is not configured"
+        )
+
+    pdf_url = storage.upload_pdf(pdf_path, str(current_user.id), request.pdf_filename)
+    if not pdf_url:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to upload PDF to S3"
+        )
 
     # 4. Create Record
     new_pdf = SharedPDF(

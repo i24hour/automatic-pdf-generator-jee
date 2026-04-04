@@ -4,8 +4,8 @@ import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { CheckCircle2, XCircle, Loader2, BookOpen, ArrowRight } from "lucide-react";
+import { API_BASE_URL } from "@/lib/config";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://q3vgjfnybq.ap-south-1.awsapprunner.com";
 
 function VerifyEmailContent() {
     const searchParams = useSearchParams();

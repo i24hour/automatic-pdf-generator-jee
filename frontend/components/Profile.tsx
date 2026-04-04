@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { User, Mail, Phone, GraduationCap, AtSign, Save, Loader2 } from "lucide-react";
+import { API_BASE_URL } from "@/lib/config";
 
 export default function Profile() {
     const { user, token, refreshUser } = useAuth();
@@ -38,7 +39,7 @@ export default function Profile() {
         setMessage(null);
 
         try {
-            const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://q3vgjfnybq.ap-south-1.awsapprunner.com';
+            const API_URL = API_BASE_URL;
             const res = await fetch(`${API_URL}/auth/profile`, {
                 method: "PUT",
                 headers: {

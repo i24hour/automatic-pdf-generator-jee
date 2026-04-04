@@ -18,8 +18,8 @@ import {
     Building2,
 } from "lucide-react";
 import { useInstituteAuth } from "@/lib/institute-auth-context";
+import { API_BASE_URL } from "@/lib/config";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://q3vgjfnybq.ap-south-1.awsapprunner.com";
 
 interface ChapterClassification {
     chapter: string;

@@ -8,6 +8,7 @@ import DesktopSidebar from "@/components/layout/DesktopSidebar";
 import LeaderboardTable from "@/components/LeaderboardTable";
 import { useCommunityApi, TestDetail, LeaderboardEntry } from "@/lib/community-api";
 import { useAuth } from "@/lib/auth-context";
+import { API_BASE_URL } from "@/lib/config";
 
 export default function TestDetailedPage() {
     const { testId } = useParams();
@@ -30,7 +31,7 @@ export default function TestDetailedPage() {
         setLoading(true);
         try {
             // Test details are public — use plain fetch (no auth needed)
-            const testRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://q3vgjfnybq.ap-south-1.awsapprunner.com'}/api/community/tests/${testId}`);
+            const testRes = await fetch(`${API_BASE_URL}/api/community/tests/${testId}`);
             if (!testRes.ok) {
                 console.error("Failed to load test:", testRes.status);
                 setLoading(false);

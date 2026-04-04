@@ -7,7 +7,7 @@ from datetime import datetime
 from database import get_db
 from auth import get_current_user_required
 from models import User, SupportTicket
-from services.gcs_storage import gcs_storage
+from services.storage import storage
 
 router = APIRouter(prefix="/support", tags=["Support"])
 
@@ -64,7 +64,7 @@ async def create_ticket(
     # Upload Screenshot if exists
     if screenshot:
         try:
-            attachment_url = gcs_storage.upload_generic_file(
+            attachment_url = storage.upload_generic_file(
                 screenshot.file, 
                 screenshot.filename, 
                 screenshot.content_type, 
@@ -76,7 +76,7 @@ async def create_ticket(
     # Upload Voice Note if exists
     if voice_note:
         try:
-            audio_url = gcs_storage.upload_generic_file(
+            audio_url = storage.upload_generic_file(
                 voice_note.file, 
                 voice_note.filename, 
                 voice_note.content_type, 

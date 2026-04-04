@@ -6,7 +6,7 @@ Pipeline (direct, no SQS):
   2. Manim renders animation to .mp4 (subprocess)
   3. edge-tts generates audio narration to .mp3
   4. FFmpeg merges video + audio
-  5. Uploads final .mp4 to GCS
+  5. Uploads final .mp4 to S3
   6. Frontend polls /status/{job_id} via SSE
 """
 
@@ -28,7 +28,7 @@ from models import User
 from auth import get_current_user_required as get_current_user
 from services.tts_engine import get_tts_engine
 from services.manim_generator import get_manim_generator
-from services.gcs_storage import gcs_storage
+from services.storage import storage
 
 
 router = APIRouter(prefix="/api/video", tags=["Video Generation"])
@@ -197,15 +197,15 @@ async def _run_video_pipeline(job_id: str, request: VideoGenerateRequest, user_i
 
         _update_job(job_id, progress=90, current_step="Video assembled!")
 
-        # ── Step 6: Upload to GCS ─────────────────────────────────────────────
+        # ── Step 6: Upload to S3 ──────────────────────────────────────────────
         _update_job(job_id, status="uploading", progress=92,
                     current_step="Uploading video to cloud storage...")
 
         video_url = None
-        if gcs_storage.is_configured():
+        if storage.is_configured():
             object_key = f"videos/{user_id}/{job_id}.mp4"
             video_url = await asyncio.to_thread(
-                gcs_storage.upload_video,
+                storage.upload_video,
                 final_video_path,
                 object_key
             )

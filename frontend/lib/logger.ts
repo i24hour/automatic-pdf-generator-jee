@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://q3vgjfnybq.ap-south-1.awsapprunner.com";
+import { API_BASE_URL } from "@/lib/config";
 
 // --- Console Interception Logic ---
 const MAX_LOGS = 50;
