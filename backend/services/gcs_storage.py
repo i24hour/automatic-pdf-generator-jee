@@ -13,7 +13,7 @@ class GCSStorage:
     """
 
     def __init__(self):
-        self.bucket_name = os.getenv("AWS_S3_BUCKET_NAME", "infinitest-pdfs")
+        self.bucket_name = os.getenv("S3_BUCKET_NAME", os.getenv("AWS_S3_BUCKET_NAME", "infinitest-pdfs"))
         self.region = os.getenv("AWS_REGION", "ap-south-1")
         self.client = None
 
@@ -138,3 +138,7 @@ class GCSStorage:
         except ClientError as e:
             print(f"✗ S3 list_user_files failed: {e}")
             return []
+
+# Module-level singleton — preserves backward compat with
+# `from services.gcs_storage import gcs_storage` used in all routers
+gcs_storage = GCSStorage()
