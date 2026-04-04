@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Check, Download, Heart, Send, Trash2 } from 'lucide-react';
+import { Check, Copy, Download, Heart, Send, Share2, Trash2 } from 'lucide-react';
 
 import { API_BASE_URL } from '@/lib/config';
 
@@ -44,7 +44,12 @@ export default function PostsFeed() {
     const [viewMode, setViewMode] = useState<'feed' | 'my'>('feed');
     const [deletingId, setDeletingId] = useState<string | null>(null);
     const [pendingLikeIds, setPendingLikeIds] = useState<string[]>([]);
-    const [sharedPostId, setSharedPostId] = useState<string | null>(null);
+    const [openSharePostId, setOpenSharePostId] = useState<string | null>(null);
+    const [copiedSharePostId, setCopiedSharePostId] = useState<string | null>(null);
+    const likeSyncingRef = useRef<Record<string, boolean>>({});
+    const desiredLikeStateRef = useRef<Record<string, boolean>>({});
+    const serverLikeStateRef = useRef<Record<string, boolean>>({});
+    const serverLikeCountRef = useRef<Record<string, number>>({});
 
     const [filter, setFilter] = useState({
         subject: searchParams.get('subject') || '',
@@ -81,10 +86,20 @@ export default function PostsFeed() {
 
             if (viewMode === 'my') {
                 // Backend returns array for /my
+                data.forEach((post: Post) => {
+                    desiredLikeStateRef.current[post.id] = post.is_liked;
+                    serverLikeStateRef.current[post.id] = post.is_liked;
+                    serverLikeCountRef.current[post.id] = post.like_count;
+                });
                 setPosts(data);
                 setHasMore(false);
             } else {
                 // Feed returns { posts, has_more }
+                data.posts.forEach((post: Post) => {
+                    desiredLikeStateRef.current[post.id] = post.is_liked;
+                    serverLikeStateRef.current[post.id] = post.is_liked;
+                    serverLikeCountRef.current[post.id] = post.like_count;
+                });
                 if (cursor) {
                     setPosts(prev => [...prev, ...data.posts]);
                 } else {
@@ -145,57 +160,94 @@ export default function PostsFeed() {
         fetchPosts(nextCursor);
     };
 
-    const handleLike = async (post: Post) => {
-        if (!token) {
-            router.push('/signup');
+    const syncLikeState = useCallback(async (postId: string) => {
+        if (!token || likeSyncingRef.current[postId]) {
             return;
         }
 
-        if (pendingLikeIds.includes(post.id)) {
+        const desiredState = desiredLikeStateRef.current[postId];
+        const serverState = serverLikeStateRef.current[postId];
+        const serverCount = serverLikeCountRef.current[postId];
+
+        if (desiredState === undefined || serverState === undefined || desiredState === serverState) {
             return;
         }
 
-        const nextLikedState = !post.is_liked;
-        const optimisticLikeCount = Math.max(0, post.like_count + (nextLikedState ? 1 : -1));
-
-        setPendingLikeIds(prev => [...prev, post.id]);
-        setPosts(prev => prev.map(item =>
-            item.id === post.id
-                ? { ...item, is_liked: nextLikedState, like_count: optimisticLikeCount }
-                : item
-        ));
+        likeSyncingRef.current[postId] = true;
+        setPendingLikeIds(prev => prev.includes(postId) ? prev : [...prev, postId]);
 
         try {
-            const method = post.is_liked ? 'DELETE' : 'POST';
-            const res = await fetch(`${API_BASE_URL}/api/posts/${post.id}/like`, {
+            const method = desiredState ? 'POST' : 'DELETE';
+            const res = await fetch(`${API_BASE_URL}/api/posts/${postId}/like`, {
                 method,
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 
-            if (res.ok) {
-                const data = await res.json();
-                setPosts(prev => prev.map(p =>
-                    p.id === post.id
-                        ? { ...p, is_liked: nextLikedState, like_count: data.like_count }
-                        : p
-                ));
-            } else {
+            if (!res.ok) {
+                throw new Error(`Like sync failed with status ${res.status}`);
+            }
+
+            const data = await res.json();
+            serverLikeStateRef.current[postId] = desiredState;
+            serverLikeCountRef.current[postId] = data.like_count;
+
+            if (desiredLikeStateRef.current[postId] === desiredState) {
                 setPosts(prev => prev.map(item =>
-                    item.id === post.id
-                        ? { ...item, is_liked: post.is_liked, like_count: post.like_count }
+                    item.id === postId
+                        ? { ...item, is_liked: desiredState, like_count: data.like_count }
                         : item
                 ));
             }
         } catch (err) {
             console.error('Like failed:', err);
-            setPosts(prev => prev.map(item =>
-                item.id === post.id
-                    ? { ...item, is_liked: post.is_liked, like_count: post.like_count }
-                    : item
-            ));
+
+            if (desiredLikeStateRef.current[postId] === desiredState) {
+                desiredLikeStateRef.current[postId] = serverState;
+
+                setPosts(prev => prev.map(item =>
+                    item.id === postId
+                        ? {
+                            ...item,
+                            is_liked: serverState,
+                            like_count: serverCount ?? item.like_count
+                        }
+                        : item
+                ));
+            }
         } finally {
-            setPendingLikeIds(prev => prev.filter(id => id !== post.id));
+            likeSyncingRef.current[postId] = false;
+            setPendingLikeIds(prev => prev.filter(id => id !== postId));
+
+            if (desiredLikeStateRef.current[postId] !== serverLikeStateRef.current[postId]) {
+                void syncLikeState(postId);
+            }
         }
+    }, [token]);
+
+    const handleLike = (post: Post) => {
+        if (!token) {
+            router.push('/signup');
+            return;
+        }
+
+        const currentDesiredState = desiredLikeStateRef.current[post.id] ?? post.is_liked;
+        const nextLikedState = !currentDesiredState;
+        desiredLikeStateRef.current[post.id] = nextLikedState;
+
+        setPosts(prev => prev.map(item => {
+            if (item.id !== post.id) return item;
+
+            const baselineCount = item.like_count;
+            const optimisticLikeCount = Math.max(0, baselineCount + (nextLikedState ? 1 : -1));
+
+            return {
+                ...item,
+                is_liked: nextLikedState,
+                like_count: optimisticLikeCount
+            };
+        }));
+
+        void syncLikeState(post.id);
     };
 
     const handleDelete = async (postId: string) => {
@@ -238,8 +290,14 @@ export default function PostsFeed() {
         window.open(`${API_BASE_URL}/api/download/${encodeURIComponent(post.pdf_filename)}`, '_blank');
     };
 
-    const handleShare = async (post: Post) => {
-        const shareUrl = `${API_BASE_URL}/api/download/${encodeURIComponent(post.pdf_filename)}`;
+    const getShareUrl = (post: Post) => `${API_BASE_URL}/api/download/${encodeURIComponent(post.pdf_filename)}`;
+
+    const handleShareToggle = (postId: string) => {
+        setOpenSharePostId(current => current === postId ? null : postId);
+    };
+
+    const handleNativeShare = async (post: Post) => {
+        const shareUrl = getShareUrl(post);
         const shareData = {
             title: `${post.subject} PDF`,
             text: `${post.topic}${post.has_solutions ? ' • With Solutions' : ''}`,
@@ -247,21 +305,30 @@ export default function PostsFeed() {
         };
 
         try {
-            if (navigator.share) {
-                await navigator.share(shareData);
+            if (!navigator.share) {
+                await navigator.clipboard.writeText(shareUrl);
+                setCopiedSharePostId(post.id);
                 return;
             }
 
-            await navigator.clipboard.writeText(shareUrl);
-            setSharedPostId(post.id);
-            window.setTimeout(() => {
-                setSharedPostId(current => current === post.id ? null : current);
-            }, 1600);
+            await navigator.share(shareData);
         } catch (error) {
             if (error instanceof Error && error.name === 'AbortError') {
                 return;
             }
             console.error('Share failed:', error);
+        }
+    };
+
+    const handleCopyLink = async (post: Post) => {
+        try {
+            await navigator.clipboard.writeText(getShareUrl(post));
+            setCopiedSharePostId(post.id);
+            window.setTimeout(() => {
+                setCopiedSharePostId(current => current === post.id ? null : current);
+            }, 1800);
+        } catch (error) {
+            console.error('Copy link failed:', error);
         }
     };
 
@@ -510,7 +577,6 @@ export default function PostsFeed() {
                                 }}>
                                     <button
                                         onClick={() => handleLike(post)}
-                                        disabled={pendingLikeIds.includes(post.id)}
                                         style={{
                                             display: 'flex',
                                             alignItems: 'center',
@@ -558,8 +624,14 @@ export default function PostsFeed() {
                                         <span>{post.download_count}</span>
                                     </button>
 
-                                    <button
-                                        onClick={() => handleShare(post)}
+                                    <div style={{
+                                        position: 'relative',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px'
+                                    }}>
+                                        <button
+                                        onClick={() => handleShareToggle(post.id)}
                                         style={{
                                             display: 'flex',
                                             alignItems: 'center',
@@ -567,7 +639,7 @@ export default function PostsFeed() {
                                             background: 'none',
                                             border: 'none',
                                             cursor: 'pointer',
-                                            color: sharedPostId === post.id ? 'var(--primary)' : 'var(--text-muted)',
+                                            color: openSharePostId === post.id ? 'var(--primary)' : 'var(--text-muted)',
                                             fontSize: '0.9rem',
                                             padding: '4px 8px',
                                             borderRadius: '8px',
@@ -576,9 +648,60 @@ export default function PostsFeed() {
                                         onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(79, 70, 229, 0.08)'}
                                         onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
                                     >
-                                        {sharedPostId === post.id ? <Check size={20} strokeWidth={2} /> : <Send size={20} strokeWidth={2} />}
-                                        <span>{sharedPostId === post.id ? 'Copied' : 'Share'}</span>
-                                    </button>
+                                        <Share2 size={20} strokeWidth={2} />
+                                        <span>Share</span>
+                                        </button>
+
+                                        {openSharePostId === post.id && (
+                                            <div style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '8px',
+                                                padding: '6px 10px',
+                                                borderRadius: '999px',
+                                                background: 'rgba(79, 70, 229, 0.08)',
+                                                border: '1px solid rgba(79, 70, 229, 0.12)'
+                                            }}>
+                                                {typeof navigator !== 'undefined' && navigator.share && (
+                                                    <button
+                                                        onClick={() => handleNativeShare(post)}
+                                                        style={{
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: '6px',
+                                                            background: 'none',
+                                                            border: 'none',
+                                                            cursor: 'pointer',
+                                                            color: 'var(--primary)',
+                                                            fontSize: '0.85rem',
+                                                            fontWeight: 600
+                                                        }}
+                                                    >
+                                                        <Send size={16} strokeWidth={2} />
+                                                        <span>Open share</span>
+                                                    </button>
+                                                )}
+
+                                                <button
+                                                    onClick={() => handleCopyLink(post)}
+                                                    style={{
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: '6px',
+                                                        background: 'none',
+                                                        border: 'none',
+                                                        cursor: 'pointer',
+                                                        color: copiedSharePostId === post.id ? 'var(--primary)' : 'var(--text-muted)',
+                                                        fontSize: '0.85rem',
+                                                        fontWeight: 600
+                                                    }}
+                                                >
+                                                    {copiedSharePostId === post.id ? <Check size={16} strokeWidth={2} /> : <Copy size={16} strokeWidth={2} />}
+                                                    <span>{copiedSharePostId === post.id ? 'Copied' : 'Copy link'}</span>
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
 
                                     {/* Delete Button (Owner Only) */}
                                     {user && user.id === post.user_id && (
