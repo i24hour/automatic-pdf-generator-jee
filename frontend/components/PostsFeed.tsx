@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { Check, Download, Heart, Send, Trash2 } from 'lucide-react';
 
 import { API_BASE_URL } from '@/lib/config';
 
@@ -29,12 +30,6 @@ interface Post {
     is_liked: boolean;
 }
 
-interface FeedResponse {
-    posts: Post[];
-    has_more: boolean;
-    next_cursor: string | null;
-}
-
 export default function PostsFeed() {
     const { token, user } = useAuth();
     const searchParams = useSearchParams();
@@ -48,6 +43,8 @@ export default function PostsFeed() {
     const [nextCursor, setNextCursor] = useState<string | null>(null);
     const [viewMode, setViewMode] = useState<'feed' | 'my'>('feed');
     const [deletingId, setDeletingId] = useState<string | null>(null);
+    const [pendingLikeIds, setPendingLikeIds] = useState<string[]>([]);
+    const [sharedPostId, setSharedPostId] = useState<string | null>(null);
 
     const [filter, setFilter] = useState({
         subject: searchParams.get('subject') || '',
@@ -127,10 +124,6 @@ export default function PostsFeed() {
         }
     }, [searchParams]);
 
-    const applySearch = () => {
-        setSearchQuery(searchInput.trim());
-    };
-
     const filteredPosts = useMemo(() => {
         if (!searchQuery) return posts;
         const query = searchQuery.toLowerCase();
@@ -152,15 +145,29 @@ export default function PostsFeed() {
         fetchPosts(nextCursor);
     };
 
-    const handleLike = async (postId: string, isLiked: boolean) => {
+    const handleLike = async (post: Post) => {
         if (!token) {
             router.push('/signup');
             return;
         }
 
+        if (pendingLikeIds.includes(post.id)) {
+            return;
+        }
+
+        const nextLikedState = !post.is_liked;
+        const optimisticLikeCount = Math.max(0, post.like_count + (nextLikedState ? 1 : -1));
+
+        setPendingLikeIds(prev => [...prev, post.id]);
+        setPosts(prev => prev.map(item =>
+            item.id === post.id
+                ? { ...item, is_liked: nextLikedState, like_count: optimisticLikeCount }
+                : item
+        ));
+
         try {
-            const method = isLiked ? 'DELETE' : 'POST';
-            const res = await fetch(`${API_BASE_URL}/api/posts/${postId}/like`, {
+            const method = post.is_liked ? 'DELETE' : 'POST';
+            const res = await fetch(`${API_BASE_URL}/api/posts/${post.id}/like`, {
                 method,
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -168,13 +175,26 @@ export default function PostsFeed() {
             if (res.ok) {
                 const data = await res.json();
                 setPosts(prev => prev.map(p =>
-                    p.id === postId
-                        ? { ...p, is_liked: !isLiked, like_count: data.like_count }
+                    p.id === post.id
+                        ? { ...p, is_liked: nextLikedState, like_count: data.like_count }
                         : p
+                ));
+            } else {
+                setPosts(prev => prev.map(item =>
+                    item.id === post.id
+                        ? { ...item, is_liked: post.is_liked, like_count: post.like_count }
+                        : item
                 ));
             }
         } catch (err) {
             console.error('Like failed:', err);
+            setPosts(prev => prev.map(item =>
+                item.id === post.id
+                    ? { ...item, is_liked: post.is_liked, like_count: post.like_count }
+                    : item
+            ));
+        } finally {
+            setPendingLikeIds(prev => prev.filter(id => id !== post.id));
         }
     };
 
@@ -216,6 +236,33 @@ export default function PostsFeed() {
 
         // Open PDF in new tab
         window.open(`${API_BASE_URL}/api/download/${encodeURIComponent(post.pdf_filename)}`, '_blank');
+    };
+
+    const handleShare = async (post: Post) => {
+        const shareUrl = `${API_BASE_URL}/api/download/${encodeURIComponent(post.pdf_filename)}`;
+        const shareData = {
+            title: `${post.subject} PDF`,
+            text: `${post.topic}${post.has_solutions ? ' • With Solutions' : ''}`,
+            url: shareUrl
+        };
+
+        try {
+            if (navigator.share) {
+                await navigator.share(shareData);
+                return;
+            }
+
+            await navigator.clipboard.writeText(shareUrl);
+            setSharedPostId(post.id);
+            window.setTimeout(() => {
+                setSharedPostId(current => current === post.id ? null : current);
+            }, 1600);
+        } catch (error) {
+            if (error instanceof Error && error.name === 'AbortError') {
+                return;
+            }
+            console.error('Share failed:', error);
+        }
     };
 
     const formatTimeAgo = (dateStr: string) => {
@@ -456,12 +503,14 @@ export default function PostsFeed() {
                                 {/* Actions */}
                                 <div style={{
                                     display: 'flex',
-                                    gap: '24px',
+                                    alignItems: 'center',
+                                    gap: '18px',
                                     marginTop: '16px',
                                     paddingLeft: '4px'
                                 }}>
                                     <button
-                                        onClick={() => handleLike(post.id, post.is_liked)}
+                                        onClick={() => handleLike(post)}
+                                        disabled={pendingLikeIds.includes(post.id)}
                                         style={{
                                             display: 'flex',
                                             alignItems: 'center',
@@ -473,34 +522,63 @@ export default function PostsFeed() {
                                             fontSize: '0.9rem',
                                             padding: '4px 8px',
                                             borderRadius: '8px',
-                                            transition: 'all 0.2s'
+                                            transition: 'all 0.2s',
+                                            opacity: pendingLikeIds.includes(post.id) ? 0.7 : 1
                                         }}
                                         onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'}
                                         onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
                                     >
-                                        <span style={{ fontSize: '1.1rem' }}>{post.is_liked ? '❤️' : '🤍'}</span>
+                                        <Heart
+                                            size={20}
+                                            strokeWidth={2}
+                                            style={{ fill: post.is_liked ? 'currentColor' : 'transparent' }}
+                                        />
                                         <span>{post.like_count}</span>
                                     </button>
-                                    <div style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '6px',
-                                        color: 'var(--text-muted)',
-                                        fontSize: '0.9rem'
-                                    }}>
-                                        <span>⬇️</span>
+
+                                    <button
+                                        onClick={() => handleDownload(post)}
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '6px',
+                                            background: 'none',
+                                            border: 'none',
+                                            cursor: 'pointer',
+                                            color: 'var(--text-muted)',
+                                            fontSize: '0.9rem',
+                                            padding: '4px 8px',
+                                            borderRadius: '8px',
+                                            transition: 'all 0.2s'
+                                        }}
+                                        onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(79, 70, 229, 0.08)'}
+                                        onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+                                    >
+                                        <Download size={20} strokeWidth={2} />
                                         <span>{post.download_count}</span>
-                                    </div>
-                                    <div style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '6px',
-                                        color: 'var(--text-muted)',
-                                        fontSize: '0.9rem'
-                                    }}>
-                                        <span>👁️</span>
-                                        <span>{post.view_count}</span>
-                                    </div>
+                                    </button>
+
+                                    <button
+                                        onClick={() => handleShare(post)}
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '6px',
+                                            background: 'none',
+                                            border: 'none',
+                                            cursor: 'pointer',
+                                            color: sharedPostId === post.id ? 'var(--primary)' : 'var(--text-muted)',
+                                            fontSize: '0.9rem',
+                                            padding: '4px 8px',
+                                            borderRadius: '8px',
+                                            transition: 'all 0.2s'
+                                        }}
+                                        onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(79, 70, 229, 0.08)'}
+                                        onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+                                    >
+                                        {sharedPostId === post.id ? <Check size={20} strokeWidth={2} /> : <Send size={20} strokeWidth={2} />}
+                                        <span>{sharedPostId === post.id ? 'Copied' : 'Share'}</span>
+                                    </button>
 
                                     {/* Delete Button (Owner Only) */}
                                     {user && user.id === post.user_id && (
@@ -512,20 +590,22 @@ export default function PostsFeed() {
                                             disabled={deletingId === post.id}
                                             style={{
                                                 marginLeft: 'auto',
-                                                background: '#fee2e2',
-                                                border: '1px solid #ef4444',
-                                                borderRadius: '8px',
-                                                padding: '4px 8px',
+                                                background: 'rgba(239, 68, 68, 0.08)',
+                                                border: '1px solid rgba(239, 68, 68, 0.22)',
+                                                borderRadius: '999px',
+                                                padding: '8px 12px',
                                                 cursor: 'pointer',
                                                 color: '#b91c1c',
                                                 fontSize: '0.8rem',
                                                 fontWeight: 600,
                                                 display: 'flex',
                                                 alignItems: 'center',
-                                                gap: '4px'
+                                                gap: '6px',
+                                                opacity: deletingId === post.id ? 0.6 : 1
                                             }}
                                         >
-                                            {deletingId === post.id ? 'Deleting...' : '🗑️ Delete'}
+                                            <Trash2 size={16} strokeWidth={2} />
+                                            <span>{deletingId === post.id ? 'Deleting...' : 'Delete'}</span>
                                         </button>
                                     )}
                                 </div>
