@@ -27,7 +27,7 @@ from auth import get_current_user_required
 router = APIRouter(prefix="/api/payments", tags=["Payments"])
 
 # ---------------------------------------------------------------------------
-# Cashfree config  (set in Cloud Run env vars)
+# Cashfree config  (set in AWS App Runner env vars)
 # ---------------------------------------------------------------------------
 CF_APP_ID = os.getenv("CASHFREE_APP_ID", "")
 CF_SECRET = os.getenv("CASHFREE_SECRET_KEY", "")
@@ -40,7 +40,7 @@ CF_BASE = (
 )
 
 FRONTEND_URL = os.getenv("FRONTEND_URL", "https://infinitest.tech")
-BACKEND_URL  = os.getenv("BACKEND_URL",  "https://mentors-mantra-api-87253755436.us-central1.run.app")
+BACKEND_URL  = os.getenv("BACKEND_URL",  "https://q3vgjfnybq.ap-south-1.awsapprunner.com")
 
 # ---------------------------------------------------------------------------
 # Plan catalogue

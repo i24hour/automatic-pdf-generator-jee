@@ -35,8 +35,7 @@ from routers import (
     payments_router,
 )
 from services.email_service import email_service
-# from services.r2_storage import r2_storage  # Deprecated
-from services.gcs_storage import gcs_storage
+from services.storage import storage as gcs_storage
 from services.job_store import job_store, JobStatus
 
 # Load environment variables
@@ -599,10 +598,10 @@ async def generate_test(
         # Upload to R2 and create SharedPDF record
         pdf_url = None
         shared_pdf_id = None
-        if r2_storage.is_configured():
+        if gcs_storage.is_configured():
             try:
-                object_key = r2_storage.get_object_key(current_user.id, os.path.basename(pdf_path))
-                pdf_url = r2_storage.upload_pdf(pdf_path, object_key)
+                object_key = gcs_storage.get_object_key(current_user.id, os.path.basename(pdf_path))
+                pdf_url = gcs_storage.upload_pdf(pdf_path, object_key)
                 if pdf_url:
                     # Create SharedPDF record (default: private)
                     shared_pdf = SharedPDF(
@@ -1007,7 +1006,7 @@ async def generate_test_verified(
         # Upload to R2 in BACKGROUND (non-blocking) - don't wait for it
         # This allows PDF to return immediately to user
         shared_pdf_id = None
-        if r2_storage.is_configured():
+        if gcs_storage.is_configured():
             # Create placeholder SharedPDF record (will be updated when upload completes)
             try:
                 shared_pdf = SharedPDF(
@@ -1031,8 +1030,8 @@ async def generate_test_verified(
                 
                 async def upload_to_r2_background():
                     try:
-                        object_key = r2_storage.get_object_key(current_user.id, os.path.basename(pdf_path))
-                        pdf_url = await asyncio.to_thread(r2_storage.upload_pdf, pdf_path, object_key)
+                        object_key = gcs_storage.get_object_key(current_user.id, os.path.basename(pdf_path))
+                        pdf_url = await asyncio.to_thread(gcs_storage.upload_pdf, pdf_path, object_key)
                         if pdf_url:
                             # Update the SharedPDF record with the actual URL
                             from database import SessionLocal

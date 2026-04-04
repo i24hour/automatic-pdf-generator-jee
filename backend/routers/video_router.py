@@ -34,7 +34,7 @@ from services.gcs_storage import gcs_storage
 router = APIRouter(prefix="/api/video", tags=["Video Generation"])
 
 
-# In-memory job store (sufficient for Cloud Run's single instance mode)
+# In-memory job store
 # For multi-instance deploys, replace with Redis or DB
 video_jobs: dict = {}
 
@@ -133,7 +133,7 @@ async def _run_video_pipeline(job_id: str, request: VideoGenerateRequest, user_i
         render_result = await generator.render_video(
             code=manim_code,
             output_dir=work_dir,
-            quality="low"   # 480p for faster rendering on Cloud Run
+            quality="low"  # 480p
         )
 
         if not render_result.get("success"):
