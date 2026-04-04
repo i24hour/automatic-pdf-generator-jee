@@ -5,7 +5,7 @@ import { Trophy, Award, Star, Crown, Medal, Loader2, User } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 
 // API base URL
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://mentors-mantra-api-87253755436.us-central1.run.app";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://q3vgjfnybq.ap-south-1.awsapprunner.com";
 
 interface LeaderboardEntry {
     user_id: string;

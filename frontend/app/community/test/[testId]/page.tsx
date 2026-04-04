@@ -30,7 +30,7 @@ export default function TestDetailedPage() {
         setLoading(true);
         try {
             // Test details are public — use plain fetch (no auth needed)
-            const testRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://mentors-mantra-api-87253755436.us-central1.run.app'}/api/community/tests/${testId}`);
+            const testRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://q3vgjfnybq.ap-south-1.awsapprunner.com'}/api/community/tests/${testId}`);
             if (!testRes.ok) {
                 console.error("Failed to load test:", testRes.status);
                 setLoading(false);

@@ -8,7 +8,7 @@ import { useAuth } from "@/lib/auth-context";
 import { FloatingInput } from "@/components/FloatingInput";
 import { GoogleLogin } from "@react-oauth/google";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://mentors-mantra-api-87253755436.us-central1.run.app";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://q3vgjfnybq.ap-south-1.awsapprunner.com";
 
 function SignupPageContent() {
     const [name, setName] = useState("");

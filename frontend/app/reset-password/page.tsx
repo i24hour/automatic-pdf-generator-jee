@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Loader2, AlertCircle, CheckCircle2, BookOpen, ArrowRight } from "lucide-react";
 import { FloatingInput } from "@/components/FloatingInput";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://mentors-mantra-api-87253755436.us-central1.run.app";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://q3vgjfnybq.ap-south-1.awsapprunner.com";
 
 function ResetPasswordForm() {
     const searchParams = useSearchParams();

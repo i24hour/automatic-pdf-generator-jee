@@ -241,7 +241,7 @@ export default function SupportPage() {
         setLoading(true);
         try {
             const token = localStorage.getItem('auth_token');
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://mentors-mantra-api-87253755436.us-central1.run.app'}/support/my`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://q3vgjfnybq.ap-south-1.awsapprunner.com'}/support/my`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (res.ok) {
@@ -268,7 +268,7 @@ export default function SupportPage() {
             if (screenshot) formData.append('screenshot', screenshot);
             if (voiceNote) formData.append('voice_note', voiceNote);
 
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://mentors-mantra-api-87253755436.us-central1.run.app'}/support/create`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://q3vgjfnybq.ap-south-1.awsapprunner.com'}/support/create`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` },
                 body: formData
