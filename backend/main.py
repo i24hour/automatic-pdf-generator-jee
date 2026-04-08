@@ -711,33 +711,36 @@ async def generate_institute_test_for_user(
 
     limits = EXAM_LIMITS[request.exam_type]
 
-    # Classify chapters by subject
+    # Classify chapters by subject — run concurrently (same pattern as student SSE)
+    import asyncio
     chapters_classified = []
     chapters_by_subject: Dict[str, List[str]] = {"Physics": [], "Chemistry": [], "Maths": [], "Zoology": [], "Botany": []}
 
-    for chapter in request.chapters:
-        if not chapter.strip():
-            continue
-        result = llm_engine.detect_subject(chapter.strip())
+    valid_chapters = [c.strip() for c in request.chapters if c.strip()]
+    detect_results = await asyncio.gather(
+        *[asyncio.to_thread(llm_engine.detect_subject, ch) for ch in valid_chapters]
+    )
+
+    for chapter, result in zip(valid_chapters, detect_results):
         subj = result.get("subject", "Physics")
         is_multi = result.get("is_multi", False)
         if is_multi:
             if subj == "PCM":
                 for s in ["Physics", "Chemistry", "Maths"]:
-                    chapters_by_subject[s].append(chapter.strip())
-                    chapters_classified.append({"chapter": chapter.strip(), "subject": s})
+                    chapters_by_subject[s].append(chapter)
+                    chapters_classified.append({"chapter": chapter, "subject": s})
             elif subj == "PCMB":
                 for s in ["Physics", "Chemistry", "Maths", "Zoology", "Botany"]:
-                    chapters_by_subject[s].append(chapter.strip())
-                    chapters_classified.append({"chapter": chapter.strip(), "subject": s})
+                    chapters_by_subject[s].append(chapter)
+                    chapters_classified.append({"chapter": chapter, "subject": s})
             elif subj == "PCB":
                 for s in ["Physics", "Chemistry", "Zoology"]:
-                    chapters_by_subject[s].append(chapter.strip())
-                    chapters_classified.append({"chapter": chapter.strip(), "subject": s})
+                    chapters_by_subject[s].append(chapter)
+                    chapters_classified.append({"chapter": chapter, "subject": s})
         else:
-            chapters_classified.append({"chapter": chapter.strip(), "subject": subj})
+            chapters_classified.append({"chapter": chapter, "subject": subj})
             if subj in chapters_by_subject:
-                chapters_by_subject[subj].append(chapter.strip())
+                chapters_by_subject[subj].append(chapter)
 
     # Determine question counts
     if request.exam_type == "NEET":
@@ -753,9 +756,8 @@ async def generate_institute_test_for_user(
         zoo_count = 0
         bot_count = 0
 
-    # Async question generation per subject
-    import asyncio
-
+    # Generate questions per subject using generate_questions_with_verification_async
+    # — identical method to student SSE generation for parity
     async def gen_subject(subj, chapters, count, exam_type, difficulty):
         if count == 0 or not chapters:
             return []
@@ -766,13 +768,13 @@ async def generate_institute_test_for_user(
         else:
             mcq_count = int(count * 0.8)
             num_count = count - mcq_count
-        result = await llm_engine.generate_questions_async(
+        result = await llm_engine.generate_questions_with_verification_async(
             subject=subj,
             topic=topic,
             mcq_count=mcq_count,
             numerical_count=num_count,
             level=exam_type,
-            difficulty=difficulty
+            difficulty=difficulty,
         )
         if result.get("success"):
             qs = result.get("questions", [])
