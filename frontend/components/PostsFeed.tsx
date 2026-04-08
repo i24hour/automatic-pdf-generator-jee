@@ -662,7 +662,7 @@ export default function PostsFeed() {
                                                 background: 'rgba(79, 70, 229, 0.08)',
                                                 border: '1px solid rgba(79, 70, 229, 0.12)'
                                             }}>
-                                                {typeof navigator !== 'undefined' && navigator.share && (
+                                                {typeof navigator !== 'undefined' && typeof navigator.share === 'function' && (
                                                     <button
                                                         onClick={() => handleNativeShare(post)}
                                                         style={{

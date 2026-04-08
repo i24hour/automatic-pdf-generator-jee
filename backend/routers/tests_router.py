@@ -113,7 +113,7 @@ async def create_test(
             num_numerical = 0
             num_mcq = total_count
 
-        tasks.append(llm_engine.generate_with_fallback_async(
+        tasks.append(llm_engine.generate_parallel(
             subject=subj_name,
             topic=topic_str,
             mcq_count=num_mcq,
@@ -124,6 +124,7 @@ async def create_test(
             medium_percent=medium_pct,
             hard_percent=hard_pct,
             include_solutions=False,
+            chunk_size=10
         ))
         task_metadata.append({
             "subject": subj_name,

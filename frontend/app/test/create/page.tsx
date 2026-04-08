@@ -45,6 +45,7 @@ function CreateTestForm() {
     const [visibility, setVisibility] = useState<VisibilityType>(mode === 'public' ? 'COMMUNITY' : 'PRIVATE');
 
     const [loading, setLoading] = useState(false);
+    const [progress, setProgress] = useState(0);
     const [error, setError] = useState('');
 
     const [examType, setExamType] = useState<ExamType>('JEE_MAINS');
@@ -111,7 +112,16 @@ function CreateTestForm() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
+        setProgress(0);
         setError('');
+
+        const progressInterval = setInterval(() => {
+            setProgress(prev => {
+                // Simulate asymptotic progress up to 99%
+                const increment = Math.max(1, (99 - prev) * 0.1);
+                return prev >= 99 ? 99 : prev + increment;
+            });
+        }, 800);
 
         const token = localStorage.getItem('auth_token');
         if (!token) {
@@ -197,14 +207,19 @@ function CreateTestForm() {
             } catch (launchErr) {
                 console.error('Launch failed:', launchErr);
                 setError('Test created but launch failed. Please try again from My Tests/Community');
-                // Could redirect to My Tests list here
+                clearInterval(progressInterval);
             }
 
         } catch (err: unknown) {
             const errorMessage = err instanceof Error ? err.message : 'Failed to create test';
             setError(errorMessage);
+            clearInterval(progressInterval);
         } finally {
-            setLoading(false);
+            clearInterval(progressInterval);
+            setProgress(100);
+            setTimeout(() => {
+                setLoading(false);
+            }, 500); // Small delay to let user see 100%
         }
     };
 
@@ -460,12 +475,23 @@ function CreateTestForm() {
                                 <button
                                     type="submit"
                                     disabled={loading || totalQuestions < 1}
-                                    className="w-full md:w-auto px-8 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-xl hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+                                    className="w-full md:w-auto px-8 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-xl hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 relative overflow-hidden"
                                 >
-                                    {loading ? 'Creating...' : (
+                                    {loading && (
+                                        <div 
+                                            className="absolute left-0 top-0 bottom-0 bg-white/20 transition-all duration-300"
+                                            style={{ width: `${Math.round(progress)}%` }}
+                                        />
+                                    )}
+                                    {loading ? (
+                                        <span className="relative z-10 flex items-center gap-2">
+                                            <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                                            Creating... {Math.round(progress)}%
+                                        </span>
+                                    ) : (
                                         <>
-                                            <CheckCircle2 className="w-5 h-5" />
-                                            Create Test
+                                            <CheckCircle2 className="w-5 h-5 relative z-10" />
+                                            <span className="relative z-10">Create Test</span>
                                         </>
                                     )}
                                 </button>
