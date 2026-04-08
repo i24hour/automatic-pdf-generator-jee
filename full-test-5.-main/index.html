@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Page</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="header">
+        <div class="system-name">
+            <p>System Name: <span>C001</span></p>
+            <p class="small-text">
+                Kindly contact the invigilator if there are any discrepancies in the Name and Photograph displayed on the screen or if the photograph is not yours.
+            </p>
+        </div>
+        <div class="candidate-info">
+            <p>Candidate Name: <span>Priyanshu</span></p>
+            <p>Subject: <span>Mock Exam</span></p>
+            <div class="candidate-photo">
+                <img src="https://firebasestorage.googleapis.com/v0/b/mentorsmantratestportal1.appspot.com/o/NewCandidateImage.jpg?alt=media&token=fa07149c-3762-4922-8bb3-fd113a0aa3b9" alt="Candidate Photo">
+            </div>
+        </div>
+    </div>
+
+    <div class="login-container">
+        <div class="login-box">
+            <h3>Login</h3>
+            <form id="loginForm">
+                <div class="input-container">
+                    <i class="fas fa-user"></i>
+                    <input type="text" placeholder="Enter ID" id="userId" required>
+                </div>
+                <div class="input-container">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" placeholder="Enter Password" id="password" required>
+                </div>
+                <button type="submit">Sign In</button>
+            </form>
+        </div>
+    </div>
+    <script type="module">
+        import { handleLogin } from "./javascript.js";
+        
+        document.addEventListener("DOMContentLoaded", function () {
+            console.log("DOMContentLoaded triggered");  // Debugging log
+            document.getElementById("loginForm").addEventListener("submit", handleLogin);
+        });
+    </script>
+    <!-- Load JavaScript as a module -->
+    <script type="module" src="javascript.js"></script>
+</body>
+</html>

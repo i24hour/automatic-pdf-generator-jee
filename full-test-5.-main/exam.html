@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>MENTORS MANTRA</title>
+	<link rel="stylesheet" type="text/css" href="style.css">   
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage.js"></script>
+</head>
+<body>
+	
+	<header>
+		<img src="https://firebasestorage.googleapis.com/v0/b/mentorsmantratestportal1.appspot.com/o/20241014_173614.png?alt=media&token=c29df049-b48d-4a0d-ac64-ff12841ac1fd">
+
+	</header>
+
+	<div class="exam_header" >
+		<button class="exam_names">JEE MAIN</button>
+		<button id="downloadPdfButton" style="display: none;">Download PDF</button>
+	</div>
+	
+	<div id="time" class="left">
+		<div id="time_left">Time Left:</div>
+	</div>
+	<div id="section_names" class="left">
+		<div class="section_selected">Phy Sec 1</div>
+		<div class="section_unselected">Phy Sec 2</div>
+		<div class="section_selected">Chem Sec 1</div>
+		<div class="section_unselected">Chem Sec 2</div>
+		<div class="section_selected">Maths Sec 1</div>
+		<div class="section_unselected">Maths Sec 2</div>
+	</div>
+	<div id="view_in_lang" class="left">
+		<select id="lang_select" class="just_3">
+  			<option value="english">English</option>
+  			<option value="hindi">Hindi</option>
+		</select>
+		<div class="just_3">View in:</div>
+	</div>
+
+	<div id="question_area_scrollable" class="left">
+		<div  class="question-title">
+			<div id="question-title">Question no. 1 </div>
+			<button id="favourite" style="float: right;"></button>
+		</div>
+		<div id="area_with_background">
+			<div class="instructions-container">
+				<button id="toggle-instructions" class="button">Hide Instructions</button>
+				<div id="general_instructions">
+					<h3>General Instructions:</h3>
+					<ul>
+						<li>The test consists of a total of 75 questions.</li>
+						<li>Each subject (PCM) has 25 questions.</li>
+						<li>This question paper contains Two Sections.</li>
+						<li>Each subject has two sections: Phy Sec1, Sec2; Chem Sec1, Sec2; Math Sec1, Sec2.</li>
+						<li>Section -1 : Attempt all questions</li>
+						<li>Section -2 : Attempt all questions</li>
+						<li>Each question carries +4 marks for the correct answer and -1 mark for the wrong answer.</li>
+					</ul>
+				</div>
+			</div>
+			<div id="quiz"></div>
+			
+			<img id="q1" class="question-image" src="">
+
+			
+
+			
+			<div class="question">
+				
+					<div id="question-container" class="question"></div>
+					<div class="answers">
+						<label for="numerical-answer">Enter your answer:</label>
+						<input type="number" id="numerical-answer" name="numerical-answer" style="width: 200px; height: 40px;">
+					</div>
+					
+					
+					
+				
+			</div>
+		</div>
+	</div>
+	<div id="next_options" class="left">
+		<div id="next" class="button">Save and Next</div>
+		<div id="cr" class="button">Clear Response</div>
+		<div id="smfran" class="button">Save & Mark for Review</div>
+		<div id="mfran" class="button">Mark for Review & Next</div>
+		
+		<button class="button" id="previous">Previous</button>
+		<button class="button" id="next_u">Next</button>
+		
+		
+	</div>
+
+	<div id="sidebar" >
+		<div id="person_info">
+			<div><img id="profile_img" src="https://www.digialm.com//OnlineAssessment/images/NewCandidateImage.jpg"></div>
+			<div id="cname">Priyanshu</div>
+		</div>
+		<div id="border">
+		    <div id="color_info">
+		    	<div class="just_4">
+					<span class="just_51" style="background-position: -7px -55px;"></span>
+					<span class="just_6">Answered</span>
+				</div>
+				<div class="just_4">
+					<span class="just_52" style="background-position: -42px -56px;"></span>
+					<span class="just_6">Not Answered</span>
+				</div>
+				<div class="just_4">
+					<span class="just_53" style="background-position: -107px -56px;"></span>
+					<span class="just_6">Not Visited</span>
+				</div>
+				<div class="just_4">
+					<span class="just_54" style="background-position: -75px -54px;"></span>
+					<span class="just_6">Marked for Review</span>
+				</div>
+				<div class="just_4" id="long">
+					<span class="just_55" style="background-position: -9px -87px;"></span>
+					<span class="just_6">Answered & Marked for Review (will be considered for evaluation)</span>
+				</div>
+			</div>
+		    
+			
+			<div id="questions_select_area">
+				<div id = "choose_text">Choose a Question</div>
+				<div id="palette-list">
+						<!-- <div class="nv item" id="btn1">1</div>
+						<div class="nv item" id="btn2">2</div>
+						<div class="nv item" id="btn3">3</div>
+						<div class="nv item" id="btn4">4</div>
+						<div class="nv item" id="btn5">5</div>
+						<div class="nv item" id="btn6">6</div> -->
+				</div>
+			</div>
+		</div>
+		
+	</div>
+
+	<div id="submit_container">
+		<div class="button" id="submit">Submit</div>
+	</div>
+
+	<div id="results" class="left"></div>
+
+	<div id="favourites_view"></div>
+
+	<footer id="ultimate_footer"></footer>
+
+	<script type="module" src="javascript.js"></script>
+	
+	<script type="text/javascript"
+	src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js">
+</script>
+<script type="text/javascript">
+(function(){
+  emailjs.init({
+	publicKey: "PL-DB4j0G4uOXkw9C",
+  });
+})();
+</script>
+<script src="https://smtpjs.com/v3/smtp.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.2/axios.min.js"></script>
+<!-- Firebase SDK -->
+</body>
+</html>  
