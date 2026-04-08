@@ -44,6 +44,42 @@ interface TestState {
     subjects: string[];
 }
 
+const TimerComponent = React.memo(({ serverTime, isTestActive, onZero }: { serverTime: number, isTestActive: boolean, onZero: () => void }) => {
+    const [timeLeft, setTimeLeft] = useState(serverTime);
+
+    useEffect(() => {
+        setTimeLeft(serverTime);
+    }, [serverTime]);
+
+    useEffect(() => {
+        if (!isTestActive) return;
+        if (timeLeft <= 0) {
+            onZero();
+            return;
+        }
+        const interval = setInterval(() => {
+            setTimeLeft(prev => {
+                if (prev <= 1) {
+                    clearInterval(interval);
+                    onZero();
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+        return () => clearInterval(interval);
+    }, [isTestActive]); // intentionally omitting timeLeft to avoid rebuilding interval
+
+    const formatTime = (seconds: number) => {
+        const hrs = Math.floor(seconds / 3600);
+        const mins = Math.floor((seconds % 3600) / 60);
+        const secs = seconds % 60;
+        return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    };
+
+    return <>{formatTime(timeLeft)}</>;
+});
+
 export default function TestInterfacePage() {
     const router = useRouter();
     const params = useParams();
@@ -53,7 +89,7 @@ export default function TestInterfacePage() {
     const [testState, setTestState] = useState<TestState | null>(null);
     const [question, setQuestion] = useState<QuestionData | null>(null);
     const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
-    const [timeRemaining, setTimeRemaining] = useState(0);
+    const [serverTimeRemaining, setServerTimeRemaining] = useState(0);
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState(false);
     const [showSubmitModal, setShowSubmitModal] = useState(false);
@@ -82,7 +118,7 @@ export default function TestInterfacePage() {
             if (response.ok) {
                 const data = await response.json();
                 setTestState(data);
-                setTimeRemaining(data.time_remaining_seconds);
+                setServerTimeRemaining(data.time_remaining_seconds);
                 setActiveSection(prev => {
                     if (!prev && data.subjects?.length > 0) return data.subjects[0];
                     return prev;
@@ -103,7 +139,7 @@ export default function TestInterfacePage() {
                 const data = await response.json();
                 setQuestion(data);
                 setSelectedAnswer(data.user_answer);
-                setTimeRemaining(data.time_remaining_seconds);
+                setServerTimeRemaining(data.time_remaining_seconds);
                 setQuestionStartTime(Date.now());
             }
         } catch (error) {
@@ -128,11 +164,6 @@ export default function TestInterfacePage() {
     }, [isFullscreen, loading]);
 
     useEffect(() => {
-        if (timeRemaining <= 0) {
-            if (testState?.status === 'IN_PROGRESS' && !actionLoading) handleSubmit();
-            return;
-        }
-        const interval = setInterval(() => setTimeRemaining(prev => Math.max(0, prev - 1)), 1000);
         const handlePopState = (e: PopStateEvent) => {
             if (testState?.status === 'IN_PROGRESS' && !showSubmitModal) {
                 window.history.pushState(null, '', window.location.href);
@@ -140,8 +171,8 @@ export default function TestInterfacePage() {
         };
         window.history.pushState(null, '', window.location.href);
         window.addEventListener('popstate', handlePopState);
-        return () => { clearInterval(interval); window.removeEventListener('popstate', handlePopState); };
-    }, [timeRemaining, testState?.status, actionLoading, showSubmitModal]);
+        return () => window.removeEventListener('popstate', handlePopState);
+    }, [testState?.status, showSubmitModal]);
 
     const getTimeSpent = () => Math.floor((Date.now() - questionStartTime) / 1000);
 
@@ -164,12 +195,12 @@ export default function TestInterfacePage() {
                 const data = await response.json();
                 if (data.palette && data.subjects) {
                     setTestState(prev => prev ? { ...prev, palette: data.palette, subjects: data.subjects, time_remaining_seconds: data.time_remaining_seconds, current_question_index: data.next_question_index } : prev);
-                    setTimeRemaining(data.time_remaining_seconds);
+                    setServerTimeRemaining(data.time_remaining_seconds);
                 }
                 if (data.next_question) {
                     setQuestion(data.next_question);
                     setSelectedAnswer(data.next_question.user_answer);
-                    setTimeRemaining(data.next_question.time_remaining_seconds);
+                    setServerTimeRemaining(data.next_question.time_remaining_seconds);
                     setQuestionStartTime(Date.now());
                     setActiveSection(data.next_question.subject);
                 }
@@ -204,13 +235,6 @@ export default function TestInterfacePage() {
                 if (!isViolation) router.push(data.redirect_url);
             } else { setActionLoading(false); }
         } catch (error) { setActionLoading(false); }
-    };
-
-    const formatTime = (seconds: number) => {
-        const hrs = Math.floor(seconds / 3600);
-        const mins = Math.floor((seconds % 3600) / 60);
-        const secs = seconds % 60;
-        return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     };
 
     useEffect(() => {
@@ -279,7 +303,13 @@ export default function TestInterfacePage() {
                     {testState.exam_type.replace('_', ' ')}
                 </div>
                 <div className="font-bold text-gray-700 text-[12px]">
-                    Time Left: <span className="font-bold text-[12px] ml-1">{formatTime(timeRemaining)}</span>
+                    Time Left: <span className="font-bold text-[12px] ml-1">
+                        <TimerComponent 
+                            serverTime={serverTimeRemaining} 
+                            isTestActive={testState?.status === 'IN_PROGRESS' && !showSubmitModal && !actionLoading} 
+                            onZero={() => { if (testState?.status === 'IN_PROGRESS' && !actionLoading) handleSubmit(); }} 
+                        />
+                    </span>
                 </div>
             </div>
 

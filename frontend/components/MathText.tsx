@@ -30,4 +30,4 @@ const MathText: React.FC<MathTextProps> = ({ content, className = '' }) => {
     );
 };
 
-export default MathText;
+export default React.memo(MathText);
