@@ -122,7 +122,7 @@ class LLMEngine:
     """LLM-agnostic engine for generating test questions."""
     
     def __init__(self):
-        self.primary_model = os.getenv("ACTIVE_MODEL", "gemini/gemini-2.5-flash")
+        self.primary_model = os.getenv("ACTIVE_MODEL", "gemini/gemini-3.1-flash-lite-preview")
         self.model = self.primary_model
         self.fallback_models = FALLBACK_MODELS
         self._current_user_id = None      # Set per-request for verify/solution log calls

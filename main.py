@@ -496,14 +496,9 @@ async def download_job_pdf(
 async def list_models():
     """List available LLM models."""
     return {
-        "active_model": os.getenv("ACTIVE_MODEL", "gemini/gemini-1.5-flash"),
+        "active_model": os.getenv("ACTIVE_MODEL", "gemini/gemini-3.1-flash-lite-preview"),
         "available_models": [
-            "gemini/gemini-1.5-flash",
-            "gemini/gemini-1.5-pro",
-            "openai/gpt-4o",
-            "openai/gpt-4o-mini",
-            "anthropic/claude-3-sonnet-20240229",
-            "anthropic/claude-3-haiku-20240307"
+            "gemini/gemini-3.1-flash-lite-preview"
         ]
     }
 

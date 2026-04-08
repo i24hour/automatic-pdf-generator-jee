@@ -76,7 +76,7 @@ Edit `backend/.env`:
 
 ```env
 # Use Gemini
-ACTIVE_MODEL="gemini/gemini-2.5-flash"
+ACTIVE_MODEL="gemini/gemini-3.1-flash-lite-preview"
 GEMINI_API_KEY="your-key"
 
 # Or use OpenAI
