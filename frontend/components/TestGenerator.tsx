@@ -225,7 +225,7 @@ function InstituteSection({
         setInstituteGenerating(true);
 
         try {
-            const response = await authFetch(`${API_BASE_URL}/api/generate-institute`, {
+            const response = await authFetch(`${API_BASE_URL}/api/institute/generate`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload),
