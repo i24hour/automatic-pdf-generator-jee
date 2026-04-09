@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, memo } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
+import { Menu, X } from 'lucide-react';
 import MathText from '@/components/MathText';
 import DiagramRenderer from '@/components/test/DiagramRenderer';
 import { useExamSecurity } from '@/hooks/useExamSecurity';
@@ -97,6 +98,7 @@ export default function TestInterfacePage() {
     const [examSummary, setExamSummary] = useState<any>(null);
     const [activeSection, setActiveSection] = useState<string | null>(null);
     const [questionStartTime, setQuestionStartTime] = useState(Date.now());
+    const [showMobilePalette, setShowMobilePalette] = useState(false);
 
     const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
 
@@ -292,6 +294,23 @@ export default function TestInterfacePage() {
     return (
         <div className="h-screen w-screen bg-white flex flex-col overflow-hidden text-sm font-sans relative">
             
+            {/* Mobile Fullscreen Requirement Overlay */}
+            {isExamActive && !isFullscreen && (
+                <div className="fixed inset-0 bg-black/95 flex flex-col items-center justify-center z-[1000] p-6 backdrop-blur-sm" onClick={enterFullscreen}>
+                    <div className="text-center p-8 bg-white rounded-lg shadow-2xl max-w-sm" onClick={e => e.stopPropagation()}>
+                        <div className="text-6xl mb-4 animate-bounce">📱</div>
+                        <h2 className="text-2xl font-bold text-gray-900 mb-3">Resume Exam</h2>
+                        <p className="text-gray-600 mb-6 font-medium text-base">Your exam must run in full-screen mode to prevent interruptions. Please click below to begin.</p>
+                        <button 
+                            onClick={(e) => { e.stopPropagation(); enterFullscreen(); }}
+                            className="w-full py-4 bg-[#0c7cd5] text-white rounded font-bold text-lg shadow-md uppercase tracking-wide hover:bg-[#0a68b4] transition transform hover:scale-105"
+                        >
+                            Tap to Enter Full Screen
+                        </button>
+                    </div>
+                </div>
+            )}
+
             {/* Header 1 */}
             <div className="bg-[#1862a8] w-full flex items-center justify-center shrink-0 border-b-2 sm:border-b-0 border-[#38a9eb]" style={{ height: '50px' }}>
                 <h1 className="text-white text-3xl font-extrabold tracking-widest" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.5)' }}>MENTORS MANTRA</h1>
@@ -302,14 +321,20 @@ export default function TestInterfacePage() {
                 <div className="bg-[#38a9eb] text-white px-[12px] py-[8px] font-normal rounded text-[14px]">
                     {testState.exam_type.replace('_', ' ')}
                 </div>
-                <div className="font-bold text-gray-700 text-[12px]">
-                    Time Left: <span className="font-bold text-[12px] ml-1">
-                        <TimerComponent 
-                            serverTime={serverTimeRemaining} 
-                            isTestActive={testState?.status === 'IN_PROGRESS' && !showSubmitModal && !actionLoading} 
-                            onZero={() => { if (testState?.status === 'IN_PROGRESS' && !actionLoading) handleSubmit(); }} 
-                        />
-                    </span>
+                <div className="flex items-center gap-4">
+                    <div className="font-bold text-gray-700 text-[12px]">
+                        Time Left: <span className="font-bold text-[12px] ml-1">
+                            <TimerComponent 
+                                serverTime={serverTimeRemaining} 
+                                isTestActive={testState?.status === 'IN_PROGRESS' && !showSubmitModal && !actionLoading} 
+                                onZero={() => { if (testState?.status === 'IN_PROGRESS' && !actionLoading) handleSubmit(); }} 
+                            />
+                        </span>
+                    </div>
+                    {/* Mobile Toggle Button */}
+                    <button onClick={() => setShowMobilePalette(!showMobilePalette)} className="md:hidden flex items-center justify-center bg-[#e5f6fd] text-[#0c7cd5] border border-[#0c7cd5] p-1 rounded shadow-sm">
+                        {showMobilePalette ? <X size={20} /> : <Menu size={20} />}
+                    </button>
                 </div>
             </div>
 
@@ -428,7 +453,7 @@ export default function TestInterfacePage() {
                 </div>
 
                 {/* Right Sidebar */}
-                <div className="w-[280px] bg-white flex flex-col shrink-0 border-l border-gray-300 absolute right-0 top-0 bottom-[50px] md:bottom-0 md:relative">
+                <div className={`w-[280px] bg-white flex flex-col shrink-0 border-l border-gray-300 fixed right-0 top-[85px] bottom-[50px] shadow-2xl z-40 transition-transform transform ${showMobilePalette ? 'translate-x-0' : 'translate-x-[110%]'} md:relative md:top-0 md:bottom-0 md:translate-x-0 md:shadow-none`}>
                     
                     {/* User Info */}
                     <div className="bg-[#f8fbff] flex flex-row items-center overflow-auto p-0 border-b-2 border-gray-300 shrink-0">

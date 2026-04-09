@@ -192,6 +192,10 @@ export function useExamSecurity({ isExamActive, onSubmitExam }: UseExamSecurityP
         if (!isExamActive) return;
 
         const checkDevTools = () => {
+            if (typeof navigator !== 'undefined' && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+                return; // Skip heuristic check on mobile (fixes false positives from browser bars/keyboards)
+            }
+            
             // A common heuristic: if outer window is significantly larger than inner window,
             // DevTools might be open docked. 
             // NOTE: This can sometimes false positive on zooming, but it's a common primitive check.
