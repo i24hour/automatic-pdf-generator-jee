@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, memo } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import MathText from '@/components/MathText';
@@ -44,7 +44,7 @@ interface TestState {
     subjects: string[];
 }
 
-const TimerComponent = React.memo(({ serverTime, isTestActive, onZero }: { serverTime: number, isTestActive: boolean, onZero: () => void }) => {
+const TimerComponent = memo(({ serverTime, isTestActive, onZero }: { serverTime: number, isTestActive: boolean, onZero: () => void }) => {
     const [timeLeft, setTimeLeft] = useState(serverTime);
 
     useEffect(() => {

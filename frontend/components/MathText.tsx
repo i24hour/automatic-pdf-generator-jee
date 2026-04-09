@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo, FC } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
@@ -9,7 +9,7 @@ interface MathTextProps {
     className?: string;
 }
 
-const MathText: React.FC<MathTextProps> = ({ content, className = '' }) => {
+const MathText: FC<MathTextProps> = ({ content, className = '' }) => {
     // Basic preprocessing to ensure LaTeX block delimiters $$...$$ usually map to new lines
     // but in markdown they are block math.
     // Also, handle the user's specific case where $m_1 = 2$ might be used.
@@ -30,4 +30,4 @@ const MathText: React.FC<MathTextProps> = ({ content, className = '' }) => {
     );
 };
 
-export default React.memo(MathText);
+export default memo(MathText);
