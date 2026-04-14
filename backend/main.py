@@ -11,9 +11,10 @@ import json
 import asyncio
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, List, Any
-from fastapi import FastAPI, HTTPException, Depends, status, BackgroundTasks
+from fastapi import FastAPI, HTTPException, Depends, status, BackgroundTasks, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.responses import FileResponse, StreamingResponse, JSONResponse
+from fastapi.exceptions import RequestValidationError
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from dotenv import load_dotenv
@@ -72,6 +73,48 @@ app.add_middleware(
     allow_headers=["*"],
     expose_headers=["*"],
 )
+
+# Fix: Ensure CORS headers are present even on error responses (401/422/500 etc.)
+# FastAPI's default exception handlers can bypass CORS middleware causing confusing
+# "CORS error" messages in the browser when the real issue is auth/validation.
+ALLOWED_ORIGINS = set(origins)
+
+def _get_cors_headers(request: Request) -> dict:
+    origin = request.headers.get("origin", "")
+    import re
+    if origin in ALLOWED_ORIGINS or re.match(r"https://.*\.vercel\.app", origin):
+        return {
+            "Access-Control-Allow-Origin": origin,
+            "Access-Control-Allow-Credentials": "true",
+        }
+    return {}
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    headers = _get_cors_headers(request)
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": exc.detail},
+        headers=headers,
+    )
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    headers = _get_cors_headers(request)
+    return JSONResponse(
+        status_code=422,
+        content={"detail": exc.errors()},
+        headers=headers,
+    )
+
+@app.exception_handler(Exception)
+async def generic_exception_handler(request: Request, exc: Exception):
+    headers = _get_cors_headers(request)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error"},
+        headers=headers,
+    )
 
 # Include routers
 app.include_router(auth_router.router)

@@ -327,9 +327,12 @@ class LLMEngine:
             import time
             start_time = time.time()
             
+            chunk_kwargs = kwargs.copy()
+            chunk_kwargs["chunk_id"] = str(index)
+            
             # Use ASYNC method directly - no to_thread needed
             result = await self.generate_with_fallback_async(
-                subject, topic, mcq_cnt, num_cnt, level, difficulty, **kwargs
+                subject, topic, mcq_cnt, num_cnt, level, difficulty, **chunk_kwargs
             )
             
             duration = time.time() - start_time
@@ -2037,9 +2040,12 @@ Do NOT copy any question verbatim. Use them only as style and difficulty referen
         else:
             ref_block = ""
 
+        chunk_id = kwargs.get("chunk_id", "1")
+        variation_instruction = f"\nIMPORTANT BATCH INSTRUCTION:\nThis is generation batch '{chunk_id}'. To ensure high diversity across concurrent batches, you MUST pick completely distinct subtopics, models, or edge cases of '{topic}'. DO NOT output the exact same questions as standard generic batches."
+
         prompt = f"""You are an expert question paper setter for competitive exams like FIITJEE, Allen, Resonance.
 
-{diff_instruction}
+{diff_instruction}{variation_instruction}
 
 GENERATE EXACTLY:
 {req_str}
