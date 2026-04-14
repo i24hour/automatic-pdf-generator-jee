@@ -375,8 +375,18 @@ export default function TestInterfacePage() {
                     </div>
 
                     {/* Question Content Scrollable */}
-                    <div className="flex-1 overflow-y-auto px-4 py-2 bg-[#f9f9f9] flex flex-col pt-4">
+                    <div className="flex-1 overflow-y-auto px-4 py-2 bg-[#f9f9f9] flex flex-col pt-4 relative">
                         
+                        {/* Loading Overlay */}
+                        {actionLoading && (
+                            <div className="absolute inset-0 bg-white/60 backdrop-blur-sm z-30 flex items-center justify-center pointer-events-none transition-opacity duration-200">
+                                <div className="flex flex-col items-center">
+                                    <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-[#0c7cd5]"></div>
+                                    <span className="text-[#0c7cd5] font-bold mt-4 shadow-sm bg-white px-3 py-1 rounded">Loading Question...</span>
+                                </div>
+                            </div>
+                        )}
+
                         {/* Question Title Header */}
                         <div className="border-b border-[#dbdbdb] pb-2 w-full flex justify-between items-center mb-0 mt-0 bg-white p-2 rounded-t-lg shadow-[0_-2px_4px_rgba(0,0,0,0.02)]">
                             <h2 className="text-[17px] font-bold text-black border-l-4 border-[#38a9eb] pl-2" style={{ fontFamily: 'Arial, sans-serif' }}>
@@ -523,7 +533,7 @@ export default function TestInterfacePage() {
             </div>
 
             {/* Global Minimum Submit Bar matching Mentors Mantra bottom right */}
-            <div className="absolute bottom-0 right-0 w-[280px] bg-[#e5f6fd] border-t border-[#c3c3c1] overflow-auto z-10 hidden md:block">
+            <div className="absolute bottom-0 right-0 w-[280px] bg-[#e5f6fd] border-t border-[#c3c3c1] overflow-auto z-50 hidden md:block">
                  <button 
                     onClick={() => { fetchSummary(); setShowSubmitModal(true); }}
                     className="bg-[#0c7cd5] text-white mx-auto my-[8px] px-[30px] py-[10px] text-[15px] font-sans border border-[#0a68b4] rounded shadow-md cursor-pointer block hover:bg-[#0a68b4] active:bg-[#084b82] transition"
