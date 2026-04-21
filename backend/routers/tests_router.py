@@ -133,7 +133,18 @@ async def create_test(
         })
 
     print(f"Starting {len(tasks)} generation tasks (1 per subject) for Master Test...")
-    results = await asyncio.gather(*tasks, return_exceptions=True)
+    # Wrap gather in a timeout so a slow/hung LLM call returns a clean JSON 504 rather
+    # than causing the proxy to time out and return an HTML error page.
+    try:
+        results = await asyncio.wait_for(
+            asyncio.gather(*tasks, return_exceptions=True),
+            timeout=240  # 4-minute hard cap; subjects fall back to placeholders individually
+        )
+    except asyncio.TimeoutError:
+        raise HTTPException(
+            status_code=504,
+            detail="Question generation timed out. Please try again."
+        )
 
     
     final_questions = []
