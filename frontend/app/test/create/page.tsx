@@ -179,13 +179,23 @@ function CreateTestForm() {
             });
 
             if (!response.ok) {
-                const data = await response.json();
                 let errMsg = 'Failed to create test';
-                if (data.detail) errMsg = typeof data.detail === 'string' ? data.detail : JSON.stringify(data.detail);
+                try {
+                    const text = await response.text();
+                    const data = JSON.parse(text);
+                    if (data.detail) errMsg = typeof data.detail === 'string' ? data.detail : JSON.stringify(data.detail);
+                } catch {
+                    // Non-JSON error body (e.g. proxy timeout HTML page) — keep generic message
+                }
                 throw new Error(errMsg);
             }
 
-            const data = await response.json();
+            let data: { test_id: string };
+            try {
+                data = await response.json();
+            } catch {
+                throw new Error('Invalid response from server. Please try again.');
+            }
             console.log('Master Test created:', data);
 
             // 2. Launch Attempt (Create Session)
@@ -201,7 +211,12 @@ function CreateTestForm() {
                     throw new Error('Test created but failed to start session.');
                 }
 
-                const launchData = await launchResponse.json();
+                let launchData: { redirect_url: string };
+                try {
+                    launchData = await launchResponse.json();
+                } catch {
+                    throw new Error('Test created but launch response was invalid. Please try again from My Tests.');
+                }
 
                 // 3. Redirect to Attempt Interface
                 router.push(launchData.redirect_url);
