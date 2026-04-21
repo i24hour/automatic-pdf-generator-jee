@@ -7,6 +7,7 @@ import { Minus, Plus, BookOpen, AlertCircle, CheckCircle2, Globe, Lock, School }
 import TopicSelector from '@/components/TopicSelector';
 
 import { API_BASE_URL as API_BASE } from '@/lib/config';
+import { useAuth } from '@/lib/auth-context';
 
 interface DifficultyDist {
     easy: number;
@@ -38,6 +39,7 @@ const INITIAL_SUBJECTS: Record<string, SubjectConfig> = {
 
 function CreateTestForm() {
     const router = useRouter();
+    const { authFetch } = useAuth();
     const searchParams = useSearchParams();
     const mode = searchParams.get('mode'); // 'public' or null
 
@@ -125,6 +127,8 @@ function CreateTestForm() {
 
         const token = localStorage.getItem('auth_token');
         if (!token) {
+            clearInterval(progressInterval);
+            setLoading(false);
             router.push('/signup');
             return;
         }
@@ -159,12 +163,11 @@ function CreateTestForm() {
             // UNIFIED ENDPOINT
             const endpoint = `${API_BASE}/api/tests/create`;
 
-            // 1. Create Master Test
-            const response = await fetch(endpoint, {
+            // 1. Create Master Test (authFetch: refresh on 401 so mobile sessions don't fail as opaque "Failed to fetch")
+            const response = await authFetch(endpoint, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({
                     exam_type: examType,
@@ -187,12 +190,11 @@ function CreateTestForm() {
 
             // 2. Launch Attempt (Create Session)
             try {
-                const launchResponse = await fetch(`${API_BASE}/test/${data.test_id}/launch`, { // Using launch endpoint
+                const launchResponse = await authFetch(`${API_BASE}/test/${data.test_id}/launch`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    }
+                    },
                 });
 
                 if (!launchResponse.ok) {

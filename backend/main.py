@@ -5,6 +5,7 @@ Main application entry point with API endpoints.
 
 # Force deploy
 import os
+import re
 import uuid
 import base64
 import json
@@ -54,22 +55,27 @@ app = FastAPI(
 )
 
 # Configure CORS
+_ORIGIN_VERCEL_APP = re.compile(r"^https://[\w.-]+\.vercel\.app$", re.I)
+# Apex + any subdomain (e.g. www, preview deployments on custom domain)
+_ORIGIN_INFINITEST = re.compile(r"^https://([\w-]+\.)*infinitest\.tech$", re.I)
+
 origins = [
     "http://localhost:3000",
     "https://localhost:3000",
+    "http://127.0.0.1:3000",
+    "https://127.0.0.1:3000",
     "https://infinitest.tech",
     "https://www.infinitest.tech",
     "https://mentors-mantra-test-generator.vercel.app",
     "https://mentors-mantra-test-generator-git-main-priyanshu85953s-projects.vercel.app",
-    "https://mentors-mantra-test-generator-*.vercel.app",
 ]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
-    allow_origin_regex=r"https://.*\.vercel\.app",
+    allow_origin_regex=r"https://([\w-]+\.)*infinitest\.tech|https://[\w.-]+\.vercel\.app",
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allow_headers=["*"],
     expose_headers=["*"],
 )
@@ -79,10 +85,22 @@ app.add_middleware(
 # "CORS error" messages in the browser when the real issue is auth/validation.
 ALLOWED_ORIGINS = set(origins)
 
+
+def _origin_allowed(origin: str) -> bool:
+    if not origin:
+        return False
+    if origin in ALLOWED_ORIGINS:
+        return True
+    if _ORIGIN_VERCEL_APP.match(origin):
+        return True
+    if _ORIGIN_INFINITEST.match(origin):
+        return True
+    return False
+
+
 def _get_cors_headers(request: Request) -> dict:
     origin = request.headers.get("origin", "")
-    import re
-    if origin in ALLOWED_ORIGINS or re.match(r"https://.*\.vercel\.app", origin):
+    if _origin_allowed(origin):
         return {
             "Access-Control-Allow-Origin": origin,
             "Access-Control-Allow-Credentials": "true",
