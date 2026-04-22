@@ -48,6 +48,7 @@ function CreateTestForm() {
 
     const [loading, setLoading] = useState(false);
     const [progress, setProgress] = useState(0);
+    const [progressMessage, setProgressMessage] = useState('');
     const [error, setError] = useState('');
     const [isAuthenticated, setIsAuthenticated] = useState(false);
 
@@ -130,16 +131,8 @@ function CreateTestForm() {
 
         setLoading(true);
         setProgress(0);
+        setProgressMessage('Starting...');
         setError('');
-
-        const progressInterval = setInterval(() => {
-            setProgress(prev => {
-                // Simulate asymptotic progress up to 99%
-                const increment = Math.max(1, (99 - prev) * 0.1);
-                return prev >= 99 ? 99 : prev + increment;
-            });
-        }, 800);
-
 
         // Prepare payload
         const subjectInputs: Record<string, any> = {};
@@ -168,83 +161,119 @@ function CreateTestForm() {
         }
 
         try {
-            // UNIFIED ENDPOINT
-            const endpoint = `${API_BASE}/api/tests/create`;
-
-            // 1. Create Master Test (authFetch: refresh on 401 so mobile sessions don't fail as opaque "Failed to fetch")
-            const response = await authFetch(endpoint, {
+            // Step 1: Start async job (returns instantly with job_id)
+            const startResponse = await authFetch(`${API_BASE}/api/tests/create-async`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     exam_type: examType,
                     subject_inputs: subjectInputs,
                     duration_minutes: duration,
                     visibility: visibility,
-                    classroom_id: null // Placeholder for future
+                    classroom_id: null
                 })
             });
 
-            if (!response.ok) {
-                let errMsg = 'Failed to create test';
+            if (!startResponse.ok) {
+                let errMsg = 'Failed to start test creation';
                 try {
-                    const text = await response.text();
-                    const data = JSON.parse(text);
+                    const data = await startResponse.json();
                     if (data.detail) errMsg = typeof data.detail === 'string' ? data.detail : JSON.stringify(data.detail);
-                } catch {
-                    // Non-JSON error body (e.g. proxy timeout HTML page) — keep generic message
-                }
+                } catch { /* non-JSON response */ }
                 throw new Error(errMsg);
             }
 
-            let data: { test_id: string };
-            try {
-                data = await response.json();
-            } catch {
-                throw new Error('Invalid response from server. Please try again.');
+            const { job_id } = await startResponse.json();
+            setProgressMessage('Connecting to generation stream...');
+
+            // Step 2: Connect to SSE stream for real-time progress
+            const testId = await new Promise<string>((resolve, reject) => {
+                const freshToken = localStorage.getItem('auth_token') || token;
+                const sseUrl = `${API_BASE}/api/tests/${job_id}/stream?token=${encodeURIComponent(freshToken || '')}`;
+                const eventSource = new EventSource(sseUrl);
+
+                const sseTimeout = setTimeout(() => {
+                    eventSource.close();
+                    reject(new Error('Connection timed out. Please try again.'));
+                }, 300000); // 5 min safety timeout
+
+                eventSource.onmessage = (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+
+                        // Update progress from backend
+                        if (data.progress !== undefined) setProgress(data.progress);
+                        if (data.message) setProgressMessage(data.message);
+
+                        if (data.status === 'done' && data.result) {
+                            clearTimeout(sseTimeout);
+                            eventSource.close();
+                            resolve(data.result.test_id);
+                        } else if (data.status === 'failed') {
+                            clearTimeout(sseTimeout);
+                            eventSource.close();
+                            reject(new Error(data.error || 'Test creation failed'));
+                        }
+                    } catch (parseErr) {
+                        console.error('SSE parse error:', parseErr);
+                    }
+                };
+
+                eventSource.onerror = async () => {
+                    eventSource.close();
+                    // Try polling status as fallback (SSE might disconnect on mobile)
+                    setProgressMessage('Reconnecting...');
+                    try {
+                        await new Promise(r => setTimeout(r, 2000));
+                        const statusRes = await authFetch(`${API_BASE}/api/tests/${job_id}/status`);
+                        if (statusRes.ok) {
+                            const statusData = await statusRes.json();
+                            if (statusData.status === 'done' && statusData.result) {
+                                clearTimeout(sseTimeout);
+                                resolve(statusData.result.test_id);
+                                return;
+                            } else if (statusData.status === 'failed') {
+                                clearTimeout(sseTimeout);
+                                reject(new Error(statusData.error || 'Test creation failed'));
+                                return;
+                            }
+                        }
+                        // If still in progress, try reconnecting SSE
+                        clearTimeout(sseTimeout);
+                        reject(new Error('Connection lost. Check My Tests for your test.'));
+                    } catch {
+                        clearTimeout(sseTimeout);
+                        reject(new Error('Connection lost. Please check My Tests.'));
+                    }
+                };
+            });
+
+            // Step 3: Launch attempt
+            setProgress(95);
+            setProgressMessage('Launching test...');
+
+            const launchResponse = await authFetch(`${API_BASE}/test/${testId}/launch`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+            });
+
+            if (!launchResponse.ok) {
+                throw new Error('Test created but failed to start session. Check My Tests.');
             }
-            console.log('Master Test created:', data);
 
-            // 2. Launch Attempt (Create Session)
-            try {
-                const launchResponse = await authFetch(`${API_BASE}/test/${data.test_id}/launch`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                });
-
-                if (!launchResponse.ok) {
-                    throw new Error('Test created but failed to start session.');
-                }
-
-                let launchData: { redirect_url: string };
-                try {
-                    launchData = await launchResponse.json();
-                } catch {
-                    throw new Error('Test created but launch response was invalid. Please try again from My Tests.');
-                }
-
-                // 3. Redirect to Attempt Interface
-                router.push(launchData.redirect_url);
-
-            } catch (launchErr) {
-                console.error('Launch failed:', launchErr);
-                setError('Test created but launch failed. Please try again from My Tests/Community');
-                clearInterval(progressInterval);
-            }
+            const launchData = await launchResponse.json();
+            setProgress(100);
+            setProgressMessage('Redirecting...');
+            router.push(launchData.redirect_url);
 
         } catch (err: unknown) {
             const errorMessage = err instanceof Error ? err.message : 'Failed to create test';
             setError(errorMessage);
-            clearInterval(progressInterval);
         } finally {
-            clearInterval(progressInterval);
-            setProgress(100);
             setTimeout(() => {
                 setLoading(false);
-            }, 500); // Small delay to let user see 100%
+                setProgressMessage('');
+            }, 500);
         }
     };
 
@@ -515,9 +544,9 @@ function CreateTestForm() {
                                         />
                                     )}
                                     {loading ? (
-                                        <span className="relative z-10 flex items-center gap-2">
+                                        <span className="relative z-10 flex items-center gap-2 text-sm">
                                             <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                                            Creating... {Math.round(progress)}%
+                                            {progressMessage || 'Creating...'} {Math.round(progress)}%
                                         </span>
                                     ) : (
                                         <>

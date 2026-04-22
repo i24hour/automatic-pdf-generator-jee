@@ -118,7 +118,13 @@ Note: Root-level Python files (for example main.py, auth.py, models.py at reposi
 
 ### 4.3 Test Portal Flow (NTA style)
 
-1. Create test via /api/tests/create (master test object).
+1. Create test via SSE flow:
+   - Frontend calls /api/tests/create-async → returns job_id instantly.
+   - Frontend opens EventSource on /api/tests/{job_id}/stream for real-time progress.
+   - Backend generates questions per-subject in background, streaming progress ("Generating Physics 1/3...").
+   - On completion, SSE emits done status with test_id.
+   - Fallback: /api/tests/{job_id}/status polling for reconnection on network drops.
+   - Legacy sync endpoint /api/tests/create still exists for backward compatibility.
 2. Launch attempt via /test/{test_id}/launch.
 3. Instruction page then /test/{test_id}/start.
 4. Runtime API calls:
@@ -271,7 +277,10 @@ Note: Root-level Python files (for example main.py, auth.py, models.py at reposi
 
 | Method | Endpoint | Purpose |
 |---|---|---|
-| POST | /api/tests/create | Create master test (private/classroom/community) |
+| POST | /api/tests/create | Sync create master test (legacy, may timeout on proxy) |
+| POST | /api/tests/create-async | Start async test creation job, returns job_id instantly |
+| GET | /api/tests/{job_id}/stream | SSE stream for test creation progress (token via query param) |
+| GET | /api/tests/{job_id}/status | Poll test creation job status (reconnection fallback) |
 | GET | /api/tests/my | List user-created tests |
 | PATCH | /api/tests/{test_id}/approve | Approval flow for moderation |
 
@@ -501,8 +510,8 @@ This section focuses on visible button-level behavior and linked backend actions
 | Community test detail | Attempt Now | Start community attempt | POST /api/community/tests/{id}/start |
 | Community test detail | Share | UI share intent | Local/share API |
 | Test create | Visibility selector | Private/community/classroom mode | Sent in /api/tests/create |
-| Test create | Subject enable/count/difficulty/topics | Build subject_inputs payload | Sent in /api/tests/create |
-| Test create | Create test | Create + launch attempt | /api/tests/create then /test/{id}/launch |
+| Test create | Subject enable/count/difficulty/topics | Build subject_inputs payload | Sent in /api/tests/create-async |
+| Test create | Create test | Start async SSE job + stream progress + auto-launch | /api/tests/create-async → SSE stream → /test/{id}/launch |
 | Test instructions | Proceed | Start attempt after acceptance | POST /test/{id}/start |
 | Test attempt | Subject tabs | Jump by section | /test/{id}/action JUMP |
 | Test attempt | Palette number | Jump to question | /test/{id}/action JUMP |
@@ -607,6 +616,7 @@ Rate-limit reset logic is monthly in active backend flow, with promo overlays an
 4. /institute/login page currently redirects to /generator.
 5. /community/create page currently redirects to /test/create.
 6. There are duplicate legacy root-level backend files beside backend/; active stack is in backend/.
+7. Test creation uses SSE-based async flow (/api/tests/create-async + /api/tests/{job_id}/stream) to avoid Vercel proxy timeout (502) on long LLM generation. The pattern mirrors the existing PDF generation SSE flow. Legacy sync /api/tests/create endpoint still exists but will timeout through Vercel proxy for >30s generations.
 7. auth_router.py contains duplicated field/endpoint declarations in some sections (works but should be cleaned for maintenance clarity).
 
 ---
