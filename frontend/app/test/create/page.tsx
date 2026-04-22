@@ -47,6 +47,13 @@ function CreateTestForm() {
     const [loading, setLoading] = useState(false);
     const [progress, setProgress] = useState(0);
     const [error, setError] = useState('');
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+    // Check auth on mount
+    useEffect(() => {
+        const token = localStorage.getItem('auth_token');
+        setIsAuthenticated(!!token);
+    }, []);
 
     const [examType, setExamType] = useState<ExamType>('JEE_MAINS');
     const [subjects, setSubjects] = useState<Record<string, SubjectConfig>>(INITIAL_SUBJECTS);
@@ -111,6 +118,14 @@ function CreateTestForm() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        // Check auth BEFORE starting any loading state
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+            router.push(`/login?redirect=${encodeURIComponent('/test/create')}`);
+            return;
+        }
+
         setLoading(true);
         setProgress(0);
         setError('');
@@ -122,12 +137,6 @@ function CreateTestForm() {
                 return prev >= 99 ? 99 : prev + increment;
             });
         }, 800);
-
-        const token = localStorage.getItem('auth_token');
-        if (!token) {
-            router.push('/signup');
-            return;
-        }
 
         // Prepare payload
         const subjectInputs: Record<string, any> = {};
@@ -467,8 +476,14 @@ function CreateTestForm() {
                                     <p className="text-lg md:text-2xl font-bold text-gray-900 dark:text-white">{duration}m</p>
                                 </div>
                             </div>
-                            {/* Create button */}
+                                            {/* Create button */}
                             <div className="w-full md:w-auto">
+                                {!isAuthenticated && (
+                                    <p className="text-amber-500 text-xs mb-2 text-center md:text-right flex items-center justify-end gap-1">
+                                        <AlertCircle className="w-3 h-3" />
+                                        Not authenticated — you'll be redirected to login
+                                    </p>
+                                )}
                                 {error && (
                                     <p className="text-red-500 text-sm mb-2 text-center md:text-right">{error}</p>
                                 )}
