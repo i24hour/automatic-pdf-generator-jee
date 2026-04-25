@@ -48,7 +48,15 @@ function CreateTestForm() {
 
     const [loading, setLoading] = useState(false);
     const [progress, setProgress] = useState(0);
+    const [progressMessage, setProgressMessage] = useState('');
     const [error, setError] = useState('');
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+    // Check auth on mount
+    useEffect(() => {
+        const token = localStorage.getItem('auth_token');
+        setIsAuthenticated(!!token);
+    }, []);
 
     const [examType, setExamType] = useState<ExamType>('JEE_MAINS');
     const [subjects, setSubjects] = useState<Record<string, SubjectConfig>>(INITIAL_SUBJECTS);
@@ -113,16 +121,18 @@ function CreateTestForm() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setLoading(true);
-        setProgress(0);
-        setError('');
 
+        // Check auth BEFORE starting any loading state
         const token = localStorage.getItem('auth_token');
         if (!token) {
-            setLoading(false);
-            router.push('/signup');
+            router.push(`/login?redirect=${encodeURIComponent('/test/create')}`);
             return;
         }
+
+        setLoading(true);
+        setProgress(0);
+        setProgressMessage('Starting...');
+        setError('');
 
         // Prepare payload
         const subjectInputs: Record<string, any> = {};
@@ -136,6 +146,7 @@ function CreateTestForm() {
                 return;
             }
 
+            // Check mandatory topics for Community Tests
             if (visibility === 'COMMUNITY' && !config.topics.trim()) {
                 setError(`${subj}: At least one topic is required for Community Tests`);
                 setLoading(false);
@@ -145,13 +156,13 @@ function CreateTestForm() {
             subjectInputs[subj] = {
                 count: config.count,
                 difficulty: config.difficulty,
-                topics: config.topics.split(',').map((t: string) => t.trim()).filter(Boolean)
+                topics: config.topics.split(',').map(t => t.trim()).filter(Boolean)
             };
         }
 
         try {
-            // 1. Start background job — returns immediately with job_id
-            const startResp = await authFetch(`${API_BASE}/api/tests/create/start`, {
+            // Step 1: Start async job (returns instantly with job_id)
+            const startResponse = await authFetch(`${API_BASE}/api/tests/create-async`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -159,107 +170,110 @@ function CreateTestForm() {
                     subject_inputs: subjectInputs,
                     duration_minutes: duration,
                     visibility: visibility,
-                    classroom_id: null,
-                }),
+                    classroom_id: null
+                })
             });
 
-            if (!startResp.ok) {
+            if (!startResponse.ok) {
                 let errMsg = 'Failed to start test creation';
                 try {
-                    const text = await startResp.text();
-                    const data = JSON.parse(text);
+                    const data = await startResponse.json();
                     if (data.detail) errMsg = typeof data.detail === 'string' ? data.detail : JSON.stringify(data.detail);
-                } catch { /* non-JSON body */ }
+                } catch { /* non-JSON response */ }
                 throw new Error(errMsg);
             }
 
-            let startData: { job_id: string };
-            try {
-                startData = await startResp.json();
-            } catch {
-                throw new Error('Invalid response from server. Please try again.');
-            }
+            const { job_id } = await startResponse.json();
+            setProgressMessage('Connecting to generation stream...');
 
-            const jobId = startData.job_id;
-            console.log('Test creation job started:', jobId);
-
-            // 2. Open SSE stream and wait for DONE / FAILED
+            // Step 2: Connect to SSE stream for real-time progress
             const testId = await new Promise<string>((resolve, reject) => {
-                const streamUrl = `${API_BASE}/api/tests/jobs/${jobId}/stream?token=${encodeURIComponent(token)}`;
-                const es = new EventSource(streamUrl);
+                const freshToken = localStorage.getItem('auth_token') || token;
+                const sseUrl = `${API_BASE}/api/tests/${job_id}/stream?token=${encodeURIComponent(freshToken || '')}`;
+                const eventSource = new EventSource(sseUrl);
 
-                es.onmessage = (ev) => {
+                const sseTimeout = setTimeout(() => {
+                    eventSource.close();
+                    reject(new Error('Connection timed out. Please try again.'));
+                }, 300000); // 5 min safety timeout
+
+                eventSource.onmessage = (event) => {
                     try {
-                        const update = JSON.parse(ev.data);
-                        const pct = typeof update.progress === 'number' ? update.progress : 0;
-                        setProgress(pct);
+                        const data = JSON.parse(event.data);
 
-                        if (update.status === 'done' && update.result?.test_id) {
-                            es.close();
-                            resolve(update.result.test_id);
-                        } else if (update.status === 'failed') {
-                            es.close();
-                            reject(new Error(update.error || 'Test creation failed on server.'));
+                        // Update progress from backend
+                        if (data.progress !== undefined) setProgress(data.progress);
+                        if (data.message) setProgressMessage(data.message);
+
+                        if (data.status === 'done' && data.result) {
+                            clearTimeout(sseTimeout);
+                            eventSource.close();
+                            resolve(data.result.test_id);
+                        } else if (data.status === 'failed') {
+                            clearTimeout(sseTimeout);
+                            eventSource.close();
+                            reject(new Error(data.error || 'Test creation failed'));
                         }
-                    } catch {
-                        // ignore parse errors on keepalive comments
+                    } catch (parseErr) {
+                        console.error('SSE parse error:', parseErr);
                     }
                 };
 
-                es.onerror = async () => {
-                    es.close();
-                    // SSE dropped — poll status as fallback
+                eventSource.onerror = async () => {
+                    eventSource.close();
+                    // Try polling status as fallback (SSE might disconnect on mobile)
+                    setProgressMessage('Reconnecting...');
                     try {
-                        const statusResp = await authFetch(`${API_BASE}/api/tests/jobs/${jobId}/status`);
-                        if (statusResp.ok) {
-                            const statusData = await statusResp.json();
-                            if (statusData.status === 'done' && statusData.result?.test_id) {
+                        await new Promise(r => setTimeout(r, 2000));
+                        const statusRes = await authFetch(`${API_BASE}/api/tests/${job_id}/status`);
+                        if (statusRes.ok) {
+                            const statusData = await statusRes.json();
+                            if (statusData.status === 'done' && statusData.result) {
+                                clearTimeout(sseTimeout);
                                 resolve(statusData.result.test_id);
                                 return;
                             } else if (statusData.status === 'failed') {
-                                reject(new Error(statusData.error || 'Test creation failed.'));
+                                clearTimeout(sseTimeout);
+                                reject(new Error(statusData.error || 'Test creation failed'));
                                 return;
                             }
                         }
-                    } catch { /* ignore */ }
-                    reject(new Error('Connection lost. Please check My Tests to see if your test was created.'));
+                        // If still in progress, try reconnecting SSE
+                        clearTimeout(sseTimeout);
+                        reject(new Error('Connection lost. Check My Tests for your test.'));
+                    } catch {
+                        clearTimeout(sseTimeout);
+                        reject(new Error('Connection lost. Please check My Tests.'));
+                    }
                 };
             });
 
-            setProgress(100);
-            console.log('Test created:', testId);
+            // Step 3: Launch attempt
+            setProgress(95);
+            setProgressMessage('Launching test...');
 
-            // 3. Launch attempt (create session)
-            try {
-                const launchResponse = await authFetch(`${API_BASE}/test/${testId}/launch`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                });
+            const launchResponse = await authFetch(`${API_BASE}/test/${testId}/launch`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+            });
 
-                if (!launchResponse.ok) {
-                    throw new Error('Test created but failed to start session.');
-                }
-
-                let launchData: { redirect_url: string };
-                try {
-                    launchData = await launchResponse.json();
-                } catch {
-                    throw new Error('Test created but launch response was invalid. Please try from My Tests.');
-                }
-
-                router.push(launchData.redirect_url);
-
-            } catch (launchErr) {
-                console.error('Launch failed:', launchErr);
-                setError('Test created but launch failed. Please try again from My Tests/Community');
+            if (!launchResponse.ok) {
+                throw new Error('Test created but failed to start session. Check My Tests.');
             }
+
+            const launchData = await launchResponse.json();
+            setProgress(100);
+            setProgressMessage('Redirecting...');
+            router.push(launchData.redirect_url);
 
         } catch (err: unknown) {
             const errorMessage = err instanceof Error ? err.message : 'Failed to create test';
             setError(errorMessage);
         } finally {
-            setProgress(100);
-            setTimeout(() => setLoading(false), 500);
+            setTimeout(() => {
+                setLoading(false);
+                setProgressMessage('');
+            }, 500);
         }
     };
 
@@ -507,8 +521,14 @@ function CreateTestForm() {
                                     <p className="text-lg md:text-2xl font-bold text-gray-900 dark:text-white">{duration}m</p>
                                 </div>
                             </div>
-                            {/* Create button */}
+                                            {/* Create button */}
                             <div className="w-full md:w-auto">
+                                {!isAuthenticated && (
+                                    <p className="text-amber-500 text-xs mb-2 text-center md:text-right flex items-center justify-end gap-1">
+                                        <AlertCircle className="w-3 h-3" />
+                                        Not authenticated — you'll be redirected to login
+                                    </p>
+                                )}
                                 {error && (
                                     <p className="text-red-500 text-sm mb-2 text-center md:text-right">{error}</p>
                                 )}
@@ -524,9 +544,9 @@ function CreateTestForm() {
                                         />
                                     )}
                                     {loading ? (
-                                        <span className="relative z-10 flex items-center gap-2">
+                                        <span className="relative z-10 flex items-center gap-2 text-sm">
                                             <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                                            Creating... {Math.round(progress)}%
+                                            {progressMessage || 'Creating...'} {Math.round(progress)}%
                                         </span>
                                     ) : (
                                         <>
