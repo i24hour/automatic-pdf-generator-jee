@@ -21,6 +21,9 @@ class JobStatus(str, Enum):
     VERIFYING = "verifying"
     COMPILING_PDF = "compiling_pdf"
     UPLOADING = "uploading"
+    # Test-creation specific statuses
+    GENERATING_QUESTIONS = "generating_questions"
+    SAVING_TEST = "saving_test"
     DONE = "done"
     FAILED = "failed"
 

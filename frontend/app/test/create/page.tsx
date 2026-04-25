@@ -117,17 +117,8 @@ function CreateTestForm() {
         setProgress(0);
         setError('');
 
-        const progressInterval = setInterval(() => {
-            setProgress(prev => {
-                // Simulate asymptotic progress up to 99%
-                const increment = Math.max(1, (99 - prev) * 0.1);
-                return prev >= 99 ? 99 : prev + increment;
-            });
-        }, 800);
-
         const token = localStorage.getItem('auth_token');
         if (!token) {
-            clearInterval(progressInterval);
             setLoading(false);
             router.push('/signup');
             return;
@@ -145,7 +136,6 @@ function CreateTestForm() {
                 return;
             }
 
-            // Check mandatory topics for Community Tests
             if (visibility === 'COMMUNITY' && !config.topics.trim()) {
                 setError(`${subj}: At least one topic is required for Community Tests`);
                 setLoading(false);
@@ -155,56 +145,95 @@ function CreateTestForm() {
             subjectInputs[subj] = {
                 count: config.count,
                 difficulty: config.difficulty,
-                topics: config.topics.split(',').map(t => t.trim()).filter(Boolean)
+                topics: config.topics.split(',').map((t: string) => t.trim()).filter(Boolean)
             };
         }
 
         try {
-            // UNIFIED ENDPOINT
-            const endpoint = `${API_BASE}/api/tests/create`;
-
-            // 1. Create Master Test (authFetch: refresh on 401 so mobile sessions don't fail as opaque "Failed to fetch")
-            const response = await authFetch(endpoint, {
+            // 1. Start background job — returns immediately with job_id
+            const startResp = await authFetch(`${API_BASE}/api/tests/create/start`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     exam_type: examType,
                     subject_inputs: subjectInputs,
                     duration_minutes: duration,
                     visibility: visibility,
-                    classroom_id: null // Placeholder for future
-                })
+                    classroom_id: null,
+                }),
             });
 
-            if (!response.ok) {
-                let errMsg = 'Failed to create test';
+            if (!startResp.ok) {
+                let errMsg = 'Failed to start test creation';
                 try {
-                    const text = await response.text();
+                    const text = await startResp.text();
                     const data = JSON.parse(text);
                     if (data.detail) errMsg = typeof data.detail === 'string' ? data.detail : JSON.stringify(data.detail);
-                } catch {
-                    // Non-JSON error body (e.g. proxy timeout HTML page) — keep generic message
-                }
+                } catch { /* non-JSON body */ }
                 throw new Error(errMsg);
             }
 
-            let data: { test_id: string };
+            let startData: { job_id: string };
             try {
-                data = await response.json();
+                startData = await startResp.json();
             } catch {
                 throw new Error('Invalid response from server. Please try again.');
             }
-            console.log('Master Test created:', data);
 
-            // 2. Launch Attempt (Create Session)
+            const jobId = startData.job_id;
+            console.log('Test creation job started:', jobId);
+
+            // 2. Open SSE stream and wait for DONE / FAILED
+            const testId = await new Promise<string>((resolve, reject) => {
+                const streamUrl = `${API_BASE}/api/tests/jobs/${jobId}/stream?token=${encodeURIComponent(token)}`;
+                const es = new EventSource(streamUrl);
+
+                es.onmessage = (ev) => {
+                    try {
+                        const update = JSON.parse(ev.data);
+                        const pct = typeof update.progress === 'number' ? update.progress : 0;
+                        setProgress(pct);
+
+                        if (update.status === 'done' && update.result?.test_id) {
+                            es.close();
+                            resolve(update.result.test_id);
+                        } else if (update.status === 'failed') {
+                            es.close();
+                            reject(new Error(update.error || 'Test creation failed on server.'));
+                        }
+                    } catch {
+                        // ignore parse errors on keepalive comments
+                    }
+                };
+
+                es.onerror = async () => {
+                    es.close();
+                    // SSE dropped — poll status as fallback
+                    try {
+                        const statusResp = await authFetch(`${API_BASE}/api/tests/jobs/${jobId}/status`);
+                        if (statusResp.ok) {
+                            const statusData = await statusResp.json();
+                            if (statusData.status === 'done' && statusData.result?.test_id) {
+                                resolve(statusData.result.test_id);
+                                return;
+                            } else if (statusData.status === 'failed') {
+                                reject(new Error(statusData.error || 'Test creation failed.'));
+                                return;
+                            }
+                        }
+                    } catch { /* ignore */ }
+                    reject(new Error('Connection lost. Please check My Tests to see if your test was created.'));
+                };
+            });
+
+            setProgress(100);
+            console.log('Test created:', testId);
+
+            // 3. Launch attempt (create session)
             try {
-                const launchResponse = await authFetch(`${API_BASE}/test/${data.test_id}/launch`, {
+                const launchResponse = await authFetch(`${API_BASE}/test/${testId}/launch`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                 });
 
                 if (!launchResponse.ok) {
@@ -215,28 +244,22 @@ function CreateTestForm() {
                 try {
                     launchData = await launchResponse.json();
                 } catch {
-                    throw new Error('Test created but launch response was invalid. Please try again from My Tests.');
+                    throw new Error('Test created but launch response was invalid. Please try from My Tests.');
                 }
 
-                // 3. Redirect to Attempt Interface
                 router.push(launchData.redirect_url);
 
             } catch (launchErr) {
                 console.error('Launch failed:', launchErr);
                 setError('Test created but launch failed. Please try again from My Tests/Community');
-                clearInterval(progressInterval);
             }
 
         } catch (err: unknown) {
             const errorMessage = err instanceof Error ? err.message : 'Failed to create test';
             setError(errorMessage);
-            clearInterval(progressInterval);
         } finally {
-            clearInterval(progressInterval);
             setProgress(100);
-            setTimeout(() => {
-                setLoading(false);
-            }, 500); // Small delay to let user see 100%
+            setTimeout(() => setLoading(false), 500);
         }
     };
 
