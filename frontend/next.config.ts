@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 
+// Keep in sync with `lib/backend-origin.ts` (for edge cases where the route handler is not used).
 const DEFAULT_BACKEND = "https://q3vgjfnybq.ap-south-1.awsapprunner.com";
 
 const UNSUPPORTED_API_HOSTS = new Set([
