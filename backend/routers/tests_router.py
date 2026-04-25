@@ -8,7 +8,7 @@ import json
 import asyncio
 import uuid
 
-from database import get_db
+from database import get_db, SessionLocal
 from models import User, Test, generate_uuid
 from auth import get_current_user_required, decode_token
 from services.llm_engine import llm_engine
@@ -307,7 +307,6 @@ async def create_test_async(
     request: CreateTestRequest,
     background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user_required),
-    db: Session = Depends(get_db)
 ):
     """
     Start test creation as a background job and return job_id instantly.
@@ -325,13 +324,13 @@ async def create_test_async(
     # Create job
     job = job_store.create_job(str(current_user.id))
 
-    # Start generation in background
+    # Pass only serializable data — db and User are request-scoped and will be
+    # closed before the background task runs. The task opens its own session.
     background_tasks.add_task(
         run_test_creation_job,
         job.job_id,
         request,
-        current_user,
-        db
+        str(current_user.id),
     )
 
     return TestSSEStartResponse(
@@ -343,11 +342,21 @@ async def create_test_async(
 async def run_test_creation_job(
     job_id: str,
     request: CreateTestRequest,
-    current_user: User,
-    db: Session
+    user_id: str,
 ):
-    """Background task that generates questions and creates the test, streaming progress via job_store."""
+    """Background task that generates questions and creates the test, streaming progress via job_store.
+    
+    Opens its own DB session — never reuse the request-scoped session, which is
+    closed by FastAPI as soon as the /create-async response is sent.
+    """
+    db = SessionLocal()
     try:
+        current_user = db.query(User).filter(User.id == user_id).first()
+        if not current_user:
+            job_store.update_job(job_id, status=JobStatus.FAILED, progress=0,
+                                 message="User not found", error="User not found")
+            return
+
         # Step 1: Analyzing
         job_store.update_job(job_id, status=JobStatus.ANALYZING, progress=5, message="Analyzing request...")
 
@@ -537,6 +546,8 @@ async def run_test_creation_job(
             message="Test creation failed",
             error=str(e)
         )
+    finally:
+        db.close()
 
 
 @router.get("/{job_id}/stream")
