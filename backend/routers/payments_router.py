@@ -208,17 +208,21 @@ async def cashfree_webhook(request: Request, db: Session = Depends(get_db)):
     received_sig = request.headers.get("x-webhook-signature")
     timestamp    = request.headers.get("x-webhook-timestamp")
 
-    if received_sig and timestamp and CF_SECRET:
-        message  = timestamp + raw_body.decode("utf-8")
-        computed = hmac.new(
-            CF_SECRET.encode("utf-8"),
-            message.encode("utf-8"),
-            hashlib.sha256,
-        ).digest()
-        computed_b64 = base64.b64encode(computed).decode("utf-8")
+    if not received_sig or not timestamp or not CF_SECRET:
+        raise HTTPException(
+            status_code=400, detail="Missing webhook signature or timestamp"
+        )
 
-        if not hmac.compare_digest(computed_b64, received_sig):
-            raise HTTPException(status_code=400, detail="Invalid webhook signature")
+    message  = timestamp + raw_body.decode("utf-8")
+    computed = hmac.new(
+        CF_SECRET.encode("utf-8"),
+        message.encode("utf-8"),
+        hashlib.sha256,
+    ).digest()
+    computed_b64 = base64.b64encode(computed).decode("utf-8")
+
+    if not hmac.compare_digest(computed_b64, received_sig):
+        raise HTTPException(status_code=400, detail="Invalid webhook signature")
 
     # ---- Parse event ----
     try:

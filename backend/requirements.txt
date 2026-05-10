@@ -36,3 +36,6 @@ cairosvg==2.7.1
 manim>=0.18.0
 edge-tts>=6.1.9
 python-dotenv==1.0.0
+
+# PDF Text + Image Extraction for PDF-to-Test
+pymupdf>=1.23.0

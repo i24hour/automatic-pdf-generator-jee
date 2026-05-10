@@ -349,14 +349,19 @@ async def run_test_creation_job(
     Opens its own DB session — never reuse the request-scoped session, which is
     closed by FastAPI as soon as the /create-async response is sent.
     """
+    from database import SessionLocal
+    from models import User
+    
     db = SessionLocal()
     try:
         current_user = db.query(User).filter(User.id == user_id).first()
         if not current_user:
-            job_store.update_job(job_id, status=JobStatus.FAILED, progress=0,
-                                 message="User not found", error="User not found")
+            job_store.update_job(
+                job_id, status=JobStatus.FAILED, progress=0,
+                message="User not found", error="User not found"
+            )
             return
-
+        
         # Step 1: Analyzing
         job_store.update_job(job_id, status=JobStatus.ANALYZING, progress=5, message="Analyzing request...")
 

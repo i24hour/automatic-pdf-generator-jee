@@ -526,6 +526,7 @@ class QuestionResponse(Base):
     marks_correct = Column(Integer, default=4)
     marks_wrong = Column(Integer, default=-1)  # Negative marking
     diagram_json = Column(Text, nullable=True)  # JSON: { "diagram_type": "ray_optics", "elements": [...] }
+    diagram_image_url = Column(String, nullable=True)  # S3 URL for extracted diagram images (PDF-to-Test)
     
     # User Response - NTA 5 States
     # NOT_VISITED, NOT_ANSWERED, ANSWERED, MARKED_REVIEW, ANSWERED_MARKED
@@ -668,3 +669,65 @@ class UserSubscription(Base):
 
     def __repr__(self):
         return f"<UserSubscription {self.plan} expires={self.expires_at}>"
+
+
+# ============================================================
+# PDF to Test Feature Models
+# ============================================================
+
+class PDFExtractJob(Base):
+    """Tracks a PDF upload → parsed questions → test creation workflow."""
+    __tablename__ = "pdf_extract_jobs"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    # Uploaded PDF
+    pdf_url = Column(String, nullable=False)
+    pdf_filename = Column(String, nullable=False)
+
+    # Workflow status
+    status = Column(String, default="parsing")  # parsing, review, created, failed
+
+    # Parsed data
+    title = Column(String, nullable=True)
+    duration_minutes = Column(Integer, default=180)
+    exam_type = Column(String, default="JEE_MAINS")
+    extracted_questions_json = Column(Text, nullable=True)  # JSON array of parsed questions + images
+    answer_key_json = Column(Text, nullable=True)           # JSON map {question_number: answer}
+
+    # Linked test once created
+    test_id = Column(String, ForeignKey("tests.id"), nullable=True)
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now(), nullable=True)
+
+    user = relationship("User")
+    test = relationship("Test")
+
+    def __repr__(self):
+        return f"<PDFExtractJob {self.id} status={self.status}>"
+
+
+class ExtractedDiagramImage(Base):
+    """Stores extracted images from a PDF with linkage to the extract job."""
+    __tablename__ = "extracted_diagram_images"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    job_id = Column(String, ForeignKey("pdf_extract_jobs.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    # S3 URL of the extracted PNG
+    image_url = Column(String, nullable=False)
+
+    # Page + bbox for traceability
+    page_number = Column(Integer, nullable=False)
+    bbox_json = Column(Text, nullable=True)  # {x0, y0, x1, y1}
+
+    # Association (filled later by proximity logic)
+    associated_question_number = Column(Integer, nullable=True)
+    association_confidence = Column(String, default="medium")  # high, medium, low
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    def __repr__(self):
+        return f"<ExtractedDiagramImage job={self.job_id} page={self.page_number}>"

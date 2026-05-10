@@ -704,6 +704,8 @@ Example: {{"subject":"Chemistry","confidence":"high"}}
                 return match.group(0)
             elif char == 'u' and len(match.group(0)) >= 6:  # \uXXXX
                 return match.group(0)
+            elif char in ['n', 't', 'r', 'b', 'f']:
+                return match.group(0)
             else:
                 # Double the backslash for anything else
                 return '\\\\' + char

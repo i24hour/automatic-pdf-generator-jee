@@ -57,6 +57,7 @@ class QuestionData(BaseModel):
     question_text: str
     diagram_json: Optional[str] = None   # Legacy TikZ format
     diagram_svg: Optional[str] = None    # New: inline SVG string
+    diagram_image_url: Optional[str] = None  # NEW: extracted image from PDF
     options: Optional[dict] = None
     status: str
     user_answer: Optional[str] = None
@@ -255,7 +256,11 @@ def launch_test_attempt(
                         "type": q_data.get("diagram_type"),
                         "params": q_data.get("diagram_params")
                     }) if q_data.get("diagram_type") else None
-                )
+                ),
+                # NEW: support extracted diagram images from PDF-to-Test
+                diagram_image_url=q_data.get("diagram_image_url") or (
+                    q_data.get("image_urls", [None])[0] if q_data.get("image_urls") else None
+                ),
             )
             db.add(response)
             
@@ -490,6 +495,7 @@ async def get_question(
         options=options,
         diagram_json=diagram_json,
         diagram_svg=diagram_svg,
+        diagram_image_url=response.diagram_image_url,
         status=get_question_status(response),
         user_answer=response.user_answer,
         is_marked_for_review=response.is_marked_for_review,
@@ -600,6 +606,15 @@ async def handle_action(
     next_question_data = None
     if next_q_response:
         options = json.loads(next_q_response.options_json) if next_q_response.options_json else None
+        # Detect diagram format
+        next_diagram_svg = None
+        next_diagram_json = None
+        raw_next_diag = next_q_response.diagram_json
+        if raw_next_diag:
+            if raw_next_diag.strip().startswith("<svg"):
+                next_diagram_svg = raw_next_diag
+            else:
+                next_diagram_json = raw_next_diag
         next_question_data = QuestionData(
             question_index=next_q_response.question_index,
             total_questions=test.total_questions,
@@ -609,6 +624,9 @@ async def handle_action(
             question_type=next_q_response.question_type,
             question_text=next_q_response.question_text,
             options=options,
+            diagram_json=next_diagram_json,
+            diagram_svg=next_diagram_svg,
+            diagram_image_url=next_q_response.diagram_image_url,
             status=get_question_status(next_q_response),
             user_answer=next_q_response.user_answer,
             is_marked_for_review=next_q_response.is_marked_for_review,

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, LayoutGrid, Trophy, Settings, BookOpen, LifeBuoy, Zap } from "lucide-react";
+import { Home, LayoutGrid, Trophy, Settings, BookOpen, LifeBuoy, Zap, FileText } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 
 export default function MobileNav() {
@@ -59,6 +59,15 @@ export default function MobileNav() {
                 >
                     <BookOpen className="w-6 h-6" />
                     <span className="text-[10px] font-medium">Test Portal</span>
+                </Link>
+
+                <Link
+                    href="/pdf-to-test"
+                    className={`flex flex-col items-center gap-1 p-2 ${isActive("/pdf-to-test") ? "text-indigo-600 dark:text-indigo-400" : "text-gray-500 dark:text-gray-400"
+                        }`}
+                >
+                    <FileText className="w-6 h-6" />
+                    <span className="text-[10px] font-medium">PDF2Test</span>
                 </Link>
 
                 <Link

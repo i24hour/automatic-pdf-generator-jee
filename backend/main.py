@@ -36,6 +36,7 @@ from routers import (
     tests_router, # NEW
     payments_router,
 )
+from routers.pdf_to_test_router import router as pdf_to_test_router
 from services.email_service import email_service
 from services.storage import storage
 from services.job_store import job_store, JobStatus
@@ -144,6 +145,7 @@ app.include_router(support_router.router)
 app.include_router(tests_router.router)
 app.include_router(community_router.router)
 app.include_router(payments_router.router)
+app.include_router(pdf_to_test_router)
 from routers.diagram_router import router as diagram_router
 app.include_router(diagram_router)
 
@@ -604,13 +606,14 @@ async def generate_test(
                     mcq_count = request.total_questions - 1
         
         # Generate questions using LLM
-        llm_result = llm_engine.generate_questions(
+        llm_result = await llm_engine.generate_questions_with_verification_async(
             subject=request.subject,
             topic=request.topic,
             mcq_count=mcq_count,
             numerical_count=numerical_count,
             level=request.level,
             difficulty=request.difficulty,
+            include_solutions=request.include_solutions,
             # Pass extended params for GATE/JEE Advanced/Boards
             gate_paper=request.gate_paper,
             num_msq=request.num_msq,
@@ -945,7 +948,17 @@ async def download_pdf(filename: str, db: Session = Depends(get_db)):
             return RedirectResponse(url=signed_url or storage.get_public_url(object_key))
     
     output_dir = os.path.join(os.path.dirname(__file__), "output")
-    pdf_path = os.path.join(output_dir, filename)
+    # Prevent path traversal by validating the resolved path stays inside output_dir
+    safe_filename = os.path.basename(filename)
+    pdf_path = os.path.join(output_dir, safe_filename)
+    real_output_dir = os.path.realpath(output_dir)
+    real_pdf_path = os.path.realpath(pdf_path)
+    # Ensure path starts with output_dir (also handles exact match edge case)
+    if not (
+        real_pdf_path == real_output_dir
+        or real_pdf_path.startswith(real_output_dir + os.sep)
+    ):
+        raise HTTPException(status_code=400, detail="Invalid filename")
     
     if not os.path.exists(pdf_path):
         raise HTTPException(status_code=404, detail="PDF file not found")
@@ -1039,7 +1052,8 @@ async def generate_test_verified(
             )
         
         # Generate filename - use actual generated count
-        actual_total = len(questions) if questions else (mcq_count + numerical_count)
+        actual_questions = llm_result.get("questions", [])
+        actual_total = len(actual_questions) if actual_questions else (mcq_count + numerical_count)
         safe_topic = request.topic.replace("&", "and").replace("/", "-").replace("\\", "-")
         safe_topic = safe_topic.replace(" ", "_").strip()
         safe_level = request.level.replace(" ", "_")
@@ -1331,8 +1345,7 @@ async def start_sse_generation(
         run_generation_job,
         job.job_id,
         request,
-        current_user,
-        db
+        str(current_user.id)
     )
     
     return SSEStartResponse(
@@ -1468,13 +1481,26 @@ async def _top_up_generation_if_needed(
 async def run_generation_job(
     job_id: str,
     request: GenerateRequest,
-    user: User,
-    db: Session
+    user_id: str
 ):
     """Background task to run PDF generation with progress updates."""
     import asyncio
+    from database import SessionLocal
+    from models import User
     
+    db = SessionLocal()
     try:
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            job_store.update_job(
+                job_id,
+                JobStatus.FAILED,
+                0,
+                "User not found",
+                error="User not found"
+            )
+            return
+        
         # Update: Analyzing
         job_store.update_job(job_id, JobStatus.ANALYZING, 5, "Analyzing topic and difficulty...")
         
@@ -1753,6 +1779,8 @@ async def run_generation_job(
             "An error occurred",
             error=str(e)
         )
+    finally:
+        db.close()
 
 
 @app.get("/api/generate-sse/{job_id}/stream")

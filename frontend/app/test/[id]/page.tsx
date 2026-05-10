@@ -31,6 +31,7 @@ interface QuestionData {
     time_remaining_seconds: number;
     diagram_json?: string;
     diagram_svg?: string;
+    diagram_image_url?: string;  // NEW: extracted image from PDF-to-Test
 }
 
 interface TestState {
@@ -408,6 +409,18 @@ export default function TestInterfacePage() {
                             {(question.diagram_svg || question.diagram_json) && (
                                 <div className="mb-6 px-2">
                                     <DiagramRenderer svgContent={question.diagram_svg} diagramJson={question.diagram_json} />
+                                </div>
+                            )}
+
+                            {/* Extracted Image from PDF (PDF-to-Test feature) */}
+                            {question.diagram_image_url && (
+                                <div className="mb-6 px-2">
+                                    <img
+                                        src={question.diagram_image_url}
+                                        alt="Question diagram"
+                                        className="max-w-full max-h-[400px] object-contain border border-gray-200 rounded-lg"
+                                        loading="lazy"
+                                    />
                                 </div>
                             )}
 

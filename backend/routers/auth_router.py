@@ -462,12 +462,6 @@ async def reset_password(request: ResetPasswordRequest, db: Session = Depends(ge
     return MessageResponse(message="Password reset successfully! Please login with your new password.")
 
 
-@router.get("/me", response_model=UserResponse)
-async def get_me(current_user: User = Depends(get_current_user_required)):
-    """Get current user info."""
-    return UserResponse.model_validate(current_user)
-
-
 @router.put("/profile", response_model=UserResponse)
 async def update_profile(
     user_update: UserUpdate,
