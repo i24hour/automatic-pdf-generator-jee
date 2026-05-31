@@ -354,10 +354,10 @@ async def test_tts():
     )
     
     if result["success"]:
-        print(f"✓ Audio generated: {result['audio_path']}")
+        print(f"[SUCCESS] Audio generated: {result['audio_path']}")
         print(f"  Duration: {result['duration_seconds']:.2f}s")
     else:
-        print(f"✗ Failed: {result['error']}")
+        print(f"[ERROR] Failed: {result['error']}")
 
 
 if __name__ == "__main__":

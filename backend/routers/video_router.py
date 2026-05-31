@@ -84,7 +84,7 @@ async def process_video_generation(job_id: str, request: VideoGenerateRequest, u
         )
     except asyncio.TimeoutError:
         _update_job(job_id, status="failed", error="Video generation timed out after 10 minutes.", current_step="Failed: Timeout exceeded")
-        print(f"✗ Video job {job_id} timed out after 10 minutes")
+        print(f"[ERROR] Video job {job_id} timed out after 10 minutes")
 
 async def _run_video_pipeline(job_id: str, request: VideoGenerateRequest, user_id: str):
     """Actual pipeline logic"""
@@ -123,7 +123,7 @@ async def _run_video_pipeline(job_id: str, request: VideoGenerateRequest, user_i
         else:
             # Validation failed even after auto-fix — log and proceed anyway
             # (the render step will give the real error if code is truly broken)
-            print(f"⚠ Code validation warning (proceeding to render): {validation.get('error')}")
+            print(f"[WARNING] Code validation warning (proceeding to render): {validation.get('error')}")
 
         # ── Step 3: Render Manim video ────────────────────────────────────────
         _update_job(job_id, status="rendering", progress=30,
@@ -229,14 +229,14 @@ async def _run_video_pipeline(job_id: str, request: VideoGenerateRequest, user_i
                     title=code_result.get("title", request.prompt[:50]),
                     duration_seconds=code_result.get("estimated_duration", 60))
 
-        print(f"✓ Video job {job_id} completed: {video_url}")
+        print(f"[SUCCESS] Video job {job_id} completed: {video_url}")
 
     except Exception as e:
         _update_job(job_id,
                     status="failed",
                     error=str(e),
                     current_step=f"Failed: {str(e)[:200]}")
-        print(f"✗ Video job {job_id} failed: {e}")
+        print(f"[ERROR] Video job {job_id} failed: {e}")
 
     finally:
         # Clean up temp dir

@@ -31,9 +31,9 @@ class S3Storage:
             )
             # Quick sanity check
             self.client.head_bucket(Bucket=self.bucket_name)
-            print(f"✓ S3 Storage initialized — bucket: {self.bucket_name} ({self.region})")
+            print(f"[SUCCESS] S3 Storage initialized — bucket: {self.bucket_name} ({self.region})")
         except Exception as e:
-            print(f"⚠ S3 Storage initialization failed (might be local): {e}")
+            print(f"[WARNING] S3 Storage initialization failed (might be local): {e}")
             self.client = None
 
     # ------------------------------------------------------------------ #
@@ -63,10 +63,10 @@ class S3Storage:
                 ExtraArgs={"ContentType": content_type},
             )
             url = self.get_public_url(object_key)
-            print(f"✓ Uploaded file to S3: {url}")
+            print(f"[SUCCESS] Uploaded file to S3: {url}")
             return url
         except ClientError as e:
-            print(f"✗ S3 file upload failed: {e}")
+            print(f"[ERROR] S3 file upload failed: {e}")
             return None
 
     # ------------------------------------------------------------------ #
@@ -76,7 +76,7 @@ class S3Storage:
     def upload_generic_file(self, file_obj, filename: str, content_type: str, folder: str = "uploads") -> Optional[str]:
         """Upload any file object to S3."""
         if not self.client:
-            print("✗ S3 client not initialized")
+            print("[ERROR] S3 client not initialized")
             return None
 
         try:
@@ -92,10 +92,10 @@ class S3Storage:
                 ExtraArgs={"ContentType": content_type},
             )
             url = f"https://{self.bucket_name}.s3.{self.region}.amazonaws.com/{object_key}"
-            print(f"✓ Uploaded file to S3: {url}")
+            print(f"[SUCCESS] Uploaded file to S3: {url}")
             return url
         except ClientError as e:
-            print(f"✗ S3 upload_generic_file failed: {e}")
+            print(f"[ERROR] S3 upload_generic_file failed: {e}")
             return None
 
     def upload_pdf(self, file_path: str, user_id_or_object_key: str, filename: Optional[str] = None) -> Optional[str]:
@@ -136,7 +136,7 @@ class S3Storage:
             )
             return url
         except ClientError as e:
-            print(f"✗ S3 generate_presigned_url failed: {e}")
+            print(f"[ERROR] S3 generate_presigned_url failed: {e}")
             return None
 
     def get_public_url(self, object_key: str) -> str:
@@ -189,10 +189,10 @@ class S3Storage:
             return False
         try:
             self.client.delete_object(Bucket=self.bucket_name, Key=object_key)
-            print(f"✓ Deleted S3 object: {object_key}")
+            print(f"[SUCCESS] Deleted S3 object: {object_key}")
             return True
         except ClientError as e:
-            print(f"✗ S3 delete_file failed: {e}")
+            print(f"[ERROR] S3 delete_file failed: {e}")
             return False
 
     def list_user_files(self, user_id: str) -> list:
@@ -206,7 +206,7 @@ class S3Storage:
             )
             return response.get("Contents", [])
         except ClientError as e:
-            print(f"✗ S3 list_user_files failed: {e}")
+            print(f"[ERROR] S3 list_user_files failed: {e}")
             return []
 
 

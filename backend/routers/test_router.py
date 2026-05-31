@@ -377,11 +377,11 @@ async def get_test_state(
 
                 db.commit()
 
-            print(f"⏰ Auto-submitted timed-out test {test_id} (score: {total_score}/{max_score})")
+            print(f"[INFO] Auto-submitted timed-out test {test_id} (score: {total_score}/{max_score})")
 
         except Exception as e:
             db.rollback()
-            print(f"⚠ Auto-submit failed for test {test_id}: {e}")
+            print(f"[WARNING] Auto-submit failed for test {test_id}: {e}")
     # ──────────────────────────────────────────────────────────────────────────
 
     return TestStateResponse(

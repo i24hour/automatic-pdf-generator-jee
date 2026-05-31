@@ -187,10 +187,10 @@ Narration {language_instruction}. Write the storyboard now:"""
                 max_tokens=2048
             )
             enhanced = response.choices[0].message.content.strip()
-            print(f"📝 Enhanced prompt ({len(enhanced)} chars):\n{enhanced[:500]}...")
+            print(f"[INFO] Enhanced prompt ({len(enhanced)} chars):\n{enhanced[:500]}...")
             return enhanced
         except Exception as e:
-            print(f"⚠ Prompt enhancement failed: {e} — using original topic")
+            print(f"[WARNING] Prompt enhancement failed: {e} — using original topic")
             return topic  # Fallback to original if enhancement fails
 
     async def generate_animation(
@@ -213,8 +213,7 @@ Narration {language_instruction}. Write the storyboard now:"""
             Dict with scene_code, narration_script, etc.
         """
         
-        # Step 1: Enhance the user's simple prompt into a detailed storyboard
-        print(f"📝 Enhancing prompt for topic: {topic[:80]}")
+        print(f"[INFO] Enhancing prompt for topic: {topic[:80]}")
         enhanced_topic = await self.enhance_prompt(topic, language)
 
         language_instruction = "in English" if language == "en" else "in Hindi (Devanagari script)"
@@ -288,19 +287,19 @@ Generate the full JSON now."""
                 play_count = scene_code.count("self.play")
                 wait_count = scene_code.count("self.wait")
                 line_count = len([l for l in scene_code.split("\n") if l.strip()])
-                print(f"🎬 Attempt {attempt+1}: scene_code has {line_count} lines, {play_count} self.play(), {wait_count} self.wait()")
+                print(f"[INFO] Attempt {attempt+1}: scene_code has {line_count} lines, {play_count} self.play(), {wait_count} self.wait()")
 
                 # Check for banned patterns — retry if found
                 banned_found = self.check_banned_patterns(scene_code)
                 if banned_found:
                     last_error = f"Used banned patterns: {', '.join(banned_found)}. These do not exist in Manim."
-                    print(f"⚠ Attempt {attempt+1}: banned patterns found: {banned_found} — retrying")
+                    print(f"[WARNING] Attempt {attempt+1}: banned patterns found: {banned_found} — retrying")
                     continue
 
                 # Reject scenes that are too short (generates 2-sec videos)
                 if play_count < 5 or wait_count < 3:
                     last_error = f"Scene too short: only {play_count} self.play() and {wait_count} self.wait(). Need at least 5 self.play() and 3 self.wait() for a proper educational video. Generate a FULL multi-scene explanation with title, multiple steps, and conclusion."
-                    print(f"⚠ Attempt {attempt+1}: scene too short ({play_count} plays, {wait_count} waits) — retrying")
+                    print(f"[WARNING] Attempt {attempt+1}: scene too short ({play_count} plays, {wait_count} waits) — retrying")
                     continue
 
                 # Check if LLM returned full class definition instead of just method body
@@ -309,7 +308,7 @@ Generate the full JSON now."""
                 else:
                     full_code = self.CODE_TEMPLATE.format(scene_code=scene_code)
 
-                print(f"✅ Attempt {attempt+1}: scene accepted — {line_count} lines, {play_count} plays, {wait_count} waits")
+                print(f"[SUCCESS] Attempt {attempt+1}: scene accepted — {line_count} lines, {play_count} plays, {wait_count} waits")
 
                 return {
                     "success": True,
@@ -378,7 +377,7 @@ Generate the full JSON now."""
         try:
             fixed = self.auto_fix_code(code)
             compile(fixed, "<string>", "exec")
-            print("✓ Code auto-fixed successfully")
+            print("[SUCCESS] Code auto-fixed successfully")
             return {"success": True, "valid": True, "code": fixed}  # return fixed code
         except SyntaxError as e:
             return {
@@ -520,14 +519,14 @@ async def test_generate():
     )
     
     if result["success"]:
-        print("✓ Code generated successfully!")
+        print("[SUCCESS] Code generated successfully!")
         print(f"  Title: {result['title']}")
         print(f"  Duration: {result['estimated_duration']}s")
         print(f"  Narration segments: {len(result['narration_script'])}")
         print("\n--- Manim Code ---")
         print(result["manim_code"][:500] + "...")
     else:
-        print(f"✗ Failed: {result['error']}")
+        print(f"[ERROR] Failed: {result['error']}")
 
 
 if __name__ == "__main__":

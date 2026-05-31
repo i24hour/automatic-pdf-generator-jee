@@ -197,13 +197,13 @@ class LLMEngine:
                     **kwargs
                 )
                 if result.get("success") and result.get("questions"):
-                    print(f"✓ Success with model: {model}")
+                    print(f"[SUCCESS] Success with model: {model}")
                     return result
                 else:
-                    print(f"✗ Model {model} returned no questions, trying next...")
+                    print(f"[ERROR] Model {model} returned no questions, trying next...")
                     last_error = result.get("error", "No questions generated")
             except Exception as e:
-                print(f"✗ Model {model} failed: {str(e)}")
+                print(f"[ERROR] Model {model} failed: {str(e)}")
                 last_error = str(e)
                 continue
         
@@ -246,13 +246,13 @@ class LLMEngine:
                     **kwargs
                 )
                 if result.get("success") and result.get("questions"):
-                    print(f"✓ Success with model (async): {model}")
+                    print(f"[SUCCESS] Success with model (async): {model}")
                     return result
                 else:
-                    print(f"✗ Model {model} returned no questions, trying next...")
+                    print(f"[ERROR] Model {model} returned no questions, trying next...")
                     last_error = result.get("error", "No questions generated")
             except Exception as e:
-                print(f"✗ Model {model} failed (async): {str(e)}")
+                print(f"[ERROR] Model {model} failed (async): {str(e)}")
                 last_error = str(e)
                 continue
         
