@@ -414,6 +414,27 @@ async def get_my_posts(
     ]
 
 
+@router.get("/debug-stats")
+async def debug_stats(db: Session = Depends(get_db)):
+    """Debug: raw counts from shared_pdfs table without any URL filtering."""
+    from sqlalchemy import text
+    total = db.query(SharedPDF).count()
+    by_visibility = db.execute(
+        text("SELECT visibility, count(*) FROM shared_pdfs GROUP BY visibility")
+    ).fetchall()
+    sample = db.execute(
+        text("SELECT id, visibility, pdf_url, subject FROM shared_pdfs LIMIT 5")
+    ).fetchall()
+    return {
+        "total": total,
+        "by_visibility": {row[0]: row[1] for row in by_visibility},
+        "sample_urls": [
+            {"id": r[0], "visibility": r[1], "pdf_url": r[2][:80] if r[2] else None, "subject": r[3]}
+            for r in sample
+        ]
+    }
+
+
 @router.get("/check-existing")
 async def check_existing_posts(
     subject: str,
