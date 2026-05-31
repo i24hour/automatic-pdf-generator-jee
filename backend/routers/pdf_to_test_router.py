@@ -57,6 +57,8 @@ class ReviewDataResponse(BaseModel):
     exam_type: str
     questions: List[ReviewQuestion]
     subjects: List[str]
+    pages_total: Optional[int] = None
+    pages_done: Optional[int] = None
 
 
 class UpdateReviewRequest(BaseModel):
@@ -233,19 +235,37 @@ def _run_pdf_parse_job(
     title: str,
     duration_minutes: int,
 ):
-    """Background task: parse PDF and store extracted data."""
+    """Background task: parse PDF with Gemini Vision and store extracted data."""
     from database import SessionLocal
 
     db = SessionLocal()
+    job = None
     try:
         job = db.query(PDFExtractJob).filter(PDFExtractJob.id == job_id).first()
         if not job:
             return
 
-        # Parse PDF
-        result = pdf_parser.parse(tmp_pdf_path, title=title, duration_minutes=duration_minutes)
+        # Progress callback — updates pages_done in DB after each page
+        def on_page_done(done: int, total: int):
+            try:
+                j = db.query(PDFExtractJob).filter(PDFExtractJob.id == job_id).first()
+                if j:
+                    j.pages_total = total
+                    j.pages_done = done
+                    db.commit()
+            except Exception as pe:
+                print(f"[PDFToTest] Progress update error: {pe}")
+                db.rollback()
 
-        # Save images to S3 and get URL mappings
+        # Parse PDF with Gemini Vision
+        result = pdf_parser.parse(
+            tmp_pdf_path,
+            title=title,
+            duration_minutes=duration_minutes,
+            progress_callback=on_page_done,
+        )
+
+        # Save extracted embedded images to S3
         qnum_to_urls = _save_extracted_images(job_id, result, user_id, db)
 
         # Apply image URLs to questions
@@ -259,10 +279,12 @@ def _run_pdf_parse_job(
 
         job.extracted_questions_json = json.dumps(questions_json)
         job.answer_key_json = json.dumps(answer_key_json)
+        job.pages_total = result.pages_total
+        job.pages_done = result.pages_total  # fully done
         job.status = "review"
         db.commit()
 
-        print(f"[PDFToTest] Job {job_id} parsed: {len(result.questions)} questions, {len(result.images)} images")
+        print(f"[PDFToTest] Job {job_id} complete: {len(result.questions)} questions, {len(result.images)} images")
 
     except Exception as e:
         import traceback
@@ -271,7 +293,6 @@ def _run_pdf_parse_job(
         print(err_str)
         if job:
             job.status = "failed"
-            # Store first 500 chars of error for debugging
             try:
                 job.extracted_questions_json = json.dumps({"error": str(e), "traceback": err_str[:500]})
             except Exception:
@@ -279,7 +300,6 @@ def _run_pdf_parse_job(
             db.commit()
     finally:
         db.close()
-        # Cleanup temp PDF
         if os.path.exists(tmp_pdf_path):
             os.remove(tmp_pdf_path)
 
@@ -308,6 +328,8 @@ async def get_review_data(
             exam_type=job.exam_type,
             questions=[],
             subjects=[],
+            pages_total=job.pages_total,
+            pages_done=job.pages_done or 0,
         )
 
     if job.status == "failed":

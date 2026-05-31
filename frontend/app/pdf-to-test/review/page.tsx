@@ -27,6 +27,8 @@ interface ReviewData {
     exam_type: string;
     questions: ReviewQuestion[];
     subjects: string[];
+    pages_total?: number;
+    pages_done?: number;
 }
 
 function ReviewContent() {
@@ -59,22 +61,24 @@ function ReviewContent() {
                 }
                 const d = await res.json();
                 setData(d);
+                if (d.status !== 'parsing') {
+                    setLoading(false);
+                }
             } catch (err: any) {
                 setError(err.message);
-            } finally {
                 setLoading(false);
             }
         };
 
         fetchData();
-        // Poll if still parsing
-        const interval = setInterval(() => {
-            if (data?.status === 'parsing') {
-                fetchData();
+        // Poll every 2s while still parsing
+        const interval = setInterval(async () => {
+            if (data?.status === 'parsing' || loading) {
+                await fetchData();
             }
-        }, 3000);
+        }, 2000);
         return () => clearInterval(interval);
-    }, [jobId, authFetch, data?.status]);
+    }, [jobId, authFetch, data?.status, loading]);
 
     const updateQuestion = (index: number, updates: Partial<ReviewQuestion>) => {
         if (!data) return;
@@ -144,9 +148,11 @@ function ReviewContent() {
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
-                <div className="flex flex-col items-center gap-3">
-                    <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-                    <p className="text-gray-600 dark:text-gray-400">Loading parsed questions...</p>
+                <div className="flex flex-col items-center gap-4 max-w-sm w-full px-6">
+                    <div className="relative">
+                        <Loader2 className="w-10 h-10 animate-spin text-blue-600" />
+                    </div>
+                    <p className="text-gray-600 dark:text-gray-400 text-sm font-medium">Connecting to AI...</p>
                 </div>
             </div>
         );
@@ -158,11 +164,12 @@ function ReviewContent() {
                 <div className="max-w-md w-full bg-white dark:bg-gray-900 rounded-xl p-6 border border-red-200 dark:border-red-800">
                     <div className="flex items-center gap-2 text-red-600 dark:text-red-400 mb-3">
                         <AlertCircle className="w-5 h-5" />
-                        <h2 className="font-semibold">PDF Parsing Failed</h2>
+                        <h2 className="font-semibold">PDF Processing Failed</h2>
                     </div>
                     <p className="text-gray-700 dark:text-gray-300 text-sm mb-2">{error}</p>
                     <p className="text-xs text-gray-500 dark:text-gray-500 mb-4">
-                        This can happen if the PDF is scanned/image-based, password-protected, or uses an unsupported format. Try uploading a text-based JEE Mains PDF.
+                        Make sure the PDF is not password-protected and contains readable exam content.
+                        Both scanned and digital PDFs are supported.
                     </p>
                     <button
                         onClick={() => router.push('/pdf-to-test')}
@@ -177,11 +184,45 @@ function ReviewContent() {
 
 
     if (data?.status === 'parsing') {
+        const done = data.pages_done ?? 0;
+        const total = data.pages_total ?? 0;
+        const pct = total > 0 ? Math.round((done / total) * 100) : 0;
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
-                <div className="flex flex-col items-center gap-3">
-                    <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-                    <p className="text-gray-600 dark:text-gray-400">Parsing PDF... Please wait.</p>
+            <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950 px-4">
+                <div className="max-w-sm w-full">
+                    <div className="bg-white dark:bg-gray-900 rounded-2xl p-8 shadow-sm border border-gray-200 dark:border-gray-800 flex flex-col items-center gap-5">
+                        {/* AI Brain Icon */}
+                        <div className="w-16 h-16 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center">
+                            <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+                        </div>
+
+                        <div className="text-center">
+                            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Gemini AI is reading your PDF</h2>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                {total > 0
+                                    ? `Analysing page ${done} of ${total}…`
+                                    : 'Starting analysis…'}
+                            </p>
+                        </div>
+
+                        {/* Progress bar */}
+                        <div className="w-full">
+                            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 overflow-hidden">
+                                <div
+                                    className="h-2.5 rounded-full bg-blue-600 transition-all duration-500"
+                                    style={{ width: `${pct || 5}%` }}
+                                />
+                            </div>
+                            <div className="flex justify-between mt-1.5">
+                                <span className="text-xs text-gray-400">{total > 0 ? `${done}/${total} pages` : 'Starting…'}</span>
+                                <span className="text-xs text-blue-600 font-medium">{pct}%</span>
+                            </div>
+                        </div>
+
+                        <p className="text-xs text-gray-400 text-center">
+                            Works for scanned &amp; digital PDFs · Usually takes 1–3 min
+                        </p>
+                    </div>
                 </div>
             </div>
         );

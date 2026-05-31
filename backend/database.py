@@ -256,4 +256,20 @@ def init_db():
             conn.commit()
     except Exception as e:
         print(f"Migration warning (payment tables): {e}")
+    # Add pages_total and pages_done to pdf_extract_jobs (Gemini Vision progress tracking)
+    try:
+        from sqlalchemy import text
+        with engine.connect() as conn:
+            try:
+                conn.execute(text("ALTER TABLE pdf_extract_jobs ADD COLUMN pages_total INTEGER"))
+                conn.commit()
+            except Exception:
+                conn.rollback()
+            try:
+                conn.execute(text("ALTER TABLE pdf_extract_jobs ADD COLUMN pages_done INTEGER DEFAULT 0"))
+                conn.commit()
+            except Exception:
+                conn.rollback()
+    except Exception as e:
+        print(f"Migration info (pdf_extract_jobs progress cols): {e}")
 

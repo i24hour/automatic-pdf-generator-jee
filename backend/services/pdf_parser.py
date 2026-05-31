@@ -1,22 +1,35 @@
 """
-PDF Parser Service for PDF-to-Test feature.
-Uses PyMuPDF (fitz) to extract text, images, and answer keys from JEE Mains PDFs.
+PDF Parser Service — Gemini Vision API powered.
+
+Converts every PDF page to a high-resolution image and sends it to Gemini Vision,
+which reads the page like a human and extracts structured JEE Mains questions.
+
+Works for:
+  - Text-based PDFs
+  - Scanned / image-based PDFs
+  - Mixed PDFs with diagrams and figures
 """
 
 import os
+import io
 import re
 import json
-import io
-from typing import List, Dict, Any, Optional, Tuple
-from dataclasses import dataclass, field, asdict
+import base64
+from typing import List, Dict, Any, Optional, Tuple, Callable
+from dataclasses import dataclass, field
 
-import fitz  # PyMuPDF
+import fitz  # PyMuPDF — used only for page → image conversion
+import litellm
 
+
+# ---------------------------------------------------------------------------
+# Data classes (kept compatible with existing router code)
+# ---------------------------------------------------------------------------
 
 @dataclass
 class ExtractedImage:
     page_number: int
-    bbox: Tuple[float, float, float, float]  # (x0, y0, x1, y1)
+    bbox: Tuple[float, float, float, float]
     image_bytes: bytes
     ext: str = "png"
 
@@ -27,12 +40,13 @@ class ExtractedQuestion:
     text: str
     options: Dict[str, str] = field(default_factory=dict)
     answer: Optional[str] = None
-    answer_value: Optional[str] = None  # For numerical answers
-    q_type: str = "mcq"  # mcq | numerical
-    subject: str = "Unknown"
-    image_bboxes: List[Tuple[float, float, float, float]] = field(default_factory=list)
+    answer_value: Optional[str] = None
+    q_type: str = "mcq"          # "mcq" | "numerical"
+    subject: str = "Physics"
+    image_bboxes: List[Tuple] = field(default_factory=list)
     image_urls: List[str] = field(default_factory=list)
     page_number: int = 0
+    has_diagram: bool = False
 
 
 @dataclass
@@ -44,339 +58,322 @@ class ParseResult:
     images: List[ExtractedImage] = field(default_factory=list)
     answer_key: Dict[int, str] = field(default_factory=dict)
     subjects_found: List[str] = field(default_factory=list)
+    pages_total: int = 0
 
+
+# ---------------------------------------------------------------------------
+# Gemini Vision prompt
+# ---------------------------------------------------------------------------
+
+_EXTRACTION_PROMPT = """\
+You are an expert JEE Mains / NEET exam question extractor.
+Carefully read the exam page image and extract EVERY question on this page.
+
+RULES:
+1. A question starts with its number (e.g. "1.", "Q.1", "1)", "2.").
+2. MCQ options are labeled A, B, C, D  (or (A), (B) etc.).
+3. Numerical / Integer type questions have NO A-D options.
+4. Subject must be ONE of: Physics, Chemistry, Maths, Zoology, Botany.
+5. If a section header like "SECTION A — PHYSICS" appears, use that subject for following questions.
+6. Include ALL text of the question, including formulas.  Use LaTeX notation for math: $\\frac{1}{2}mv^2$.
+7. If the question has a figure/diagram embedded in it, write [DIAGRAM] at that position in the text and set has_diagram to true.
+8. If this page is a COVER PAGE, INSTRUCTIONS PAGE, or ANSWER KEY page with no question bodies, return an empty array [].
+
+OUTPUT FORMAT — return ONLY a raw JSON array, no markdown fences, no explanation:
+[
+  {
+    "question_number": 1,
+    "text": "Full question text. [DIAGRAM] if a figure appears here.",
+    "options": {"A": "...", "B": "...", "C": "...", "D": "..."},
+    "answer": "B",
+    "type": "mcq",
+    "subject": "Physics",
+    "has_diagram": false
+  },
+  {
+    "question_number": 2,
+    "text": "An integer-type question text.",
+    "options": {},
+    "answer": "4",
+    "type": "numerical",
+    "subject": "Chemistry",
+    "has_diagram": false
+  }
+]
+
+If no questions are found on this page, return exactly: []
+"""
+
+
+# ---------------------------------------------------------------------------
+# Main parser class
+# ---------------------------------------------------------------------------
 
 class PDFParser:
-    """Parse JEE Mains PDFs into structured questions with images."""
+    """Parse JEE / NEET PDFs using Gemini Vision — works for ALL PDF types."""
 
-    # Regex patterns for JEE Mains
-    QUESTION_PATTERN = re.compile(
-        r'(?:^|\n)\s*(?:Q\.?|Question)?\s*(\d+)\s*[:.\)]\s*(.+?)(?=\n\s*(?:\d+\s*[:.\)]|Q\.?\s*\d+|\Z))',
-        re.DOTALL | re.IGNORECASE
-    )
-    OPTION_PATTERN = re.compile(
-        r'\n\s*\(?([A-D])\)?[.\)]\s*(.+?)(?=\n\s*\(?[A-D]\)?[.\)]|\Z)',
-        re.DOTALL
-    )
-    NUMERICAL_HINT = re.compile(
-        r'integer\s*type|numerical\s*type|type\s*:\s*numerical|enter\s*\d+',
-        re.IGNORECASE
-    )
-    SECTION_HEADER = re.compile(
-        r'(?:Physics|Chemistry|Mathematics|Maths)\s*(?:Section|\(|:)?',
-        re.IGNORECASE
-    )
+    # Model used for vision extraction (override via env var PDF_PARSE_MODEL)
+    VISION_MODEL = os.getenv("PDF_PARSE_MODEL", "gemini/gemini-2.0-flash")
+    PAGE_DPI = 200          # Higher = better OCR, larger payload
+    MAX_PAGES = 60          # Safety limit per upload
 
     def __init__(self):
-        self.image_threshold_px = 150  # Max vertical distance to associate image with question
+        self._setup_api_key()
 
-    def parse(self, pdf_path: str, title: str = "", duration_minutes: int = 180) -> ParseResult:
+    def _setup_api_key(self):
+        """Ensure GEMINI_API_KEY is set (also accepts GOOGLE_API_KEY)."""
+        if not os.getenv("GEMINI_API_KEY") and os.getenv("GOOGLE_API_KEY"):
+            os.environ["GEMINI_API_KEY"] = os.getenv("GOOGLE_API_KEY", "")
+            print("[PDFParser] Mapped GOOGLE_API_KEY -> GEMINI_API_KEY")
+
+    # ------------------------------------------------------------------
+    # Public API
+    # ------------------------------------------------------------------
+
+    def parse(
+        self,
+        pdf_path: str,
+        title: str = "",
+        duration_minutes: int = 180,
+        progress_callback: Optional[Callable[[int, int], None]] = None,
+    ) -> ParseResult:
         """
-        Main entry point. Parse a JEE Mains PDF.
-        Returns structured questions + raw images.
+        Main entry point.  Parse any JEE/NEET PDF using Gemini Vision.
+
+        Args:
+            pdf_path:          Absolute path to the uploaded PDF.
+            title:             Test title (passed through).
+            duration_minutes:  Test duration (passed through).
+            progress_callback: Optional fn(pages_done, pages_total) called after each page.
+
+        Returns:
+            ParseResult with all extracted questions and embedded images.
         """
         doc = fitz.open(pdf_path)
-        result = ParseResult(title=title, duration_minutes=duration_minutes)
+        total_pages = min(len(doc), self.MAX_PAGES)
 
-        all_text_blocks: List[Dict[str, Any]] = []
+        result = ParseResult(
+            title=title,
+            duration_minutes=duration_minutes,
+            pages_total=total_pages,
+        )
+
+        # question_number → ExtractedQuestion  (avoids duplicates from page overlaps)
+        seen: Dict[int, ExtractedQuestion] = {}
         all_images: List[ExtractedImage] = []
 
-        for page_idx in range(len(doc)):
+        print(f"[PDFParser] Starting Vision extraction: {total_pages} pages, model={self.VISION_MODEL}")
+
+        for page_idx in range(total_pages):
             page = doc.load_page(page_idx)
             page_num = page_idx + 1
 
-            # Extract text blocks with bounding boxes
-            blocks = page.get_text("dict")["blocks"]
-            for b in blocks:
-                if "lines" in b:
-                    text = "\n".join(
-                        span["text"] for line in b["lines"] for span in line["spans"]
-                    )
-                    if text.strip():
-                        all_text_blocks.append({
-                            "page": page_num,
-                            "bbox": b["bbox"],
-                            "text": text.strip(),
-                        })
+            # ── Convert page to PNG ──────────────────────────────────
+            mat = fitz.Matrix(self.PAGE_DPI / 72, self.PAGE_DPI / 72)
+            pix = page.get_pixmap(matrix=mat, colorspace=fitz.csRGB)
+            img_bytes = pix.tobytes("png")
 
-            # Extract images
-            img_list = page.get_images(full=True)
-            for img_index, img in enumerate(img_list, start=1):
-                xref = img[0]
-                base_image = doc.extract_image(xref)
-                image_bytes = base_image["image"]
-                ext = base_image["ext"]
+            # ── Collect embedded images (for diagram upload later) ──
+            page_imgs = self._extract_embedded_images(doc, page, page_num)
+            all_images.extend(page_imgs)
 
-                # Get image position on page
-                # Find the rect where this image appears
-                img_rects = self._find_image_rects(page, xref)
-                for rect in img_rects:
-                    all_images.append(ExtractedImage(
-                        page_number=page_num,
-                        bbox=(rect.x0, rect.y0, rect.x1, rect.y1),
-                        image_bytes=image_bytes,
-                        ext=ext if ext else "png",
-                    ))
+            # ── Send page to Gemini Vision ───────────────────────────
+            try:
+                page_questions = self._extract_from_page_image(img_bytes, page_num)
+                new_count = 0
+                for q in page_questions:
+                    if q.question_number not in seen:
+                        seen[q.question_number] = q
+                        new_count += 1
+                print(f"[PDFParser] Page {page_num}/{total_pages}: {new_count} new questions extracted")
+            except Exception as e:
+                print(f"[PDFParser] Page {page_num} failed: {e}")
+
+            if progress_callback:
+                try:
+                    progress_callback(page_idx + 1, total_pages)
+                except Exception:
+                    pass
 
         doc.close()
 
+        # Sort by question number
+        result.questions = [seen[k] for k in sorted(seen.keys())]
         result.images = all_images
 
-        # Group blocks by page and sort top-to-bottom
-        pages_blocks: Dict[int, List[Dict]] = {}
-        for b in all_text_blocks:
-            pages_blocks.setdefault(b["page"], []).append(b)
+        # Collect unique subjects
+        subjects = list({q.subject for q in result.questions
+                         if q.subject not in ("Unknown", "")})
+        result.subjects_found = subjects or ["Physics", "Chemistry", "Maths"]
 
-        for page_num in pages_blocks:
-            pages_blocks[page_num].sort(key=lambda x: x["bbox"][1])  # sort by y0
-
-        # Detect subjects sections
-        subjects_found = self._detect_subjects(pages_blocks)
-        result.subjects_found = subjects_found
-
-        # Parse questions page by page
-        current_subject = "Unknown"
-        for page_num in sorted(pages_blocks.keys()):
-            blocks = pages_blocks[page_num]
-            current_subject = self._parse_page_questions(
-                blocks, current_subject, result, page_num
-            )
-
-        # Try to find and parse answer key
-        result.answer_key = self._extract_answer_key(pages_blocks)
-
-        # Apply answer key to questions
-        self._apply_answer_key(result)
-
-        # Associate images with questions by proximity
-        self._associate_images(result)
-
+        print(f"[PDFParser] Done: {len(result.questions)} questions, "
+              f"{len(result.images)} images, subjects={result.subjects_found}")
         return result
 
-    def _find_image_rects(self, page: fitz.Page, xref: int) -> List[fitz.Rect]:
-        """Find all display rectangles for a given image xref on a page."""
-        rects = []
-        # Heuristic: look for images in page display list
-        for img in page.get_images(full=True):
-            if img[0] == xref:
-                # We can't get exact bbox easily without parsing the display list,
-                # so we approximate by looking for 'xObject' references in raw content
-                # A simpler approach: check page.get_text() around image positions
-                # For now, use a placeholder approach: if only 1 image per page, assume it spans center
-                rects.append(fitz.Rect(50, 100, page.rect.width - 50, page.rect.height - 100))
-                break
-        if not rects:
-            rects.append(fitz.Rect(50, 100, page.rect.width - 50, page.rect.height - 100))
-        return rects
+    # ------------------------------------------------------------------
+    # Internal helpers
+    # ------------------------------------------------------------------
 
-    def _detect_subjects(self, pages_blocks: Dict[int, List[Dict]]) -> List[str]:
-        """Detect subject section headers across all pages."""
-        subjects = []
-        for page_num, blocks in pages_blocks.items():
-            for b in blocks:
-                m = self.SECTION_HEADER.match(b["text"])
-                if m:
-                    subj = m.group(0).strip().title()
-                    if "Math" in subj:
-                        subj = "Maths"
-                    if subj not in subjects:
-                        subjects.append(subj)
-        return subjects if subjects else ["Physics", "Chemistry", "Maths"]
+    def _extract_embedded_images(
+        self, doc: fitz.Document, page: fitz.Page, page_num: int
+    ) -> List[ExtractedImage]:
+        """Extract raw embedded images from a PDF page for later S3 upload."""
+        images = []
+        try:
+            for img_info in page.get_images(full=True):
+                xref = img_info[0]
+                base_image = doc.extract_image(xref)
+                if not base_image or not base_image.get("image"):
+                    continue
+                img_data = base_image["image"]
+                ext = base_image.get("ext", "png")
 
-    def _parse_page_questions(
-        self,
-        blocks: List[Dict],
-        current_subject: str,
-        result: ParseResult,
-        page_num: int
-    ) -> str:
-        """Parse questions from a single page's text blocks."""
-        # Concatenate blocks into page text
-        page_text = "\n".join(b["text"] for b in blocks)
+                # Get bounding box on page
+                rects = page.get_image_rects(xref)
+                bbox: Tuple[float, float, float, float] = (0.0, 0.0, 100.0, 100.0)
+                if rects:
+                    r = rects[0]
+                    bbox = (float(r.x0), float(r.y0), float(r.x1), float(r.y1))
 
-        # Update current subject if header found
-        for b in blocks:
-            m = self.SECTION_HEADER.match(b["text"])
-            if m:
-                current_subject = m.group(0).strip().title()
-                if "Math" in current_subject:
-                    current_subject = "Maths"
+                # Skip tiny images (likely decorative borders / logos)
+                w = bbox[2] - bbox[0]
+                h = bbox[3] - bbox[1]
+                if w < 50 or h < 50:
+                    continue
 
-        # Find all question-like blocks using simple heuristics
-        q_blocks = self._find_question_blocks(blocks)
+                images.append(ExtractedImage(
+                    page_number=page_num,
+                    bbox=bbox,
+                    image_bytes=img_data,
+                    ext=ext if ext else "png",
+                ))
+        except Exception as e:
+            print(f"[PDFParser] Embedded image extraction error (page {page_num}): {e}")
+        return images
 
-        for q_info in q_blocks:
-            q_num = q_info["q_num"]
-            q_text = q_info["text"]
-            q_bbox = q_info["bbox"]
+    def _extract_from_page_image(
+        self, img_bytes: bytes, page_num: int
+    ) -> List[ExtractedQuestion]:
+        """Send a page PNG to Gemini Vision and parse the JSON response."""
+        b64 = base64.b64encode(img_bytes).decode("utf-8")
 
-            # Detect if numerical
-            is_numerical = bool(self.NUMERICAL_HINT.search(q_text))
-
-            # Extract options from nearby blocks
-            options = self._extract_options_for_block(q_info, blocks)
-
-            if not options and not is_numerical:
-                # Maybe options are inline in the text
-                options = self._extract_inline_options(q_text)
-
-            if not options and not is_numerical:
-                # Default to empty — might be a poorly parsed block
-                pass
-
-            # Clean question text (remove options from it if embedded)
-            clean_text = self._clean_question_text(q_text, options)
-
-            eq = ExtractedQuestion(
-                question_number=q_num,
-                text=clean_text,
-                options=options,
-                q_type="numerical" if is_numerical else "mcq",
-                subject=current_subject,
-                page_number=page_num,
-            )
-            result.questions.append(eq)
-
-        return current_subject
-
-    def _find_question_blocks(self, blocks: List[Dict]) -> List[Dict]:
-        """Find blocks that start questions using number patterns."""
-        q_blocks = []
-        for idx, b in enumerate(blocks):
-            text = b["text"]
-            # Match start of block: number followed by . ) :
-            m = re.match(r'^\s*(\d+)\s*[:.\)]\s*(.*)', text, re.DOTALL)
-            if m:
-                q_num = int(m.group(1))
-                q_text = m.group(2)
-
-                # Accumulate following blocks until next question or big gap
-                accumulated = q_text
-                for j in range(idx + 1, len(blocks)):
-                    next_text = blocks[j]["text"]
-                    if re.match(r'^\s*\d+\s*[:.\)]', next_text):
-                        break
-                    accumulated += "\n" + next_text
-
-                q_blocks.append({
-                    "q_num": q_num,
-                    "text": accumulated.strip(),
-                    "bbox": b["bbox"],
-                    "block_index": idx,
-                })
-        return q_blocks
-
-    def _extract_options_for_block(
-        self,
-        q_info: Dict,
-        blocks: List[Dict]
-    ) -> Dict[str, str]:
-        """Extract options that appear after a question block."""
-        options = {}
-        start_idx = q_info["block_index"] + 1
-
-        for j in range(start_idx, min(start_idx + 6, len(blocks))):
-            text = blocks[j]["text"]
-            opt_matches = list(self.OPTION_PATTERN.finditer("\n" + text))
-            for match in opt_matches:
-                opt_letter = match.group(1).upper()
-                opt_text = match.group(2).strip()
-                if opt_letter not in options:
-                    options[opt_letter] = opt_text
-
-            # Stop if we hit another question
-            if re.match(r'^\s*\d+\s*[:.\)]', text):
-                break
-
-        return options
-
-    def _extract_inline_options(self, text: str) -> Dict[str, str]:
-        """Try to extract options embedded inside the question text itself."""
-        options = {}
-        pattern = re.compile(
-            r'\(?([A-D])\)?[.\)]\s*([^\n]+?)(?=\s*\(?[A-D]\)?[.\)]|\Z)',
-            re.DOTALL
+        response = litellm.completion(
+            model=self.VISION_MODEL,
+            messages=[{
+                "role": "user",
+                "content": [
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": f"data:image/png;base64,{b64}"},
+                    },
+                    {"type": "text", "text": _EXTRACTION_PROMPT},
+                ],
+            }],
+            temperature=0.1,
+            max_tokens=8192,
         )
-        for match in pattern.finditer(text):
-            options[match.group(1).upper()] = match.group(2).strip()
-        return options
 
-    def _clean_question_text(self, text: str, options: Dict[str, str]) -> str:
-        """Remove option lines from the question body."""
-        lines = text.split("\n")
-        clean_lines = []
-        for line in lines:
-            if re.match(r'^\s*\(?[A-D]\)?[.\)]', line):
-                continue
-            clean_lines.append(line)
-        return "\n".join(clean_lines).strip()
+        raw = (response.choices[0].message.content or "[]").strip()
+        return self._parse_response(raw, page_num)
 
-    def _extract_answer_key(self, pages_blocks: Dict[int, List[Dict]]) -> Dict[int, str]:
-        """Look for answer key section at the end of the document."""
-        answer_key = {}
-        all_blocks = []
-        for page_num in sorted(pages_blocks.keys()):
-            all_blocks.extend(pages_blocks[page_num])
+    def _parse_response(self, raw: str, page_num: int) -> List[ExtractedQuestion]:
+        """Parse Gemini's JSON array response into ExtractedQuestion objects."""
+        # Strip markdown fences if present
+        cleaned = raw
+        if cleaned.startswith("```"):
+            cleaned = re.sub(r"^```[a-z]*\n?", "", cleaned)
+            cleaned = re.sub(r"\n?```$", "", cleaned.rstrip())
+        cleaned = cleaned.strip()
 
-        # Heuristic: answer key is usually near the end
-        # Look for "Answer Key" header and parse table after it
-        in_answer_section = False
-        for b in all_blocks:
-            text = b["text"]
-            if re.search(r'answer\s*key|key\s*answers|solutions', text, re.IGNORECASE):
-                in_answer_section = True
-                continue
+        # Find outermost JSON array
+        start = cleaned.find("[")
+        end = cleaned.rfind("]") + 1
+        if start == -1 or end <= start:
+            print(f"[PDFParser] No JSON array in response for page {page_num}: {cleaned[:100]!r}")
+            return []
 
-            if in_answer_section:
-                # Match "1. A" or "1 A" or "1) B"
-                for line in text.split("\n"):
-                    m = re.match(r'^\s*(\d+)\s*[:.\)]\s*([A-D]|\d+)', line, re.IGNORECASE)
-                    if m:
-                        q_num = int(m.group(1))
-                        ans = m.group(2).strip().upper()
-                        answer_key[q_num] = ans
+        try:
+            data = json.loads(cleaned[start:end])
+        except json.JSONDecodeError as e:
+            print(f"[PDFParser] JSON parse error page {page_num}: {e} | raw: {cleaned[start:start+200]!r}")
+            return []
 
-        return answer_key
+        if not isinstance(data, list):
+            return []
 
-    def _apply_answer_key(self, result: ParseResult):
-        """Map extracted answers to questions by number."""
-        for q in result.questions:
-            if q.question_number in result.answer_key:
-                ans = result.answer_key[q.question_number]
-                q.answer = ans
-                if q.q_type == "numerical" or ans.isdigit():
-                    q.answer_value = ans
-                    q.q_type = "numerical"
+        questions = []
+        for item in data:
+            q = self._item_to_question(item, page_num)
+            if q is not None:
+                questions.append(q)
+        return questions
 
-    def _associate_images(self, result: ParseResult):
-        """Associate extracted images with nearby questions using spatial proximity."""
-        for img in result.images:
-            img_page = img.page_number
-            img_y = img.bbox[1]  # y0 (top)
+    def _item_to_question(
+        self, item: Any, page_num: int
+    ) -> Optional[ExtractedQuestion]:
+        """Convert a raw dict from Gemini's response into an ExtractedQuestion."""
+        if not isinstance(item, dict):
+            return None
 
-            # Find questions on the same page
-            page_questions = [q for q in result.questions if q.page_number == img_page]
-            if not page_questions:
-                continue
+        # question_number is required
+        raw_num = item.get("question_number")
+        if raw_num is None:
+            return None
+        try:
+            q_num = int(raw_num)
+        except (ValueError, TypeError):
+            return None
 
-            # Find nearest question above the image
-            best_q = None
-            best_dist = float("inf")
-            for q in page_questions:
-                # Approximate question y position by its question_number order
-                # For simplicity, use question_number as proxy for vertical order
-                q_idx = page_questions.index(q)
-                q_y = q_idx * 200  # rough estimate
-                dist = img_y - q_y
-                if 0 < dist < best_dist:
-                    best_dist = dist
-                    best_q = q
+        # type
+        raw_type = str(item.get("type", "mcq")).lower()
+        q_type = "numerical" if any(kw in raw_type for kw in ("num", "integer", "nat")) else "mcq"
 
-            if best_q and best_dist < self.image_threshold_px * 3:  # relax threshold
-                best_q.image_bboxes.append(img.bbox)
+        # subject
+        raw_subj = str(item.get("subject", "Physics")).strip()
+        valid_subjects = {"Physics", "Chemistry", "Maths", "Zoology", "Botany"}
+        subject = raw_subj if raw_subj in valid_subjects else "Physics"
+
+        # options — normalize to uppercase keys A B C D only
+        raw_opts = item.get("options", {})
+        if isinstance(raw_opts, dict):
+            options = {
+                k.upper(): str(v).strip()
+                for k, v in raw_opts.items()
+                if k.upper() in ("A", "B", "C", "D") and str(v).strip()
+            }
+        else:
+            options = {}
+
+        # answer
+        raw_ans = item.get("answer")
+        answer: Optional[str] = None
+        if raw_ans is not None:
+            ans_str = str(raw_ans).strip().upper()
+            if ans_str in ("A", "B", "C", "D"):
+                answer = ans_str
+            elif ans_str.replace(".", "").replace("-", "").replace(" ", "").isdigit():
+                answer = ans_str  # numerical answer
+
+        # text
+        text = str(item.get("text", "")).strip()
+
+        return ExtractedQuestion(
+            question_number=q_num,
+            text=text,
+            options=options,
+            answer=answer,
+            q_type=q_type,
+            subject=subject,
+            page_number=page_num,
+            has_diagram=bool(item.get("has_diagram", False)),
+        )
+
+    # ------------------------------------------------------------------
+    # Output serialisation (router uses this)
+    # ------------------------------------------------------------------
 
     def to_json(self, result: ParseResult) -> List[Dict[str, Any]]:
-        """Convert parsed result to JSON-serializable list."""
+        """Convert ParseResult to JSON-serialisable list for DB storage."""
         return [
             {
                 "question_number": q.question_number,
@@ -386,13 +383,16 @@ class PDFParser:
                 "answer_value": q.answer_value,
                 "type": q.q_type,
                 "subject": q.subject,
-                "image_bboxes": q.image_bboxes,
+                "image_bboxes": list(q.image_bboxes),
                 "image_urls": q.image_urls,
                 "page_number": q.page_number,
+                "has_diagram": q.has_diagram,
             }
             for q in result.questions
         ]
 
 
-# Singleton
+# ---------------------------------------------------------------------------
+# Singleton instance
+# ---------------------------------------------------------------------------
 pdf_parser = PDFParser()
