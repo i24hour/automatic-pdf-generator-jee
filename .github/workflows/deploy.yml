@@ -113,3 +113,17 @@ jobs:
             --cli-input-json file://apprunner-update.json \
             --region ${{ env.AWS_REGION }}
         fi
+
+    - name: Describe App Runner Deployment Status
+      if: always()
+      run: |
+        SERVICE_ARN=$(aws apprunner list-services --region ${{ env.AWS_REGION }} --query "ServiceSummaryList[?ServiceName=='${{ env.SERVICE_NAME }}'].ServiceArn" --output text || echo "")
+        if [ "$SERVICE_ARN" != "" ] && [ "$SERVICE_ARN" != "None" ]; then
+          echo "=== Service Description ==="
+          aws apprunner describe-service --service-arn "$SERVICE_ARN" --region ${{ env.AWS_REGION }}
+          echo "=== Recent Operations ==="
+          aws apprunner list-operations --service-arn "$SERVICE_ARN" --region ${{ env.AWS_REGION }}
+        else
+          echo "Service not found or error retrieving ServiceArn"
+        fi
+
