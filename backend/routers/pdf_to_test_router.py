@@ -265,11 +265,17 @@ def _run_pdf_parse_job(
         print(f"[PDFToTest] Job {job_id} parsed: {len(result.questions)} questions, {len(result.images)} images")
 
     except Exception as e:
-        print(f"[PDFToTest] Parse job {job_id} failed: {e}")
         import traceback
-        traceback.print_exc()
+        err_str = traceback.format_exc()
+        print(f"[PDFToTest] Parse job {job_id} FAILED: {e}")
+        print(err_str)
         if job:
             job.status = "failed"
+            # Store first 500 chars of error for debugging
+            try:
+                job.extracted_questions_json = json.dumps({"error": str(e), "traceback": err_str[:500]})
+            except Exception:
+                pass
             db.commit()
     finally:
         db.close()
@@ -305,7 +311,16 @@ async def get_review_data(
         )
 
     if job.status == "failed":
-        raise HTTPException(status_code=400, detail="PDF parsing failed. Please try again.")
+        # Try to extract stored error message
+        error_detail = "PDF parsing failed. Please try again."
+        if job.extracted_questions_json:
+            try:
+                stored = json.loads(job.extracted_questions_json)
+                if isinstance(stored, dict) and "error" in stored:
+                    error_detail = f"Parsing failed: {stored['error'][:200]}"
+            except Exception:
+                pass
+        raise HTTPException(status_code=400, detail=error_detail)
 
     # Deserialize questions
     questions = json.loads(job.extracted_questions_json or "[]")

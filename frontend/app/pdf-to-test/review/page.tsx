@@ -158,19 +158,23 @@ function ReviewContent() {
                 <div className="max-w-md w-full bg-white dark:bg-gray-900 rounded-xl p-6 border border-red-200 dark:border-red-800">
                     <div className="flex items-center gap-2 text-red-600 dark:text-red-400 mb-3">
                         <AlertCircle className="w-5 h-5" />
-                        <h2 className="font-semibold">Error</h2>
+                        <h2 className="font-semibold">PDF Parsing Failed</h2>
                     </div>
-                    <p className="text-gray-700 dark:text-gray-300 text-sm">{error}</p>
+                    <p className="text-gray-700 dark:text-gray-300 text-sm mb-2">{error}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-500 mb-4">
+                        This can happen if the PDF is scanned/image-based, password-protected, or uses an unsupported format. Try uploading a text-based JEE Mains PDF.
+                    </p>
                     <button
                         onClick={() => router.push('/pdf-to-test')}
-                        className="mt-4 text-sm text-blue-600 hover:underline"
+                        className="mt-2 text-sm text-blue-600 hover:underline"
                     >
-                        Go back to upload
+                        ← Go back to upload
                     </button>
                 </div>
             </div>
         );
     }
+
 
     if (data?.status === 'parsing') {
         return (
