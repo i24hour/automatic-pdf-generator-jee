@@ -67,23 +67,6 @@ def init_db():
     # Create all tables
     Base.metadata.create_all(bind=engine)
     
-    # Always-run migrations: new columns needed for current features
-    # These use IF NOT EXISTS pattern via try/except so they're safe to run repeatedly
-    try:
-        from sqlalchemy import text
-        with engine.connect() as conn:
-            for col_sql in [
-                "ALTER TABLE pdf_extract_jobs ADD COLUMN IF NOT EXISTS pages_total INTEGER",
-                "ALTER TABLE pdf_extract_jobs ADD COLUMN IF NOT EXISTS pages_done INTEGER DEFAULT 0",
-            ]:
-                try:
-                    conn.execute(text(col_sql))
-                    conn.commit()
-                except Exception:
-                    conn.rollback()
-    except Exception as e:
-        print(f"[DB] Always-run migration warning: {e}")
-
     # Run heavy migrations only if explicitly asked (avoids lock queues on cold starts)
     if os.getenv("RUN_MIGRATIONS") != "true":
         print("DEBUG: Skipping ALTER TABLE migrations to prevent DB locks. Set RUN_MIGRATIONS=true to run them.")

@@ -227,7 +227,6 @@ async def upload_pdf(
         message="PDF uploaded successfully. Parsing in progress..."
     )
 
-
 def _run_pdf_parse_job(
     job_id: str,
     user_id: str,
@@ -245,13 +244,15 @@ def _run_pdf_parse_job(
         if not job:
             return
 
-        # Progress callback — updates pages_done in DB after each page
+        # Progress callback — stores progress inside extracted_questions_json
+        # (avoids needing new DB columns; safe for existing schema)
         def on_page_done(done: int, total: int):
             try:
                 j = db.query(PDFExtractJob).filter(PDFExtractJob.id == job_id).first()
                 if j:
-                    j.pages_total = total
-                    j.pages_done = done
+                    j.extracted_questions_json = json.dumps(
+                        {"_progress": {"done": done, "total": total}}
+                    )
                     db.commit()
             except Exception as pe:
                 print(f"[PDFToTest] Progress update error: {pe}")
@@ -273,14 +274,12 @@ def _run_pdf_parse_job(
             if q.question_number in qnum_to_urls:
                 q.image_urls = qnum_to_urls[q.question_number]
 
-        # Serialize to JSON
+        # Serialize to JSON (replaces the _progress placeholder with real questions)
         questions_json = pdf_parser.to_json(result)
         answer_key_json = {str(k): v for k, v in result.answer_key.items()}
 
         job.extracted_questions_json = json.dumps(questions_json)
         job.answer_key_json = json.dumps(answer_key_json)
-        job.pages_total = result.pages_total
-        job.pages_done = result.pages_total  # fully done
         job.status = "review"
         db.commit()
 
@@ -321,6 +320,17 @@ async def get_review_data(
 
     try:
         if job.status == "parsing":
+            # Read progress from extracted_questions_json if available
+            pages_done = 0
+            pages_total = None
+            if job.extracted_questions_json:
+                try:
+                    prog_data = json.loads(job.extracted_questions_json)
+                    if isinstance(prog_data, dict) and "_progress" in prog_data:
+                        pages_done = prog_data["_progress"].get("done", 0)
+                        pages_total = prog_data["_progress"].get("total")
+                except Exception:
+                    pass
             return ReviewDataResponse(
                 job_id=job_id,
                 status="parsing",
@@ -329,8 +339,8 @@ async def get_review_data(
                 exam_type=job.exam_type,
                 questions=[],
                 subjects=[],
-                pages_total=getattr(job, "pages_total", None),
-                pages_done=getattr(job, "pages_done", 0) or 0,
+                pages_total=pages_total,
+                pages_done=pages_done,
             )
 
         if job.status == "failed":
@@ -346,7 +356,7 @@ async def get_review_data(
 
         # Deserialize questions
         questions = json.loads(job.extracted_questions_json or "[]")
-        # If stored as dict (old error format), treat as empty
+        # If stored as dict (progress/error format), treat as empty
         if isinstance(questions, dict):
             questions = []
         subjects = list({q.get("subject", "Physics") for q in questions if isinstance(q, dict)})
@@ -373,8 +383,8 @@ async def get_review_data(
             exam_type=job.exam_type,
             questions=review_questions,
             subjects=subjects,
-            pages_total=getattr(job, "pages_total", None),
-            pages_done=getattr(job, "pages_done", 0) or 0,
+            pages_total=None,
+            pages_done=0,
         )
 
     except HTTPException:

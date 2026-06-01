@@ -689,9 +689,8 @@ class PDFExtractJob(Base):
     # Workflow status
     status = Column(String, default="parsing")  # parsing, review, created, failed
 
-    # Parsing progress (populated as Gemini processes each page)
-    pages_total = Column(Integer, nullable=True)   # Total pages in PDF
-    pages_done = Column(Integer, default=0)        # Pages fully processed so far
+    # Note: parsing progress is stored in extracted_questions_json as {"_progress": {"done": N, "total": M}}
+    # while status == "parsing", to avoid needing new DB columns
 
     # Parsed data
     title = Column(String, nullable=True)
