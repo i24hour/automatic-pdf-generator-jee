@@ -69,7 +69,7 @@ jobs:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         AWS_ACCOUNT_ID: ${{ steps.login-ecr.outputs.registry }}
       run: |
-        IMAGE_URI="$ECR_REGISTRY/$ECR_REPOSITORY:latest"
+        IMAGE_URI="$ECR_REGISTRY/$ECR_REPOSITORY:${{ github.sha }}"
         
         # Check if service exists
         SERVICE_ARN=$(aws apprunner list-services --region ${{ env.AWS_REGION }} --query "ServiceSummaryList[?ServiceName=='${{ env.SERVICE_NAME }}'].ServiceArn" --output text || echo "")
