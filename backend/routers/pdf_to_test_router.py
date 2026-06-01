@@ -319,57 +319,70 @@ async def get_review_data(
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
 
-    if job.status == "parsing":
+    try:
+        if job.status == "parsing":
+            return ReviewDataResponse(
+                job_id=job_id,
+                status="parsing",
+                title=job.title or "",
+                duration_minutes=job.duration_minutes or 180,
+                exam_type=job.exam_type,
+                questions=[],
+                subjects=[],
+                pages_total=getattr(job, "pages_total", None),
+                pages_done=getattr(job, "pages_done", 0) or 0,
+            )
+
+        if job.status == "failed":
+            error_detail = "PDF parsing failed. Please try again."
+            if job.extracted_questions_json:
+                try:
+                    stored = json.loads(job.extracted_questions_json)
+                    if isinstance(stored, dict) and "error" in stored:
+                        error_detail = f"Parsing failed: {stored['error'][:200]}"
+                except Exception:
+                    pass
+            raise HTTPException(status_code=400, detail=error_detail)
+
+        # Deserialize questions
+        questions = json.loads(job.extracted_questions_json or "[]")
+        # If stored as dict (old error format), treat as empty
+        if isinstance(questions, dict):
+            questions = []
+        subjects = list({q.get("subject", "Physics") for q in questions if isinstance(q, dict)})
+
+        review_questions = [
+            ReviewQuestion(
+                question_number=q.get("question_number", i + 1),
+                text=q.get("text", ""),
+                options=q.get("options", {}),
+                answer=q.get("answer"),
+                type=q.get("type", "mcq"),
+                subject=q.get("subject", "Physics"),
+                image_urls=q.get("image_urls", []),
+            )
+            for i, q in enumerate(questions)
+            if isinstance(q, dict)
+        ]
+
         return ReviewDataResponse(
             job_id=job_id,
-            status="parsing",
+            status=job.status,
             title=job.title or "",
             duration_minutes=job.duration_minutes or 180,
             exam_type=job.exam_type,
-            questions=[],
-            subjects=[],
-            pages_total=job.pages_total,
-            pages_done=job.pages_done or 0,
+            questions=review_questions,
+            subjects=subjects,
+            pages_total=getattr(job, "pages_total", None),
+            pages_done=getattr(job, "pages_done", 0) or 0,
         )
 
-    if job.status == "failed":
-        # Try to extract stored error message
-        error_detail = "PDF parsing failed. Please try again."
-        if job.extracted_questions_json:
-            try:
-                stored = json.loads(job.extracted_questions_json)
-                if isinstance(stored, dict) and "error" in stored:
-                    error_detail = f"Parsing failed: {stored['error'][:200]}"
-            except Exception:
-                pass
-        raise HTTPException(status_code=400, detail=error_detail)
-
-    # Deserialize questions
-    questions = json.loads(job.extracted_questions_json or "[]")
-    subjects = list({q.get("subject", "Physics") for q in questions})
-
-    review_questions = [
-        ReviewQuestion(
-            question_number=q.get("question_number", i + 1),
-            text=q.get("text", ""),
-            options=q.get("options", {}),
-            answer=q.get("answer"),
-            type=q.get("type", "mcq"),
-            subject=q.get("subject", "Physics"),
-            image_urls=q.get("image_urls", []),
-        )
-        for i, q in enumerate(questions)
-    ]
-
-    return ReviewDataResponse(
-        job_id=job_id,
-        status=job.status,
-        title=job.title or "",
-        duration_minutes=job.duration_minutes or 180,
-        exam_type=job.exam_type,
-        questions=review_questions,
-        subjects=subjects,
-    )
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        print(f"[PDFToTest] get_review_data error: {e}\n{traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"Server error: {str(e)[:200]}")
 
 
 @router.put("/{job_id}/review", response_model=ReviewDataResponse)

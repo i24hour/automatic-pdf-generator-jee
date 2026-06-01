@@ -67,13 +67,28 @@ def init_db():
     # Create all tables
     Base.metadata.create_all(bind=engine)
     
-    # Run migrations for new columns only if explicitly asked
-    # Running ALTER TABLE on every Serverless cold start causes Postgres lock queues
-    # which block all incoming SELECT requests and result in 504 timeouts.
+    # Always-run migrations: new columns needed for current features
+    # These use IF NOT EXISTS pattern via try/except so they're safe to run repeatedly
+    try:
+        from sqlalchemy import text
+        with engine.connect() as conn:
+            for col_sql in [
+                "ALTER TABLE pdf_extract_jobs ADD COLUMN IF NOT EXISTS pages_total INTEGER",
+                "ALTER TABLE pdf_extract_jobs ADD COLUMN IF NOT EXISTS pages_done INTEGER DEFAULT 0",
+            ]:
+                try:
+                    conn.execute(text(col_sql))
+                    conn.commit()
+                except Exception:
+                    conn.rollback()
+    except Exception as e:
+        print(f"[DB] Always-run migration warning: {e}")
+
+    # Run heavy migrations only if explicitly asked (avoids lock queues on cold starts)
     if os.getenv("RUN_MIGRATIONS") != "true":
         print("DEBUG: Skipping ALTER TABLE migrations to prevent DB locks. Set RUN_MIGRATIONS=true to run them.")
         return
-        
+
     print("DEBUG: Running ALTER TABLE migrations...")
     try:
         from sqlalchemy import text
@@ -256,20 +271,4 @@ def init_db():
             conn.commit()
     except Exception as e:
         print(f"Migration warning (payment tables): {e}")
-    # Add pages_total and pages_done to pdf_extract_jobs (Gemini Vision progress tracking)
-    try:
-        from sqlalchemy import text
-        with engine.connect() as conn:
-            try:
-                conn.execute(text("ALTER TABLE pdf_extract_jobs ADD COLUMN pages_total INTEGER"))
-                conn.commit()
-            except Exception:
-                conn.rollback()
-            try:
-                conn.execute(text("ALTER TABLE pdf_extract_jobs ADD COLUMN pages_done INTEGER DEFAULT 0"))
-                conn.commit()
-            except Exception:
-                conn.rollback()
-    except Exception as e:
-        print(f"Migration info (pdf_extract_jobs progress cols): {e}")
 
