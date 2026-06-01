@@ -1302,9 +1302,9 @@ async def seed_promo_code(
 async def list_models():
     """List available LLM models."""
     return {
-        "active_model": os.getenv("ACTIVE_MODEL", "gemini/gemini-3.1-flash-lite-preview"),
+        "active_model": os.getenv("ACTIVE_MODEL", "gemini/gemini-3.1-flash-lite"),
         "available_models": [
-            "gemini/gemini-3.1-flash-lite-preview"
+            "gemini/gemini-3.1-flash-lite"
         ]
     }
 

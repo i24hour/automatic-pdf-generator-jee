@@ -113,7 +113,7 @@ class PDFParser:
     """Parse JEE / NEET PDFs using Gemini Vision — works for ALL PDF types."""
 
     # Model used for vision extraction (override via env var PDF_PARSE_MODEL)
-    VISION_MODEL = os.getenv("PDF_PARSE_MODEL", "gemini/gemini-2.5-flash")
+    VISION_MODEL = os.getenv("PDF_PARSE_MODEL", "gemini/gemini-3-flash-preview")
     PAGE_DPI = 200          # Higher = better OCR, larger payload
     MAX_PAGES = 60          # Safety limit per upload
 

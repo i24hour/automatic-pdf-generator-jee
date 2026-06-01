@@ -20,7 +20,7 @@ class ManimGenerator:
     """
     
     # Default model for code generation
-    DEFAULT_MODEL = os.getenv("ACTIVE_MODEL", "gemini/gemini-3.1-flash-lite-preview")
+    DEFAULT_MODEL = os.getenv("ACTIVE_MODEL", "gemini/gemini-3.1-flash-lite")
     
     # Manim code template
     CODE_TEMPLATE = '''
