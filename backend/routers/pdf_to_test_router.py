@@ -490,7 +490,7 @@ async def create_test_from_pdf(
             "topic": subject,
             "difficulty": "Medium",
             "marks": 4,
-            "diagram_image_url": q.get("image_urls", [None])[0],  # Primary image
+            "diagram_image_url": q.get("image_urls")[0] if q.get("image_urls") else None,
             "image_urls": q.get("image_urls", []),
         })
 
