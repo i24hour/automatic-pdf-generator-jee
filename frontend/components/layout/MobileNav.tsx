@@ -15,25 +15,7 @@ export default function MobileNav() {
         <>
             {/* Bottom Navigation Bar */}
             <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-black px-4 py-2 flex justify-between items-center z-50 md:hidden">
-                {/* Upgrade pill — only for free users */}
-                {(!user?.plan || user.plan === "free") && (
-                    <Link
-                        href="/pricing"
-                        className="absolute -top-10 right-4 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-xs font-semibold shadow-lg hover:opacity-90 transition-opacity"
-                    >
-                        <Zap className="w-3 h-3" />
-                        Upgrade ₹19
-                    </Link>
-                )}
-                {user?.plan === "earth" && (
-                    <Link
-                        href="/pricing"
-                        className="absolute -top-10 right-4 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-green-500 to-teal-500 text-white text-xs font-semibold shadow-lg hover:opacity-90 transition-opacity"
-                    >
-                        <Zap className="w-3 h-3" />
-                        Go Universe ₹99
-                    </Link>
-                )}
+                {/* Upgrade pills removed since all accounts are free */}
                 <Link
                     href="/"
                     className={`flex flex-col items-center gap-1 p-2 ${isActive("/") ? "text-indigo-600 dark:text-indigo-400" : "text-gray-500 dark:text-gray-400"

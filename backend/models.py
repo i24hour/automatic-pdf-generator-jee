@@ -36,8 +36,8 @@ class User(Base):
     total_likes_received = Column(Integer, default=0)  # Cache for leaderboard
     total_posts = Column(Integer, default=0)  # Cache for leaderboard
     fresh_questions_enabled = Column(Boolean, default=True)  # Toggle for fresh questions feature
-    is_premium = Column(Boolean, default=False)   # True for paid plans
-    plan = Column(String, default="free")         # "free" | "earth" | "universe"
+    is_premium = Column(Boolean, default=True)   # True for paid plans
+    plan = Column(String, default="universe")         # "free" | "earth" | "universe"
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     
     # Relationships

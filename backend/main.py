@@ -272,7 +272,8 @@ def check_rate_limit(user: User, db: Session) -> tuple[bool, int, float, int, st
     Check if user has exceeded rate limit.
     Returns: (is_allowed, remaining_count, hours_until_reset, total_limit, reset_date_str)
     """
-    from routers.payments_router import PLAN_LIMITS
+    # Force make free: unlimited rate limit
+    return True, 999999, 0.0, 999999, "Never"
 
     # Check if monthly bonus needs reset
     now = datetime.now(timezone.utc)
@@ -371,7 +372,8 @@ def check_institute_rate_limit(user: User, db: Session) -> tuple:
     Returns (is_allowed, remaining, limit).
     earth plan: 1 institute PDF/month, universe plan: 4 institute PDFs/month.
     """
-    INSTITUTE_LIMITS = {"earth": 1, "universe": 4}
+    # Force make free: unlimited institute PDFs
+    return True, 999999, 999999
     plan = getattr(user, "plan", "free") or "free"
     limit = INSTITUTE_LIMITS.get(plan, 0)
     if limit == 0:

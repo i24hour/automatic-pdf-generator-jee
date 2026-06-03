@@ -1405,11 +1405,6 @@ export default function TestGenerator() {
                                 router.push("/signup");
                                 return;
                             }
-                            const plan = user?.plan || "free";
-                            if (plan === "free") {
-                                router.push("/pricing");
-                                return;
-                            }
                             setPageMode("institute");
                         }}
                         className={`px-6 py-2 rounded-full text-sm font-semibold transition-all duration-200 ${pageMode === "institute"
@@ -1451,15 +1446,7 @@ export default function TestGenerator() {
                                     </span>
                                 )}
                             </div>
-                            {rateLimit && rateLimit.remaining === 0 && (
-                                <a
-                                    href="/pricing"
-                                    className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-semibold hover:opacity-90 transition-opacity shadow-md"
-                                >
-                                    <Zap className="w-4 h-4" />
-                                    Upgrade — Earth ₹19 · Universe ₹99
-                                </a>
-                            )}
+                            {/* Upgrade CTA removed since all accounts are free */}
                         </div>
                     )}
                 </>

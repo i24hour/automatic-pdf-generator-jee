@@ -313,7 +313,6 @@ export default function SettingsPage() {
 
     const sections = [
         { id: "profile", label: "Profile", icon: User },
-        { id: "upgrade", label: "Upgrade to Pro", icon: Zap },
         { id: "promo", label: "Promo Code", icon: Tag },
         { id: "theme", label: "Theme", icon: theme === "dark" ? Moon : Sun },
         { id: "fresh", label: "Fresh Questions", icon: Sparkles },

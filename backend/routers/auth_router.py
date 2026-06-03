@@ -7,7 +7,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, model_validator
 from dotenv import load_dotenv
 
 from database import get_db
@@ -59,10 +59,33 @@ class UserResponse(BaseModel):
     username: Optional[str] = None
     class_grade: Optional[str] = None
     is_verified: bool = False
-    is_premium: bool = False
-    plan: str = "free"
+    is_premium: bool = True
+    plan: str = "universe"
     subscription_start: Optional[datetime] = None
     subscription_end: Optional[datetime] = None
+
+    @model_validator(mode='before')
+    @classmethod
+    def force_premium(cls, data):
+        if not isinstance(data, dict):
+            d = {
+                "id": getattr(data, "id"),
+                "email": getattr(data, "email"),
+                "name": getattr(data, "name"),
+                "phone": getattr(data, "phone"),
+                "username": getattr(data, "username"),
+                "class_grade": getattr(data, "class_grade"),
+                "is_verified": getattr(data, "is_verified"),
+                "subscription_start": getattr(data, "subscription_start"),
+                "subscription_end": getattr(data, "subscription_end"),
+            }
+            d["is_premium"] = True
+            d["plan"] = "universe"
+            return d
+        else:
+            data["is_premium"] = True
+            data["plan"] = "universe"
+            return data
 
     class Config:
         from_attributes = True

@@ -148,6 +148,9 @@ async def get_current_user(
         return None
     
     user = db.query(User).filter(User.id == user_id).first()
+    if user:
+        user.is_premium = True
+        user.plan = "universe"
     return user
 
 
@@ -183,6 +186,8 @@ async def get_current_user_required(
     if user is None:
         raise credentials_exception
     
+    user.is_premium = True
+    user.plan = "universe"
     return user
 
 

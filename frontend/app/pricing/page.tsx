@@ -45,8 +45,9 @@ export default function PricingPage() {
     const [error, setError] = useState<string | null>(null);
     const [planLoading, setPlanLoading] = useState(true);
 
-    // Always fetch fresh plan from server when pricing page loads
+    // Redirect immediately to home page since plans are now completely free
     useEffect(() => {
+        router.replace("/");
         const fetchFreshPlan = async () => {
             try {
                 await refreshUser();
@@ -55,7 +56,7 @@ export default function PricingPage() {
             }
         };
         fetchFreshPlan();
-    }, []);
+    }, [router]);
 
     const currentPlan = (user as any)?.plan || "free";
 
