@@ -90,7 +90,10 @@ function LoginPageContent() {
 
                     {/* Title */}
                     <h1 className="text-2xl font-semibold text-gray-900 text-center mb-2">Welcome Back</h1>
-                    <p className="text-gray-500 text-center mb-8 text-sm">Sign in to continue</p>
+                    <p className="text-gray-500 text-center text-sm">Sign in to continue</p>
+                    <p className="text-gray-500 text-center mb-8 text-xs">
+                        Topic select karke actual PDF test papers generate kar sakte ho.
+                    </p>
 
                     {/* Google Sign In */}
                     <div className="mb-6">
